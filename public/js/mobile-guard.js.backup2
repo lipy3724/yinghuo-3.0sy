@@ -1,0 +1,306 @@
+// 手机端拦截脚本
+// 作用：在移动设备上阻止进入仅支持桌面端的功能页面，并给出提示
+(function () {
+  console.log('移动端拦截脚本已加载');
+  
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) return; // 仅在手机浏览器执行
+  
+  console.log('检测到移动设备');
+
+  // 允许手机端访问的 URL 白名单
+  const allowList = new Set([
+    '/login.html',
+    '/register.html',
+    '/phone-login.html',
+    '/phone-register.html',
+    '/forgot-password.html',
+    '/privacy-policy.html',
+    '/service-agreement.html',
+    '/index.html', // 首页允许
+    '/',
+    '/credits.html', // 积分页面允许
+    '/account.html', // 账户页面允许
+    '/credits-usage.html' // 积分使用记录允许
+  ]);
+
+  // AI功能路径列表（需要拦截的路径）
+  const aiFunctionPaths = new Set([
+    '/virtual-model',
+    '/virtual-model-redirect.html',
+    '/virtual-model-shoes.html',
+    '/image-removal.html',
+    '/image-expansion.html',
+    '/image-sharpen.html',
+    '/image-colorization.html',
+    '/scene-generator.html',
+    '/cutout.html',
+    '/local-redraw.html',
+    '/global-style.html',
+    '/clothing-simulation.html',
+    '/clothing-segmentation.html',
+    '/model-skin-changer.html',
+    '/text-to-image.html',
+    '/text-to-video.html',
+    '/image-to-video.html',
+    '/multi-image-to-video.html',
+    '/video-style-repaint.html',
+    '/digital-human-video.html',
+    '/video-subtitle-remover.html',
+    '/amazon-listing.html',
+    '/amazon-search-term.html',
+    '/amazon-review-analysis.html',
+    '/amazon-consumer-insights.html',
+    '/amazon-customer-email.html',
+    '/fba-claim-email.html',
+    '/amazon-review-generator.html',
+    '/amazon-review-response.html',
+    '/amazon-brand-naming.html',
+    '/amazon-post-creator.html',
+    '/amazon-video-script.html',
+    '/product-comparison.html',
+    '/amazon-brand-info.html',
+    '/product-improvement-analysis.html',
+    '/amazon-keyword-recommender.html',
+    '/amazon-case-creator.html',
+    '/prompt-editor.html',
+    '/diantu.html',
+    '/image-upscaler.html',
+    '/translate.html',
+    '/marketing-images.html'
+  ]);
+
+  // 显示友好的提示弹窗
+  function showMobileAlert(isPageBlock = false) {
+    // 检查是否已经显示了弹窗
+    if (document.querySelector('.mobile-guard-alert')) return;
+    
+    console.log('显示移动端提示弹窗');
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'mobile-guard-alert';
+    alertDiv.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 90%; width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+          <div style="font-size: 60px; margin-bottom: 20px; line-height: 1;">📱→💻</div>
+          <h3 style="color: #333; margin-bottom: 15px; font-size: 20px; font-weight: 600;">请在电脑上使用完整功能</h3>
+          <p style="color: #666; margin-bottom: 25px; line-height: 1.6; font-size: 16px;">
+            为提供最佳体验，此功能仅支持电脑端访问。<br>请使用电脑浏览器访问我们的网站。
+          </p>
+          <div style="display: flex; justify-content: center; gap: 10px;">
+            ${isPageBlock ? 
+              `<button onclick="window.history.back()" style="flex: 1; background: #6366f1; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">返回上一页</button>` 
+              : 
+              `<button onclick="this.closest('.mobile-guard-alert').remove()" style="flex: 1; background: #6366f1; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500;">我知道了</button>`
+            }
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // 添加简单的动画效果
+    const popupContent = alertDiv.querySelector('div > div');
+    popupContent.style.transform = 'scale(0.9)';
+    popupContent.style.opacity = '0';
+    popupContent.style.transition = 'all 0.3s ease-out';
+    
+    // 强制重排后显示动画
+    setTimeout(() => {
+      popupContent.style.transform = 'scale(1)';
+      popupContent.style.opacity = '1';
+    }, 10);
+  }
+
+  // 检查是否是需要拦截的AI功能链接
+  function isAIFunctionLink(url) {
+    if (!url || typeof url !== 'string') return false;
+    
+    // 清理URL，移除查询参数和锚点
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    
+    // 直接检查是否在AI功能路径列表中
+    if (aiFunctionPaths.has(cleanUrl)) return true;
+    if (aiFunctionPaths.has(url)) return true;
+    
+    // 检查是否包含checkAuthAndRedirect调用
+    if (url.includes('checkAuthAndRedirect')) return true;
+    
+    // 检查是否是以AI功能路径开头的路径
+    for (const path of aiFunctionPaths) {
+      if (url.startsWith(path) || cleanUrl.startsWith(path)) return true;
+    }
+    
+    // 检查文件名是否匹配（去掉路径前缀）
+    const fileName = cleanUrl.split('/').pop();
+    if (fileName && aiFunctionPaths.has('/' + fileName)) return true;
+    
+    return false;
+  }
+  
+  // 检查当前页面是否是功能页面
+  function checkCurrentPage() {
+    console.log('检查当前页面路径:', window.location.pathname);
+    
+    // 检查当前路径是否在白名单中
+    if (allowList.has(window.location.pathname)) {
+      console.log('当前页面在白名单中，允许访问');
+      return;
+    }
+    
+    // 检查当前路径是否是功能页面
+    const isFeaturePage = isAIFunctionLink(window.location.pathname);
+    console.log('当前页面是否是功能页面:', isFeaturePage);
+    
+    if (isFeaturePage) {
+      // 如果是功能页面，显示弹窗并阻止进一步加载
+      showMobileAlert(true);
+      
+      // 阻止页面内容加载
+      document.addEventListener('DOMContentLoaded', function() {
+        // 隐藏页面主要内容
+        const mainContent = document.querySelector('main') || document.querySelector('.container') || document.querySelector('.content');
+        if (mainContent) {
+          mainContent.style.display = 'none';
+        }
+      });
+    }
+  }
+
+  // 捕获所有点击事件
+  document.addEventListener(
+    'click',
+    function (e) {
+      const link = e.target.closest('a, button, [role="button"], .card, .feature-card, .function-card, .card-body'); // 查找可点击元素
+      if (!link) return;
+
+      // 检查data属性中的URL或功能信息
+      const dataHref = link.dataset.href || link.dataset.url || link.dataset.link || link.dataset.target;
+      const href = link.getAttribute('href');
+      const onclick = link.getAttribute('onclick') || '';
+      
+      console.log('点击元素:', link.tagName, '链接:', href || dataHref || '无链接');
+      
+      // 检查元素类名是否包含功能卡片相关类名
+      const isFeatureCard = link.classList && (
+        link.classList.contains('feature-card') || 
+        link.classList.contains('function-card') || 
+        link.classList.contains('ai-feature') ||
+        link.classList.contains('feature-item')
+      );
+      
+      // 如果是功能卡片，直接拦截
+      if (isFeatureCard) {
+        console.log('拦截功能卡片点击');
+        e.preventDefault();
+        e.stopPropagation();
+        showMobileAlert();
+        return false;
+      }
+      
+      // 检查href属性
+      if (href) {
+        // 跳过锚点链接和纯JavaScript代码
+        if (href.startsWith('#') || href === 'javascript:void(0)') return;
+
+        // 外部链接放行
+        if (/^https?:\/\//i.test(href) && !href.includes(window.location.hostname)) return;
+
+        // 白名单放行
+        if (allowList.has(href)) return;
+
+        // 检查是否是AI功能链接
+        if (isAIFunctionLink(href)) {
+          console.log('拦截功能链接点击:', href);
+          e.preventDefault();
+          e.stopPropagation();
+          showMobileAlert();
+          return false;
+        }
+      }
+      
+      // 检查data-href属性
+      if (dataHref && isAIFunctionLink(dataHref)) {
+        console.log('拦截data-href功能链接点击:', dataHref);
+        e.preventDefault();
+        e.stopPropagation();
+        showMobileAlert();
+        return false;
+      }
+
+      // 检查onclick属性中的跳转或checkAuthAndRedirect调用
+      if (onclick) {
+        if (onclick.includes('location.href') || onclick.includes('window.location') || 
+            onclick.includes('navigate') || onclick.includes('redirect')) {
+          // 尝试提取URL
+          const urlMatch = onclick.match(/(location\.href|window\.location|location\.replace)\s*=\s*['"]([^'"]+)['"]/);
+          if (urlMatch && urlMatch[2] && isAIFunctionLink(urlMatch[2])) {
+            console.log('拦截onclick中的跳转:', urlMatch[2]);
+            e.preventDefault();
+            e.stopPropagation();
+            showMobileAlert();
+            return false;
+          }
+        }
+        
+        // 检查checkAuthAndRedirect调用
+        if (onclick.includes('checkAuthAndRedirect')) {
+          // 提取URL参数
+          const urlMatch = onclick.match(/checkAuthAndRedirect\(['"]([^'"]+)['"]\)/);
+          if (urlMatch && urlMatch[1] && isAIFunctionLink(urlMatch[1])) {
+            console.log('拦截checkAuthAndRedirect调用:', urlMatch[1]);
+            e.preventDefault();
+            e.stopPropagation();
+            showMobileAlert();
+            return false;
+          }
+        }
+      }
+    },
+    true // 捕获阶段，优先触发
+  );
+
+  // 覆盖全局跳转函数
+  function overrideGlobalFunctions() {
+    // 立即覆盖 checkAuthAndRedirect 函数
+    if (window.checkAuthAndRedirect) {
+      console.log('覆盖checkAuthAndRedirect函数');
+      const originalCheckAuthAndRedirect = window.checkAuthAndRedirect;
+      window.checkAuthAndRedirect = function (url) {
+        console.log('checkAuthAndRedirect被调用:', url);
+        if (url && isAIFunctionLink(url)) {
+          showMobileAlert();
+          return false;
+        }
+        // 如果不是AI功能链接，执行原函数
+        return originalCheckAuthAndRedirect.call(this, url);
+      };
+    }
+
+    // 覆盖其他可能的跳转函数
+    const originalWindowOpen = window.open;
+    window.open = function(url, name, specs) {
+      console.log('window.open被调用:', url);
+      if (url && isAIFunctionLink(url)) {
+        showMobileAlert();
+        return null;
+      }
+      return originalWindowOpen.call(this, url, name, specs);
+    };
+  }
+
+  // 确保在页面完全加载后执行检查
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      checkCurrentPage();
+      overrideGlobalFunctions();
+    });
+  } else {
+    // 如果页面已加载完成，立即执行
+    checkCurrentPage();
+    overrideGlobalFunctions();
+  }
+  
+  // 立即检查当前页面（不等待DOMContentLoaded）
+  checkCurrentPage();
+})();

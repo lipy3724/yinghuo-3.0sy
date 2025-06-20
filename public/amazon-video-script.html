@@ -219,7 +219,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -312,10 +313,7 @@
                         重新生成
                     </button>
                     
-                    <button id="newScriptButton" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <i class="ri-add-line mr-2"></i>
-                        创建新脚本
-                    </button>
+
                 </div>
             </div>
             
@@ -357,9 +355,54 @@
             return true;
         }
         
+        // 结果保持功能
+        function loadSavedResults() {
+            const savedResults = sessionStorage.getItem('amazon-video-script-results');
+            if (savedResults) {
+                try {
+                    const results = JSON.parse(savedResults);
+                    
+                    // 恢复脚本内容
+                    const scriptContent = document.getElementById('scriptContent');
+                    if (scriptContent && results.scriptText) {
+                        scriptContent.textContent = results.scriptText;
+                        
+                        // 显示结果区域
+                        document.getElementById('initial-content').classList.add('hidden');
+                        document.getElementById('result-content').classList.remove('hidden');
+                        document.getElementById('error-content').classList.add('hidden');
+                        
+                        console.log('已恢复保存的视频脚本结果');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('恢复保存结果失败:', error);
+                    sessionStorage.removeItem('amazon-video-script-results');
+                }
+            }
+            return false;
+        }
+
+        function saveResults(scriptText) {
+            try {
+                sessionStorage.setItem('amazon-video-script-results', JSON.stringify({ scriptText }));
+                console.log('视频脚本结果已保存');
+            } catch (error) {
+                console.error('保存结果失败:', error);
+            }
+        }
+
+        function clearSavedResults() {
+            sessionStorage.removeItem('amazon-video-script-results');
+            console.log('已清除保存的视频脚本结果');
+        }
+
         // 页面加载时检查认证
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
+            
+            // 尝试加载保存的结果
+            loadSavedResults();// 监听浏览器标签页关闭或导航离开
             
             // 页面加载时不需要记录使用
         });
@@ -377,7 +420,7 @@
         const copyButton = document.getElementById('copyButton');
         const copyMessage = document.getElementById('copyMessage');
         const regenerateButton = document.getElementById('regenerateButton');
-        const newScriptButton = document.getElementById('newScriptButton');
+
         const tryAgainButton = document.getElementById('tryAgainButton');
         
         // 表单提交事件
@@ -452,13 +495,14 @@
                                           '无法获取生成的脚本内容';
                         
                         scriptContent.textContent = scriptText;
+                        
+                        // 保存结果
+                        saveResults(scriptText);
+                        
                         loadingContent.classList.add('hidden');
                         resultContent.classList.remove('hidden');
                         
                         // 特性追踪
-                        if (typeof trackFeatureUsage === 'function') {
-                            trackFeatureUsage('amazon_video_script');
-                        }
                         
                         return;
                     } else {
@@ -478,13 +522,14 @@
                                       '无法获取生成的脚本内容';
                     
                     scriptContent.textContent = scriptText;
+                    
+                    // 保存结果
+                    saveResults(scriptText);
+                    
                     loadingContent.classList.add('hidden');
                     resultContent.classList.remove('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_video_script');
-                    }
                     
                 } else {
                     throw new Error(result.error || result.message || '生成失败');
@@ -547,15 +592,12 @@
         
         // 重新生成按钮点击事件
         regenerateButton.addEventListener('click', function() {
+            // 清除保存的结果
+            clearSavedResults();
             scriptCreatorForm.dispatchEvent(new Event('submit'));
         });
         
-        // 创建新脚本按钮点击事件
-        newScriptButton.addEventListener('click', function() {
-            scriptCreatorForm.reset();
-            resultContent.classList.add('hidden');
-            initialContent.classList.remove('hidden');
-        });
+
         
         // 重新尝试按钮点击事件
         tryAgainButton.addEventListener('click', function() {

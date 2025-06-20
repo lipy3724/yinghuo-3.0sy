@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端防护测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button, a.button {
+            background: #4a6cf7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-block;
+            text-decoration: none;
+            margin: 5px;
+        }
+        .feature-card {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>移动端防护测试页面</h1>
+    
+    <div class="test-section">
+        <h2>测试1: 直接链接</h2>
+        <p>点击下方链接测试移动端防护功能是否正常拦截:</p>
+        <div>
+            <a href="/image-removal.html" class="button">图像智能消除功能</a>
+            <a href="/text-to-image.html" class="button">文生图片功能</a>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试2: 功能卡片点击</h2>
+        <p>点击下方功能卡片测试移动端防护功能是否正常拦截:</p>
+        <div class="feature-card" onclick="location.href='/image-upscaler.html'">
+            <h3>图片高清放大</h3>
+            <p>点击此卡片将尝试跳转到图片高清放大功能页面</p>
+        </div>
+        <div class="feature-card" data-href="/translate.html">
+            <h3>图片翻译</h3>
+            <p>点击此卡片将尝试跳转到图片翻译功能页面</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试3: JavaScript跳转</h2>
+        <p>点击下方按钮测试JavaScript跳转是否被正确拦截:</p>
+        <div>
+            <button onclick="window.location.href='/cutout.html'">JS跳转测试1</button>
+            <button onclick="checkAuthAndRedirect('/marketing-images.html')">JS跳转测试2</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试4: 动态注入</h2>
+        <p>点击下方按钮测试动态创建的元素是否被正确拦截:</p>
+        <div>
+            <button id="create-link">创建功能链接</button>
+            <div id="dynamic-content"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试结果</h2>
+        <div id="test-result" class="result">测试结果将显示在这里...</div>
+    </div>
+    
+    <script>
+        // 模拟checkAuthAndRedirect函数
+        function checkAuthAndRedirect(url) {
+            console.log('原始checkAuthAndRedirect函数被调用:', url);
+            window.location.href = url;
+            return true;
+        }
+        
+        // 动态创建元素测试
+        document.getElementById('create-link').addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.href = '/scene-generator.html';
+            link.className = 'button';
+            link.textContent = '动态创建的场景生成器链接';
+            document.getElementById('dynamic-content').appendChild(link);
+            
+            logResult('已创建动态链接，请点击测试');
+        });
+        
+        // 记录测试结果
+        function logResult(message) {
+            const resultElem = document.getElementById('test-result');
+            resultElem.textContent = new Date().toLocaleTimeString() + ': ' + message;
+        }
+        
+        // 页面加载完成后记录状态
+        window.addEventListener('load', function() {
+            logResult('页面加载完成，移动端检测状态: ' + 
+                (/Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? '移动设备' : '非移动设备'));
+        });
+    </script>
+</body>
+</html> 

@@ -188,8 +188,17 @@ router.post('/phone/register', async (req, res) => {
     
     await user.save();
 
-    // 生成JWT令牌
-    const token = generateToken(user.id);
+    // 生成JWT令牌并记录会话，指定为普通用户会话
+    const { token, expiresAt } = await generateToken(user.id, req, JWT_EXPIRE, false);
+
+    // 更新用户的最后活跃时间
+    user.lastActiveAt = new Date();
+    await user.save();
+
+    // 获取当前用户的活跃会话数
+    const activeSessionCount = await UserSession.getActiveSessionCount(user.id);
+
+    console.log(`手机注册成功: 用户=${user.username}, id=${user.id}, 活跃会话数=${activeSessionCount}`);
 
     // 返回用户信息和令牌
     res.status(201).json({
@@ -198,7 +207,9 @@ router.post('/phone/register', async (req, res) => {
         id: user.id,
         username: user.username,
         phone: user.phone,
-        token
+        token,
+        expiresAt,
+        activeSessionCount
       }
     });
   } catch (error) {
@@ -281,8 +292,17 @@ router.post('/phone/login', async (req, res) => {
       });
     }
 
-    // 生成JWT令牌
-    const token = generateToken(user.id);
+    // 生成JWT令牌并记录会话，指定为普通用户会话
+    const { token, expiresAt } = await generateToken(user.id, req, JWT_EXPIRE, false);
+
+    // 更新用户的最后活跃时间
+    user.lastActiveAt = new Date();
+    await user.save();
+
+    // 获取当前用户的活跃会话数
+    const activeSessionCount = await UserSession.getActiveSessionCount(user.id);
+
+    console.log(`手机验证码登录成功: 用户=${user.username}, id=${user.id}, 活跃会话数=${activeSessionCount}`);
 
     // 返回用户信息和令牌
     res.json({
@@ -291,7 +311,9 @@ router.post('/phone/login', async (req, res) => {
         id: user.id,
         username: user.username,
         phone: user.phone,
-        token
+        token,
+        expiresAt,
+        activeSessionCount
       }
     });
   } catch (error) {
@@ -1051,7 +1073,7 @@ router.post('/forgot-password/verify-code', async (req, res) => {
     }
 
     // 生成临时验证令牌
-    const token = generateToken(user.id, '30m'); // 30分钟有效期的令牌
+    const { token } = await generateToken(user.id, '30m'); // 30分钟有效期的令牌
 
     // 返回验证成功和令牌
     res.json({

@@ -61,16 +61,83 @@
             -webkit-user-select: none;
             -ms-user-select: none;
         }
+        
+        /* 导航栏高度 */
+        .navbar {
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Logo样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            transition: transform 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        .logo-link {
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-link:hover {
+            background-color: transparent;
+        }
+        
+        .logo-link:after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
+            transform: translateX(-50%);
+            transition: width 0.2s ease;
+            opacity: 0;
+        }
+        
+        .logo-link:hover:after {
+            width: 60%;
+            opacity: 0.6;
+        }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="min-h-screen bg-white">
     <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
+    <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1">萤火<span class="inline-block w-2 h-2 bg-indigo-600 rounded-full"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
         <div class="flex items-center space-x-4">
@@ -82,7 +149,7 @@
     </nav>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex">
+    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
         <div class="flex flex-col lg:flex-row bg-white h-full w-full">
             <!-- 左侧：上传图片和提示词 -->
             <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">

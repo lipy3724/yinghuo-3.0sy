@@ -163,6 +163,41 @@ const saveTaskDetails = async (usage, taskInfo) => {
     } else {
       console.log(`任务ID ${taskInfo.taskId} 已存在，跳过保存`);
     }
+
+    // 如果是数字人视频功能，根据真实时长校正积分
+    if (usage.featureName === 'DIGITAL_HUMAN_VIDEO' && taskInfo.extraData && taskInfo.extraData.videoDuration) {
+      const realCost = taskInfo.isFree ? 0 : Math.ceil(taskInfo.extraData.videoDuration) * 9;
+      if (realCost !== taskInfo.creditCost) {
+        const delta = realCost - taskInfo.creditCost; // >0 需补扣；<0 需退款
+        const user = await User.findByPk(usage.userId);
+        if (delta > 0) {
+          // 补扣时如果余额不足，扣至 0
+          const deduct = Math.min(delta, user.credits);
+          user.credits -= deduct;
+          await user.save();
+          taskInfo.creditCost += deduct;
+          if (Array.isArray(tasks) && tasks.length > 0) {
+            tasks[tasks.length - 1].creditCost = taskInfo.creditCost;
+          }
+          usage.credits = (usage.credits || 0) + deduct;
+          usage.details = JSON.stringify({ ...details, tasks });
+          await usage.save();
+          console.log(`[校正] 已补扣用户 ${usage.userId} 积分 ${deduct}`);
+        } else if (delta < 0) {
+          const refund = -delta;
+          user.credits += refund;
+          await user.save();
+          taskInfo.creditCost -= refund;
+          if (Array.isArray(tasks) && tasks.length > 0) {
+            tasks[tasks.length - 1].creditCost = taskInfo.creditCost;
+          }
+          usage.credits = (usage.credits || 0) - refund;
+          usage.details = JSON.stringify({ ...details, tasks });
+          await usage.save();
+          console.log(`[校正] 已向用户 ${usage.userId} 退款积分 ${refund}`);
+        }
+      }
+    }
   } catch (error) {
     console.error('保存任务详情失败:', error);
     throw error;
@@ -216,12 +251,12 @@ const createDigitalHumanMiddleware = (getDynamicCredits) => {
           resetDate: todayStr,
           details: JSON.stringify({ tasks: [] })
         });
-      } else if (usage.resetDate !== todayStr) {
-        // 新的一天，重置计数
-        usage.usageCount = 0;
-        usage.resetDate = todayStr;
-        await usage.save();
       }
+      
+      // 不再每日重置 usageCount，确保每个用户终身仅有一次免费机会
+      // 如果仍需要记录最新访问日期，可在此更新 lastUsedAt
+      usage.lastUsedAt = new Date();
+      await usage.save();
       
       // 检查是否还有免费次数
       const isFreeUsage = usage.usageCount < featureConfig.freeUsage;
@@ -235,7 +270,8 @@ const createDigitalHumanMiddleware = (getDynamicCredits) => {
         featureConfig,
         usageType: isFreeUsage ? 'free' : 'paid',
         getDynamicCredits, // 传递动态积分计算函数
-        isFreeUsage: isFreeUsage // 标记是否为免费使用
+        isFreeUsage: isFreeUsage, // 旧字段，向后兼容
+        isFree: isFreeUsage // 新增字段，供路由逻辑判断
       };
       
       console.log(`数字人视频功能中间件: 用户${userId}, 今日使用${usage.usageCount}/${featureConfig.freeUsage}, 类型: ${req.featureUsage.usageType}`);

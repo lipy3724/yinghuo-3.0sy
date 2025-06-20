@@ -4,6 +4,7 @@ let userCredits = 0;
 let currentUser = null;
 let taskId = null;
 let pollingInterval = null;
+let videoUrl = null;
 
 // 立即检查用户登录状态
 (function checkLoginStatus() {
@@ -18,23 +19,25 @@ let pollingInterval = null;
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
-    // DOM元素
+    // 获取DOM元素
     const uploadArea = document.getElementById('upload-area');
     const imageUpload = document.getElementById('image-upload');
+    const originalImageContainer = document.getElementById('original-image-container');
     const originalImage = document.getElementById('original-image');
     const originalImagePlaceholder = document.getElementById('original-image-placeholder');
     const outputVideoContainer = document.getElementById('output-video-container');
     const outputVideo = document.getElementById('output-video');
-    const outputVideoPlaceholder = document.getElementById('output-video-placeholder');
     const videoWrapper = document.getElementById('video-wrapper');
+    const outputVideoPlaceholder = document.getElementById('output-video-placeholder');
+    const downloadBtn = document.getElementById('download-btn');
     const generateBtn = document.getElementById('generate-btn');
     const promptInput = document.getElementById('prompt-input');
+    const smartRewriteToggle = document.getElementById('smart-rewrite-toggle');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingMessage = document.getElementById('loading-message');
     const userCreditsElement = document.getElementById('user-credits');
     const loginBtn = document.getElementById('login-btn');
     const userMenuBtn = document.getElementById('user-menu-btn');
-    const smartRewriteToggle = document.getElementById('smart-rewrite-toggle');
     const toggleSlider = document.getElementById('toggle-slider');
     const toggleBackground = document.getElementById('toggle-background');
     
@@ -283,6 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.output && data.output.task_id) {
                 taskId = data.output.task_id;
+                console.log('获取到任务ID:', taskId);
                 loadingMessage.textContent = '任务提交成功，正在处理中...';
                 
                 // 开始轮询任务状态
@@ -337,9 +341,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (status === 'SUCCEEDED') {
                     // 任务成功完成，获取视频URL
-                    const videoUrl = data.output.video_url;
+                    const newVideoUrl = data.output.video_url;
                     
-                    if (videoUrl) {
+                    if (newVideoUrl) {
+                        // 保存视频URL和任务ID到全局变量
+                        videoUrl = newVideoUrl;
+                        console.log('获取到视频URL:', videoUrl);
+                        console.log('任务ID:', taskId);
+                        
                         // 停止轮询
                         clearInterval(pollingInterval);
                         pollingInterval = null;
@@ -382,6 +391,68 @@ document.addEventListener('DOMContentLoaded', function() {
         videoWrapper.classList.remove('hidden');
         outputVideoPlaceholder.classList.add('hidden');
         
+        // 显示下载按钮
+        if (downloadBtn) {
+            downloadBtn.classList.remove('hidden');
+            
+            // 添加下载按钮点击事件
+            downloadBtn.addEventListener('click', () => {
+                if (videoUrl) {
+                    console.log('开始下载视频:', videoUrl);
+                    
+                    // 检查视频URL是否为空
+                    if (!videoUrl.trim()) {
+                        console.error('视频URL为空，无法下载');
+                        alert('视频URL为空，请等待视频完全生成后再尝试下载');
+                        return;
+                    }
+                    
+                    // 显示加载状态
+                    loadingOverlay.classList.remove('hidden');
+                    loadingMessage.textContent = '正在准备下载...';
+                    
+                    // 使用视频去除字幕的下载API（已知可用）
+                    const downloadUrl = `/api/video-subtitle-removal/download?url=${encodeURIComponent(videoUrl)}`;
+                    console.log('使用下载API:', downloadUrl);
+                    
+                    // 创建一个隐藏的下载链接
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = '图生视频.mp4'; // 设置下载文件名
+                    
+                    // 添加到文档中
+                    document.body.appendChild(a);
+                    
+                    // 模拟点击并跟踪状态
+                    try {
+                        a.click();
+                        console.log('下载链接已点击');
+                        
+                        // 3秒后隐藏加载状态
+                        setTimeout(() => {
+                            loadingOverlay.classList.add('hidden');
+                        }, 3000);
+                    } catch (e) {
+                        console.error('点击下载链接失败:', e);
+                        loadingOverlay.classList.add('hidden');
+                        
+                        // 尝试备用方法 - 使用fetch直接下载
+                        if (confirm('下载失败，是否尝试其他下载方式？')) {
+                            downloadVideoWithFetch(videoUrl);
+                        }
+                    }
+                    
+                    // 移除下载链接
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                    }, 100);
+                } else {
+                    console.error('没有可下载的视频URL');
+                    alert('没有可下载的视频');
+                }
+            });
+        }
+        
         // 设置视频加载事件
         outputVideo.onloadeddata = function() {
             // 滚动到视频区域
@@ -393,6 +464,46 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('视频加载失败，请刷新页面重试');
             console.error('视频加载失败:', videoUrl);
         };
+    }
+    
+    // 使用fetch API直接下载视频（备用方法）
+    async function downloadVideoWithFetch(url) {
+        try {
+            loadingOverlay.classList.remove('hidden');
+            loadingMessage.textContent = '正在尝试备用下载方式...';
+            
+            console.log('使用fetch下载视频:', url);
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP错误! 状态: ${response.status}`);
+            }
+            
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = '图生视频.mp4';
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(link);
+                loadingOverlay.classList.add('hidden');
+            }, 1000);
+        } catch (error) {
+            console.error('备用下载方式失败:', error);
+            loadingOverlay.classList.add('hidden');
+            
+            // 最后的备选方案 - 在新窗口打开视频
+            if (confirm('下载仍然失败，是否尝试在新窗口中打开视频？')) {
+                window.open(url, '_blank');
+            }
+        }
     }
     
     // 保存视频结果到服务器（可选）

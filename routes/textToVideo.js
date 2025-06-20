@@ -188,9 +188,25 @@ router.post('/create', protect, createUnifiedFeatureMiddleware('text-to-video'),
         status: normalizedStatus,
         creditCost: estimatedCost,
         timestamp: new Date(),
-        hasChargedCredits: false,  // 初始设置为未扣减积分，成功后会更新为true
+        hasChargedCredits: true, // 积分已在统一中间件中扣除
         isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
       };
+      
+      // 🚀 立即将任务详情写入数据库，保证积分使用页面实时更新
+      try {
+        if (req.featureUsage && req.featureUsage.usage) {
+          const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+          await saveTaskDetails(req.featureUsage.usage, {
+            taskId: taskId,
+            creditCost: estimatedCost,
+            isFree: req.featureUsage?.usageType === 'free'
+          });
+          console.log(`已即时写入文生视频任务记录到数据库 taskId=${taskId}`);
+        }
+      } catch (saveErr) {
+        console.error('即时保存文生视频任务详情失败:', saveErr);
+        // 继续流程，不影响用户体验
+      }
       
       console.log(`任务信息已存储到全局变量: taskId=${taskId}, userId=${userId}, creditCost=${estimatedCost}${req.featureUsage?.usageType === 'free' ? ' (免费次数)' : ''}`);
       
@@ -488,24 +504,25 @@ router.get('/status/:taskId', protect, async (req, res) => {
           userTasks[userId][userTaskIndex].videoUrl = videoUrl;
           console.log(`任务完成，视频URL已保存: ${videoUrl}`);
           
-          // 记录到图片历史
-          try {
-            await ImageHistory.create({
-              userId,
-              imageUrl: videoUrl,
-              processType: '文生视频',
-              description: userTasks[userId][userTaskIndex].prompt,
-              metadata: JSON.stringify({
-                model: userTasks[userId][userTaskIndex].model,
-                size: userTasks[userId][userTaskIndex].size
-              }),
-              type: 'TEXT_TO_VIDEO_NO_DOWNLOAD' // 使用特殊类型标记，不显示在下载中心
-            });
-            console.log('视频记录已保存到历史记录，但不会显示在下载中心');
-          } catch (historyError) {
-            console.error('保存历史记录失败:', historyError);
-            // 继续处理，不影响主要功能
-          }
+          // 文生视频不保存到下载中心，注释掉历史记录保存
+          console.log('文生视频完成，跳过保存到下载中心历史记录');
+          // try {
+          //   await ImageHistory.create({
+          //     userId,
+          //     imageUrl: videoUrl,
+          //     processType: '文生视频',
+          //     description: userTasks[userId][userTaskIndex].prompt,
+          //     metadata: JSON.stringify({
+          //       model: userTasks[userId][userTaskIndex].model,
+          //       size: userTasks[userId][userTaskIndex].size
+          //     }),
+          //     type: 'TEXT_TO_VIDEO_NO_DOWNLOAD' // 使用特殊类型标记，不显示在下载中心
+          //   });
+          //   console.log('视频记录已保存到历史记录，但不会显示在下载中心');
+          // } catch (historyError) {
+          //   console.error('保存历史记录失败:', historyError);
+          //   // 继续处理，不影响主要功能
+          // }
         }
       }
       
@@ -755,6 +772,88 @@ router.get('/tasks', protect, (req, res) => {
 });
 
 /**
+ * @route   DELETE /api/text-to-video/tasks/:taskId
+ * @desc    删除用户的文生视频任务记录
+ * @access  私有
+ */
+router.delete('/tasks/:taskId', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const taskId = req.params.taskId;
+    
+    console.log(`删除任务请求: userId=${userId}, taskId=${taskId}`);
+    
+    // 从用户任务列表中删除
+    if (userTasks[userId]) {
+      const taskIndex = userTasks[userId].findIndex(task => task.id === taskId);
+      if (taskIndex !== -1) {
+        const deletedTask = userTasks[userId].splice(taskIndex, 1)[0];
+        console.log(`已从用户任务列表中删除任务: ${taskId}`);
+        
+        // 从全局任务记录中删除
+        if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
+          delete global.textToVideoTasks[taskId];
+          console.log(`已从全局任务记录中删除任务: ${taskId}`);
+        }
+        
+        // 尝试从数据库中删除相关记录
+        try {
+          // 删除视频结果记录
+          await VideoResult.destroy({
+            where: { taskId: taskId }
+          });
+          
+          // 删除历史记录
+          await ImageHistory.destroy({
+            where: { 
+              userId: userId,
+              metadata: {
+                [sequelize.Op.like]: `%"taskId":"${taskId}"%`
+              }
+            }
+          });
+          
+          console.log(`已从数据库中删除任务相关记录: ${taskId}`);
+        } catch (dbError) {
+          console.error('删除数据库记录时出错:', dbError);
+          // 继续处理，不影响主要删除功能
+        }
+        
+        return res.json({
+          success: true,
+          message: '任务已删除',
+          deletedTask: deletedTask
+        });
+      } else {
+        console.log(`未找到要删除的任务: ${taskId}`);
+        return res.status(404).json({
+          success: false,
+          code: 'TaskNotFound',
+          message: '未找到指定的任务',
+          request_id: null
+        });
+      }
+    } else {
+      console.log(`用户 ${userId} 没有任务记录`);
+      return res.status(404).json({
+        success: false,
+        code: 'NoTasks',
+        message: '没有找到任务记录',
+        request_id: null
+      });
+    }
+  } catch (error) {
+    console.error('删除任务出错:', error);
+    return res.status(500).json({
+      success: false,
+      code: 'InternalServerError',
+      message: '删除任务失败: ' + error.message,
+      request_id: null
+    });
+  }
+});
+
+/**
  * @route   POST /api/text-to-video/image-to-video
  * @desc    创建图生视频任务
  * @access  Private
@@ -901,9 +1000,24 @@ router.post('/image-to-video', protect, createUnifiedFeatureMiddleware('image-to
                 img_url: input.img_url,
                 timestamp: new Date(),
                 creditCost: creditCost,
-                hasChargedCredits: false,  // 初始设置为未扣减积分
+                hasChargedCredits: true,  // 积分已在统一中间件中扣除
                 isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
             };
+            
+            // 立即写入数据库记录
+            try {
+                if (req.featureUsage && req.featureUsage.usage) {
+                    const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                    await saveTaskDetails(req.featureUsage.usage, {
+                        taskId: taskId,
+                        creditCost: creditCost,
+                        isFree: req.featureUsage?.usageType === 'free'
+                    });
+                    console.log(`已即时写入图生视频任务记录到数据库 taskId=${taskId}`);
+                }
+            } catch (dbErr) {
+                console.error('即时保存图生视频任务详情失败:', dbErr);
+            }
             
             console.log(`保存图生视频任务信息: 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCost}${req.featureUsage?.usageType === 'free' ? ' (免费次数)' : ''}`);
             
@@ -1335,24 +1449,25 @@ router.post('/save-video-result', protect, async (req, res) => {
         
         await result.save();
             
-            // 保存视频结果到历史记录但不显示在下载中心
-            try {
-                await ImageHistory.create({
-                    userId: req.user.id,
-                    imageUrl: videoUrl,
-                    processType: type === 'text-to-video' ? '文生视频' : '图生视频',
-                    description: prompt || '',
-                    type: type === 'text-to-video' ? 'TEXT_TO_VIDEO_NO_DOWNLOAD' : 'IMAGE_TO_VIDEO_NO_DOWNLOAD',
-                    metadata: JSON.stringify({
-                        taskId: taskId
-                    }),
-                    createdAt: new Date()
-                });
-                console.log(`视频结果已保存到历史记录但不会显示在下载中心: taskId=${taskId}`);
-            } catch (historyError) {
-                console.error('保存视频历史记录失败:', historyError);
-                // 继续处理，不影响主要功能
-            }
+            // 视频结果不保存到下载中心，注释掉历史记录保存
+            console.log(`视频结果完成，跳过保存到下载中心历史记录: taskId=${taskId}`);
+            // try {
+            //     await ImageHistory.create({
+            //         userId: req.user.id,
+            //         imageUrl: videoUrl,
+            //         processType: type === 'text-to-video' ? '文生视频' : '图生视频',
+            //         description: prompt || '',
+            //         type: type === 'text-to-video' ? 'TEXT_TO_VIDEO_NO_DOWNLOAD' : 'IMAGE_TO_VIDEO_NO_DOWNLOAD',
+            //         metadata: JSON.stringify({
+            //             taskId: taskId
+            //         }),
+            //         createdAt: new Date()
+            //     });
+            //     console.log(`视频结果已保存到历史记录但不会显示在下载中心: taskId=${taskId}`);
+            // } catch (historyError) {
+            //     console.error('保存视频历史记录失败:', historyError);
+            //     // 继续处理，不影响主要功能
+            // }
             
             // 检查全局变量中是否已经扣除过积分，避免重复扣费
             const taskRecordType = type === 'text-to-video' ? 'textToVideoTasks' : 'imageToVideoTasks';
@@ -1489,9 +1604,24 @@ router.post('/image-to-video-sync', protect, createUnifiedFeatureMiddleware('ima
             img_url: img_url,
             timestamp: new Date(),
             creditCost: creditCost,
-            hasChargedCredits: false,  // 初始设置为未扣减积分
+            hasChargedCredits: true,  // 积分已在统一中间件中扣除
             isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
         };
+        
+        // 立即写入数据库记录
+        try {
+            if (req.featureUsage && req.featureUsage.usage) {
+                const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                await saveTaskDetails(req.featureUsage.usage, {
+                    taskId: taskId,
+                    creditCost: creditCost,
+                    isFree: req.featureUsage?.usageType === 'free'
+                });
+                console.log(`已即时写入图生视频(同步)任务记录到数据库 taskId=${taskId}`);
+            }
+        } catch (dbErr) {
+            console.error('即时保存图生视频(同步)任务详情失败:', dbErr);
+        }
         
         console.log(`保存图生视频任务信息(同步API): 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCost}${req.featureUsage?.usageType === 'free' ? ' (免费次数)' : ''}`);
         console.log(`当前imageToVideoTasks记录数: ${Object.keys(global.imageToVideoTasks).length}`);

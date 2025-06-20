@@ -79,7 +79,8 @@
     <script src="https://g.alicdn.com/code/npm/@ali/intl-op-frame-sdk/0.1.10/main.min.js" 
             onerror="showError('SDK加载失败，请检查网络连接')"></script>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/iframe-mobile-guard.js"></script>
+</head>
 <body>
     <iframe id="myiframe" class="aidc-open-frame" src="" frameborder="0"></iframe>
     <div id="errorContainer">
@@ -355,27 +356,20 @@
                 
                 // 处理生产拦截
                 if (action === 'generate') {
-                    // 获取图片数量
-                    const imageNum = data?.imageNum || 1;
-                    console.log("用户请求生成图片，数量:", imageNum);
-                    
-                    // 记录功能使用并检查是否可以继续
-                    trackFeatureUsage('clothing-simulation').then(canProceed => {
-                        // 响应编辑器请求
-                        iframeEle.contentWindow.postMessage({
-                            biz: receiveBiz,
-                            action: 'respond',
-                            success: canProceed // 根据是否可以继续返回成功或失败
-                        }, '*');
-                        
-                        if (!canProceed) {
-                            console.log("用户积分不足，已阻止生产");
-                            alert("积分不足，无法继续生成图片");
-                        } else {
-                            console.log("已允许继续生产流程");
-                        }
-                    });
-                    return;
+                    console.log('收到 generate 消息，准备扣费');
+                    trackFeatureUsage('use', 'clothing-simulation')
+                        .then(canProceed => {
+                            iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: canProceed }, '*');
+                            if (!canProceed) {
+                                alert('免费次数已用完或积分不足');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('扣费失败', err);
+                            iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: false }, '*');
+                            alert('服务器错误，请稍后再试');
+                        });
+                    return; // 等待respond完成后再继续
                 }
                 
                 // 减少触发保存的条件，只在关键操作时保存
@@ -452,11 +446,9 @@
             }
         });
         
-        // 页面加载时初始化
+        // 页面加载仅初始化编辑器，不立即扣费
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                initializeEditor();
-            }, 500); // 延迟初始化，确保SDK已加载
+            initializeEditor();
         });
     </script>
 </body>

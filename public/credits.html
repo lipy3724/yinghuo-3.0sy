@@ -121,16 +121,82 @@
             box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
             border-color: #6366f1;
         }
+        
+        /* 导航栏高度 */
+        .navbar {
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Logo样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            transition: transform 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        .logo-link {
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-link:hover {
+            background-color: transparent;
+        }
+        
+        .logo-link:after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
+            transform: translateX(-50%);
+            transition: width 0.2s ease;
+            opacity: 0;
+        }
+        
+        .logo-link:hover:after {
+            width: 60%;
+            opacity: 0.6;
+        }
     </style>
 
     <link rel="icon" href="/images/favicon.png" type="image/png"></head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
+    <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1">萤火AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
         <div class="flex items-center space-x-6">
@@ -141,7 +207,7 @@
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto mt-8 px-4">
+    <div class="max-w-4xl mx-auto mt-8 px-4" style="margin-top: 88px;">
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h1 class="text-2xl font-bold mb-6">积分管理</h1>
 
@@ -198,10 +264,10 @@
                                 <div class="text-xs text-gray-500 mt-1">¥0.08/积分</div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
-                            <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="198">
+                            <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="350">
                                 <div class="text-gray-800 font-medium mb-1">59元</div>
-                                <div class="text-indigo-600 font-bold">198积分</div>
-                                <div class="text-xs text-gray-500 mt-1">¥0.30/积分</div>
+                                <div class="text-indigo-600 font-bold">350积分</div>
+                                <div class="text-xs text-gray-500 mt-1">¥0.17/积分</div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
                         </div>
@@ -250,21 +316,7 @@
                 </div>
             </div>
 
-            <!-- 使用记录 -->
-            <h2 class="text-xl font-semibold mb-4">我的使用记录
-                <button id="refresh-usage" class="ml-2 text-sm font-normal text-indigo-600 hover:text-indigo-800 flex items-center">
-                    <i class="ri-refresh-line mr-1"></i>刷新
-                </button>
-            </h2>
-            <div id="usage-list" class="space-y-4">
-                <!-- 使用记录将通过JS动态生成 -->
-                <div class="animate-pulse">
-                    <div class="h-16 bg-gray-200 rounded"></div>
-                </div>
-                <div class="animate-pulse">
-                    <div class="h-16 bg-gray-200 rounded"></div>
-                </div>
-            </div>
+            <!-- 已移除我的使用记录组件 -->
         </div>
     </div>
 
@@ -272,7 +324,6 @@
         // 全局变量
         let userCredits = 0;
         let featurePricing = [];
-        let featureUsages = {};
         const messageBox = document.getElementById('message-box');
         
         // 显示消息
@@ -334,20 +385,7 @@
                             document.getElementById('last-recharge-time').textContent = date.toLocaleString('zh-CN');
                         }
                         
-                        // 更新功能使用记录
-                        featureUsages = data.data.featureUsages;
-                        
-                        // 如果没有视频风格重绘的使用记录，手动添加一个
-                        if (!featureUsages['VIDEO_STYLE_REPAINT']) {
-                            featureUsages['VIDEO_STYLE_REPAINT'] = {
-                                name: 'VIDEO_STYLE_REPAINT',
-                                remainingFreeUsage: 1,
-                                freeUsageLimit: 1,
-                                lastUsed: null
-                            };
-                        }
-                        
-                        renderUsageList();
+                        // 使用记录功能已删除，不再处理 featureUsages
                     }
                 } else {
                     const error = await response.json();
@@ -407,6 +445,7 @@
                 'MULTI_IMAGE_TO_VIDEO': '多图转视频',
                 'DIGITAL_HUMAN_VIDEO': '视频数字人',
                 'VIDEO_STYLE_REPAINT': '视频风格重绘',
+                'DIANTU': '垫图',
                 'amazon_video_script': '亚马逊广告视频脚本生成',
                 'product_improvement_analysis': '选品的改款分析和建议',
                 'amazon_brand_info': '品牌信息收集和总结',
@@ -534,111 +573,6 @@
             pricingList.appendChild(repaintCard);
         }
         
-        // 渲染使用记录列表
-        function renderUsageList() {
-            const usageList = document.getElementById('usage-list');
-            
-            if (Object.keys(featureUsages).length === 0) {
-                usageList.innerHTML = '<p class="text-gray-500">暂无使用记录</p>';
-                return;
-            }
-            
-            usageList.innerHTML = '';
-            
-            // 功能名称本地化
-            const featureNames = {
-                'image-upscaler': '图像高清放大',
-                'marketing-images': 'AI营销图生成',
-                'cutout': '商品换背景',
-                'translate': '图片翻译',
-                'scene-generator': '场景图生成',
-                'image-removal': '图像智能消除',
-                'model-skin-changer': '模特换肤',
-                'clothing-simulation': '模拟试衣',
-                'text-to-video': '文生视频',
-                'image-to-video': '图生视频',
-                'IMAGE_EDIT': '指令编辑',
-                'LOCAL_REDRAW': '局部重绘',
-                'IMAGE_COLORIZATION': '图像上色',
-                'IMAGE_EXPANSION': '智能扩图',
-                'VIRTUAL_SHOE_MODEL': '鞋靴虚拟试穿',
-                'TEXT_TO_IMAGE': '文生图片',
-                'IMAGE_SHARPENING': '模糊图片变清晰',
-                'CLOTH_SEGMENTATION': '智能服饰分割',
-                'GLOBAL_STYLE': '全局风格化',
-                'VIRTUAL_MODEL_VTON': '智能虚拟模特试穿',
-                'VIDEO_SUBTITLE_REMOVER': '视频去除字幕',
-                'MULTI_IMAGE_TO_VIDEO': '多图转视频',
-                'DIGITAL_HUMAN_VIDEO': '视频数字人',
-                'VIDEO_STYLE_REPAINT': '视频风格重绘',
-                // 亚马逊助手功能
-                'amazon_video_script': '亚马逊广告视频脚本生成',
-                'amazon_brand_info': '品牌信息收集和总结',
-                'amazon_brand_naming': '亚马逊品牌起名',
-                'amazon_listing': '亚马逊Listing写作与优化',
-                'amazon_search_term': '亚马逊后台搜索词',
-                'amazon_review_analysis': '亚马逊客户评论分析',
-                'amazon_consumer_insights': '亚马逊消费者洞察专家',
-                'amazon_customer_email': '亚马逊客户邮件回复',
-                'amazon_review_generator': '亚马逊评论生成',
-                'amazon_review_response': '亚马逊评论回复',
-                'amazon_post_creator': '创建亚马逊Post',
-                'amazon_keyword_recommender': '亚马逊关键词推荐',
-                'amazon_case_creator': '亚马逊客服case内容',
-                'product_improvement_analysis': '产品改进分析',
-                'product_comparison': '产品对比',
-                'fba_claim_email': 'FBA索赔邮件'
-            };
-            
-            // 显示所有功能的使用记录（包括亚马逊助手功能）
-            const filteredFeatures = Object.keys(featureUsages).filter(key => {
-                const usage = featureUsages[key];
-                // 只显示有使用记录的功能（lastUsed不为null）
-                return usage.lastUsed !== null;
-            });
-            
-            if (filteredFeatures.length === 0) {
-                usageList.innerHTML = '<p class="text-gray-500">暂无使用记录</p>';
-                return;
-            }
-            
-            filteredFeatures.forEach(key => {
-                const usage = featureUsages[key];
-                const localName = featureNames[usage.name] || usage.name;
-                
-                const lastUsedText = usage.lastUsed 
-                    ? `上次使用: ${new Date(usage.lastUsed).toLocaleString('zh-CN')}`
-                    : '从未使用';
-                
-                const card = document.createElement('div');
-                card.className = 'feature-card';
-                
-                // 根据功能类型显示不同的信息
-                let rightContent = '';
-                if (usage.freeUsageLimit > 0) {
-                    // 有免费次数的功能
-                    rightContent = `<p class="text-indigo-600">剩余试用次数: <span class="font-bold">${usage.remainingFreeUsage}</span>/${usage.freeUsageLimit}</p>`;
-                } else {
-                    // 没有免费次数的功能（如亚马逊助手）
-                    rightContent = `<p class="text-orange-600">每次使用: <span class="font-bold">${usage.creditCost}</span> 积分</p>`;
-                }
-                
-                card.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h3 class="font-semibold">${localName}</h3>
-                            <p class="text-sm text-gray-500">${lastUsedText}</p>
-                        </div>
-                        <div class="text-right">
-                            ${rightContent}
-                        </div>
-                    </div>
-                `;
-                
-                usageList.appendChild(card);
-            });
-        }
-        
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             // 检查用户是否已登录
@@ -652,9 +586,6 @@
             
             // 初始化充值表单
             initRechargeForm();
-            
-            // 绑定刷新使用记录按钮
-            document.getElementById('refresh-usage').addEventListener('click', loadCreditsInfo);
         });
         
         // 初始化充值表单
@@ -673,7 +604,7 @@
                 rechargeBtn.addEventListener('click', function() {
                     rechargeFormContainer.classList.remove('hidden');
                     rechargeFormContainer.classList.add('animate-fade-in');
-            });
+                });
             }
             
             // 隐藏充值表单

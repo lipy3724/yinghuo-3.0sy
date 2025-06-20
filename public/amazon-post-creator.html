@@ -178,7 +178,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -299,9 +300,70 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-post-creator-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 清空Post容器
+                        postContainer.innerHTML = '';
+                        
+                        // 重新创建Post内容
+                        if (results.title && results.content) {
+                            const postCard = document.createElement('div');
+                            postCard.className = 'post-card';
+                            
+                            const postContent = document.createElement('div');
+                            
+                            const titleElement = document.createElement('h3');
+                            titleElement.className = 'font-bold text-xl text-indigo-700 mb-4';
+                            titleElement.textContent = results.title;
+                            
+                            const contentElement = document.createElement('div');
+                            contentElement.className = 'text-gray-700 prose max-w-none';
+                            contentElement.innerHTML = results.content.replace(/\n/g, '<br>');
+                            
+                            postContent.appendChild(titleElement);
+                            postContent.appendChild(contentElement);
+                            postCard.appendChild(postContent);
+                            postContainer.appendChild(postCard);
+                            
+                            // 显示结果区域
+                            resultContainer.classList.remove('hidden');
+                            emptyResultState.classList.add('hidden');
+                            
+                            console.log('已恢复保存的Post创建结果');
+                            return true;
+                        }
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-post-creator-results');
+                    }
+                }
+                return false;
+            }
+
+            function saveResults(data) {
+                try {
+                    sessionStorage.setItem('amazon-post-creator-results', JSON.stringify(data));
+                    console.log('Post创建结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-post-creator-results');
+                console.log('已清除保存的Post创建结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }
             
             postCreatorForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -359,6 +421,9 @@
                         postContent.appendChild(contentElement);
                         postCard.appendChild(postContent);
                         postContainer.appendChild(postCard);
+                        
+                        // 保存结果
+                        saveResults(result.data);
                     } else {
                         // 如果没有Post内容，显示提示信息
                         const noPostMsg = document.createElement('p');
@@ -373,9 +438,6 @@
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_post_creator');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -448,6 +510,9 @@
             // 重新生成按钮功能
             const regenerateButton = document.getElementById('regenerateButton');
             regenerateButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 直接重新提交表单
                 postCreatorForm.dispatchEvent(new Event('submit'));
             });

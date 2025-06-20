@@ -72,15 +72,82 @@
             width: 100%;
             height: 100%;
         }
+        
+        /* 导航栏高度 */
+        .navbar {
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Logo样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            transition: transform 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        .logo-link {
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-link:hover {
+            background-color: transparent;
+        }
+        
+        .logo-link:after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
+            transform: translateX(-50%);
+            transition: width 0.2s ease;
+            opacity: 0;
+        }
+        
+        .logo-link:hover:after {
+            width: 60%;
+            opacity: 0.6;
+        }
     </style>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
+    <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
         <div class="flex items-center space-x-6">
@@ -92,7 +159,7 @@
     </nav>
 
     <!-- 主内容区域 -->
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-8" style="margin-top: 60px;">
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h1 class="text-2xl font-bold text-gray-800 mb-2">智能虚拟模特鞋靴试穿</h1>
             <p class="text-gray-600 mb-4">上传模特图片和鞋靴图片，AI技术自动生成模特穿搭效果</p>

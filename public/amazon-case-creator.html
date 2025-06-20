@@ -193,7 +193,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -326,6 +327,40 @@
             const caseTips = document.getElementById('caseTips');
             const copySuccess = document.getElementById('copySuccess');
             
+            // 结果保持功能
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-case-creator-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        displayResult(results);
+                        console.log('已恢复保存的case创建结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-case-creator-results');
+                    }
+                }
+                return false;
+            }
+
+            function saveResults(data) {
+                try {
+                    sessionStorage.setItem('amazon-case-creator-results', JSON.stringify(data));
+                    console.log('case创建结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-case-creator-results');
+                console.log('已清除保存的case创建结果');
+            }
+            
+            // 初始化时尝试加载保存的结果
+            loadSavedResults();// 监听浏览器标签页关闭或导航离开
+            
             // 表单提交事件
             caseForm.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -383,13 +418,13 @@
                     }
                     const data = await response.json();
                 
-                    if (data.success) {
-                        displayResult(data.data);
-                        
-                        // 特性追踪
-                        if (typeof trackFeatureUsage === 'function') {
-                            trackFeatureUsage('amazon_case_creator');
-                        }
+                                    if (data.success) {
+                    displayResult(data.data);
+                    
+                    // 保存结果
+                    saveResults(data.data);
+                    
+                    // 特性追踪
                     } else {
                         alert('生成失败: ' + (data.error || '未知错误'));
                     }

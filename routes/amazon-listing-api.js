@@ -3,7 +3,34 @@ const router = express.Router();
 const axios = require('axios');
 const logger = require('../utils/logger');
 const { protect } = require('../middleware/auth');
-const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
+const { createUnifiedFeatureMiddleware, saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+
+// ===== 自动记录亚马逊助手使用详情 (必须放在所有路由之前) =====
+router.use((req, res, next) => {
+  res.on('finish', async () => {
+    try {
+      if (res.statusCode >= 400) return;
+      if (!req.featureUsage || !req.featureUsage.usage) return;
+      if (req.featureUsage._detailsLogged) return;
+
+      const { featureName, creditCost, isFree, usage } = req.featureUsage;
+      const taskId = `${featureName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      await saveTaskDetails(usage, {
+        taskId,
+        creditCost: creditCost || 0,
+        isFree: isFree || false
+      });
+
+      req.featureUsage._detailsLogged = true;
+      logger.info(`已记录亚马逊助手使用详情 taskId=${taskId}`);
+    } catch (err) {
+      logger.error('记录亚马逊助手使用详情失败', { error: err.message });
+    }
+  });
+
+  next();
+});
 
 // GLM-4 API配置
 const GLM4_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
@@ -1206,6 +1233,22 @@ suggestion: 对此案例的进一步处理建议，包括可能的交叉销售�
             });
         }
 
+        // 返回结果前立即记录使用详情，确保积分统计
+        if (req.featureUsage && req.featureUsage.usage && !req.featureUsage._detailsLogged) {
+          try {
+            const taskId = `amazon_customer_email-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            await saveTaskDetails(req.featureUsage.usage, {
+              taskId,
+              creditCost: req.featureUsage.creditCost || 0,
+              isFree: req.featureUsage.isFree || false
+            });
+            req.featureUsage._detailsLogged = true;
+            logger.info(`(instant) 已记录亚马逊客服邮件回复使用详情 taskId=${taskId}`);
+          } catch (err) {
+            logger.error('立即记录亚马逊客服邮件回复详情失败', { error: err.message });
+          }
+        }
+
         // 返回结果
         res.json({
             success: true,
@@ -1842,6 +1885,22 @@ ${productDescription ? `产品描述: ${productDescription}` : ''}
             result = { reviews: defaultReviews };
         }
 
+        // 返回结果前立即记录使用详情，确保积分统计
+        if (req.featureUsage && req.featureUsage.usage && !req.featureUsage._detailsLogged) {
+          try {
+            const taskId = `amazon_review_generator-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            await saveTaskDetails(req.featureUsage.usage, {
+              taskId,
+              creditCost: req.featureUsage.creditCost || 0,
+              isFree: req.featureUsage.isFree || false
+            });
+            req.featureUsage._detailsLogged = true;
+            logger.info(`(instant) 已记录亚马逊评论生成使用详情 taskId=${taskId}`);
+          } catch (err) {
+            logger.error('立即记录亚马逊评论生成详情失败', { error: err.message });
+          }
+        }
+
         // 返回结果
         res.json({
             success: true,
@@ -1950,6 +2009,22 @@ ${brandName ? `品牌名称：${brandName}` : ''}
         const content = response.data.choices[0].message.content.trim();
         logger.info(`亚马逊评论回复原始响应: ${content}`);
         
+        // 返回结果前立即记录使用详情，确保积分统计
+        if (req.featureUsage && req.featureUsage.usage && !req.featureUsage._detailsLogged) {
+          try {
+            const taskId = `amazon_review_response-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            await saveTaskDetails(req.featureUsage.usage, {
+              taskId,
+              creditCost: req.featureUsage.creditCost || 0,
+              isFree: req.featureUsage.isFree || false
+            });
+            req.featureUsage._detailsLogged = true;
+            logger.info(`(instant) 已记录亚马逊评论回复使用详情 taskId=${taskId}`);
+          } catch (err) {
+            logger.error('立即记录亚马逊评论回复详情失败', { error: err.message });
+          }
+        }
+
         // 返回结果
         res.json({
             success: true,
@@ -3385,6 +3460,77 @@ ${industryCategory ? `行业类别: ${industryCategory}` : ''}
             details: error.message
         });
     }
+});
+
+/**
+ * 通用使用详情记录中间件
+ * 作用：在请求处理完毕后（响应已发送）统一写入数据库中的任务详情，
+ * 避免在每个路由中手动调用 saveTaskDetails。仅当请求成功（HTTP<400）且
+ * 已通过 createUnifiedFeatureMiddleware 写入 req.featureUsage 时执行。
+ */
+router.use((req, res, next) => {
+  // 仅在响应完成后触发
+  res.on('finish', async () => {
+    try {
+      // 只处理成功响应
+      if (res.statusCode >= 400) return;
+      // 需要 featureUsage 信息
+      if (!req.featureUsage || !req.featureUsage.usage) return;
+
+      // 避免重复写入
+      if (req.featureUsage._detailsLogged) return;
+
+      const { featureName, creditCost, isFree, usage } = req.featureUsage;
+
+      // 生成唯一 taskId：功能名-时间戳-短随机串
+      const taskId = `${featureName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      await saveTaskDetails(usage, {
+        taskId,
+        creditCost: creditCost || 0,
+        isFree: isFree || false
+      });
+
+      // 标记已写入
+      req.featureUsage._detailsLogged = true;
+      logger.info(`已记录亚马逊助手使用详情 taskId=${taskId}`);
+    } catch (err) {
+      logger.error('记录亚马逊助手使用详情失败', { error: err.message });
+    }
+  });
+
+  next();
+});
+
+// ----------------------------------------------------------
+// 统一记录亚马逊助手所有功能的使用详情
+// ----------------------------------------------------------
+router.use((req, res, next) => {
+  // 在响应完成后写入数据库
+  res.on('finish', async () => {
+    try {
+      if (res.headersSent && res.statusCode >= 400) return; // 仅记录成功请求
+      if (!req.featureUsage || !req.featureUsage.usage) return; // 需要 featureUsage 数据
+
+      if (req.featureUsage._detailsLogged) return; // 避免重复
+
+      const { featureName, creditCost, isFree, usage } = req.featureUsage;
+      const taskId = `${featureName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      await saveTaskDetails(usage, {
+        taskId,
+        creditCost: creditCost || 0,
+        isFree: isFree || false
+      });
+
+      req.featureUsage._detailsLogged = true;
+      logger.info(`(early) 已记录亚马逊助手使用详情 taskId=${taskId}`);
+    } catch (err) {
+      logger.error('记录亚马逊助手使用详情失败', { error: err.message });
+    }
+  });
+
+  next();
 });
 
 module.exports = router; 

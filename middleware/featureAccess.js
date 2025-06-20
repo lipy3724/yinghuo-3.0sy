@@ -13,7 +13,7 @@ const FEATURES = {
   'scene-generator': { creditCost: 7, freeUsage: 1 }, // 场景生成
   'image-removal': { creditCost: 7, freeUsage: 1 }, // 图像物体移除 
   'model-skin-changer': { creditCost: 10, freeUsage: 1 }, // 模特肤色替换
-  'clothing-simulation': { creditCost: 5, freeUsage: 1 }, // 模拟试衣
+  'clothing-simulation': { creditCost: 10, freeUsage: 1 }, // 模拟试衣
   'text-to-video': { creditCost: 66, freeUsage: 1 }, // 文生视频功能，较高积分消耗
   'image-to-video': { creditCost: 66, freeUsage: 1 }, // 图生视频功能
   'IMAGE_EDIT': { creditCost: 7, freeUsage: 1 }, // 图像指令编辑功能
@@ -56,10 +56,23 @@ const FEATURES = {
     freeUsage: 1 
   }, // 视频去除字幕 30积分/30秒
   'MULTI_IMAGE_TO_VIDEO': { 
-    creditCost: (duration) => {
-      // 计算视频时长应消耗的积分
-      // 默认每30秒30积分，不足30秒按30秒计算
-      return Math.ceil(duration / 30) * 30;
+    creditCost: (payload) => {
+      /*
+        计算多图转视频积分：
+        - 规则：每 30 秒 30 积分，不足 30 秒按 30 秒计。
+        - 兼容调用方传入数字 duration，或整个 req.body 对象。
+      */
+      let durationSec;
+      if (typeof payload === 'number') {
+        durationSec = payload;
+      } else if (payload && typeof payload === 'object') {
+        // 前端传递的 duration 字段（秒）
+        durationSec = parseInt(payload.duration, 10);
+      }
+      if (!durationSec || Number.isNaN(durationSec) || durationSec <= 0) {
+        durationSec = 10; // 默认 10 秒
+      }
+      return Math.ceil(durationSec / 30) * 30;
     }, 
     freeUsage: 1 
   }, // 多图转视频 30积分/30秒
@@ -72,15 +85,16 @@ const FEATURES = {
     freeUsage: 1 
   },  // 视频数字人 9积分/秒
   'VIDEO_STYLE_REPAINT': { 
-    creditCost: (duration, resolution = 540) => {
-      // 根据分辨率和时长计算积分消耗
-      // 540P: 3积分/秒
-      // 720P: 6积分/秒
-      const rate = resolution <= 540 ? 3 : 6;
-      return Math.ceil(duration) * rate;
+    creditCost: (payload) => {
+      /*
+        视频风格重绘积分计算在任务完成后才能确定(依赖实际时长与分辨率)。
+        这里返回 0，使创建任务阶段仅做免费次数判断而不预扣积分。
+        后续在任务完成回调里会根据实际值统一扣费。
+      */
+      return 0;
     }, 
     freeUsage: 1 
-  }, // 视频风格重绘功能
+  }, // 视频风格重绘功能（按实际时长+分辨率计费，创建阶段不扣费）
   // 可以添加更多功能和对应的积分消耗
 };
 

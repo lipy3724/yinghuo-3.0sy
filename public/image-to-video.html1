@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图生视频 - 萤火.AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #6366f1;
+            background-color: #f9fafb;
+        }
+        .result-section {
+            border-left: 1px solid #e5e7eb;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        .video-control {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .video-wrapper:hover .video-control {
+            opacity: 1;
+        }
+        
+        /* 自定义开关样式 */
+        #toggle-background.bg-blue-500 {
+            border-color: #3b82f6;
+        }
+        
+        #toggle-slider {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        input:checked ~ #toggle-background {
+            background-color: #3b82f6 !important;
+            border-color: #3b82f6 !important;
+        }
+        
+        input:focus ~ #toggle-background {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        @media (min-width: 1024px) {
+            .content-container {
+                flex-direction: row;
+            }
+        }
+        
+        /* 提示词教程模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 30px auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close-button:hover {
+            color: #000;
+        }
+        
+        /* 提示词教程内容样式 */
+        .tutorial-content h2 {
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+        
+        .tutorial-content h3 {
+            color: #4338ca;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .tutorial-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .tutorial-content .formula {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .tutorial-content .example {
+            color: #4b5563;
+            font-style: italic;
+            margin-left: 1rem;
+        }
+    </style>
+
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center">
+            <a href="/" class="flex items-center">
+                <span class="font-bold text-2xl text-indigo-600 mr-1">萤火<span class="inline-block w-2 h-2 bg-indigo-600 rounded-full"></span>AI</span>
+                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+            </a>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="/" class="text-gray-600 hover:text-gray-900">
+                <i class="ri-home-line mr-1"></i>
+                <span>返回首页</span>
+            </a>
+            <a href="/credits.html" class="text-gray-600 hover:text-gray-900">
+                <i class="ri-coin-line mr-1"></i>
+                <span id="user-credits">积分: 加载中...</span>
+            </a>
+            <div class="relative" id="user-section">
+                <button id="user-menu-btn" class="hidden flex items-center text-gray-700 hover:text-gray-900">
+                    <i class="ri-user-3-line mr-1 text-lg"></i>
+                    <span id="username-display">用户名</span>
+                    <i class="ri-arrow-down-s-line ml-1"></i>
+                </button>
+                <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    登录/注册
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="main-container">
+        <div class="content-container">
+            <!-- 左侧：上传图片和输入提示词 -->
+            <div class="w-full lg:w-1/5 lg:min-w-[200px] border-b lg:border-b-0 lg:border-r border-gray-200 p-3">
+                <h2 class="text-lg font-bold mb-2">上传图片</h2>
+                
+                <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-2 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
+                    <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
+                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
+                    <input type="file" id="image-upload" class="hidden" accept="image/*">
+                </div>
+                <p class="text-xs text-gray-500 mb-2 -mt-1">上传图片的大小不能大于30M</p>
+                
+                <div class="mb-2 lg:flex-grow flex flex-col">
+                    <div class="flex justify-between items-center mb-1">
+                        <h2 class="text-base font-medium">输入提示词</h2>
+                        <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800" id="prompt-guide-link">提示词详细教程</a>
+                    </div>
+                    <textarea id="prompt-input" style="height: 400px !important; min-height: 400px !important;" class="w-full min-h-[400px] h-[400px] p-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 resize-none" placeholder="请输入提示词"></textarea>
+                    
+                    <!-- 智能改写开关 -->
+                    <div class="flex items-center justify-between py-2 px-3 bg-blue-50 rounded-md mb-2">
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-700">是否开启提示词智能改写</span>
+                        </div>
+                        <label class="flex items-center cursor-pointer">
+                            <div class="relative inline-block w-10 align-middle select-none">
+                                <input type="checkbox" id="smart-rewrite-toggle" class="sr-only" checked>
+                                <div id="toggle-background" class="block w-10 h-5 bg-gray-200 rounded-full border transition-colors duration-200 ease-in-out"></div>
+                                <div id="toggle-slider" class="absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full shadow transition-transform duration-200 ease-in-out"></div>
+                            </div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-red-500 mb-3">开启后使用者在右侧输入的提示词进行智能改写，对于较短的提示词生成效果会提升明显，但生成结果会偏离原意。</p>
+                </div>
+            </div>
+            
+            <!-- 右侧：效果展示 -->
+            <div class="w-full lg:w-4/5 lg:pl-6 lg:pr-4 py-6 result-section flex-grow">
+                <h2 class="text-2xl font-bold mb-6 text-center">效果展示</h2>
+                
+                <p class="text-gray-700 mb-6 text-center">模特面带微笑，向前走两步，手保持自然，连衣裙也跟着步伐动</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-3">上传图片：</h3>
+                        <div id="original-image-container" class="h-64 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                            <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片">
+                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium mb-3">输出视频：</h3>
+                        <div id="output-video-container" class="h-64 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                            <div id="video-wrapper" class="video-wrapper hidden w-full h-full relative">
+                                <video id="output-video" class="w-full h-full object-contain" controls></video>
+                                                                <!-- 添加下载按钮 -->
+                                <div class="absolute top-2 right-2">
+                                    <button id="download-video-btn" class="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 flex items-center shadow-md hidden">
+                                        <i class="ri-download-line mr-1"></i>下载视频
+                                    </button>
+                                </div>
+                            </div>
+                            <p id="output-video-placeholder" class="text-gray-500 text-center px-4">视频生成后将在这里显示</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 填充剩余空间的内容 -->
+                <div class="mt-8 bg-gray-50 p-4 rounded-lg flex-grow">
+                    <h3 class="text-lg font-medium mb-3">使用说明</h3>
+                    <div class="text-gray-600 text-sm">
+                        <p class="mb-2">1. 上传一张清晰的图片（支持JPG、PNG等常见格式）</p>
+                        <p class="mb-2">2. 输入您希望生成的视频动作描述，如"模特向左转身，微笑，然后挥手"</p>
+                        <p class="mb-2">3. 根据需要选择是否开启智能改写功能</p>
+                        <p class="mb-2">4. 点击"立即生成"按钮，等待视频生成（约3-10分钟）</p>
+                        <p class="mb-4">5. 生成完成后，您可以直接观看或下载视频</p>
+                        
+                        <p class="font-medium">注意事项：</p>
+                        <p class="mb-1">- 每次生成视频将消耗您账户中的积分</p>
+                        <p class="mb-1">- 图片中的人物姿势越自然，生成效果越好</p>
+                        <p class="mb-1">- 提示词越具体明确，生成的视频效果越理想</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加固定在底部的按钮 -->
+    <div class="fixed bottom-0 left-0 w-full lg:w-1/5 p-3 bg-white border-t border-gray-200">
+        <button id="generate-btn" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 flex items-center justify-center text-sm">
+            <i class="ri-movie-2-line mr-1"></i>
+            立即生成
+        </button>
+    </div>
+    
+    <!-- 加载中遮罩 -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+                <p id="loading-message" class="text-gray-700 text-center">视频生成中，请稍候...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示词教程模态框 -->
+    <div id="prompt-tutorial-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-tutorial">&times;</span>
+            <div class="tutorial-content">
+                <h2 class="text-2xl font-bold mb-4">文生视频/图生视频提示词教程</h2>
+                
+                <p class="text-lg font-medium text-gray-700">提示词公式</p>
+                <p>提示词用来描述视频中所包含的内容和运动过程，它是控制视频画面内容与效果的关键因素。提示词描述越完整、精确和丰富，生成视频的品质越高，且越贴近期望生成的内容。为了帮助您更快上手，我们针对不同的使用需求提供了四种提示词使用公式：</p>
+                
+                <h3 class="text-xl font-medium">基础公式</h3>
+                <p><strong>面向用户：</strong>适用于初次尝试AI视频的新用户，及将AI视频作为灵感启发的用户，简单自由的提示词可生成更具有想象力的视频。</p>
+                
+                <div class="formula">
+                    <p class="font-medium">提示词 = 主体 + 场景 + 运动</p>
+                </div>
+                
+                <ul class="list-disc ml-6 mb-4 text-gray-700">
+                    <li><strong>主体：</strong>主体是视频内容的主要表现对象，可以是人、动物、植物、物品或非物理真实存在的想象物体。</li>
+                    <li><strong>场景：</strong>场景是主体所处的环境，包含背景、前景，可以是物理存在的真实空间或想象出来的虚构场景。</li>
+                    <li><strong>运动：</strong>运动包含主体的具体运动和非主体的运动状态，可以是静止、小幅度运动、大幅度运动、局部运动或整体动势。</li>
+                </ul>
+                
+                <h3 class="text-xl font-medium">进阶公式</h3>
+                <p><strong>面向用户：</strong>适用于有一定AI视频使用经验的用户，在基础公式之上添加更丰富细致的描述可有效提升视频质感、生动性与故事性。</p>
+                
+                <div class="formula">
+                    <p class="font-medium">提示词 = 主体（主体描述）+ 场景（场景描述）+ 运动（运动描述）+ 镜头语言 + 氛围词 + 风格化</p>
+                </div>
+                
+                <ul class="list-disc ml-6 mb-4 text-gray-700">
+                    <li>
+                        <strong>主体描述：</strong>主体描述是对主体外观特征细节的描述，可通过形容词或短句列举。
+                        <p class="example">例如："一位身着少数民族服饰的黑发苗族少女"、"一位来自异世界的飞天仙子，身着破旧却华丽的服饰，背后展开一对由废墟碎片构成的奇异翅膀"</p>
+                    </li>
+                    <li><strong>场景描述：</strong>场景描述是对主体所处环境特征细节的描述，可通过形容词或短句列举。</li>
+                    <li>
+                        <strong>运动描述：</strong>运动描述是对运动特征细节的描述，包含运动的幅度、速率和运动作用的效果。
+                        <p class="example">例如："猛烈地摇摆"、"缓慢地移动"、"打碎了玻璃"</p>
+                    </li>
+                    <li><strong>镜头语言：</strong>镜头语言包含景别、视角、镜头、运镜等。</li>
+                    <li>
+                        <strong>氛围词：</strong>氛围词是对预期画面氛围的描述。
+                        <p class="example">例如："梦幻"、"孤独"、"宏伟"</p>
+                    </li>
+                    <li>
+                        <strong>风格化：</strong>风格化是对画面风格语言的描述。
+                        <p class="example">例如："赛博朋克"、"勾线插画"、"废土风格"</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引用外部Javascript文件 -->
+    <script src="/js/image-to-video.js"></script>
+    
+    <!-- 添加提示词教程模态框的JavaScript -->
+    <script>
+        // 获取模态框元素
+        const modal = document.getElementById('prompt-tutorial-modal');
+        // 获取打开模态框的按钮
+        const tutorialLink = document.getElementById('prompt-guide-link');
+        // 获取关闭按钮
+        const closeBtn = document.getElementById('close-tutorial');
+        
+        // 点击链接打开模态框
+        tutorialLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // 防止背景滚动
+        });
+        
+        // 点击关闭按钮关闭模态框
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // 恢复背景滚动
+        });
+        
+        // 点击模态框外部关闭模态框
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto'; // 恢复背景滚动
+            }
+        });
+    </script>
+</body>
+</html> 

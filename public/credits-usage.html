@@ -26,30 +26,86 @@
             50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
             100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
         }
-        .logo-text {
-            animation: firefly-glow 3s infinite;
-        }
-        .logo-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #6366f1;
-            border-radius: 50%;
-            margin-left: 2px;
-            margin-right: 4px;
+                /* Logo容器样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
             position: relative;
-            top: -2px;
+            z-index: 5;
+            transition: transform 0.2s ease;
+            }
+        
+        /* Logo图片样式 - 适配导航栏高度 */
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        /* 导航栏高度 */
+        .navbar {
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-container {
+            margin-top: 10px;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        
+        /* Logo链接样式 */
+        .logo-link {
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-link:hover {
+            background-color: transparent;
+        }
+        
+        .logo-link:after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
+            transform: translateX(-50%);
+            transition: width 0.2s ease;
+            opacity: 0;
+        }
+        
+        .logo-link:hover:after {
+            width: 60%;
+            opacity: 0.6;
         }
     </style>
 
     <link rel="icon" href="/images/favicon.png" type="image/png"></head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
+    <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
         <div class="flex items-center space-x-6">
@@ -88,14 +144,14 @@
         </div>
     </nav>
 
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-8" style="margin-top: 60px;">
         <h1 class="text-2xl font-bold mb-6">积分使用情况</h1>
         
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-medium text-lg">积分概览</h3>
                 <div class="text-sm text-gray-500">
-                    <select id="time-filter" class="border rounded px-2 py-1">
+                    <select id="time-filter" class="border rounded px-2 py-1 hidden">
                         <option value="7">最近7天</option>
                         <option value="30" selected>最近30天</option>
                         <option value="90">最近90天</option>

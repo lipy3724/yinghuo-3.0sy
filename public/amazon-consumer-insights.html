@@ -218,7 +218,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -349,16 +350,7 @@
                     </button>
                 </div>
                 
-                <!-- 调试区域 -->
-                <div class="mt-3 pt-2 border-t border-gray-200">
-                    <details class="text-sm">
-                        <summary class="text-gray-500 cursor-pointer hover:text-indigo-600">显示调试信息</summary>
-                        <div class="mt-1 bg-gray-100 p-2 rounded-md">
-                            <h4 class="font-medium mb-1 text-xs">原始API响应：</h4>
-                            <div id="debugApiResponse" class="whitespace-pre-wrap text-xs font-mono overflow-auto max-h-96"></div>
-                        </div>
-                    </details>
-                </div>
+
             </div>
             
             <div id="emptyResultState" class="h-full flex items-center justify-center">
@@ -390,9 +382,55 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能：检查是否有保存的结果
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-consumer-insights-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 恢复结果显示
+                        document.getElementById('userPersonaResult').innerHTML = formatInsightContent(results.userPersona);
+                        document.getElementById('usageScenariosResult').innerHTML = formatInsightContent(results.usageScenarios);
+                        document.getElementById('painPointsResult').innerHTML = formatInsightContent(results.painPoints);
+                        document.getElementById('purchaseMotivationsResult').innerHTML = formatInsightContent(results.purchaseMotivations);
+                        document.getElementById('unmetNeedsResult').innerHTML = formatInsightContent(results.unmetNeeds);
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的消费者洞察结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-consumer-insights-results');
+                    }
+                }
+                return false;
+            }
+            
+            // 保存结果到localStorage
+            function saveResults(results) {
+                try {
+                    sessionStorage.setItem('amazon-consumer-insights-results', JSON.stringify(results));
+                    console.log('消费者洞察结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+            
+            // 清除保存的结果
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-consumer-insights-results');
+                console.log('已清除保存的消费者洞察结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }// 监听浏览器标签页关闭或导航离开
             
             // 移除字符串中的所有星号
             function removeAllAsterisks(text) {
@@ -534,9 +572,8 @@
                     document.getElementById('purchaseMotivationsResult').innerHTML = formatInsightContent(result.data.purchaseMotivations);
                     document.getElementById('unmetNeedsResult').innerHTML = formatInsightContent(result.data.unmetNeeds);
                     
-                    // 显示调试信息（移除星号后的数据）
-                    const cleanedResult = JSON.parse(JSON.stringify(result));
-                    document.getElementById('debugApiResponse').textContent = JSON.stringify(cleanedResult, null, 2);
+                    // 保存结果到localStorage
+                    saveResults(result.data);
                     
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
@@ -544,9 +581,6 @@
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_consumer_insights');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -590,6 +624,9 @@
             // 重新分析按钮功能
             const newAnalysisButton = document.getElementById('newAnalysisButton');
             newAnalysisButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');

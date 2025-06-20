@@ -109,9 +109,8 @@ logger.info('支付宝SDK配置:', {
 });
 
 // 支付宝支付配置
-// 判断是否使用沙箱环境
-const isSandbox = process.env.NODE_ENV !== 'production';
-const gateway = isSandbox ? 'https://openapi-sandbox.dl.alipaydev.com/gateway.do' : 'https://openapi.alipay.com/gateway.do';
+const isSandbox = false; // 设置为false使用正式环境
+const gateway = 'https://openapi.alipay.com/gateway.do'; // 直接使用正式网关
 
 // 支付宝支付配置 - 使用3.x版本的初始化方式
 const alipaySdk = new AlipaySdk({
@@ -787,8 +786,10 @@ router.get('/usage', protect, async (req, res) => {
               month: '2-digit',
               day: '2-digit',
               hour: '2-digit',
-              minute: '2-digit'
+              minute: '2-digit',
+              second: '2-digit'
             }).replace(/\//g, '-'),
+            timestamp: taskDate.getTime(),
             feature: getLocalFeatureName(featureName),
             description: description,
             credits: task.isFree ? "免费" : creditCost, // 免费使用显示"免费"而不是数值0
@@ -880,7 +881,7 @@ router.get('/usage', protect, async (req, res) => {
       else if (featureName === 'IMAGE_SHARPENING' || featureName === 'image-upscaler' || featureName === 'IMAGE_COLORIZATION' || 
                featureName === 'GLOBAL_STYLE' || featureName === 'LOCAL_REDRAW' || featureName === 'DIANTU' ||
                featureName === 'text-to-video' || featureName === 'image-to-video' || 
-               featureName === 'MULTI_IMAGE_TO_VIDEO' || featureName === 'VIDEO_STYLE_REPAINT' || featureName === 'DIGITAL_HUMAN_VIDEO') {
+               featureName === 'MULTI_IMAGE_TO_VIDEO' || featureName === 'VIDEO_STYLE_REPAINT' || featureName === 'DIGITAL_HUMAN_VIDEO' || featureName === 'VIRTUAL_SHOE_MODEL') {
         // 图片和视频相关功能的特殊处理（图片高清放大、图片上色、全局风格化、局部重绘、垫图、文生视频、图生视频、多图转视频、视频风格重绘）
         // 修复积分计算重复问题，仅使用实际任务数量
         let actualUsageCount = 0;
@@ -911,6 +912,9 @@ router.get('/usage', protect, async (req, res) => {
               break;
             case 'DIGITAL_HUMAN_VIDEO':
               featureNameDisplay = '视频数字人';
+              break;
+            case 'VIRTUAL_SHOE_MODEL':
+              featureNameDisplay = '鞋靴虚拟试穿';
               break;
             default:
               featureNameDisplay = getLocalFeatureName(featureName);
@@ -964,6 +968,9 @@ router.get('/usage', protect, async (req, res) => {
             case 'DIGITAL_HUMAN_VIDEO':
               featureNameDisplay = '视频数字人';
               break;
+            case 'VIRTUAL_SHOE_MODEL':
+              featureNameDisplay = '鞋靴虚拟试穿';
+              break;
             default:
               featureNameDisplay = getLocalFeatureName(featureName);
           }
@@ -1011,7 +1018,7 @@ router.get('/usage', protect, async (req, res) => {
             featureName === 'marketing-images' || featureName === 'translate' || featureName === 'cutout' ||
             featureName === 'VIRTUAL_MODEL_VTON' || featureName === 'IMAGE_COLORIZATION' ||
             featureName === 'GLOBAL_STYLE' || featureName === 'DIANTU' || featureName === 'image-removal' ||
-            featureName === 'LOCAL_REDRAW' || featureName === 'text-to-video' || featureName === 'image-to-video') {
+            featureName === 'LOCAL_REDRAW' || featureName === 'text-to-video' || featureName === 'image-to-video' || featureName === 'VIRTUAL_SHOE_MODEL') {
           // 这些功能已经在任务中计算了积分消费，不需要再使用数据库记录中的积分
           console.log(`特殊功能${featureName}，使用任务记录中的积分消费: ${totalFeatureCreditCost}`);
           
@@ -1081,7 +1088,11 @@ router.get('/usage', protect, async (req, res) => {
   });
     
     // 按日期降序排序
-    usageRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+    usageRecords.sort((a, b) => {
+      const tb = b.timestamp !== undefined ? b.timestamp : new Date(b.date).getTime();
+      const ta = a.timestamp !== undefined ? a.timestamp : new Date(a.date).getTime();
+      return tb - ta;
+    });
     
     // 计算功能使用百分比
     const featureUsage = [];
@@ -1280,7 +1291,7 @@ function formatDate(date) {
   if (!date) return '';
   try {
     const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
   } catch (e) {
     console.error('日期格式化错误:', e);
     return '';
@@ -1306,7 +1317,7 @@ router.post('/alipay/create', protect, async (req, res) => {
         else if (parseInt(amount) === 3980) price = 399;
         else if (parseInt(amount) === 6730) price = 599;
         else if (parseInt(amount) === 12500) price = 999;
-        else if (parseInt(amount) === 198) price = 59;
+        else if (parseInt(amount) === 350) price = 59;
         else price = Math.ceil(parseInt(amount) * 0.12); // 默认比例
         
         // 使用Sequelize ORM创建订单

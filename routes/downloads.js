@@ -48,7 +48,14 @@ router.post('/save', protect, async (req, res) => {
         imageUrl,
         processedImageUrl: imageUrl, // 为了兼容旧模型，也设置processedImageUrl
         type: requestType,
-        processType: '图像指令编辑', // 添加processType字段
+        processType: type === 'global-style' ? '全局风格化' : 
+                   (type === 'IMAGE_EXPANSION' ? '智能扩图' : 
+                   (type === 'IMAGE_SHARPENING' ? '模糊图片变清晰' : 
+                   (type === 'IMAGE_COLORIZATION' ? '图像上色' : 
+                   (type === 'DIANTU' ? '垫图' : 
+                   (type === 'LOCAL_REDRAW' ? '局部重绘' : 
+                   (type === 'CLOTH_SEGMENTATION' ? '智能服饰分割' : 
+                   (type === 'TEXT_TO_IMAGE' ? '文生图片' : '图像指令编辑'))))))), // 根据类型设置对应的processType
         createdAt: new Date(),
         updatedAt: new Date()
       });
