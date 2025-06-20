@@ -1,0 +1,36 @@
+/**
+ * 移动端拦截中间件
+ * 该中间件自动在所有HTML响应中注入mobile-guard.js脚本引用
+ */
+
+function mobileGuardMiddleware(req, res, next) {
+  // 保存原始的res.send方法
+  const originalSend = res.send;
+
+  // 覆盖res.send方法
+  res.send = function(body) {
+    // 仅处理HTML响应
+    if (typeof body === 'string' && 
+        ((res.get('Content-Type') || '').includes('text/html') || 
+        body.includes('<!DOCTYPE html>') || 
+        body.includes('<html>'))) {
+      
+      // 检查是否已经包含mobile-guard.js引用
+      if (!body.includes('mobile-guard.js')) {
+        // 在</head>标签前添加脚本引用，而不是</body>前
+        // 这样可以避免影响页面中的API请求路径
+        body = body.replace(
+          '</head>',
+          '<script src="/js/mobile-guard.js"></script></head>'
+        );
+      }
+    }
+    
+    // 调用原始的send方法
+    return originalSend.call(this, body);
+  };
+
+  next();
+}
+
+module.exports = mobileGuardMiddleware; 

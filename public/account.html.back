@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的账户 - 萤火AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+        
+        /* 表单样式优化 */
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #fff;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        
+        .form-control:focus {
+            border-color: #a5b4fc;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.2);
+        }
+        
+        .form-control:read-only {
+            background-color: #f9fafb;
+            cursor: not-allowed;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+            font-size: 0.9rem;
+        }
+        
+        .form-hint {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.375rem;
+        }
+        
+        /* 按钮样式优化 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        /* 消息提示样式优化 */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .alert-success {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        
+        .alert-danger {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border-left: 4px solid #ef4444;
+        }
+        
+        /* 标签页样式优化 */
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+        
+        .tab-button {
+            position: relative;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            color: #6b7280;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-button:hover {
+            color: #4b5563;
+        }
+        
+        .tab-button.active {
+            color: #4f46e5;
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #4f46e5;
+            border-radius: 1px;
+        }
+        
+        /* 卡片样式优化 */
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+        
+        /* 页面布局优化 */
+        .page-container {
+            max-width: 42rem;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        /* 导航栏样式优化 */
+        .navbar {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .logo-text {
+            font-weight: 600;
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        
+        .logo-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 2px;
+            position: relative;
+            top: -1px;
+        }
+    </style>
+
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar flex items-center justify-between">
+        <div class="flex items-center">
+            <a href="/" class="flex items-center group">
+                <span class="font-bold text-2xl mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
+                <span class="text-gray-500 text-sm ml-1 transition-colors group-hover:text-indigo-500">Yinghuo.Ai</span>
+            </a>
+        </div>
+        <div class="flex items-center space-x-6">
+            <a href="/" class="flex items-center text-gray-600 hover:text-indigo-600 transition-colors">
+                <i class="ri-home-line mr-1.5"></i>
+                <span>首页</span>
+            </a>
+            <a href="/credits.html" class="flex items-center text-gray-600 hover:text-indigo-600 transition-colors">
+                <i class="ri-coin-line mr-1.5"></i>
+                <span>积分管理</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="card p-8 fade-in">
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-2xl font-bold text-gray-900">我的账户</h1>
+                <div class="text-sm text-gray-500 flex items-center">
+                    <i class="ri-shield-check-line mr-1.5 text-indigo-500"></i>
+                    <span>账户安全</span>
+                </div>
+            </div>
+
+            <div class="hidden" id="message-box"></div>
+
+            <div class="tabs-header mb-6">
+                <button class="tab-button active" data-tab="profile">
+                    基本信息
+                </button>
+                <button class="tab-button" data-tab="password">
+                    修改密码
+                </button>
+            </div>
+
+            <!-- 基本信息表单 -->
+            <div id="profile-tab" class="tab-content">
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label">用户名</label>
+                        <input type="text" id="username" name="username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="masked-phone" class="form-label">手机号</label>
+                        <input type="text" id="masked-phone" name="masked-phone" class="form-control" readonly>
+                        <p class="form-hint">手机号码不可修改</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-4">
+                        <i class="ri-save-line mr-1.5"></i>
+                        保存修改
+                    </button>
+                </form>
+            </div>
+
+            <!-- 修改密码表单 -->
+            <div id="password-tab" class="tab-content hidden">
+                <form id="password-form">
+                    <div class="form-group">
+                        <label for="current-password" class="form-label">当前密码</label>
+                        <input type="password" id="current-password" name="currentPassword" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password" class="form-label">新密码</label>
+                        <input type="password" id="new-password" name="newPassword" class="form-control" required minlength="6">
+                        <p class="form-hint">密码长度至少6位</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password" class="form-label">确认新密码</label>
+                        <input type="password" id="confirm-password" name="confirmPassword" class="form-control" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-4">
+                        <i class="ri-lock-password-line mr-1.5"></i>
+                        更新密码
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentUser = null;
+        const messageBox = document.getElementById('message-box');
+        
+        // 显示消息
+        function showMessage(message, type = 'success') {
+            const icon = type === 'success' ? 'ri-check-line' : 'ri-error-warning-line';
+            messageBox.innerHTML = `
+                <div class="alert ${type === 'success' ? 'alert-success' : 'alert-danger'} fade-in">
+                    <i class="${icon} mr-2 text-lg"></i>
+                    ${message}
+                </div>
+            `;
+            messageBox.classList.remove('hidden');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // 检查用户是否已登录
+        function checkAuth() {
+            const authToken = localStorage.getItem('authToken');
+            const userInfo = localStorage.getItem('user');
+            
+            if (!authToken || !userInfo) {
+                // 用户未登录，跳转到登录页面
+                window.location.href = '/login.html';
+                return false;
+            }
+            
+            try {
+                currentUser = JSON.parse(userInfo);
+                return true;
+            } catch (e) {
+                console.error('解析用户信息出错:', e);
+                // 清除无效的存储
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+                return false;
+            }
+        }
+        
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/user', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.success && data.data) {
+                        // 更新全局用户信息
+                        currentUser = data.data;
+                        
+                        // 更新localStorage中的用户信息
+                        localStorage.setItem('user', JSON.stringify({
+                            id: currentUser.id,
+                            username: currentUser.username,
+                            phone: currentUser.phone || ''
+                        }));
+                        
+                        // 填充表单
+                        document.getElementById('username').value = currentUser.username || '';
+                        
+                        // 显示部分隐藏的手机号
+                        if (currentUser.phone && currentUser.phone.length === 11) {
+                            const maskedPhone = currentUser.phone.substring(0, 3) + '****' + currentUser.phone.substring(7);
+                            document.getElementById('masked-phone').value = maskedPhone;
+                        } else {
+                            document.getElementById('masked-phone').value = '';
+                        }
+                    }
+                } else {
+                    const error = await response.json();
+                    showMessage(error.message || '获取用户信息失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载用户信息出错:', error);
+                showMessage('加载用户信息出错，请刷新页面重试', 'error');
+            }
+        }
+        
+        // 处理基本信息表单提交
+        document.getElementById('profile-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            
+            if (!username.trim()) {
+                showMessage('用户名不能为空', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({ username })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage('个人信息更新成功');
+                    
+                    // 更新本地存储的用户信息
+                    const userInfo = JSON.parse(localStorage.getItem('user'));
+                    userInfo.username = username;
+                    localStorage.setItem('user', JSON.stringify(userInfo));
+                    
+                    // 刷新用户信息
+                    await loadUserInfo();
+                } else {
+                    showMessage(data.message || '更新失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('更新个人信息出错:', error);
+                showMessage('更新出错，请稍后重试', 'error');
+            }
+        });
+        
+        // 处理修改密码表单提交
+        document.getElementById('password-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                showMessage('两次输入的新密码不一致', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({ 
+                        currentPassword,
+                        newPassword 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage('密码修改成功');
+                    document.getElementById('password-form').reset();
+                } else {
+                    showMessage(data.message || '密码修改失败，请重试', 'error');
+                }
+            } catch (error) {
+                console.error('修改密码出错:', error);
+                showMessage('修改密码出错，请稍后重试', 'error');
+            }
+        });
+        
+        // 处理标签页切换
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有按钮的激活状态
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // 添加当前按钮的激活状态
+                this.classList.add('active');
+                
+                // 隐藏所有内容
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.add('hidden');
+                });
+                
+                // 显示选择的内容
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+            });
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (checkAuth()) {
+                await loadUserInfo();
+            }
+        });
+    </script>
+</body>
+</html>
