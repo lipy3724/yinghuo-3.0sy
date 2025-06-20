@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组件化示例页面 - 萤火AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
+    <script src="/js/logout-handler.js"></script>
+    <script src="/js/auth-check.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏容器 -->
+    <div id="navbar-container"></div>
+    
+    <!-- 侧边栏容器 -->
+    <div id="sidebar-container"></div>
+    
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">🎉 组件化改造完成！</h1>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">✨ 改造成果</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-blue-800 mb-2">🧭 完整版导航栏</h3>
+                        <p class="text-blue-600 text-sm">包含所有功能菜单、积分中心、下载中心等完整功能</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-green-800 mb-2">🎯 简化版导航栏</h3>
+                        <p class="text-green-600 text-sm">只显示Logo和返回首页，适用于功能页面</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-purple-800 mb-2">📱 可复用侧边栏</h3>
+                        <p class="text-purple-600 text-sm">独立的侧边栏组件，支持快捷访问和折叠功能</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-yellow-800 mb-2">🎨 统一样式文件</h3>
+                        <p class="text-yellow-600 text-sm">所有组件样式集中管理，便于维护</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-red-800 mb-2">⚡ JavaScript功能</h3>
+                        <p class="text-red-600 text-sm">完整的交互功能，支持下拉菜单、侧边栏控制等</p>
+                    </div>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-indigo-800 mb-2">📖 详细文档</h3>
+                        <p class="text-indigo-600 text-sm">完整的使用说明和最佳实践指南</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">🚀 使用优势</h2>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <i class="ri-check-circle-fill text-green-500 mr-2 mt-1"></i>
+                        <span><strong>易于维护：</strong>导航栏有改动时，只需修改组件文件，所有页面自动更新</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="ri-check-circle-fill text-green-500 mr-2 mt-1"></i>
+                        <span><strong>代码复用：</strong>避免在每个页面重复编写相同的导航栏代码</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="ri-check-circle-fill text-green-500 mr-2 mt-1"></i>
+                        <span><strong>灵活配置：</strong>可根据页面类型选择完整版或简化版导航栏</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="ri-check-circle-fill text-green-500 mr-2 mt-1"></i>
+                        <span><strong>统一样式：</strong>确保所有页面的导航栏样式保持一致</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="ri-check-circle-fill text-green-500 mr-2 mt-1"></i>
+                        <span><strong>功能完整：</strong>保留所有原有功能，包括下拉菜单、用户认证等</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">📁 文件清单</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">组件文件</h3>
+                        <ul class="space-y-1 text-sm text-gray-600">
+                            <li>📄 components/navbar-full.html</li>
+                            <li>📄 components/navbar-simple.html</li>
+                            <li>📄 components/sidebar.html</li>
+                            <li>🎨 components/styles.css</li>
+                            <li>⚡ components/components.js</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-2">文档文件</h3>
+                        <ul class="space-y-1 text-sm text-gray-600">
+                            <li>📖 components/README.md</li>
+                            <li>🌟 example-page.html</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载组件 -->
+    <script src="/components/components.js"></script>
+    <script>
+        // 动态加载组件
+        async function loadComponent(componentPath, containerId) {
+            try {
+                const response = await fetch(componentPath);
+                const html = await response.text();
+                document.getElementById(containerId).innerHTML = html;
+                
+                // 组件加载完成后重新初始化
+                if (window.ComponentsJS) {
+                    window.ComponentsJS.initializeComponents();
+                }
+            } catch (error) {
+                console.error('Failed to load component:', error);
+            }
+        }
+        
+        // 页面加载完成后加载组件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载完整版导航栏和侧边栏
+            Promise.all([
+                loadComponent('/components/navbar-full.html', 'navbar-container'),
+                loadComponent('/components/sidebar.html', 'sidebar-container')
+            ]).then(() => {
+                console.log('✅ 所有组件加载完成！');
+                
+                // 显示成功消息
+                if (window.ComponentsJS && window.ComponentsJS.showToast) {
+                    window.ComponentsJS.showToast('组件加载成功！', 'success');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

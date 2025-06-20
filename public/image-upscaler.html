@@ -6,6 +6,7 @@
     <title>图像高清放大 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/components/styles.css" rel="stylesheet">
     <script src="/js/logout-handler.js"></script>
     <script src="/js/auth-check.js"></script>
     <script src="/feature-tracker.js"></script>
@@ -49,8 +50,11 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
+
     <!-- 主内容区域 -->
-    <div class="container mx-auto p-8">
+    <div class="container mx-auto p-8" style="margin-top: 60px;">
         <h1 class="text-2xl font-bold mb-6">图像高清放大</h1>
         
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -565,6 +569,22 @@
                 if (bytes < 1024) return bytes + ' B';
                 else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
                 else return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+        });
+
+        // 加载导航栏组件
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
             }
         });
     </script>

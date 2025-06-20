@@ -1,0 +1,142 @@
+<!-- 完整版导航栏 - 用于首页 -->
+<nav class="navbar flex items-center justify-between px-4">
+    <div class="flex items-center">
+        <!-- 侧边栏折叠/展开按钮 -->
+        <button id="sidebar-toggle-nav" class="hidden">
+            <i class="ri-menu-fold-line text-lg"></i>
+        </button>
+        <a href="/" class="flex items-center logo-link">
+            <div class="logo-container">
+                <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+            </div>
+        </a>
+        <!-- 添加顶部导航功能菜单 -->
+        <div class="ml-8 flex items-center space-x-6">
+            <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/marketing-images.html')" class="text-gray-600 hover:text-gray-900 flex items-center">
+                <i class="ri-image-line mr-1"></i>
+                <span>AI营销图</span>
+            </a>
+            <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/translate')" class="text-gray-600 hover:text-gray-900 flex items-center">
+                <i class="ri-translate-2 mr-1"></i>
+                <span>图片翻译</span>
+            </a>
+            <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/cutout')" class="text-gray-600 hover:text-gray-900 flex items-center">
+                <i class="ri-image-edit-line mr-1"></i>
+                <span>商品换背景</span>
+            </a>
+            <!-- 功能中心下拉菜单 -->
+            <div class="relative features-menu-wrapper">
+                <button class="text-gray-600 hover:text-gray-900 flex items-center" id="features-menu-btn">
+                    <i class="ri-apps-line mr-1"></i>
+                    <span>功能中心</span>
+                    <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
+                </button>
+                <div class="features-menu-bridge"></div>
+                <div id="features-dropdown" class="hidden absolute left-0 mt-2 w-[800px] bg-white rounded-md shadow-lg py-4 z-10">
+                    <div class="grid grid-cols-4 gap-2 px-4">
+                        <!-- 图像处理类 -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing">图像处理</h3>
+                            <ul class="space-y-1">
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">场景图生成</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像智能消除</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能扩图</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模糊图片变清晰</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像高清放大</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像上色</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">局部重绘</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">全局风格化</a></li>
+                                <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">垫图</a></li>
+                            </ul>
+                        </div>
+                        <!-- 模特/服饰类 -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b model-clothing">模特与服饰</h3>
+                            <ul class="space-y-1">
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模特换肤</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模拟试衣</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能服饰分割</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能虚拟模特试穿</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">鞋靴虚拟试穿</a></li>
+                            </ul>
+                            
+                            <h3 class="text-sm font-semibold text-gray-900 mt-4 mb-2 pb-1 border-b ai-creation">AI创作</h3>
+                            <ul class="space-y-1">
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">文生图片</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">指令编辑</a></li>
+                            </ul>
+                        </div>
+                        <!-- 视频处理类 -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b video-processing">视频处理</h3>
+                            <ul class="space-y-1">
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">文生视频</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图生视频</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/multi-image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">多图转视频</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频风格重绘</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频数字人</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频去除字幕</a></li>
+                            </ul>
+                        </div>
+                        <!-- 亚马逊助手 -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b amazon-assistant">亚马逊助手</h3>
+                            <ul class="space-y-1">
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">Listing写作与优化</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">后台搜索词</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">客户评论分析</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">消费者洞察</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-customer-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">客户邮件回复</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">FBA索赔邮件</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">评论生成</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">评论回复</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">品牌起名</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">创建Post</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">广告视频脚本</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">产品对比</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">品牌信息收集和总结</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">选品的改款分析和建议</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">亚马逊关键词推荐</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-case-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">亚马逊客服case内容</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center space-x-6">
+        <div class="relative credits-menu-wrapper">
+            <button class="text-gray-600 hover:text-gray-900 flex items-center" id="credits-menu-btn">
+                <i class="ri-coin-line mr-1"></i>
+                <span>积分中心</span>
+                <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
+            </button>
+            <div id="credits-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
+                <a href="/credits-usage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分使用情况</a>
+            </div>
+        </div>
+        <a href="/download-center.html" class="text-gray-600 hover:text-gray-900 flex items-center">
+            <i class="ri-download-2-line mr-1"></i>
+            <span>下载中心</span>
+        </a>
+        <!-- 用户未登录时显示登录注册按钮 -->
+        <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+            登录/注册
+        </a>
+        <!-- 用户已登录时显示用户信息 -->
+        <div id="user-info" class="hidden relative user-menu-wrapper">
+            <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-gray-900">
+                <i class="ri-user-3-line mr-1 text-lg"></i>
+                <span id="username-display">用户名</span>
+                <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
+            </button>
+            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">我的账户</a>
+                <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
+                <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
+            </div>
+        </div>
+    </div>
+</nav> 

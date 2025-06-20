@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>指令编辑 - 萤火AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -173,8 +174,11 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
 </head>
 <body>
+    <!-- 简化版导航栏 -->
+    <div id="navbar-simple"></div>
+    
     <!-- 主内容区域 -->
-    <div class="editor-wrapper bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+    <div class="editor-wrapper bg-gradient-to-br from-indigo-50 via-white to-blue-50" style="margin-top: 60px; min-height: calc(100vh - 60px);">
         <div class="container mx-auto px-4 pt-4 pb-10 w-full max-w-full">
             <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                 <div class="p-6 border-b border-gray-100">
@@ -363,7 +367,21 @@
 
     <!-- 引用外部Javascript文件 -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载简化版导航栏组件
+            try {
+                const navbarResponse = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await navbarResponse.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件JavaScript
+                const componentsScript = document.createElement('script');
+                componentsScript.src = '/components/components.js';
+                document.head.appendChild(componentsScript);
+            } catch (error) {
+                console.error('加载导航栏组件失败:', error);
+            }
+            
             // DOM元素
             const uploadArea = document.getElementById('upload-area');
             const imageUpload = document.getElementById('image-upload');

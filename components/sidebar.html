@@ -1,0 +1,250 @@
+<!-- 侧边栏组件 -->
+<div class="sidebar">
+    <!-- 全局折叠按钮 -->
+    <button id="sidebar-toggle-btn-inner" style="display:none">
+        <i class="ri-menu-fold-line text-lg text-gray-600"></i>
+    </button>
+    <div class="py-4 px-3">
+        <ul class="space-y-2">
+            <!-- 添加快捷访问按钮 -->
+            <li>
+                <button id="quick-access-btn" class="quick-access-btn w-full flex items-center justify-center p-3 text-base font-medium rounded-lg mb-3">
+                    <i class="ri-add-line mr-2 text-lg"></i>
+                    <span>添加快捷访问</span>
+                </button>
+            </li>
+            <!-- 快捷访问功能列表容器 -->
+            <div id="sidebar-features-container" class="mt-4">
+                <!-- 这里将动态添加用户选择的功能 -->
+                <div class="text-center text-gray-400 text-sm py-6 empty-state hidden">
+                    <i class="ri-function-line text-3xl mb-2 block"></i>
+                    <p>点击上方按钮添加您常用的功能</p>
+                </div>
+            </div>
+        </ul>
+    </div>
+</div>
+
+<!-- 折叠 / 展开侧边栏按钮（紧贴侧边栏右侧） -->
+<button id="sidebar-toggle-btn">
+    <i id="toggle-icon" class="ri-arrow-left-s-line text-xl text-gray-600"></i>
+</button>
+
+<!-- 快捷访问下拉菜单 -->
+<div id="quick-access-dropdown" class="hidden">
+    <div class="dropdown-header">
+        <div class="flex items-center">
+            <h3>添加快捷访问</h3>
+            <span id="selected-count" class="text-gray-500">(0/10)</span>
+        </div>
+        <button id="close-dropdown" class="text-gray-400 hover:text-gray-600">
+            <i class="ri-close-line"></i>
+        </button>
+    </div>
+    <!-- 滚动内容区域 -->
+    <div class="feature-list-scroll">
+        <div class="feature-list">
+            <!-- 图像处理类 -->
+            <div class="mb-5">
+                <h4 class="flex items-center">
+                    <i class="ri-image-edit-line mr-1 text-indigo-500"></i>
+                    图像处理
+                </h4>
+                <div class="grid grid-cols-1 gap-1">
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="场景图生成" data-icon="ri-landscape-line" data-bg="bg-emerald-100" data-color="text-emerald-500" data-url="/scene-generator.html">
+                        <span>场景图生成</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="图像智能消除" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/image-removal.html">
+                        <span>图像智能消除</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="智能扩图" data-icon="ri-crop-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/image-expansion.html">
+                        <span>智能扩图</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="模糊图片变清晰" data-icon="ri-image-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/image-sharpen.html">
+                        <span>模糊图片变清晰</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="图像高清放大" data-icon="ri-zoom-in-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/image-upscaler.html">
+                        <span>图像高清放大</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="图像上色" data-icon="ri-paint-brush-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/image-colorization.html">
+                        <span>图像上色</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="局部重绘" data-icon="ri-brush-3-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/local-redraw.html">
+                        <span>局部重绘</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="全局风格化" data-icon="ri-palette-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/global-style.html">
+                        <span>全局风格化</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="垫图" data-icon="ri-collage-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/diantu.html">
+                        <span>垫图</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 模特与服饰类 -->
+            <div class="mb-5">
+                <h4 class="flex items-center">
+                    <i class="ri-t-shirt-line mr-1 text-indigo-500"></i>
+                    模特与服饰
+                </h4>
+                <div class="grid grid-cols-1 gap-1">
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="模特换肤" data-icon="ri-user-5-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/model-skin-changer.html">
+                        <span>模特换肤</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="模拟试衣" data-icon="ri-t-shirt-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/clothing-simulation.html">
+                        <span>模拟试衣</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="智能服饰分割" data-icon="ri-scissors-cut-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/clothing-segmentation.html">
+                        <span>智能服饰分割</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="智能虚拟模特试穿" data-icon="ri-t-shirt-2-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/virtual-model">
+                        <span>智能虚拟模特试穿</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="鞋靴虚拟试穿" data-icon="ri-footprint-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/virtual-model-shoes.html">
+                        <span>鞋靴虚拟试穿</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- AI创作类 -->
+            <div class="mb-5">
+                <h4 class="flex items-center">
+                    <i class="ri-brush-line mr-1 text-indigo-500"></i>
+                    AI创作
+                </h4>
+                <div class="grid grid-cols-1 gap-1">
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="文生图片" data-icon="ri-image-add-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/text-to-image.html">
+                        <span>文生图片</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="指令编辑" data-icon="ri-edit-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/prompt-editor.html">
+                        <span>指令编辑</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 视频处理类 -->
+            <div class="mb-5">
+                <h4 class="flex items-center">
+                    <i class="ri-movie-line mr-1 text-indigo-500"></i>
+                    视频处理
+                </h4>
+                <div class="grid grid-cols-1 gap-1">
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="文生视频" data-icon="ri-movie-2-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/text-to-video.html">
+                        <span>文生视频</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="图生视频" data-icon="ri-vidicon-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/image-to-video.html">
+                        <span>图生视频</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="多图转视频" data-icon="ri-film-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/multi-image-to-video.html">
+                        <span>多图转视频</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="视频风格重绘" data-icon="ri-paint-brush-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/video-style-repaint.html">
+                        <span>视频风格重绘</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="视频数字人" data-icon="ri-user-voice-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/digital-human-video.html">
+                        <span>视频数字人</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="视频去除字幕" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/video-subtitle-remover.html">
+                        <span>视频去除字幕</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 亚马逊助手 -->
+            <div class="mb-5">
+                <h4 class="flex items-center">
+                    <i class="ri-amazon-line mr-1 text-indigo-500"></i>
+                    亚马逊助手
+                </h4>
+                <div class="grid grid-cols-1 gap-1">
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="Listing写作与优化" data-icon="ri-draft-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/amazon-listing.html">
+                        <span>Listing写作与优化</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="后台搜索词" data-icon="ri-search-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-search-term.html">
+                        <span>后台搜索词</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="客户评论分析" data-icon="ri-chat-poll-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/amazon-review-analysis.html">
+                        <span>客户评论分析</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="消费者洞察" data-icon="ri-spy-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/amazon-consumer-insights.html">
+                        <span>消费者洞察</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="客户邮件回复" data-icon="ri-mail-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/amazon-customer-email.html">
+                        <span>客户邮件回复</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="FBA索赔邮件" data-icon="ri-mail-star-line" data-bg="bg-amber-100" data-color="text-amber-500" data-url="/fba-claim-email.html">
+                        <span>FBA索赔邮件</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="评论生成" data-icon="ri-chat-new-line" data-bg="bg-rose-100" data-color="text-rose-500" data-url="/amazon-review-generator.html">
+                        <span>评论生成</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="评论回复" data-icon="ri-reply-line" data-bg="bg-teal-100" data-color="text-teal-500" data-url="/amazon-review-response.html">
+                        <span>评论回复</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="品牌起名" data-icon="ri-price-tag-3-line" data-bg="bg-orange-100" data-color="text-orange-500" data-url="/amazon-brand-naming.html">
+                        <span>品牌起名</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="创建Post" data-icon="ri-article-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-post-creator.html">
+                        <span>创建Post</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="广告视频脚本" data-icon="ri-video-chat-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/amazon-video-script.html">
+                        <span>广告视频脚本</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="产品对比" data-icon="ri-scales-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/product-comparison.html">
+                        <span>产品对比</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="品牌信息收集和总结" data-icon="ri-file-info-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-brand-info.html">
+                        <span>品牌信息收集和总结</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="选品的改款分析和建议" data-icon="ri-tools-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/product-improvement-analysis.html">
+                        <span>选品的改款分析和建议</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="亚马逊关键词推荐" data-icon="ri-hashtag" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/amazon-keyword-recommender.html">
+                        <span>亚马逊关键词推荐</span>
+                    </label>
+                    <label class="feature-checkbox-item">
+                        <input type="checkbox" data-feature="亚马逊客服case内容" data-icon="ri-customer-service-2-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/amazon-case-creator.html">
+                        <span>亚马逊客服case内容</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

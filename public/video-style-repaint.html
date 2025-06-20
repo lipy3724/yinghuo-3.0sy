@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视频风格重绘 - 萤火AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/components/styles.css" rel="stylesheet">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -108,25 +109,11 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
-    <!-- 导航栏 - 固定高度 -->
-    <header class="bg-white shadow-sm py-0 px-6 nav-fixed-height flex items-center justify-between">
-        <div class="flex items-center h-full">
-            <a href="/" class="flex items-center h-full">
-                <div class="logo-container">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
-                </div>
-            </a>
-        </div>
-        <div class="flex items-center space-x-4">
-            <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center text-sm">
-                <i class="ri-arrow-left-line mr-1"></i>
-                <span>返回首页</span>
-            </a>
-        </div>
-    </header>
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex">
+    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
         <div class="flex flex-col lg:flex-row bg-white h-full w-full">
             <!-- 左侧：上传视频和风格控制 -->
             <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
@@ -582,6 +569,22 @@
                     URL.revokeObjectURL(videoURL);
                     originalVideo.fileRef = null;
                 };
+            }
+        });
+
+        // 加载导航栏组件
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
             }
         });
     </script>

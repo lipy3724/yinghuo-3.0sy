@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视频去除字幕 - 萤火.AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/components/styles.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
     <style>
         html, body {
@@ -92,7 +93,10 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
-    <div class="flex">
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
+
+    <div class="flex" style="margin-top: 60px;">
         <!-- 主内容区域 -->
         <div class="flex-1 flex flex-col">
             <div class="main-container flex-grow">
@@ -764,6 +768,22 @@
                     // 开始轮询
                     checkStatus();
                 });
+            }
+        });
+
+        // 加载导航栏组件
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
             }
         });
     </script>

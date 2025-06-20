@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多图转视频 - 萤火.AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
     <style>
         html, body {
             height: 100%;
@@ -131,7 +132,10 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
 </head>
 <body>
-    <div class="main-container">
+    <!-- 简化版导航栏 -->
+    <div id="navbar-simple"></div>
+    
+    <div class="main-container" style="margin-top: 60px; height: calc(100vh - 60px);">
         <!-- 左侧面板：可独立滚动 -->
         <div class="left-panel">
             <div class="p-3">
@@ -341,6 +345,23 @@
     </div>
 
     <!-- 引用外部Javascript文件 -->
-    <script src="/js/multi-image-to-video.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        // 加载简化版导航栏组件
+        try {
+            const navbarResponse = await fetch('/components/navbar-simple.html');
+            const navbarHtml = await navbarResponse.text();
+            document.getElementById('navbar-simple').innerHTML = navbarHtml;
+            
+            // 加载组件JavaScript
+            const componentsScript = document.createElement('script');
+            componentsScript.src = '/components/components.js';
+            document.head.appendChild(componentsScript);
+        } catch (error) {
+            console.error('加载导航栏组件失败:', error);
+        }
+    });
+</script>
+<script src="/js/multi-image-to-video.js"></script>
 </body>
 </html> 
