@@ -688,49 +688,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('开始下载视频:', videoUrl);
                 
-                // 显示下载中的状态
-                loadingOverlay.classList.remove('hidden');
-                loadingMessage.textContent = '正在准备下载...';
+                // 使用视频去除字幕的下载API（已知可用）
+                const proxyUrl = `/api/video-subtitle-removal/download?url=${encodeURIComponent(videoUrl)}`;
+                console.log('使用下载API:', proxyUrl);
                 
-                // 使用fetch获取视频内容为blob
-                fetch(videoUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('视频下载失败，状态码: ' + response.status);
-                        }
-                        return response.blob();
-                    })
-                    .then(blob => {
-                        // 创建一个blob URL
-                        const blobUrl = URL.createObjectURL(blob);
-                        
-                        // 创建下载链接
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = `多图生成视频_${Date.now()}.mp4`;
-                        link.style.display = 'none';
-                        
-                        // 触发点击下载
-                        document.body.appendChild(link);
-                        link.click();
-                        
-                        // 延迟后释放blob URL和移除链接
-                        setTimeout(() => {
-                            URL.revokeObjectURL(blobUrl);
-                            document.body.removeChild(link);
-                            loadingOverlay.classList.add('hidden');
-                        }, 200);
-                    })
-                    .catch(error => {
-                        console.error('下载视频出错:', error);
-                        alert('下载视频失败: ' + error.message);
-                        loadingOverlay.classList.add('hidden');
-                        
-                        // 二次尝试 - 通过window.open
-                        if (confirm('直接下载失败，是否尝试在新窗口中打开视频？')) {
-                            window.open(videoUrl, '_blank');
-                        }
-                    });
+                // 创建一个隐藏的下载链接
+                const a = document.createElement('a');
+                a.href = proxyUrl;
+                a.download = `多图生成视频_${Date.now()}.mp4`; // 设置下载文件名
+                
+                // 添加到文档中
+                document.body.appendChild(a);
+                
+                // 模拟点击并跟踪状态
+                try {
+                    a.click();
+                    console.log('下载链接已点击');
+                } catch (e) {
+                    console.error('点击下载链接失败:', e);
+                    // 尝试直接在新窗口打开
+                    window.open(proxyUrl, '_blank');
+                }
+                
+                // 移除下载链接
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                }, 100);
             });
         }
     }

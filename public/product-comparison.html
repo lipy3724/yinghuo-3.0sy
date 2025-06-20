@@ -194,7 +194,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -342,9 +343,96 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 智能结果管理：页面加载时尝试恢复之前的结果
+            function restoreSessionResults() {
+                try {
+                    const savedResults = sessionStorage.getItem('productComparison_results');
+                    if (savedResults) {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 恢复结果内容
+                        if (results.featureComparison) {
+                            document.getElementById('featureComparisonResult').innerHTML = results.featureComparison;
+                        }
+                        if (results.strengthsWeaknesses) {
+                            document.getElementById('strengthsWeaknessesResult').innerHTML = results.strengthsWeaknesses;
+                        }
+                        if (results.improvementSuggestions) {
+                            document.getElementById('improvementSuggestionsResult').innerHTML = results.improvementSuggestions;
+                        }
+                        
+                        // 显示结果容器
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        // 重新应用样式
+                        applyResultStyles();
+                        
+                        console.log('已恢复产品对比的会话结果');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('恢复会话结果时出错:', error);
+                    sessionStorage.removeItem('productComparison_results');
+                }
+                return false;
+            }
+            
+            // 保存结果到会话存储
+            function saveSessionResults(results) {
+                try {
+                    sessionStorage.setItem('productComparison_results', JSON.stringify(results));
+                    console.log('已保存产品对比结果到会话存储');
+                } catch (error) {
+                    console.error('保存会话结果时出错:', error);
+                }
+            }
+            
+            // 应用结果样式的函数
+            function applyResultStyles() {
+                // 美化表格样式
+                const tables = document.querySelectorAll('#resultContainer table');
+                tables.forEach(table => {
+                    table.classList.add('w-full', 'border-collapse');
+                    
+                    // 添加表格边框和样式
+                    const allCells = table.querySelectorAll('th, td');
+                    allCells.forEach(cell => {
+                        cell.classList.add('border', 'border-gray-300', 'px-4', 'py-2');
+                    });
+                    
+                    // 表头样式
+                    const headers = table.querySelectorAll('th');
+                    headers.forEach(header => {
+                        header.classList.add('bg-indigo-50', 'text-indigo-700', 'font-medium');
+                    });
+                    
+                    // 交替行样式
+                    const rows = table.querySelectorAll('tr:not(:first-child)');
+                    rows.forEach((row, index) => {
+                        if (index % 2 === 0) {
+                            row.classList.add('bg-gray-50');
+                        }
+                    });
+                });
+                
+                // 美化列表样式
+                const lists = document.querySelectorAll('#improvementSuggestionsResult ol, #improvementSuggestionsResult ul');
+                lists.forEach(list => {
+                    list.classList.add('list-decimal', 'ml-5', 'space-y-2');
+                    
+                    const items = list.querySelectorAll('li');
+                    items.forEach(item => {
+                        item.classList.add('py-1');
+                    });
+                });
+            }
+            
+            // 初始化：尝试恢复会话结果，如果没有则显示空状态
+            if (!restoreSessionResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }
             
             productComparisonForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -354,12 +442,7 @@
                 processingText.textContent = '正在分析产品信息并生成对比结果，请稍候...';
                 
                 try {
-                    // 记录功能使用并检查积分
-                    const canProceed = await trackFeatureUsage('product_comparison');
-                    if (!canProceed) {
-                        loadingOverlay.classList.add('hidden');
-                        return;
-                    }
+                    // 已由后端统一中间件处理积分，无需前端重复检查，避免扣费两次
                     
                     // 获取表单数据
                     const formData = {
@@ -405,46 +488,23 @@
                         return content;
                     }
                     
-                    document.getElementById('featureComparisonResult').innerHTML = cleanContent(result.data.featureComparison);
-                    document.getElementById('strengthsWeaknessesResult').innerHTML = cleanContent(result.data.strengthsWeaknesses);
-                    document.getElementById('improvementSuggestionsResult').innerHTML = cleanContent(result.data.improvementSuggestions);
+                    const cleanedFeatureComparison = cleanContent(result.data.featureComparison);
+                    const cleanedStrengthsWeaknesses = cleanContent(result.data.strengthsWeaknesses);
+                    const cleanedImprovementSuggestions = cleanContent(result.data.improvementSuggestions);
                     
-                    // 美化表格样式
-                    const tables = document.querySelectorAll('#resultContainer table');
-                    tables.forEach(table => {
-                        table.classList.add('w-full', 'border-collapse');
-                        
-                        // 添加表格边框和样式
-                        const allCells = table.querySelectorAll('th, td');
-                        allCells.forEach(cell => {
-                            cell.classList.add('border', 'border-gray-300', 'px-4', 'py-2');
-                        });
-                        
-                        // 表头样式
-                        const headers = table.querySelectorAll('th');
-                        headers.forEach(header => {
-                            header.classList.add('bg-indigo-50', 'text-indigo-700', 'font-medium');
-                        });
-                        
-                        // 交替行样式
-                        const rows = table.querySelectorAll('tr:not(:first-child)');
-                        rows.forEach((row, index) => {
-                            if (index % 2 === 0) {
-                                row.classList.add('bg-gray-50');
-                            }
-                        });
+                    document.getElementById('featureComparisonResult').innerHTML = cleanedFeatureComparison;
+                    document.getElementById('strengthsWeaknessesResult').innerHTML = cleanedStrengthsWeaknesses;
+                    document.getElementById('improvementSuggestionsResult').innerHTML = cleanedImprovementSuggestions;
+                    
+                    // 保存结果到会话存储
+                    saveSessionResults({
+                        featureComparison: cleanedFeatureComparison,
+                        strengthsWeaknesses: cleanedStrengthsWeaknesses,
+                        improvementSuggestions: cleanedImprovementSuggestions
                     });
                     
-                    // 美化列表样式
-                    const lists = document.querySelectorAll('#improvementSuggestionsResult ol, #improvementSuggestionsResult ul');
-                    lists.forEach(list => {
-                        list.classList.add('list-decimal', 'ml-5', 'space-y-2');
-                        
-                        const items = list.querySelectorAll('li');
-                        items.forEach(item => {
-                            item.classList.add('py-1');
-                        });
-                    });
+                    // 应用样式
+                    applyResultStyles();
                     
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
@@ -524,6 +584,9 @@
             // 创建新对比按钮功能
             const newComparisonButton = document.getElementById('newComparisonButton');
             newComparisonButton.addEventListener('click', () => {
+                // 清除会话存储的结果
+                sessionStorage.removeItem('productComparison_results');
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');

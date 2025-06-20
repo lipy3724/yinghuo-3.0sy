@@ -629,3 +629,36 @@ Authorization: Bearer {管理员TOKEN}
 17. ✅ 亚马逊视频脚本生成
 
 现在所有亚马逊助手功能的英文输出都能正常工作，用户可以根据需要选择合适的输出语言，获得一致的高质量结果。
+
+#### 🐞 Bug Fix - FBA索赔邮件无法点击生成 (2025-06-13)
+
+**问题**: 在 FBA 索赔邮件页面点击「生成索赔邮件」按钮后无任何反应，开发者工具报语法错误 `awaitif`。该错误同时导致前端重复积分扣费的潜在风险。
+
+**原因**: 代码中误将 `await trackFeatureUsage(...)` 写成 `awaitif`，导致脚本解析失败；此外该调用会与后端统一中间件造成双重扣费。
+
+**解决**:
+1. 移除页面中错误的 `trackFeatureUsage` 调用，改由后端统一中间件 `createUnifiedFeatureMiddleware('fba_claim_email')` 负责积分扣除。
+2. 修正 JavaScript 语法错误，页面脚本恢复正常执行。
+
+**影响**:
+- 现在「FBA索赔邮件」功能可以正常使用。
+- 积分只扣除一次，避免双重扣费。
+
+## 部署说明
+
+### 宝塔面板部署
+详细的部署说明请参考 [DEPLOY.md](./DEPLOY.md) 文件。
+
+### 快速部署步骤
+1. 在宝塔面板中安装 Node.js 16.x
+2. 安装 PM2：`npm install pm2 -g`
+3. 上传项目文件到网站目录
+4. 安装依赖：`npm install`
+5. 使用 PM2 启动：`pm2 start ecosystem.config.js`
+6. 配置 Nginx 反向代理
+
+### 环境要求
+- Node.js 16.x 或以上
+- PM2 进程管理工具
+- MySQL 数据库（如果使用）
+- Nginx 反向代理

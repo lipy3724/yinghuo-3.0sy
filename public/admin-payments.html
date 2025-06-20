@@ -72,7 +72,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="min-h-screen bg-gray-100">
     <!-- 移动端导航栏 -->
     <div class="md:hidden bg-white shadow-sm py-3 px-4 flex items-center justify-between">
@@ -472,7 +473,7 @@
                             ${order.order_number}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${order.orderUser ? order.orderUser.username : '未知用户'} (ID: ${order.user_id})
+                            ${order.user ? order.user.username : '已删除用户'} (ID: ${order.user_id})
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             ¥${parseFloat(order.price).toFixed(2)}

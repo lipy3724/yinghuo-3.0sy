@@ -241,7 +241,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -397,9 +398,55 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能：检查是否有保存的结果
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-review-analysis-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 恢复结果显示
+                        document.getElementById('productProsConsResult').innerHTML = formatAnalysisResult(results.productProsCons);
+                        document.getElementById('customerEmotionResult').innerHTML = formatAnalysisResult(results.customerEmotion);
+                        document.getElementById('customerNeedsResult').innerHTML = formatAnalysisResult(results.customerNeeds);
+                        document.getElementById('salesStrategyResult').innerHTML = formatAnalysisResult(results.salesStrategy);
+                        document.getElementById('replyTemplateResult').innerHTML = formatAnalysisResult(results.replyTemplate);
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的评论分析结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-review-analysis-results');
+                    }
+                }
+                return false;
+            }
+            
+            // 保存结果到localStorage
+            function saveResults(results) {
+                try {
+                    sessionStorage.setItem('amazon-review-analysis-results', JSON.stringify(results));
+                    console.log('评论分析结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+            
+            // 清除保存的结果
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-review-analysis-results');
+                console.log('已清除保存的评论分析结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }
             
             // 格式化分析结果，使其更有条理
             function formatAnalysisResult(content) {
@@ -483,15 +530,15 @@
                     document.getElementById('salesStrategyResult').innerHTML = formatAnalysisResult(result.data.salesStrategy);
                     document.getElementById('replyTemplateResult').innerHTML = formatAnalysisResult(result.data.replyTemplate);
                     
+                    // 保存结果到localStorage
+                    saveResults(result.data);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_review_analysis');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -528,6 +575,9 @@
             // 重新分析按钮功能
             const newAnalysisButton = document.getElementById('newAnalysisButton');
             newAnalysisButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');

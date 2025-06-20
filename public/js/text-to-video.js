@@ -623,7 +623,7 @@ function createTaskElement(task) {
                     您的浏览器不支持视频标签
                 </video>
                 <div class="flex justify-end mt-2">
-                    <a href="${task.videoUrl}" class="text-indigo-600 hover:text-indigo-800 text-sm mr-3" download target="_blank">
+                    <a href="/api/video-subtitle-removal/download?url=${encodeURIComponent(task.videoUrl)}" class="text-indigo-600 hover:text-indigo-800 text-sm mr-3" download>
                         <i class="ri-download-2-line mr-1"></i>下载
                     </a>
                     <button class="text-indigo-600 hover:text-indigo-800 text-sm preview-btn mr-3" data-url="${task.videoUrl}">
@@ -912,12 +912,12 @@ function deleteTask(taskId) {
     // 查找任务对象，以获取完整信息
     const taskToDelete = tasks.find(task => task.id === taskId);
     if (!taskToDelete) {
-        console.warn(`未找到ID为 ${taskId} 的任务对象，将尝试直接删除`);
+        console.warn(`未找到ID为 ${taskId} 的任务对象`);
     } else {
         console.log('找到要删除的任务:', taskToDelete);
     }
     
-    // 检查删除操作是否成功执行的函数
+    // 本地删除函数
     const removeTaskLocally = () => {
         // 从任务列表中移除
         const index = tasks.findIndex(task => task.id === taskId);
@@ -946,7 +946,6 @@ function deleteTask(taskId) {
                 `;
             }
             
-            showToast('任务已删除', 'success');
             return true;
         } else {
             console.warn('无法从本地删除：未在任务列表中找到该任务');
@@ -954,83 +953,32 @@ function deleteTask(taskId) {
         }
     };
     
-    // 从控制台日志中获取正确的API端点
-    const apiBaseUrl = '/api/text-to-video';
-    const endpoints = [
-        `${apiBaseUrl}/ta/${taskId}`,        // 根据网络请求日志
-        `${apiBaseUrl}/tasks/${taskId}`,     // 标准格式
-        `${apiBaseUrl}/task/${taskId}`,      // 单数形式
-        `${apiBaseUrl}/delete/${taskId}`,    // 显式删除端点
-        `${apiBaseUrl}/videos/${taskId}`     // 尝试视频资源路径
-    ];
-    
-    // 创建一个Promise来处理本地删除选项
-    const localDeletePromise = new Promise((resolve, reject) => {
-        // 3秒后如果API调用没有成功，就询问是否本地删除
-        setTimeout(() => {
-            if (confirm('删除请求处理时间较长，是否直接从列表中移除任务？')) {
-                if (removeTaskLocally()) {
-                    resolve({ success: true, local: true });
-                } else {
-                    reject(new Error('无法从本地列表中移除任务'));
-                }
-            }
-        }, 3000);
-    });
-    
-    // API删除尝试函数
-    const tryDeleteAPI = async () => {
-        for (let i = 0; i < endpoints.length; i++) {
-            const endpoint = endpoints[i];
-            console.log(`尝试API端点(${i+1}/${endpoints.length}): ${endpoint}`);
-            
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log(`API响应(${endpoint}):`, response.status);
-                
-                if (response.ok) {
-                    // 成功删除
-                    return { success: true, endpoint };
-                }
-                
-                // 尝试读取错误信息
-                try {
-                    const errorData = await response.json();
-                    console.error('删除失败，服务器响应:', errorData);
-                } catch (e) {
-                    console.error('删除失败，无法解析响应:', e);
-                }
-            } catch (error) {
-                console.error(`端点 ${endpoint} 请求失败:`, error);
-            }
+    // 调用后端API删除任务
+    fetch(`/api/text-to-video/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
         }
-        
-        throw new Error('所有API尝试均失败');
-    };
-    
-    // 使用Promise.race同时尝试API删除和本地删除选项
-    Promise.race([tryDeleteAPI(), localDeletePromise])
-    .then(result => {
-        console.log('删除操作结果:', result);
-        
-        if (result.local) {
-            console.log('通过本地选项删除任务');
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
         } else {
-            console.log(`通过API成功删除任务: ${result.endpoint}`);
-            removeTaskLocally(); // 确保本地状态也更新
+            throw new Error(`删除失败: HTTP ${response.status}`);
+        }
+    })
+    .then(result => {
+        console.log('删除成功:', result);
+        if (removeTaskLocally()) {
+            showToast('任务已删除', 'success');
+        } else {
+            showToast('任务已从服务器删除，但本地列表更新失败', 'warning');
         }
     })
     .catch(error => {
-        console.error('删除失败:', error);
-        
-        // 最终失败的处理
+        console.error('删除任务失败:', error);
+        // 如果API调用失败，询问是否本地删除
         if (confirm('删除任务失败，是否从本地列表中移除？')) {
             if (removeTaskLocally()) {
                 showToast('任务已从本地列表移除', 'warning');
@@ -1038,7 +986,7 @@ function deleteTask(taskId) {
                 showToast('无法移除任务', 'error');
             }
         } else {
-            showToast(`删除失败: ${error.message}`, 'error');
+            showToast('删除任务失败', 'error');
         }
     });
 } 

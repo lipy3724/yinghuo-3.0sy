@@ -78,6 +78,7 @@
             position: relative;
             z-index: 5;
             transition: transform 0.2s ease;
+            margin-top: 10px;
         }
         
         /* 添加logo的hover效果 - 简化版 */
@@ -87,6 +88,18 @@
         
         .logo-container:hover .logo-dot {
             box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
+        }
+        
+        /* Logo图片样式 */
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
         }
         
         /* Logo链接样式 - 简化版 */
@@ -100,7 +113,7 @@
         }
         
         .logo-link:hover {
-            background-color: rgba(249, 250, 251, 0.8);
+            background-color: transparent;
         }
         
         .logo-link:after {
@@ -351,6 +364,15 @@
             border-right: 1px solid #e5e7eb;
             z-index: 40;
             box-shadow: 1px 0 5px rgba(0,0,0,0.05);
+            transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        /* 折叠状态下隐藏侧边栏并让主内容全宽 */
+        body.sidebar-collapsed .sidebar {
+            transform: translateX(-100%);
+        }
+        body.sidebar-collapsed .main-content {
+            margin-left: 0 !important;
         }
         
         /* 主内容区域样式 - 为侧边栏留出空间 */
@@ -977,17 +999,56 @@
             transform: translateY(0);
             pointer-events: auto;
         }
+        
+        /* CSS 增加旋转动画 */
+        #sidebar-toggle-btn i{
+            transition: transform 0.35s cubic-bezier(0.22,0.61,0.36,1);
+        }
+        #sidebar-toggle-btn.collapsed i{
+            transform: rotate(180deg);
+        }
+        
+        /* 侧边栏折叠按钮主样式 */
+        #sidebar-toggle-btn {
+            position: fixed;
+            top: 50%;
+            left: 16rem;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-left: none;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: left 0.35s cubic-bezier(0.22,0.61,0.36,1), background 0.2s ease, box-shadow 0.2s ease;
+            z-index: 60;
+        }
+        #sidebar-toggle-btn:hover {
+            background: #f3f4f6;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.06);
+        }
+        body.sidebar-collapsed #sidebar-toggle-btn {
+            left: 0;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
+            <!-- 侧边栏折叠/展开按钮 -->
+            <button id="sidebar-toggle-nav" class="hidden">
+                <i class="ri-menu-fold-line text-lg"></i>
+            </button>
             <a href="#" class="flex items-center logo-link">
                 <div class="logo-container">
-                <span class="font-bold text-2xl text-indigo-600 mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
                 </div>
-                <span class="logo-subtitle">Yinghuo.Ai</span>
             </a>
             <!-- 添加顶部导航功能菜单 -->
             <div class="ml-8 flex items-center space-x-6">
@@ -1122,6 +1183,10 @@
 
     <!-- 侧边栏 -->
     <div class="sidebar">
+        <!-- 全局折叠按钮 -->
+        <button id="sidebar-toggle-btn-inner" style="display:none">
+            <i class="ri-menu-fold-line text-lg text-gray-600"></i>
+        </button>
         <div class="py-4 px-3">
             <ul class="space-y-2">
                 <!-- 添加快捷访问按钮 -->
@@ -1142,6 +1207,11 @@
             </ul>
         </div>
     </div>
+
+    <!-- 折叠 / 展开侧边栏按钮（紧贴侧边栏右侧） -->
+    <button id="sidebar-toggle-btn">
+        <i id="toggle-icon" class="ri-arrow-left-s-line text-xl text-gray-600"></i>
+    </button>
 
     <!-- 快捷访问下拉菜单 -->
     <div id="quick-access-dropdown" class="hidden">
@@ -1164,6 +1234,10 @@
                         图像处理
                     </h4>
                     <div class="grid grid-cols-1 gap-1">
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="场景图生成" data-icon="ri-landscape-line" data-bg="bg-emerald-100" data-color="text-emerald-500" data-url="/scene-generator.html">
+                            <span>场景图生成</span>
+                        </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="图像智能消除" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/image-removal.html">
                         <span>图像智能消除</span>
@@ -1275,7 +1349,7 @@
                         <span>视频数字人</span>
                         </label>
                         <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="视频去除字幕" data-icon="ri-subtitles-off-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/video-subtitle-remover.html">
+                            <input type="checkbox" data-feature="视频去除字幕" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/video-subtitle-remover.html">
                         <span>视频去除字幕</span>
                         </label>
                     </div>
@@ -2161,6 +2235,18 @@
                 if (saved) {
                     try {
                         selectedFeatures = JSON.parse(saved);
+                        // 同步最新的icon / bg / color（解决改图标后旧记录不更新的问题）
+                        selectedFeatures = selectedFeatures.map(sf => {
+                            const cb = document.querySelector(`.feature-checkbox-item input[data-feature="${sf.name}"]`);
+                            if (cb) {
+                                const { icon, bg, color } = cb.dataset;
+                                // 如果数据发生变化，则更新
+                                if (icon && sf.icon !== icon) sf.icon = icon;
+                                if (bg && sf.bg !== bg) sf.bg = bg;
+                                if (color && sf.color !== color) sf.color = color;
+                            }
+                            return sf;
+                        });
                         updateSelectedCount();
                         renderSidebarFeatures();
                         updateCheckboxes();
@@ -2409,15 +2495,22 @@
             // 页面加载时初始化快捷访问功能
             loadSelectedFeatures();
             
+            // === 侧边栏折叠/展开逻辑 ===
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const bodyEl = document.body;
+            sidebarToggleBtn.addEventListener('click', () => {
+                bodyEl.classList.toggle('sidebar-collapsed');
+                sidebarToggleBtn.classList.toggle('collapsed');
+            });
         });
         
-        // 检查用户权限并重定向
+        // 检查用户权限并在新窗口中打开
         async function checkAuthAndRedirect(url) {
             // 如果有统一的auth-check.js提供的checkAuth函数，优先使用它
             if (typeof window.checkAuth === 'function') {
                 const isAuthenticated = await window.checkAuth(false);
                 if (isAuthenticated) {
-                    window.location.href = url;
+                    window.open(url, '_blank'); // 在新窗口中打开
                 } else {
                     window.location.href = '/login.html?redirect=' + encodeURIComponent(url);
                 }
@@ -2447,11 +2540,11 @@
                         return;
                     }
                     
-                    // 会话有效，重定向到请求的页面
-                    window.location.href = url;
+                    // 会话有效，在新窗口中打开请求的页面
+                    window.open(url, '_blank');
                 } catch (error) {
                     console.error('验证会话时出错:', error);
-                    window.location.href = url;
+                    window.open(url, '_blank'); // 出错时也在新窗口中打开
                 }
             } else {
                 window.location.href = '/login.html?redirect=' + encodeURIComponent(url);

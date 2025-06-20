@@ -21,14 +21,17 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         .navbar {
-            height: 60px;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 50;
+            height: 60px;
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            z-index: 50;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .main-content {
@@ -307,41 +310,15 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body>
     <!-- 导航栏 -->
-    <nav class="navbar flex items-center justify-between px-4">
-        <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
-            </a>
-        </div>
-        <div class="flex items-center space-x-4">
-            <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center">
-                <i class="ri-home-line mr-1"></i>
-                <span>首页</span>
-            </a>
-            <div id="auth-buttons">
-                <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                    登录/注册
-                </a>
-            </div>
-            <!-- 用户已登录时显示用户信息 -->
-            <div id="user-info" class="hidden relative">
-                <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-gray-900">
-                    <i class="ri-user-3-line mr-1 text-lg"></i>
-                    <span id="username-display">用户名</span>
-                    <i class="ri-arrow-down-s-line ml-1"></i>
-                </button>
-                <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">我的账户</a>
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div class="navbar">
+        <h1 class="text-xl font-bold text-indigo-600">
+            <i class="ri-tools-line mr-2"></i>选品的改款分析和建议
+        </h1>
+    </div>
 
     <!-- 主内容区 -->
     <div class="main-content">
@@ -477,76 +454,8 @@
     </div>
 
     <script>
-        // 用户认证相关
-        function checkAuthStatus() {
-            const authToken = localStorage.getItem('authToken');
-            const userInfo = localStorage.getItem('user');
-            const loginBtn = document.getElementById('login-btn');
-            const authButtons = document.getElementById('auth-buttons');
-            const userInfoElement = document.getElementById('user-info');
-            
-            if (authToken && userInfo) {
-                // 用户已登录
-                try {
-                    const user = JSON.parse(userInfo);
-                    document.getElementById('username-display').textContent = user.username;
-                    
-                    // 显示用户信息，隐藏登录按钮
-                    if (authButtons) authButtons.classList.add('hidden');
-                    if (userInfoElement) userInfoElement.classList.remove('hidden');
-                } catch (e) {
-                    console.error('解析用户信息出错:', e);
-                    // 清除无效的存储
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
-                }
-            } else {
-                // 用户未登录
-                if (authButtons) authButtons.classList.remove('hidden');
-                if (userInfoElement) userInfoElement.classList.add('hidden');
-            }
-        }
-        
-        // 用户菜单切换
-        const userMenuBtn = document.getElementById('user-menu-btn');
-        const userDropdown = document.getElementById('user-dropdown');
-        
-        if (userMenuBtn) {
-            userMenuBtn.addEventListener('click', () => {
-                userDropdown.classList.toggle('hidden');
-            });
-        
-            // 点击菜单外区域关闭下拉菜单
-            document.addEventListener('click', (event) => {
-                if (!userMenuBtn.contains(event.target) && !userDropdown.contains(event.target)) {
-                    userDropdown.classList.add('hidden');
-                }
-            });
-        }
-        
-        // 处理退出登录
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                // 清除认证信息
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('user');
-                // 更新界面
-                checkAuthStatus();
-                // 跳转到首页
-                window.location.href = '/';
-            });
-        }
-
-        // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
-            
             // 特性追踪 - 使用已加载的feature-tracker.js
-            if (typeof trackFeatureUsage === 'function') {
-                trackFeatureUsage('page_view', 'product_improvement_analysis');
-            }
         });
         
         // 复制文本到剪贴板
@@ -882,6 +791,79 @@
             return String(value);
         }
 
+        // 智能结果管理：页面加载时尝试恢复之前的结果
+        function restoreSessionResults() {
+            try {
+                const savedResults = sessionStorage.getItem('productImprovement_results');
+                if (savedResults) {
+                    const results = JSON.parse(savedResults);
+                    
+                    // 恢复结果内容
+                    if (results.productAnalysis) {
+                        document.getElementById('productAnalysis').innerHTML = results.productAnalysis.html;
+                        document.getElementById('productAnalysis').setAttribute('data-raw-text', results.productAnalysis.rawText);
+                    }
+                    if (results.userNeeds) {
+                        document.getElementById('userNeeds').innerHTML = results.userNeeds.html;
+                        document.getElementById('userNeeds').setAttribute('data-raw-text', results.userNeeds.rawText);
+                    }
+                    if (results.competitiveAnalysis) {
+                        document.getElementById('competitiveAnalysis').innerHTML = results.competitiveAnalysis.html;
+                        document.getElementById('competitiveAnalysis').setAttribute('data-raw-text', results.competitiveAnalysis.rawText);
+                    }
+                    if (results.improvementDirections) {
+                        document.getElementById('improvementDirections').innerHTML = results.improvementDirections.html;
+                        document.getElementById('improvementDirections').setAttribute('data-raw-text', results.improvementDirections.rawText);
+                    }
+                    if (results.specificSuggestions) {
+                        document.getElementById('specificSuggestions').innerHTML = results.specificSuggestions.html;
+                        document.getElementById('specificSuggestions').setAttribute('data-raw-text', results.specificSuggestions.rawText);
+                    }
+                    
+                    // 显示结果容器
+                    document.getElementById('initial-content').classList.add('hidden');
+                    document.getElementById('loading-content').classList.add('hidden');
+                    document.getElementById('error-content').classList.add('hidden');
+                    document.getElementById('result-content').classList.remove('hidden');
+                    
+                    console.log('已恢复选品改款分析的会话结果');
+                    return true;
+                }
+            } catch (error) {
+                console.error('恢复会话结果时出错:', error);
+                sessionStorage.removeItem('productImprovement_results');
+            }
+            return false;
+        }
+        
+        // 保存结果到会话存储
+        function saveSessionResults(data) {
+            try {
+                const resultsToSave = {};
+                const fields = ['productAnalysis', 'userNeeds', 'competitiveAnalysis', 'improvementDirections', 'specificSuggestions'];
+                
+                fields.forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element) {
+                        resultsToSave[field] = {
+                            html: element.innerHTML,
+                            rawText: element.getAttribute('data-raw-text') || element.textContent
+                        };
+                    }
+                });
+                
+                sessionStorage.setItem('productImprovement_results', JSON.stringify(resultsToSave));
+                console.log('已保存选品改款分析结果到会话存储');
+            } catch (error) {
+                console.error('保存会话结果时出错:', error);
+            }
+        }
+        
+        // 页面加载时尝试恢复会话结果
+        document.addEventListener('DOMContentLoaded', function() {
+            restoreSessionResults();
+        });
+
         // 显示结果
         function showResult(data) {
             document.getElementById('initial-content').classList.add('hidden');
@@ -1040,10 +1022,10 @@
             document.getElementById('copy-all-btn').innerHTML = 
                 `<i class="ri-file-copy-line mr-2"></i> ${isChinese ? '复制全部内容' : 'Copy All Content'}`;
             
+            // 保存结果到会话存储
+            saveSessionResults(data);
+            
             // 特性追踪 - 使用已加载的feature-tracker.js
-            if (typeof trackFeatureUsage === 'function') {
-                trackFeatureUsage('product_improvement_analysis');
-            }
         }
 
         // 显示错误

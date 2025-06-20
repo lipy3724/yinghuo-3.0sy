@@ -178,7 +178,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -299,9 +300,120 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能：检查是否有保存的结果
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-brand-info-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 清空品牌信息容器
+                        brandInfoContainer.innerHTML = '';
+                        
+                        // 恢复品牌信息显示
+                        if (results.data) {
+                            const brandCard = document.createElement('div');
+                            brandCard.className = 'brand-info-card';
+                            
+                            const brandContent = document.createElement('div');
+                            
+                            // 安全地处理文本内容
+                            const safeTextWithBreaks = (text) => {
+                                if (text === null || text === undefined) return '';
+                                if (typeof text === 'object') {
+                                    try {
+                                        if (Array.isArray(text)) {
+                                            return text.map((item, index) => {
+                                                return typeof item === 'object' ? 
+                                                    `${index + 1}. ${JSON.stringify(item, null, 2)}` : 
+                                                    `${index + 1}. ${item}`;
+                                            }).join('<br><br>');
+                                        }
+                                        const formattedText = JSON.stringify(text, null, 2)
+                                            .replace(/^\{|\}$/g, '')
+                                            .replace(/",/g, '"<br>')
+                                            .replace(/"/g, '')
+                                            .replace(/:/g, ': ');
+                                        return formattedText;
+                                    } catch (e) {
+                                        return '无法显示对象内容';
+                                    }
+                                }
+                                const textStr = typeof text === 'string' ? text : String(text);
+                                return textStr.replace(/\n/g, '<br>');
+                            };
+                            
+                            // 添加品牌标题
+                            const titleElement = document.createElement('h3');
+                            titleElement.className = 'font-bold text-xl text-indigo-700 mb-4';
+                            titleElement.textContent = results.data.brandName || results.formData?.brandName || '品牌信息';
+                            
+                            // 恢复各个信息部分
+                            const sections = [
+                                { key: 'foundingInfo', title: '品牌成立信息', titleEn: 'Founding Information' },
+                                { key: 'background', title: '品牌背景和特点', titleEn: 'Brand Background & Characteristics' },
+                                { key: 'marketPosition', title: '行业地位', titleEn: 'Market Position' },
+                                { key: 'topProducts', title: '畅销产品', titleEn: 'Top-Selling Products' },
+                                { key: 'salesData', title: '销售数据', titleEn: 'Sales Data' },
+                                { key: 'brandEvaluation', title: '品牌评价', titleEn: 'Brand Evaluation' }
+                            ];
+                            
+                            sections.forEach(section => {
+                                if (results.data[section.key]) {
+                                    const sectionTitle = document.createElement('h4');
+                                    sectionTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
+                                    sectionTitle.textContent = section.title;
+                                    
+                                    const sectionContent = document.createElement('div');
+                                    sectionContent.className = 'text-gray-700 mb-4';
+                                    sectionContent.innerHTML = safeTextWithBreaks(results.data[section.key]);
+                                    
+                                    brandContent.appendChild(sectionTitle);
+                                    brandContent.appendChild(sectionContent);
+                                }
+                            });
+                            
+                            brandCard.appendChild(titleElement);
+                            brandCard.appendChild(brandContent);
+                            brandInfoContainer.appendChild(brandCard);
+                        }
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的品牌信息结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-brand-info-results');
+                    }
+                }
+                return false;
+            }
+            
+            // 保存结果到localStorage
+            function saveResults(results, formData) {
+                try {
+                    const dataToSave = { ...results, formData };
+                    sessionStorage.setItem('amazon-brand-info-results', JSON.stringify(dataToSave));
+                    console.log('品牌信息结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+            
+            // 清除保存的结果
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-brand-info-results');
+                console.log('已清除保存的品牌信息结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }// 监听浏览器标签页关闭或导航离开
             
             // 检查用户是否已登录
             function checkAuth() {
@@ -498,6 +610,9 @@
                         brandInfoContainer.appendChild(noBrandInfoMsg);
                     }
                     
+                    // 保存结果到localStorage
+                    saveResults(result, formData);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
@@ -509,9 +624,6 @@
                     }
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_brand_info');
-                    }
                     
                 } catch (error) {
                     console.error('收集品牌信息出错:', error);
@@ -574,6 +686,9 @@
             // 重新生成按钮功能
             const regenerateButton = document.getElementById('regenerateButton');
             regenerateButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 直接重新提交表单
                 brandInfoForm.dispatchEvent(new Event('submit'));
             });

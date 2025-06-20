@@ -17,24 +17,29 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        @keyframes firefly-glow {
-            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
-            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
-            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        /* Logo图片样式 */
+        .logo-image {
+            height: 92px; /* 增大logo高度 */
+            width: auto;
+            transition: all 0.2s ease;
+            margin-top: 6px; /* 向下移动一点 */
         }
-        .logo-text {
-            animation: firefly-glow 3s infinite;
-        }
-        .logo-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #6366f1;
-            border-radius: 50%;
-            margin-left: 2px;
-            margin-right: 4px;
+        /* Logo容器样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
             position: relative;
-            top: -2px;
+            z-index: 5;
+            height: 100%; /* 让容器高度100%适应导航栏 */
+        }
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        /* 导航栏固定高度 */
+        .nav-fixed-height {
+            height: 60px; /* 固定导航栏高度 */
+            display: flex;
+            align-items: center;
         }
         /* 自定义滚动条 */
         ::-webkit-scrollbar {
@@ -144,53 +149,24 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
-    <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
-        <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
-                        </a>
+    <!-- 导航栏 - 固定高度 -->
+    <header class="bg-white shadow-sm py-0 px-6 nav-fixed-height flex items-center justify-between border-b border-gray-200">
+        <div class="flex items-center h-full">
+            <a href="/" class="flex items-center h-full">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
+            </a>
         </div>
         <div class="flex items-center space-x-6">
-            <div class="relative">
-                <button class="text-gray-600 hover:text-gray-900 flex items-center" id="credits-menu-btn">
-                    <i class="ri-coin-line mr-1"></i>
-                    <span>积分中心</span>
-                    <i class="ri-arrow-down-s-line ml-1"></i>
-                </button>
-                <div id="credits-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="/credits-usage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分使用情况</a>
-                </div>
-            </div>
-            <a href="/download-center.html" class="text-gray-600 hover:text-gray-900 flex items-center">
-                <i class="ri-download-2-line mr-1"></i>
-                <span>下载中心</span>
-                        </a>
-            <!-- 用户未登录时显示登录注册按钮 -->
-            <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                登录注册
-                        </a>
-            <!-- 用户已登录时显示用户信息 -->
-            <div id="user-info" class="hidden relative">
-                <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-gray-900">
-                    <i class="ri-user-3-line mr-1 text-lg"></i>
-                    <span id="username-display">用户名</span>
-                    <i class="ri-arrow-down-s-line ml-1"></i>
-                </button>
-                <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">我的账户</a>
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
-            </div>
+            <!-- 删除积分中心、下载中心按钮和登录注册按钮 -->
         </div>
-        </div>
-    </nav>
+    </header>
 
-        <!-- 主内容区域 -->
+    <!-- 主内容区域 -->
     <div class="container mx-auto p-5 overflow-auto">
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-2xl font-bold">下载中心</h1>
@@ -250,6 +226,30 @@
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="模拟试衣">
                         模拟试衣
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="智能扩图">
+                        智能扩图
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="模糊图片变清晰">
+                        模糊图片变清晰
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像上色">
+                        图像上色
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="全局风格化">
+                        全局风格化
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="垫图">
+                        垫图
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="局部重绘">
+                        局部重绘
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="智能服饰分割">
+                        智能服饰分割
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="文生图片">
+                        文生图片
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="other">
                         其他处理
@@ -744,7 +744,51 @@
             
             const processedImageUrl = item.processedImageUrl || '';
             const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : '未知时间';
-            const processType = item.processType || '图片处理';
+            
+            // 根据processType显示对应的功能名称
+            let processType = item.processType || '图片处理';
+            
+            // 将功能代码映射为可读的中文名称
+            switch (processType) {
+                case 'IMAGE_EXPANSION':
+                    processType = '智能扩图';
+                    break;
+                case 'IMAGE_SHARPENING':
+                    processType = '模糊图片变清晰';
+                    break;
+                case 'IMAGE_COLORIZATION':
+                    processType = '图像上色';
+                    break;
+                case 'GLOBAL_STYLE':
+                case 'global-style':
+                    processType = '全局风格化';
+                    break;
+                case 'DIANTU':
+                    processType = '垫图';
+                    break;
+                case 'LOCAL_REDRAW':
+                    processType = '局部重绘';
+                    break;
+                case 'CLOTH_SEGMENTATION':
+                    processType = '智能服饰分割';
+                    break;
+                case 'TEXT_TO_IMAGE':
+                    processType = '文生图片';
+                    break;
+                // 保留其他已有的功能名称
+                case '图片翻译':
+                case '营销图生成':
+                case '商品换背景':
+                case '场景图生成':
+                case '图像智能消除':
+                case '模特换肤':
+                case '模拟试衣':
+                case '全局风格化':
+                    break;
+                default:
+                    // 如果是其他未知类型，保持原样
+                    break;
+            }
             
             // 检查图片是否被选中
             const isSelected = selectedItems.has(item.id.toString());
@@ -837,7 +881,51 @@
             
             const processedImageUrl = item.processedImageUrl || '';
             const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : '未知时间';
-            const processType = item.processType || '图片处理';
+            
+            // 根据processType显示对应的功能名称
+            let processType = item.processType || '图片处理';
+            
+            // 将功能代码映射为可读的中文名称
+            switch (processType) {
+                case 'IMAGE_EXPANSION':
+                    processType = '智能扩图';
+                    break;
+                case 'IMAGE_SHARPENING':
+                    processType = '模糊图片变清晰';
+                    break;
+                case 'IMAGE_COLORIZATION':
+                    processType = '图像上色';
+                    break;
+                case 'GLOBAL_STYLE':
+                case 'global-style':
+                    processType = '全局风格化';
+                    break;
+                case 'DIANTU':
+                    processType = '垫图';
+                    break;
+                case 'LOCAL_REDRAW':
+                    processType = '局部重绘';
+                    break;
+                case 'CLOTH_SEGMENTATION':
+                    processType = '智能服饰分割';
+                    break;
+                case 'TEXT_TO_IMAGE':
+                    processType = '文生图片';
+                    break;
+                // 保留其他已有的功能名称
+                case '图片翻译':
+                case '营销图生成':
+                case '商品换背景':
+                case '场景图生成':
+                case '图像智能消除':
+                case '模特换肤':
+                case '模拟试衣':
+                case '全局风格化':
+                    break;
+                default:
+                    // 如果是其他未知类型，保持原样
+                    break;
+            }
             
             // 检查图片是否被选中
             const isSelected = selectedItems.has(item.id.toString());
@@ -932,9 +1020,52 @@
             if (type === 'all') {
                 renderImages();
             } else {
-                const filtered = allImages.filter(item => 
-                    item.processType && (item.processType === type || type === 'other' && !['图片翻译', '营销图生成', '商品换背景', '场景图生成', '图像智能消除', '模特换肤', '模拟试衣'].includes(item.processType))
-                );
+                const filtered = allImages.filter(item => {
+                    // 首先将内部处理类型代码转换为对应的显示名称
+                    let displayType = item.processType || '';
+                    switch (displayType) {
+                        case 'IMAGE_EXPANSION':
+                            displayType = '智能扩图';
+                            break;
+                        case 'IMAGE_SHARPENING':
+                            displayType = '模糊图片变清晰';
+                            break;
+                        case 'IMAGE_COLORIZATION':
+                            displayType = '图像上色';
+                            break;
+                        case 'GLOBAL_STYLE':
+                        case 'global-style':
+                            displayType = '全局风格化';
+                            break;
+                        case 'DIANTU':
+                            displayType = '垫图';
+                            break;
+                        case 'LOCAL_REDRAW':
+                            displayType = '局部重绘';
+                            break;
+                        case 'CLOTH_SEGMENTATION':
+                            displayType = '智能服饰分割';
+                            break;
+                        case 'TEXT_TO_IMAGE':
+                            displayType = '文生图片';
+                            break;
+                    }
+                    
+                    // 然后根据转换后的显示名称进行过滤
+                    if (type === 'other') {
+                        // 如果是"其他"类别，则排除所有已知类型
+                        const knownTypes = [
+                            '图片翻译', '营销图生成', '商品换背景', '场景图生成', 
+                            '图像智能消除', '模特换肤', '模拟试衣', '智能扩图',
+                            '模糊图片变清晰', '图像上色', '全局风格化', '垫图',
+                            '局部重绘', '智能服饰分割', '文生图片'
+                        ];
+                        return !knownTypes.includes(displayType);
+                    } else {
+                        // 否则，匹配指定类型
+                        return displayType === type;
+                    }
+                });
                 renderImages(filtered);
             }
         }
@@ -999,7 +1130,51 @@
             const processedImageUrl = item.processedImageUrl || '';
             const originalImageUrl = item.originalImageUrl || '';
             const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : '未知时间';
-            const processType = item.processType || '图片处理';
+            
+            // 根据processType显示对应的功能名称
+            let processType = item.processType || '图片处理';
+            
+            // 将功能代码映射为可读的中文名称
+            switch (processType) {
+                case 'IMAGE_EXPANSION':
+                    processType = '智能扩图';
+                    break;
+                case 'IMAGE_SHARPENING':
+                    processType = '模糊图片变清晰';
+                    break;
+                case 'IMAGE_COLORIZATION':
+                    processType = '图像上色';
+                    break;
+                case 'GLOBAL_STYLE':
+                case 'global-style':
+                    processType = '全局风格化';
+                    break;
+                case 'DIANTU':
+                    processType = '垫图';
+                    break;
+                case 'LOCAL_REDRAW':
+                    processType = '局部重绘';
+                    break;
+                case 'CLOTH_SEGMENTATION':
+                    processType = '智能服饰分割';
+                    break;
+                case 'TEXT_TO_IMAGE':
+                    processType = '文生图片';
+                    break;
+                // 保留其他已有的功能名称
+                case '图片翻译':
+                case '营销图生成':
+                case '商品换背景':
+                case '场景图生成':
+                case '图像智能消除':
+                case '模特换肤':
+                case '模拟试衣':
+                case '全局风格化':
+                    break;
+                default:
+                    // 如果是其他未知类型，保持原样
+                    break;
+            }
             
             // 计算剩余时间
             const createdAt = new Date(item.createdAt || Date.now());

@@ -154,6 +154,7 @@
             max-width: 42rem;
             margin: 0 auto;
             padding: 2rem 1.5rem;
+            margin-top: 60px;
         }
         
         /* 动画效果 */
@@ -168,41 +169,79 @@
         
         /* 导航栏样式优化 */
         .navbar {
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
-            padding: 1rem 1.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
-        .logo-text {
-            font-weight: 600;
-            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-        
-        .logo-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
-            border-radius: 50%;
-            margin-left: 2px;
-            margin-right: 2px;
+        /* Logo样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
             position: relative;
-            top: -1px;
+            z-index: 5;
+            transition: transform 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        .logo-link {
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-link:hover {
+            background-color: transparent;
+        }
+        
+        .logo-link:after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
+            transform: translateX(-50%);
+            transition: width 0.2s ease;
+            opacity: 0;
+        }
+        
+        .logo-link:hover:after {
+            width: 60%;
+            opacity: 0.6;
         }
     </style>
 
     <link rel="icon" href="/images/favicon.png" type="image/png"></head>
 <body>
     <!-- 导航栏 -->
-    <nav class="navbar flex items-center justify-between">
+    <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
-            <a href="/" class="flex items-center group">
-                <span class="font-bold text-2xl mr-1 logo-text">萤火<span class="logo-dot"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1 transition-colors group-hover:text-indigo-500">Yinghuo.Ai</span>
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
         <div class="flex items-center space-x-6">

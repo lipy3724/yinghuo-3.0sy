@@ -168,7 +168,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -323,9 +324,51 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-customer-email-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 恢复结果显示
+                        document.getElementById('customerEmotionResult').innerHTML = results.customerEmotion;
+                        document.getElementById('emailReplyResult').innerHTML = results.emailReply;
+                        document.getElementById('suggestionResult').innerHTML = results.suggestion;
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的客户邮件结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-customer-email-results');
+                    }
+                }
+                return false;
+            }
+
+            function saveResults(data) {
+                try {
+                    sessionStorage.setItem('amazon-customer-email-results', JSON.stringify(data));
+                    console.log('客户邮件结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-customer-email-results');
+                console.log('已清除保存的客户邮件结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }// 监听浏览器标签页关闭或导航离开
             
             customerEmailForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -364,15 +407,15 @@
                     document.getElementById('emailReplyResult').innerHTML = result.data.emailReply;
                     document.getElementById('suggestionResult').innerHTML = result.data.suggestion;
                     
+                    // 保存结果
+                    saveResults(result.data);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_customer_email');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -409,6 +452,9 @@
             // 重新撰写按钮功能
             const newEmailButton = document.getElementById('newEmailButton');
             newEmailButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');

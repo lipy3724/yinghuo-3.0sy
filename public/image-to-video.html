@@ -153,16 +153,43 @@
             font-style: italic;
             margin-left: 1rem;
         }
+
+        /* Logo图片样式 */
+        .logo-image {
+            height: 92px; /* 增大logo高度 */
+            width: auto;
+            transition: all 0.2s ease;
+            margin-top: 6px; /* 向下移动一点 */
+        }
+        /* Logo容器样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            height: 100%; /* 让容器高度100%适应导航栏 */
+        }
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        /* 导航栏固定高度 */
+        .nav-fixed-height {
+            height: 60px; /* 固定导航栏高度 */
+            display: flex;
+            align-items: center;
+        }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
-        <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1">萤火<span class="inline-block w-2 h-2 bg-indigo-600 rounded-full"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+    <!-- 导航栏 - 固定高度 -->
+    <header class="bg-white shadow-sm py-0 px-6 nav-fixed-height flex items-center justify-between">
+        <div class="flex items-center h-full">
+            <a href="/" class="flex items-center h-full">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
         <div class="flex items-center space-x-4">
@@ -185,7 +212,7 @@
                 </a>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- 主内容区域 -->
     <div class="main-container">
@@ -245,6 +272,10 @@
                         <div id="output-video-container" class="h-64 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                             <div id="video-wrapper" class="video-wrapper hidden w-full h-full relative">
                                 <video id="output-video" class="w-full h-full object-contain" controls></video>
+                                <button id="download-btn" class="hidden absolute top-2 right-2 bg-indigo-600 text-white px-3 py-1 rounded-md flex items-center text-sm hover:bg-indigo-700">
+                                    <i class="ri-download-2-line mr-1"></i>
+                                    下载
+                                </button>
                             </div>
                             <p id="output-video-placeholder" class="text-gray-500 text-center px-4">视频生成后将在这里显示</p>
                         </div>

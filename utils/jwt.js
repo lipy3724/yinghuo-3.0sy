@@ -10,12 +10,19 @@ const JWT_EXPIRE = process.env.JWT_EXPIRE || '30d';
 /**
  * 生成JWT令牌并记录会话
  * @param {number} id 用户ID
- * @param {object} req 请求对象，用于获取设备信息
+ * @param {object|string} req 请求对象，用于获取设备信息；或者直接传入过期时间字符串
  * @param {string} expiresIn 过期时间，例如：'30d'，'1h'，'30m'等
  * @param {boolean} isAdmin 是否为管理员登录
  * @returns {object} 包含token和过期时间的对象
  */
 const generateToken = async (id, req = null, expiresIn = JWT_EXPIRE, isAdmin = false) => {
+  // 处理参数，支持直接传入过期时间作为第二个参数
+  if (typeof req === 'string') {
+    isAdmin = expiresIn || false;
+    expiresIn = req;
+    req = null;
+  }
+
   // 生成JWT令牌
   const token = jwt.sign({ id, isAdmin }, JWT_SECRET, {
     expiresIn: expiresIn
@@ -52,14 +59,26 @@ const generateToken = async (id, req = null, expiresIn = JWT_EXPIRE, isAdmin = f
   }
 
   // 如果提供了请求对象，记录会话信息
-  if (req) {
+  if (req && typeof req === 'object') {
     try {
       let deviceInfo = 'Unknown Device';
-      let ipAddress = req.ip || req.connection.remoteAddress;
-      let userAgent = req.headers['user-agent'] || 'Unknown';
+      let ipAddress = 'Unknown';
+      let userAgent = 'Unknown';
+
+      // 安全地获取IP地址
+      if (req.ip) {
+        ipAddress = req.ip;
+      } else if (req.connection && req.connection.remoteAddress) {
+        ipAddress = req.connection.remoteAddress;
+      }
+
+      // 安全地获取User-Agent
+      if (req.headers && req.headers['user-agent']) {
+        userAgent = req.headers['user-agent'];
+      }
 
       // 尝试从User-Agent获取设备信息
-      if (userAgent) {
+      if (userAgent && userAgent !== 'Unknown') {
         // 检测设备类型
         if (userAgent.match(/Android/i)) {
           deviceInfo = 'Android Device';
@@ -78,7 +97,7 @@ const generateToken = async (id, req = null, expiresIn = JWT_EXPIRE, isAdmin = f
       // 使用userAgent前128个字符和IP地址生成指纹
       const deviceFingerprint = require('crypto')
         .createHash('md5')
-        .update(userAgent.substring(0, 128) + ipAddress + (isAdmin ? '-admin' : '-user'))
+        .update((userAgent.substring(0, 128) || '') + ipAddress + (isAdmin ? '-admin' : '-user'))
         .digest('hex');
       
       // 查找用户现有的同设备会话
@@ -97,7 +116,7 @@ const generateToken = async (id, req = null, expiresIn = JWT_EXPIRE, isAdmin = f
         // 为每个会话计算设备指纹
         const sessionFingerprint = require('crypto')
           .createHash('md5')
-          .update(session.userAgent.substring(0, 128) + session.ipAddress + (isAdmin ? '-admin' : '-user'))
+          .update((session.userAgent.substring(0, 128) || '') + session.ipAddress + (isAdmin ? '-admin' : '-user'))
           .digest('hex');
         
         // 如果指纹匹配，表示是同一设备

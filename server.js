@@ -244,6 +244,8 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('X-Frame-Options', 'ALLOWALL');
   res.header('Content-Security-Policy', "frame-ancestors * 'self'");
+  // 允许网页及其 iframe 使用陀螺仪和加速度计传感器，避免浏览器权限策略报错
+  res.header('Permissions-Policy', 'accelerometer=(self \"https://manekenai-editor.aidc-ai.com\"), gyroscope=(self \"https://manekenai-editor.aidc-ai.com\")');
   
   // 处理OPTIONS请求
   if (req.method === 'OPTIONS') {
@@ -494,6 +496,9 @@ app.post('/api/multi-image-to-video', protect, createUnifiedFeatureMiddleware('M
             };
         }
         
+        // 计算最终积分：免费使用时为 0
+        const creditCostFinal = isFree ? 0 : creditCost;
+        
         // 保存任务信息到全局变量，用于积分统计
         if (!global.multiImageToVideoTasks) {
             global.multiImageToVideoTasks = {};
@@ -502,8 +507,8 @@ app.post('/api/multi-image-to-video', protect, createUnifiedFeatureMiddleware('M
         // 记录用户的任务信息
         global.multiImageToVideoTasks[taskId] = {
             userId: userId,
-            creditCost: creditCost,
-            hasChargedCredits: true,
+            creditCost: creditCostFinal,
+            hasChargedCredits: !isFree,
             timestamp: new Date(),
             imageCount: images.length,
             duration: duration || 10,
@@ -512,14 +517,14 @@ app.post('/api/multi-image-to-video', protect, createUnifiedFeatureMiddleware('M
             isFree: isFree
         };
         
-        console.log(`多图转视频任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCost}, 是否免费=${isFree}`);
+        console.log(`多图转视频任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCostFinal}, 是否免费=${isFree}`);
         
         // 使用统一中间件的saveTaskDetails函数保存任务详情
         try {
             const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
             await saveTaskDetails(req.featureUsage.usage, {
                 taskId: taskId,
-                creditCost: creditCost,
+                creditCost: creditCostFinal,
                 isFree: isFree,
                 extraData: {
                     description: '多图转视频',
@@ -755,6 +760,69 @@ app.use('/api/global-style', globalStyleRoutes);
 // 添加亚马逊Listing路由
 app.use('/api/amazon-listing', amazonListingRoutes);
 
+// 视频风格重绘下载代理（必须在404处理之前注册）
+app.get('/api/video-style-repaint/download', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).send('缺少 url 参数');
+  try {
+    const axios = require('axios');
+    const response = await axios.get(url, { responseType: 'stream' });
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'attachment; filename="video-style-repaint.mp4"');
+    response.data.pipe(res);
+  } catch (err) {
+    console.error('[video-style-repaint/download] 代理下载失败:', err.message);
+    res.status(500).send('下载失败');
+  }
+});
+
+// 视频去除字幕下载代理
+app.get('/api/video-subtitle-removal/download', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    console.error('[video-subtitle-removal/download] 缺少URL参数');
+    return res.status(400).send('缺少 url 参数');
+  }
+  
+  console.log('[video-subtitle-removal/download] 请求下载视频:', url);
+  
+  try {
+    const axios = require('axios');
+    const response = await axios.get(url, { 
+      responseType: 'stream',
+      timeout: 30000, // 30秒超时
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    console.log('[video-subtitle-removal/download] 视频类型:', contentType);
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'attachment; filename="video-download.mp4"');
+    
+    response.data.pipe(res);
+    
+    // 添加错误处理
+    response.data.on('error', (err) => {
+      console.error('[video-subtitle-removal/download] 流处理错误:', err.message);
+      if (!res.headersSent) {
+        res.status(500).send('下载过程中出错');
+      }
+    });
+  } catch (err) {
+    console.error('[video-subtitle-removal/download] 代理下载失败:', err.message);
+    if (err.response) {
+      console.error('  状态码:', err.response.status);
+      console.error('  响应头:', JSON.stringify(err.response.headers));
+    }
+    res.status(500).send('下载失败: ' + err.message);
+  }
+});
+
 // 在路由配置部分的开始处添加数字人视频处理路由
 
 // 静态文件服务 - 这应该在代理之前，确保静态文件优先
@@ -802,8 +870,9 @@ const { createDigitalHumanMiddleware } = require('./middleware/unifiedFeatureUsa
 
 // 创建数字人视频中间件实例
 const digitalHumanMiddleware = createDigitalHumanMiddleware((videoDuration) => {
-  // 根据视频时长计算积分：每秒9积分
-  return Math.ceil(videoDuration * 9);
+  // 根据视频时长计算积分：每秒 9 积分；必须先向上取整到秒，再乘 9，
+  // 否则 2.3 秒视频会被错误扣为 ceil(2.3*9)=21 而非 27。
+  return Math.ceil(videoDuration) * 9;
 });
 
 // 使用已定义在文件底部的配置和处理函数
@@ -894,20 +963,19 @@ app.post('/api/digital-human/upload', protect, digitalHumanMiddleware, async (re
         console.log(`分析得到视频时长: ${videoDuration}秒`);
         
         // 检查是否为免费使用
-        if (!req.featureUsage?.isFreeUsage) {
+        if (!req.featureUsage?.isFree) {
           // 计算需要的积分
           const getDynamicCredits = req.featureUsage.getDynamicCredits;
-          actualCreditCost = getDynamicCredits ? getDynamicCredits(videoDuration) : Math.ceil(videoDuration * 9);
+          actualCreditCost = getDynamicCredits ? getDynamicCredits(videoDuration) : Math.ceil(videoDuration) * 9;
           
           console.log(`视频时长${videoDuration}秒，需要积分: ${actualCreditCost}`);
           
           // 检查用户积分是否足够
           const user = await User.findByPk(req.user.id);
           if (user.credits >= actualCreditCost) {
-            // 积分足够，扣除积分
-            user.credits -= actualCreditCost;
-            await user.save();
-            isChargedCredits = true;
+            // 有足够积分但先不扣费，等任务完成后按真实时长一次性结算
+            // 这里只进行余额校验，预留额度
+            isChargedCredits = false;
             
             // 更新使用次数
             const usage = req.featureUsage.usage;
@@ -968,7 +1036,7 @@ app.post('/api/digital-human/upload', protect, digitalHumanMiddleware, async (re
             userId: req.user.id,
             hasChargedCredits: isChargedCredits, // 标记是否已扣除积分
             createdAt: new Date(),
-            isFree: req.featureUsage?.isFreeUsage, // 标记是否为免费使用
+            isFree: req.featureUsage?.isFree, // 标记是否为免费使用
             getDynamicCredits: req.featureUsage?.getDynamicCredits, // 动态积分计算函数
             actualCreditCost: actualCreditCost, // 实际扣除的积分
             uploadVideoDuration: req.uploadVideoDuration || 0 // 上传时分析的视频时长
@@ -1079,8 +1147,9 @@ app.get('/api/digital-human/task/:taskId', async (req, res) => {
               const hasChargedCredits = taskInfo.hasChargedCredits;
               const uploadCreditCost = taskInfo.actualCreditCost || 0;
               
-              // 使用上传时已计算的积分
-              const finalCreditCost = uploadCreditCost;
+              // 若上传阶段已扣费，则沿用 uploadCreditCost；
+              // 否则先记录 0，由 saveTaskDetails 在内部根据真实时长统一扣费
+              let finalCreditCost = hasChargedCredits ? uploadCreditCost : 0;
               
               console.log(`任务 ${taskId} 积分处理: 扣除=${finalCreditCost} (${isFree ? '免费' : '付费'})，时长 ${videoDuration}秒，上传时已处理=${hasChargedCredits}`);
               
@@ -1190,13 +1259,19 @@ async function getVideoDuration(videoUrl) {
       }
       
       // 如果有Content-Length，尝试根据文件大小和典型比特率估算时长
-      if (headResponse.headers['content-length']) {
-        const fileSize = parseInt(headResponse.headers['content-length']);
-        // 假设平均比特率为1Mbps (1,000,000 bits per second = 125,000 bytes per second)
-        const estimatedDuration = Math.ceil(fileSize / 125000);
-        console.log(`根据文件大小估算视频时长: ${estimatedDuration}秒`);
-        return estimatedDuration;
-      }
+      const fileSize = parseInt(headResponse.headers['content-length']);
+      /*
+        旧逻辑假设视频平均码率仅 1 Mbps，导致对短视频的时长严重高估（文件稍大就按几十秒计）。
+
+        新逻辑改用保守的 **4 Mbps**（≈500 kB/s）作为估算基准，并将结果限定在合理范围(2-60 秒)。
+        这样 10 MB 文件 → 10 / 0.5 ≈ 20 s；1 MB 文件 → 2 s，明显更接近真实值。
+      */
+      const BYTES_PER_SECOND = 500000; // 约 4 Mbps
+      let estimatedDuration = Math.ceil(fileSize / BYTES_PER_SECOND);
+      // 限定范围，避免极端值
+      estimatedDuration = Math.min(Math.max(estimatedDuration, 2), 60);
+      console.log(`根据文件大小估算视频时长(改进): ${estimatedDuration}秒 (文件大小=${fileSize}B)`);
+      return estimatedDuration;
     } catch (headError) {
       console.log('HEAD请求失败，无法获取视频元数据:', headError.message);
     }
@@ -1771,6 +1846,8 @@ app.post('/api/save-result', async (req, res) => {
       timestamp,
       id: imageHistory.id 
     });
+    
+    // 移除营销图补偿逻辑 — 每次点击立即生成已在前端调用 /track-usage 完成扣费
   } catch (error) {
     console.error('保存结果失败:', error);
     res.status(500).json({ error: '保存结果失败', message: error.message });
@@ -2493,6 +2570,8 @@ app.post('/api/upload-image-for-shoe-model', protect, memoryUpload.single('file'
 });
 
 // 创建鞋靴模特试穿任务
+const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
+
 app.post('/api/create-shoe-model-task', protect, createUnifiedFeatureMiddleware('VIRTUAL_SHOE_MODEL'), async (req, res) => {
   try {
     console.log('接收到创建鞋靴模特试穿任务请求:', req.body);
@@ -2564,28 +2643,20 @@ app.post('/api/create-shoe-model-task', protect, createUnifiedFeatureMiddleware(
         result: response.data
       };
 
-      // 记录使用历史
-      try {
-        await FeatureUsage.create({
-          userId: req.user.id,
-          featureName: 'VIRTUAL_SHOE_MODEL',
-          usageDate: new Date(),
-          requestData: JSON.stringify({
-            modelImage: modelImageUrl,
-            shoeImage: shoeImageUrl
-          }),
-          responseData: JSON.stringify(response.data),
-          status: 'PENDING'
-        });
-
-        // 扣除用户积分
-        await User.decrement('credits', {
-          by: creditCost, // 使用配置的积分消费值
-          where: { id: req.user.id }
-        });
-      } catch (historyError) {
-        console.error('记录使用历史失败:', historyError);
-        // 继续处理，不影响主流程
+      // --- 统一记录任务详情，避免重复扣费 ---
+      if (req.featureUsage && req.featureUsage.usage && !req.featureUsage._detailsLogged) {
+        try {
+          await saveTaskDetails(req.featureUsage.usage, {
+            taskId,
+            creditCost: req.featureUsage.creditCost || 0,
+            isFree: req.featureUsage.isFree || false,
+            extraData: { modelImageUrl, shoeImageUrl }
+          });
+          req.featureUsage._detailsLogged = true;
+          console.log(`(instant) 已记录鞋靴虚拟试穿任务详情 taskId=${taskId}`);
+        } catch (err) {
+          console.error('保存鞋靴虚拟试穿任务详情失败:', err.message);
+        }
       }
 
       res.status(200).json({
@@ -4182,6 +4253,53 @@ app.post('/api/video-style-repaint/upload', protect, async (req, res) => {
   }
 });
 
+// 虚拟模特试穿功能 - 提前注册路由，确保在 404 处理器之前被匹配
+app.post([
+  '/api/virtual-model/usage-original',
+  '/api/virtual-model/usage',
+  '/api/virtual-modeL/usage',
+  '/api/virtual-modeL/usage-original'
+], protect, createUnifiedFeatureMiddleware('VIRTUAL_MODEL_VTON'), async (req, res) => {
+  try {
+    console.log('接收虚拟模特使用记录请求:', req.body);
+
+    const userId = req.user.id;
+    const { usageType, creditCost, isFree, remainingFreeUsage } = req.featureUsage;
+
+    // 生成任务ID并保存任务详情
+    try {
+      const taskId = Date.now().toString();
+      const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
+      await saveTaskDetails(req.featureUsage.usage, {
+        taskId,
+        creditCost,
+        isFree,
+        extraData: {}
+      });
+      console.log(`虚拟模特试穿功能使用记录已保存: 用户ID=${userId}, 积分=${creditCost}, 是否免费=${isFree}`);
+    } catch (e) {
+      console.error('处理虚拟模特试穿功能使用记录失败:', e);
+    }
+
+    return res.json({
+      success: true,
+      message: '使用记录已保存',
+      data: {
+        featureName: 'VIRTUAL_MODEL_VTON',
+        usageType,
+        creditCost,
+        remainingFreeUsage
+      }
+    });
+  } catch (error) {
+    console.error('记录虚拟模特使用情况失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '服务器内部错误: ' + error.message
+    });
+  }
+});
+
 // 404处理
 app.use((req, res) => {
   // 检查是否请求的是根目录下的HTML文件
@@ -5488,7 +5606,7 @@ if (!global.multiImageToVideoTasks) {
 }
 
 // 添加虚拟模特使用记录API - 使用统一中间件
-app.post('/api/virtual-model/usage', protect, createUnifiedFeatureMiddleware('VIRTUAL_MODEL_VTON'), async (req, res) => {
+app.post('/api/virtual-model/usage-original', protect, createUnifiedFeatureMiddleware('VIRTUAL_MODEL_VTON'), async (req, res) => {
   try {
     console.log('接收虚拟模特使用记录请求:', req.body);
     
@@ -5529,6 +5647,149 @@ app.post('/api/virtual-model/usage', protect, createUnifiedFeatureMiddleware('VI
       success: false,
       message: '服务器内部错误: ' + error.message
     });
+  }
+});
+
+// 兼容大小写或缺少首斜杠的路径，防止 404
+app.post(['/api/virtual-model/usage', '/api/virtual-modeL/usage', '/api/virtual-model/usage-original', '/api/virtual-modeL/usage-original'], protect, createUnifiedFeatureMiddleware('VIRTUAL_MODEL_VTON'), async (req, res) => {
+  try {
+    console.log('接收虚拟模特使用记录请求:', req.body);
+    
+    const userId = req.user.id;
+    
+    // 从统一中间件获取积分使用信息
+    const { usageType, creditCost, isFree, remainingFreeUsage } = req.featureUsage;
+    
+    // 生成任务ID并保存任务详情
+    try {
+      const taskId = Date.now().toString();
+      const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
+      await saveTaskDetails(req.featureUsage.usage, {
+        taskId: taskId,
+        creditCost: creditCost,
+        isFree: isFree,
+        extraData: {}
+      });
+      console.log(`虚拟模特试穿功能使用记录已保存: 用户ID=${userId}, 积分=${creditCost}, 是否免费=${isFree}`);
+    } catch (e) {
+      console.error('处理虚拟模特试穿功能使用记录失败:', e);
+    }
+    
+    // 记录使用情况成功
+    return res.json({
+      success: true,
+      message: '使用记录已保存',
+      data: {
+        featureName: 'VIRTUAL_MODEL_VTON',
+        usageType,
+        creditCost,
+        remainingFreeUsage
+      }
+    });
+  } catch (error) {
+    console.error('记录虚拟模特使用情况失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '服务器内部错误: ' + error.message
+    });
+  }
+});
+
+// 视频风格重绘下载代理，解决跨域及 attachment 问题
+app.get('/api/video-style-repaint/download', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).send('缺少 url 参数');
+  }
+  try {
+    const axios = require('axios');
+    // 以流形式获取远端视频
+    const response = await axios.get(url, { responseType: 'stream' });
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'attachment; filename="video-style-repaint.mp4"');
+    response.data.pipe(res);
+  } catch (err) {
+    console.error('[video-style-repaint/download] 代理下载失败:', err.message);
+    res.status(500).send('下载失败');
+  }
+});
+
+// 图生视频专用下载API
+app.get('/api/image-to-video/download', async (req, res) => {
+  const { url, taskId } = req.query;
+  
+  console.log('[image-to-video/download] 请求下载，参数:', { url, taskId });
+  
+  // 如果提供了taskId，尝试从任务记录中获取视频URL
+  if (taskId && (!url || url.trim() === '')) {
+    try {
+      // 检查全局变量中是否有该任务
+      if (global.imageToVideoTasks && global.imageToVideoTasks[taskId]) {
+        const task = global.imageToVideoTasks[taskId];
+        
+        // 检查任务是否有视频URL
+        if (task.videoUrl) {
+          console.log(`[image-to-video/download] 从任务记录中找到视频URL: ${task.videoUrl}`);
+          return res.redirect(`/api/video-subtitle-removal/download?url=${encodeURIComponent(task.videoUrl)}`);
+        }
+      }
+      
+      // 如果在全局变量中找不到，尝试从数据库中查询
+      const VideoResult = require('./models/VideoResult');
+      const result = await VideoResult.findOne({
+        where: { taskId: taskId }
+      });
+      
+      if (result && result.videoUrl) {
+        console.log(`[image-to-video/download] 从数据库中找到视频URL: ${result.videoUrl}`);
+        return res.redirect(`/api/video-subtitle-removal/download?url=${encodeURIComponent(result.videoUrl)}`);
+      }
+    } catch (err) {
+      console.error('[image-to-video/download] 查询任务记录失败:', err);
+    }
+  }
+  
+  // 如果没有taskId或者查询失败，尝试直接使用url
+  if (!url || url.trim() === '') {
+    console.error('[image-to-video/download] 缺少有效的URL参数');
+    return res.status(400).send('缺少有效的视频URL参数');
+  }
+  
+  try {
+    const axios = require('axios');
+    console.log('[image-to-video/download] 尝试下载视频:', url);
+    
+    const response = await axios.get(url, { 
+      responseType: 'stream',
+      timeout: 30000,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    console.log('[image-to-video/download] 视频类型:', contentType);
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'attachment; filename="image-to-video.mp4"');
+    
+    response.data.pipe(res);
+    
+    response.data.on('error', (err) => {
+      console.error('[image-to-video/download] 流处理错误:', err.message);
+      if (!res.headersSent) {
+        res.status(500).send('下载过程中出错');
+      }
+    });
+  } catch (err) {
+    console.error('[image-to-video/download] 下载失败:', err.message);
+    if (err.response) {
+      console.error('  状态码:', err.response.status);
+      console.error('  响应头:', JSON.stringify(err.response.headers));
+    }
+    res.status(500).send('下载失败: ' + err.message);
   }
 });
 

@@ -46,7 +46,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 主内容区域 -->
     <div class="container mx-auto p-8">
@@ -278,12 +279,6 @@
                 
                 // 获取用户选择的放大倍数（从隐藏输入框）
                 const upscaleFactor = parseInt(document.getElementById('upscaleFactor').value);
-                
-                // 检查积分
-                const canProceed = await trackFeatureUsage('image-upscaler');
-                if (!canProceed) {
-                    return; // 如果不能继续（如积分不足），则中止处理
-                }
                 
                 // 显示放大倍数提示信息
                 let processingMessage = '正在处理图片';

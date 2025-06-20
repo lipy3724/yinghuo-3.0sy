@@ -10,6 +10,9 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
+        header {
+            border-bottom: 1px solid #e5e7eb !important; /* 强制添加底部边框 */
+        }
         .upload-area {
             border: 2px dashed #cbd5e0;
             border-radius: 8px;
@@ -76,25 +79,51 @@
             overflow: hidden;
             background-color: #f9fafb;
         }
+        /* Logo图片样式 */
+        .logo-image {
+            height: 92px; /* 增大logo高度 */
+            width: auto;
+            transition: all 0.2s ease;
+            margin-top: 6px; /* 向下移动一点 */
+        }
+        /* Logo容器样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            height: 100%; /* 让容器高度100%适应导航栏 */
+        }
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        /* 导航栏固定高度 */
+        .nav-fixed-height {
+            height: 60px; /* 固定导航栏高度 */
+            display: flex;
+            align-items: center;
+        }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
-<body class="min-h-screen bg-white">
-    <!-- 导航栏 -->
-    <nav class="bg-white border-b border-gray-200 py-3 px-4 flex items-center justify-between shadow-sm">
-        <div class="flex items-center">
-            <a href="/" class="flex items-center">
-                <span class="font-bold text-2xl text-indigo-600 mr-1">萤火<span class="inline-block w-2 h-2 bg-indigo-600 rounded-full"></span>AI</span>
-                <span class="text-gray-500 text-sm ml-1">Yinghuo.Ai</span>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 - 固定高度 -->
+    <header class="bg-white shadow-sm py-0 px-6 nav-fixed-height flex items-center justify-between">
+        <div class="flex items-center h-full">
+            <a href="/" class="flex items-center h-full">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
             </a>
         </div>
-        <div class="flex items-center">
-            <a href="/" class="text-gray-600 hover:text-gray-900">
-                <i class="ri-home-line mr-1"></i>
+        <div class="flex items-center space-x-4">
+            <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center text-sm">
+                <i class="ri-arrow-left-line mr-1"></i>
                 <span>返回首页</span>
             </a>
         </div>
-    </nav>
+    </header>
 
     <!-- 主内容区域 -->
     <div class="w-full h-[calc(100vh-60px)] flex">
@@ -183,10 +212,6 @@
                     <div class="w-full md:w-1/2">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="text-base font-medium text-center">风格化结果:</h3>
-                            <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-1 px-2 rounded-md hover:bg-indigo-700 text-sm flex items-center">
-                                <i class="ri-save-line mr-1"></i>
-                                保存到下载中心
-                            </button>
                         </div>
                         <div id="result-video-container" class="video-container relative mx-auto" style="width: 512px; max-height: 512px;">
                             <video id="result-video" class="w-full h-full object-contain hidden" controls></video>
@@ -235,7 +260,6 @@
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
             const retryBtn = document.getElementById('retry-btn');
-            const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
             
             // 视频上传处理
             uploadArea.addEventListener('click', () => {
@@ -451,7 +475,6 @@
                             resultVideoPlaceholder.classList.add('hidden');
                             downloadBtn.classList.remove('hidden');
                             retryBtn.classList.remove('hidden');
-                            saveToDownloadsBtn.classList.remove('hidden');
                             loadingOverlay.classList.add('hidden');
                         };
                         
@@ -473,12 +496,13 @@
                 }
             });
             
-            // 下载按钮点击事件
+            // 使用后端代理确保跨域下载触发保存
             downloadBtn.addEventListener('click', () => {
                 if (resultVideo.src) {
+                    const proxyUrl = `/api/video-style-repaint/download?url=${encodeURIComponent(resultVideo.src)}`;
                     const link = document.createElement('a');
-                    link.href = resultVideo.src;
-                    link.download = '视频风格重绘结果_' + new Date().getTime() + '.mp4';
+                    link.href = proxyUrl;
+                    link.download = '视频风格重绘结果_' + Date.now() + '.mp4';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -492,46 +516,6 @@
                 resultVideoPlaceholder.classList.remove('hidden');
                 downloadBtn.classList.add('hidden');
                 retryBtn.classList.add('hidden');
-                saveToDownloadsBtn.classList.add('hidden');
-            });
-            
-            // 保存到下载中心按钮点击事件
-            saveToDownloadsBtn.addEventListener('click', async () => {
-                if (!resultVideo.src || resultVideo.classList.contains('hidden')) {
-                    alert('没有可保存的结果视频！');
-                    return;
-                }
-                
-                try {
-                    loadingOverlay.classList.remove('hidden');
-                    loadingMessage.textContent = '正在保存到下载中心...';
-                    
-                    const response = await fetch('/api/downloads/save', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        },
-                        body: JSON.stringify({
-                            videoUrl: resultVideo.src,
-                            title: '视频风格重绘结果',
-                            type: 'video-style-repaint'
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        alert('已成功保存到下载中心！');
-                    } else {
-                        throw new Error(result.message || '保存失败');
-                    }
-                } catch (error) {
-                    console.error('保存到下载中心失败:', error);
-                    alert('保存到下载中心失败: ' + error.message);
-                } finally {
-                    loadingOverlay.classList.add('hidden');
-                }
             });
             
             // 辅助函数
@@ -590,7 +574,6 @@
                     resultVideoPlaceholder.classList.remove('hidden');
                     downloadBtn.classList.add('hidden');
                     retryBtn.classList.add('hidden');
-                    saveToDownloadsBtn.classList.add('hidden');
                 };
                 
                 // 处理加载错误

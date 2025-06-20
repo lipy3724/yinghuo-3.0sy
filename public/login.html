@@ -44,19 +44,18 @@
         .logo-container {
             text-align: center;
             margin-bottom: 20px;
+            margin-top: 20px;
         }
         
         .logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            margin-bottom: 10px;
+            width: 160px;
+            height: 100px;
+            margin-bottom: 20px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            object-fit: contain;
+            transform: translateX(-10px);
         }
         
         .auth-title {
@@ -237,10 +236,7 @@
 <body>
     <div class="auth-container">
         <div class="logo-container">
-            <div class="logo">
-                <i class="fas fa-fire"></i>
-            </div>
-            <h2 class="auth-title">萤火AI</h2>
+            <img src="/images/logo/logo.png" alt="萤火AI" class="logo">
         </div>
         
         <div class="tabs">

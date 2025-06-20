@@ -178,7 +178,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -294,9 +295,104 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能：检查是否有保存的结果
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-brand-naming-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 清空品牌容器
+                        brandContainer.innerHTML = '';
+                        
+                        // 恢复品牌结果显示
+                        if (results.brandNames && results.brandNames.length > 0) {
+                            const brandInfo = results.brandNames[0];
+                            
+                            const brandCard = document.createElement('div');
+                            brandCard.className = 'brand-card';
+                            
+                            const brandContent = document.createElement('div');
+                            
+                            // 添加品牌名
+                            const nameElement = document.createElement('h3');
+                            nameElement.className = 'font-bold text-2xl text-indigo-700 mb-4 text-center';
+                            nameElement.textContent = brandInfo.name;
+                            
+                            // 添加解释/理由
+                            const reasonTitle = document.createElement('h4');
+                            reasonTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
+                            reasonTitle.textContent = '命名理由';
+                            
+                            const reasonElement = document.createElement('p');
+                            reasonElement.className = 'text-gray-600 mb-4';
+                            reasonElement.textContent = brandInfo.explanation;
+                            
+                            // 添加完美日子场景
+                            const perfectDayTitle = document.createElement('h4');
+                            perfectDayTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
+                            perfectDayTitle.textContent = '完美场景';
+                            
+                            const perfectDayElement = document.createElement('p');
+                            perfectDayElement.className = 'text-gray-600 mb-4';
+                            perfectDayElement.textContent = brandInfo.perfectDay;
+                            
+                            // 添加价值观
+                            const valuesTitle = document.createElement('h4');
+                            valuesTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
+                            valuesTitle.textContent = '代表价值观';
+                            
+                            const valuesElement = document.createElement('p');
+                            valuesElement.className = 'text-gray-600 mb-4';
+                            valuesElement.textContent = brandInfo.values;
+                            
+                            // 组装品牌卡片
+                            brandContent.appendChild(nameElement);
+                            brandContent.appendChild(reasonTitle);
+                            brandContent.appendChild(reasonElement);
+                            brandContent.appendChild(perfectDayTitle);
+                            brandContent.appendChild(perfectDayElement);
+                            brandContent.appendChild(valuesTitle);
+                            brandContent.appendChild(valuesElement);
+                            brandCard.appendChild(brandContent);
+                            brandContainer.appendChild(brandCard);
+                        }
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的品牌命名结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-brand-naming-results');
+                    }
+                }
+                return false;
+            }
+            
+            // 保存结果到localStorage
+            function saveResults(results) {
+                try {
+                    sessionStorage.setItem('amazon-brand-naming-results', JSON.stringify(results));
+                    console.log('品牌命名结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+            
+            // 清除保存的结果
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-brand-naming-results');
+                console.log('已清除保存的品牌命名结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }// 监听浏览器标签页关闭或导航离开
             
             brandNamingForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -390,15 +486,15 @@
                         brandContainer.appendChild(noBrandsMsg);
                     }
                     
+                    // 保存结果到localStorage
+                    saveResults(result.data);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_brand_naming');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -477,6 +573,9 @@
             // 生成新品牌名按钮功能
             const newBrandButton = document.getElementById('newBrandButton');
             newBrandButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 直接重新提交表单
                 brandNamingForm.dispatchEvent(new Event('submit'));
             });

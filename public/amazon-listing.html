@@ -167,7 +167,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -292,10 +293,7 @@
                         <i class="ri-file-copy-line mr-1"></i>
                         复制全部
                     </button>
-                    <button type="button" id="saveButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
-                        <i class="ri-save-line mr-1"></i>
-                        保存结果
-                    </button>
+
                     <button type="button" id="newGenerationButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
                         重新生成
@@ -332,9 +330,64 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能：检查是否有保存的结果
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-listing-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 恢复结果显示
+                        document.getElementById('generatedTitle').textContent = results.title;
+                        document.getElementById('titleCharCount').textContent = results.title.length;
+                        
+                        const bulletPointsList = document.getElementById('generatedBulletPoints');
+                        bulletPointsList.innerHTML = '';
+                        results.bulletPoints.forEach(point => {
+                            const li = document.createElement('li');
+                            li.textContent = point;
+                            bulletPointsList.appendChild(li);
+                        });
+                        
+                        document.getElementById('generatedDescription').textContent = results.description;
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的Listing结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-listing-results');
+                    }
+                }
+                return false;
+            }
+            
+            // 保存结果到localStorage
+            function saveResults(results) {
+                try {
+                    sessionStorage.setItem('amazon-listing-results', JSON.stringify(results));
+                    console.log('Listing结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+            
+            // 清除保存的结果
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-listing-results');
+                console.log('已清除保存的Listing结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }
+            
+
             
             listingWriterForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -381,6 +434,9 @@
                     
                     document.getElementById('generatedDescription').textContent = result.data.description;
                     
+                    // 保存结果到localStorage
+                    saveResults(result.data);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
@@ -392,9 +448,6 @@
                     }
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_listing');
-                    }
                     
                 } catch (error) {
                     console.error('生成Listing出错:', error);
@@ -430,6 +483,9 @@
             // 重新生成按钮功能
             const newGenerationButton = document.getElementById('newGenerationButton');
             newGenerationButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');
@@ -441,16 +497,7 @@
                 document.getElementById('productFeatureCount').focus();
             });
             
-            // 保存结果按钮功能
-            const saveButton = document.getElementById('saveButton');
-            saveButton.addEventListener('click', () => {
-                // 显示保存成功提示
-                const originalText = saveButton.innerHTML;
-                saveButton.innerHTML = '<i class="ri-check-line mr-1"></i>已保存';
-                setTimeout(() => {
-                    saveButton.innerHTML = originalText;
-                }, 2000);
-            });
+
             
             // AI推荐关键词功能
             const aiRecommendKeywordsButton = document.getElementById('aiRecommendKeywords');

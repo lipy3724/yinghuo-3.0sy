@@ -41,6 +41,11 @@ async function checkAuth(redirectOnFailure = true) {
             responseData = await response.json();
         } catch (e) {
             console.error('解析响应数据失败:', e);
+            // 如果解析失败但状态码是200，可能是网络问题，不要立即重定向
+            if (response.status === 200) {
+                console.log('响应状态正常但解析失败，可能是网络问题，暂不重定向');
+                return true; // 暂时认为验证成功
+            }
         }
         
         // 如果会话无效，清除登录信息并重定向
@@ -72,6 +77,11 @@ async function checkAuth(redirectOnFailure = true) {
             return false;
         }
         
+        // 如果状态码是200但没有响应数据，也认为验证成功
+        if (response.status === 200) {
+            return true;
+        }
+        
         if (!responseData || !responseData.success) {
             console.log('API返回验证失败');
             if (redirectOnFailure) {
@@ -83,6 +93,11 @@ async function checkAuth(redirectOnFailure = true) {
         return true;
     } catch (error) {
         console.error('验证会话时出错:', error);
+        // 网络错误不要立即重定向，给用户一些时间
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.log('网络请求失败，可能是网络问题，暂不重定向');
+            return true; // 网络问题时暂时认为验证成功
+        }
         if (redirectOnFailure) {
             clearAuthAndRedirect();
         }
@@ -121,10 +136,28 @@ async function checkFeatureAccess(featureName) {
 document.addEventListener('DOMContentLoaded', function() {
     // 如果页面不是登录页或注册页，执行验证
     const isAuthPage = window.location.pathname.includes('login.html') || 
-                      window.location.pathname.includes('register.html');
+                      window.location.pathname.includes('register.html') ||
+                      window.location.pathname.includes('phone-login.html') ||
+                      window.location.pathname.includes('phone-register.html');
     
     if (!isAuthPage && localStorage.getItem('authToken')) {
-        checkAuth();
+        // 添加延迟，避免刚登录成功就被重定向
+        // 特别是从手机验证码登录页面跳转过来的情况
+        const referrer = document.referrer;
+        const isFromLoginPage = referrer.includes('login.html') || 
+                               referrer.includes('phone-login.html') ||
+                               referrer.includes('register.html') ||
+                               referrer.includes('phone-register.html');
+        
+        if (isFromLoginPage) {
+            // 如果是从登录页面跳转过来的，延迟2秒再验证
+            setTimeout(() => {
+                checkAuth();
+            }, 2000);
+        } else {
+            // 否则立即验证
+            checkAuth();
+        }
     }
 });
 

@@ -21,6 +21,13 @@
             top: 0;
             left: 0;
         }
+        
+        /* 尝试修复编辑器内按钮联动问题 */
+        iframe {
+            pointer-events: auto;
+        }
+        
+        /* 如果需要，可以添加更多样式来控制编辑器内的按钮行为 */
     </style>
     <script>
         // open sdk 扩展配置 - 初始化为空，稍后从API获取
@@ -32,8 +39,14 @@
     </script>
     <script src="https://g.alicdn.com/code/npm/@ali/intl-op-frame-sdk/0.1.10/main.min.js"></script>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/iframe-mobile-guard.js"></script>
+</head>
 <body>
+    <!-- 用户提示信息 -->
+    <div id="user-tip" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; z-index: 9999; display: none;">
+        💡 提示：下载和保存是独立操作，按钮动画仅为视觉反馈
+    </div>
+    
     <iframe id="myiframe" class="aidc-open-frame" src="" frameborder="0"></iframe>
 
     <script>
@@ -41,6 +54,8 @@
         let iframeEle = document.getElementById("myiframe");
         let receiveBiz = ""; // 保存业务标识，用于postMessage回应
         let selectedImageIndex = 0; // 当前选中的图片索引
+        // 标记是否已记录过一次扣费，避免重复扣费
+        let hasTrackedUsage = false;
         
         // 从API获取配置信息
         async function fetchConfig() {
@@ -98,7 +113,9 @@
                 appKey: window.INTL_OP_FRAME_SDK_CONFIG.appKey,
                 trial: true,
                 lang: 'zh-cn',
-                charge: true // 开启生产拦截
+                charge: true, // 开启生产拦截
+                // 尝试禁用按钮联动效果
+                disableButtonSync: true,
                 // 可选: imageUrl参数可以在这里添加
                 // imageUrl: "https://example.com/image.jpg"
             };
@@ -106,11 +123,36 @@
             // 使用payload方式构建URL
             const payloadString = encodeURIComponent(JSON.stringify(params));
             // 使用营销图生成路由
+            // 检查是否为移动设备
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                console.log("检测到移动设备，不加载编辑器");
+                return;
+            }
+            
             const url = `https://editor.d.design/editor/index.html/#/marketing-image?payload=${payloadString}`;
             
             // 更新iframe的src
             iframeEle.src = url;
             console.log("加载营销图生成编辑器，已开启生产拦截");
+            
+            // 编辑器加载完成后尝试修复按钮联动问题
+            iframeEle.onload = function() {
+                console.log("编辑器已加载，尝试修复按钮联动问题");
+                // 向编辑器发送配置消息，尝试禁用按钮联动
+                setTimeout(() => {
+                    try {
+                        iframeEle.contentWindow.postMessage({
+                            action: 'config',
+                            disableButtonSync: true,
+                            separateDownloadSave: true
+                        }, '*');
+                        console.log("已发送按钮联动禁用配置");
+                    } catch (e) {
+                        console.log("无法发送配置消息:", e);
+                    }
+                }, 1000);
+            };
         }
         
         // 辅助函数：下载图片
@@ -260,7 +302,10 @@
         // 监听编辑器消息
         window.addEventListener("message", (ev) => {
             try {
-                console.log("收到编辑器消息:", JSON.stringify(ev.data));
+                console.log("=== 收到编辑器消息 ===");
+                console.log("完整消息:", JSON.stringify(ev.data));
+                console.log("消息来源:", ev.origin);
+                console.log("========================");
                 
                 // 确保消息有效
                 if (!ev.data) {
@@ -271,6 +316,9 @@
                 // 解构消息数据
                 const { data, action, biz, errCode, errMessage } = ev.data;
                 
+                console.log("解析后的action:", action);
+                console.log("解析后的data:", data);
+                
                 // 保存业务标识用于后续响应
                 if (biz) {
                     receiveBiz = biz;
@@ -278,27 +326,23 @@
                 
                 // 处理生产拦截
                 if (action === 'generate') {
-                    // 获取图片数量
-                    const imageNum = data?.imageNum || 1;
-                    console.log("用户请求生成图片，数量:", imageNum);
-                    
-                    // 记录功能使用并检查是否可以继续
-                    trackFeatureUsage('marketing-images').then(canProceed => {
-                        // 响应编辑器请求
-                        iframeEle.contentWindow.postMessage({
-                            biz: receiveBiz,
-                            action: 'respond',
-                            success: canProceed // 根据是否可以继续返回成功或失败
-                        }, '*');
-                        
-                        if (!canProceed) {
-                            console.log("用户积分不足，已阻止生产");
-                            alert("积分不足，无法继续生成图片");
-                        } else {
-                            console.log("已允许继续生产流程");
-                        }
-                    });
-                    return;
+                    console.log('收到 generate，准备扣费');
+                    // 记录一次功能使用（扣费/免费次数计算）
+                    // 将在下面通过 trackFeatureUsage 调用后端接口
+                    // 首次生成时扣费/检查免费次数
+                    trackFeatureUsage('use', 'marketing-images')
+                        .then(canProceed => {
+                            // 将结果返回给 SDK
+                            iframeEle.contentWindow.postMessage({ biz, action: 'respond', success: canProceed }, '*');
+                            if (!canProceed) {
+                                alert('免费次数已用完或积分不足');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('扣费失败', err);
+                            iframeEle.contentWindow.postMessage({ biz, action: 'respond', success: false }, '*');
+                        });
+                    return; // 等待扣费结果后再继续
                 }
                 
                 // 标志变量，用于防止重复保存和重复提示
@@ -374,45 +418,40 @@
                     // 在任务成功时不自动保存，等待用户明确的保存操作
                     console.log("任务成功，等待用户选择保存");
                 } else if (action === "submitAll") {
-                    console.log("用户一次性提交所有图片:", JSON.stringify(data));
+                    console.log("收到submitAll事件:", JSON.stringify(data));
                     
-                    // 即使有多张图片，也只保存当前选中的那一张
-                    if (data && Array.isArray(data)) {
-                        handleImageSave(data);
-                    } else if (data) {
-                        handleImageSave(data);
-                    }
+                    // 不自动保存，让用户主动选择保存
+                    console.log("submitAll事件不自动保存，等待用户手动保存");
                 } else if (action === "submit") {
+                    console.log("=== 触发保存操作 ===");
                     console.log("用户点击了保存按钮:", JSON.stringify(data));
+                    console.log("即将调用 handleImageSave");
+                    console.log("==================");
                     // 处理保存操作 - 只保存当前选择的图片
                     if (data) {
                         handleImageSave(data);
-                        
-                        // 如果数据包含URL，触发下载
-                        let downloadUrl = null;
-                        
-                        if (Array.isArray(data)) {
-                            const selectedImage = getSelectedImage(data);
-                            if (selectedImage && selectedImage.url) {
-                                downloadUrl = selectedImage.url;
-                            }
-                        } else if (data.url) {
-                            downloadUrl = data.url;
-                        }
-                        
-                        if (downloadUrl) {
-                            downloadImage(downloadUrl, `marketing-image-${Date.now()}.png`);
-                        }
                     } else {
                         console.error("保存失败：未收到有效的图片数据");
                         alert("保存失败：未收到有效的图片数据");
                     }
                 } else if (action === "download") {
+                    console.log("=== 触发下载操作 ===");
                     console.log("用户点击了下载按钮:", JSON.stringify(data));
-                    // 处理下载操作 - 只处理当前选择的图片下载
+                    console.log("注意：此操作不会自动保存");
+                    console.log("==================");
+                    
+                    // 显示用户提示
+                    const tip = document.getElementById('user-tip');
+                    if (tip) {
+                        tip.style.display = 'block';
+                        setTimeout(() => {
+                            tip.style.display = 'none';
+                        }, 3000);
+                    }
+                    
+                    // 处理下载操作 - 只处理当前选择的图片下载，不自动保存
                     if (data) {
                         let downloadUrl = null;
-                        let imageToSave = null;
                         
                         if (Array.isArray(data)) {
                             const selectedImage = getSelectedImage(data);
@@ -420,24 +459,14 @@
                                 if (selectedImage.url) {
                                     downloadUrl = selectedImage.url;
                                 }
-                                imageToSave = selectedImage;
                             }
                         } else if (data.url) {
                             downloadUrl = data.url;
-                            imageToSave = data;
                         }
                         
                         if (downloadUrl) {
                             downloadImage(downloadUrl, `marketing-image-${Date.now()}.png`);
-                            
-                            // 后台静默保存当前选中的图片到下载中心
-                            if (imageToSave) {
-                                saveImageResult(imageToSave).then(success => {
-                                    if (success) {
-                                        console.log('图片已静默保存到下载中心');
-                                    }
-                                });
-                            }
+                            console.log("图片下载完成，未自动保存到下载中心");
                         } else {
                             console.error("下载失败：未找到有效的图片URL");
                         }
@@ -475,15 +504,16 @@
                     }
                 } else {
                     // 处理未知的消息类型
-                    console.log("收到未知类型的消息:", action, "尝试处理数据:", JSON.stringify(data));
+                    console.log("收到未知类型的消息:", action, "完整消息:", JSON.stringify(ev.data));
                     // 对于未知类型的消息，不自动保存，避免意外的多次保存
+                    console.log("未知消息类型，不执行任何自动操作");
                 }
             } catch (error) {
                 console.error('处理消息出错:', error);
             }
         });
         
-        // 页面加载时初始化
+        // 页面加载仅初始化，不扣费
         document.addEventListener('DOMContentLoaded', function() {
             initializeEditor();
         });

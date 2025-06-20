@@ -167,7 +167,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -288,9 +289,50 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-search-term-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 恢复结果显示
+                        document.getElementById('generatedSearchTerm').textContent = results.searchTerm;
+                        document.getElementById('searchTermCharCount').textContent = results.searchTerm.length;
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的搜索词结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-search-term-results');
+                    }
+                }
+                return false;
+            }
+
+            function saveResults(data) {
+                try {
+                    sessionStorage.setItem('amazon-search-term-results', JSON.stringify(data));
+                    console.log('搜索词结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-search-term-results');
+                console.log('已清除保存的搜索词结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }// 监听浏览器标签页关闭或导航离开
             
             searchTermForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -325,15 +367,15 @@
                     document.getElementById('generatedSearchTerm').textContent = result.data.searchTerm;
                     document.getElementById('searchTermCharCount').textContent = result.data.searchTerm.length;
                     
+                    // 保存结果
+                    saveResults(result.data);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_search_term');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -370,6 +412,9 @@
             // 重新生成按钮功能
             const newGenerationButton = document.getElementById('newGenerationButton');
             newGenerationButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');

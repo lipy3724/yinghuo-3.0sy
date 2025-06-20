@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户注册 - 萤火AI</title>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -47,19 +48,18 @@
         .logo-container {
             text-align: center;
             margin-bottom: 30px;
+            margin-top: 20px;
         }
         
         .logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            margin-bottom: 10px;
+            width: 160px;
+            height: 100px;
+            margin-bottom: 20px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            object-fit: contain;
+            transform: translateX(-10px);
         }
         
         .auth-title {
@@ -202,14 +202,11 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+</head>
 <body>
     <div class="auth-container">
         <div class="logo-container">
-            <div class="logo">
-                <i class="fas fa-fire"></i>
-            </div>
-            <h2 class="auth-title">用户注册</h2>
+            <img src="/images/logo/logo.png" alt="萤火AI" class="logo">
         </div>
         
         <div id="error-message" class="error-message" style="display: none;">

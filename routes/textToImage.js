@@ -1,8 +1,9 @@
 const express = require('express');
 const axios = require('axios');
+const logger = require('../utils/logger');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
+const { createUnifiedFeatureMiddleware, saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
 const { uploadToOSS } = require('../api-utils');
 
 // 通义万相API密钥
@@ -74,6 +75,20 @@ router.post('/generate', protect, createUnifiedFeatureMiddleware('TEXT_TO_IMAGE'
         hasChargedCredits: true, // 积分已在中间件中扣除
         isFree: isFree
       };
+
+      // 🚀 立即将任务详情保存到数据库，确保积分使用页面及时显示
+      try {
+        if (req.featureUsage && req.featureUsage.usage) {
+          await saveTaskDetails(req.featureUsage.usage, {
+            taskId: taskId,
+            creditCost: creditCost,
+            isFree: isFree
+          });
+          logger.info(`已即时写入文生图任务记录到数据库 taskId=${taskId}`);
+        }
+      } catch (dbErr) {
+        logger.error('即时保存文生图任务详情失败', { error: dbErr.message });
+      }
 
       return res.json({
         success: true,

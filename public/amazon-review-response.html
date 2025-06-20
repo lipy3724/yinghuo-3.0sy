@@ -192,7 +192,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -299,9 +300,115 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-review-response-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 清空回复容器
+                        responseContainer.innerHTML = '';
+                        
+                        // 重新创建回复内容
+                        if (results.response && results.reviewContent) {
+                            // 创建评论卡片
+                            const reviewCard = document.createElement('div');
+                            reviewCard.className = 'review-card';
+                            
+                            const reviewContent = document.createElement('div');
+                            reviewContent.className = 'mb-2';
+                            
+                            const reviewHeader = document.createElement('div');
+                            reviewHeader.className = 'flex items-center mb-2';
+                            
+                            const userIcon = document.createElement('i');
+                            userIcon.className = 'ri-user-3-line text-gray-500 mr-2';
+                            
+                            const userLabel = document.createElement('span');
+                            userLabel.className = 'font-medium text-gray-700';
+                            userLabel.textContent = '客户评论';
+                            
+                            reviewHeader.appendChild(userIcon);
+                            reviewHeader.appendChild(userLabel);
+                            
+                            const contentElement = document.createElement('p');
+                            contentElement.className = 'text-gray-700';
+                            contentElement.textContent = results.reviewContent;
+                            
+                            reviewContent.appendChild(reviewHeader);
+                            reviewContent.appendChild(contentElement);
+                            reviewCard.appendChild(reviewContent);
+                            responseContainer.appendChild(reviewCard);
+                            
+                            // 创建回复卡片
+                            const responseCard = document.createElement('div');
+                            responseCard.className = 'response-card';
+                            
+                            const responseContent = document.createElement('div');
+                            responseContent.className = 'mb-2';
+                            
+                            const responseHeader = document.createElement('div');
+                            responseHeader.className = 'flex items-center mb-2';
+                            
+                            const sellerIcon = document.createElement('i');
+                            sellerIcon.className = 'ri-store-2-line text-green-600 mr-2';
+                            
+                            const sellerLabel = document.createElement('span');
+                            sellerLabel.className = 'font-medium text-green-700';
+                            sellerLabel.textContent = results.brandName ? `${results.brandName} 回复` : '商家回复';
+                            
+                            responseHeader.appendChild(sellerIcon);
+                            responseHeader.appendChild(sellerLabel);
+                            
+                            const responseElement = document.createElement('p');
+                            responseElement.className = 'text-gray-700';
+                            responseElement.textContent = results.response;
+                            
+                            responseContent.appendChild(responseHeader);
+                            responseContent.appendChild(responseElement);
+                            responseCard.appendChild(responseContent);
+                            responseContainer.appendChild(responseCard);
+                            
+                            // 显示结果区域
+                            resultContainer.classList.remove('hidden');
+                            emptyResultState.classList.add('hidden');
+                            
+                            console.log('已恢复保存的评论回复结果');
+                            return true;
+                        }
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-review-response-results');
+                    }
+                }
+                return false;
+            }
+
+            function saveResults(data, formData) {
+                try {
+                    const results = {
+                        response: data.response,
+                        reviewContent: formData.reviewContent,
+                        brandName: formData.brandName
+                    };
+                    sessionStorage.setItem('amazon-review-response-results', JSON.stringify(results));
+                    console.log('评论回复结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-review-response-results');
+                console.log('已清除保存的评论回复结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }// 监听浏览器标签页关闭或导航离开
             
             reviewResponseForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -408,15 +515,15 @@
                         responseContainer.appendChild(noResponseMsg);
                     }
                     
+                    // 保存结果
+                    saveResults(result.data, formData);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
                     emptyResultState.classList.add('hidden');
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_review_response');
-                    }
                     
                     // 在小屏幕设备上，自动滚动到结果区域
                     if (window.innerWidth < 768) {
@@ -485,6 +592,9 @@
             // 创建新回复按钮功能
             const newResponseButton = document.getElementById('newResponseButton');
             newResponseButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');

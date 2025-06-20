@@ -161,7 +161,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -251,11 +252,47 @@
     </div>
 
     <script>
+        // 结果保持功能
+        function loadSavedResults() {
+            const savedResults = sessionStorage.getItem('amazon-keyword-recommender-results');
+            if (savedResults) {
+                try {
+                    const keywords = JSON.parse(savedResults);
+                    displayKeywords(keywords);
+                    console.log('已恢复保存的关键词推荐结果');
+                    return true;
+                } catch (error) {
+                    console.error('恢复保存结果失败:', error);
+                    sessionStorage.removeItem('amazon-keyword-recommender-results');
+                }
+            }
+            return false;
+        }
+
+        function saveResults(keywords) {
+            try {
+                sessionStorage.setItem('amazon-keyword-recommender-results', JSON.stringify(keywords));
+                console.log('关键词推荐结果已保存');
+            } catch (error) {
+                console.error('保存结果失败:', error);
+            }
+        }
+
+        function clearSavedResults() {
+            sessionStorage.removeItem('amazon-keyword-recommender-results');
+            console.log('已清除保存的关键词推荐结果');
+        }
+
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 尝试加载保存的结果
+            loadSavedResults();// 监听浏览器标签页关闭或导航离开
+            
             // 表单提交
             document.getElementById('keywordForm').addEventListener('submit', function(e) {
                 e.preventDefault();
+                // 清除之前保存的结果
+                clearSavedResults();
                 generateKeywords();
             });
 
@@ -301,10 +338,10 @@
                     if (data.success) {
                         displayKeywords(data.data.keywords);
                         
+                        // 保存结果到localStorage
+                        saveResults(data.data.keywords);
+                        
                         // 特性追踪
-                        if (typeof trackFeatureUsage === 'function') {
-                            trackFeatureUsage('amazon_keyword_recommender');
-                        }
                     } else {
                         alert('生成失败: ' + (data.error || '未知错误'));
                     }

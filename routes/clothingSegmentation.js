@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid'); // 需要安装uuid包: npm install uuid
 const { callClothSegmentationApi } = require('../utils/aliyunApiProxy');
 const axios = require('axios');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
+const uploadFromUrl = require('../utils/uploadFromUrl'); // 新增: OSS 转存工具
 
 /**
  * 服饰分割API - 创建任务
@@ -112,6 +113,51 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('CLOTH_SEGME
             } catch (dbError) {
                 console.error('保存服饰分割使用记录失败:', dbError);
                 // 继续处理，不影响用户使用
+            }
+            
+            // 提取一份可靠的主图 URL
+            const extractMain = (result) => {
+              if (!result || !result.Data) return null;
+              if (result.Data.ImageURL) return result.Data.ImageURL;
+              if (result.Data.Elements && result.Data.Elements.length) return result.Data.Elements[0].ImageURL;
+              if (result.Data.ClassUrl && Object.keys(result.Data.ClassUrl).length) {
+                const first = Object.keys(result.Data.ClassUrl)[0];
+                return result.Data.ClassUrl[first];
+              }
+              return null;
+            };
+
+            const originMainUrl = extractMain(apiResult);
+
+            try {
+                // 如果主图缺失直接抛错，转入代理逻辑
+                if (!originMainUrl) throw new Error('主图 URL 为空');
+
+                apiResult.Data.ImageURL = await uploadFromUrl(originMainUrl, 'cloth-segmentation');
+
+                if (apiResult.Data.ClassUrl && typeof apiResult.Data.ClassUrl === 'object') {
+                    const newClassUrl = {};
+                    for (const key of Object.keys(apiResult.Data.ClassUrl)) {
+                        newClassUrl[key] = await uploadFromUrl(apiResult.Data.ClassUrl[key], 'cloth-segmentation/class');
+                    }
+                    apiResult.Data.ClassUrl = newClassUrl;
+                }
+            } catch (ossErr) {
+                console.error('上传 OSS 失败，改用代理下载:', ossErr.message);
+
+                const toProxy = (u) => `/api/cloth-segmentation/download?url=${encodeURIComponent(u)}`;
+                if (originMainUrl) {
+                    apiResult.Data.ImageURL = toProxy(originMainUrl);
+                }
+
+                if (apiResult.Data.ClassUrl && typeof apiResult.Data.ClassUrl === 'object') {
+                    const newClassUrl = {};
+                    Object.keys(apiResult.Data.ClassUrl).forEach(k => {
+                        const original = apiResult.Data.ClassUrl[k];
+                        newClassUrl[k] = original ? toProxy(original) : original;
+                    });
+                    apiResult.Data.ClassUrl = newClassUrl;
+                }
             }
             
             // 返回标准API结果
@@ -243,6 +289,20 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
             error: error.message
         });
     }
+});
+
+// 下载代理路由, 避免 Mixed-Content
+router.get('/download', async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send('缺少 url 参数');
+  try {
+    const response = await axios.get(url, { responseType: 'stream' });
+    res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+    response.data.pipe(res);
+  } catch (e) {
+    console.error('[proxy-download] 失败:', e.message);
+    res.status(500).send('文件下载失败');
+  }
 });
 
 module.exports = router; 

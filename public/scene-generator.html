@@ -29,9 +29,11 @@
             }
         };
     </script>
+    <script src="/feature-tracker.js"></script>
     <script src="https://g.alicdn.com/code/npm/@ali/intl-op-frame-sdk/0.1.10/main.min.js"></script>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/iframe-mobile-guard.js"></script>
+</head>
 <body>
     <iframe id="myiframe" class="aidc-open-frame" src="" frameborder="0"></iframe>
 
@@ -82,45 +84,21 @@
             }
         }
         
-        // 记录功能使用
-        async function trackFeatureUsage() {
+        // 功能使用检查（已移除积分扣除逻辑，避免双重扣费）
+        async function checkFeatureAccess() {
             try {
                 // 获取用户token
                 const authToken = localStorage.getItem('authToken');
                 if (!authToken) {
-                    console.error('用户未登录，无法记录使用情况');
-                    return;
+                    console.error('用户未登录');
+                    return false;
                 }
                 
-                const response = await fetch('/api/credits/track-usage', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        featureName: 'scene-generator' // 功能名称对应featureAccess.js中的配置
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('功能使用已记录:', result.data);
-                } else {
-                    console.error('记录功能使用失败:', result.message);
-                    // 如果是积分不足，可以提示用户
-                    if (response.status === 402) {
-                        alert('您的免费试用次数已用完，积分不足，请充值后再使用。');
-                        // 跳转到积分管理页面
-                        window.location.href = '/credits.html';
-                        return false;
-                    }
-                }
-                
+                // 这里可以添加其他检查逻辑，但不扣费
+                console.log('功能访问检查通过');
                 return true;
             } catch (error) {
-                console.error('跟踪功能使用出错:', error);
+                console.error('功能访问检查出错:', error);
                 return false;
             }
         }
@@ -147,6 +125,13 @@
             // 使用payload方式构建URL
             const payloadString = encodeURIComponent(JSON.stringify(params));
             // 使用场景图生成路由
+            // 检查是否为移动设备
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                console.log("检测到移动设备，不加载编辑器");
+                return;
+            }
+            
             const url = `https://editor.d.design/editor/index.html/#/scene?payload=${payloadString}`;
             
             // 更新iframe的src
@@ -313,25 +298,10 @@
                 
                 // 处理生产拦截
                 if (action === 'generate' || action === 'generateScene') {
-                    // 获取图片数量
-                    const imageNum = data?.imageNum || 1;
-                    console.log("用户请求生成图片，数量:", imageNum);
-                    
-                    // 记录功能使用并检查是否可以继续
-                    trackFeatureUsage().then(canProceed => {
-                        // 响应编辑器请求
-                        iframeEle.contentWindow.postMessage({
-                            biz: receiveBiz,
-                            action: 'respond',
-                            success: canProceed // 根据是否可以继续返回成功或失败
-                        }, '*');
-                        
-                        if (!canProceed) {
-                            console.log("用户积分不足，已阻止生产");
-                            alert("积分不足，无法继续生成图片");
-                        } else {
-                            console.log("已允许继续生产流程");
-                        }
+                    trackFeatureUsage('use', 'scene-generator').then(canProceed=>{
+                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action:'respond', success: canProceed }, '*');
+                    }).catch(()=>{
+                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action:'respond', success:false }, '*');
                     });
                     return;
                 }

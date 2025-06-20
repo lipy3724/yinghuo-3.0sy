@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const https = require('https');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { FEATURES } = require('../middleware/featureAccess');
@@ -10,6 +11,12 @@ const { FeatureUsage } = require('../models/FeatureUsage');
 // 配置API密钥和基础URL
 const API_KEY = process.env.DASHSCOPE_API_KEY;
 const API_BASE_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis';
+
+// 创建一个 Axios 实例，强制使用 IPv4，避免因服务器不支持 IPv6 导致的 EHOSTUNREACH/ECONNREFUSED 错误
+const axiosInstance = axios.create({
+  // keepAlive 可以复用连接，family:4 强制解析为 IPv4 地址
+  httpsAgent: new https.Agent({ keepAlive: true, family: 4 })
+});
 
 /**
  * @route   POST /api/image-edit/create-task
@@ -645,7 +652,7 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
         
         try {
             // 发送查询任务状态请求
-            const response = await axios.get(url, { headers });
+            const response = await axiosInstance.get(url, { headers });
             
             console.log(`任务状态查询响应: ${response.status}, 任务状态: ${response.data.output?.task_status || '未知'}`);
             
@@ -772,7 +779,7 @@ async function createTask(requestData) {
     };
     
     // 发送创建任务请求
-    const response = await axios.post(API_BASE_URL, requestData, { headers });
+    const response = await axiosInstance.post(API_BASE_URL, requestData, { headers });
     
     console.log('通义万相API响应:', response.status, JSON.stringify(response.data, null, 2));
     

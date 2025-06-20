@@ -6,6 +6,9 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+// 导入中间件
+const mobileGuardMiddleware = require('./middleware/mobileGuard');
+
 // 导入路由
 const authRoutes = require('./routes/auth');
 // 其他路由导入...
@@ -16,6 +19,8 @@ const app = express();
 // 中间件
 app.use(cors());
 app.use(bodyParser.json());
+// 使用移动端拦截中间件（必须在静态文件中间件之前）
+app.use(mobileGuardMiddleware);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 路由

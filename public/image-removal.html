@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>图像智能消除 - 萤火AI</title>
     <script src="/feature-tracker.js"></script>
+    <script src="/js/iframe-mobile-guard.js"></script>
+    <title>图像智能消除 - 萤火AI</title>
     <style>
         html, body {
             width: 100%;
@@ -125,7 +126,9 @@
     <script src="https://g.alicdn.com/code/npm/@ali/intl-op-frame-sdk/0.1.10/main.min.js" 
             onerror="showError('SDK加载失败，请检查网络连接')"></script>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <script src="/js/iframe-mobile-guard.js"></script>
+    </head>
 <body>
     <iframe id="myiframe" class="aidc-open-frame" src="" frameborder="0"></iframe>
     <div id="errorContainer">
@@ -142,8 +145,7 @@
         // 构建编辑器URL并加载
         async function initializeEditor() {
             // 不再记录功能使用 - 移除初始化时扣除次数
-            // const canProceed = await trackFeatureUsage('image-removal');
-            // if (!canProceed) {
+            // const canProceed = await// if (!canProceed) {
             //     return; // 如果不能继续（如积分不足），则不加载编辑器
             // }
             
@@ -165,6 +167,13 @@
             const sceneURL = 'https://editor.d.design/editor/index.html/#/elimination';
             
             // 拼接成最终链接
+            // 检查是否为移动设备
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                console.log("检测到移动设备，不加载编辑器");
+                return;
+            }
+            
             const url = `${sceneURL}?payload=${payloadString}`;
             
             // 更新iframe的src
@@ -332,50 +341,16 @@
                 
                 // 处理生产拦截
                 if (action === 'generate') {
-                    // 获取图片数量
-                    const imageNum = data?.imageNum || 1;
-                    console.log("用户请求生成图片，数量:", imageNum);
-                    
-                    try {
-                        // 记录功能使用并检查是否可以继续
-                        trackFeatureUsage('image-removal').then(canProceed => {
-                            try {
-                                // 响应编辑器请求
-                                if (iframeEle && iframeEle.contentWindow) {
-                                    iframeEle.contentWindow.postMessage({
-                                        biz: receiveBiz,
-                                        action: 'respond',
-                                        success: canProceed // 根据是否可以继续返回成功或失败
-                                    }, '*');
-                                    
-                                    if (!canProceed) {
-                                        console.log("用户积分不足，已阻止生产");
-                                        alert("积分不足，无法继续生成图片");
-                                    } else {
-                                        console.log("已允许继续生产流程");
-                                    }
-                                } else {
-                                    console.error("iframe元素或其contentWindow不存在");
-                                }
-                            } catch (responseError) {
-                                console.error("响应编辑器请求时出错:", responseError);
-                                // 出错时默认允许继续，避免功能阻塞
-                                alert("处理请求时出现错误，但已允许继续");
-                            }
-                        }).catch(trackError => {
-                            console.error("记录功能使用出错:", trackError);
-                            // 出错时默认允许继续
-                            if (iframeEle && iframeEle.contentWindow) {
-                                iframeEle.contentWindow.postMessage({
-                                    biz: receiveBiz,
-                                    action: 'respond',
-                                    success: true
-                                }, '*');
-                            }
-                        });
-                    } catch (error) {
-                        console.error("处理生成请求出错:", error);
-                    }
+                    console.log('收到 generate，准备扣费');
+                    trackFeatureUsage('use', 'image-removal').then(canProceed => {
+                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: canProceed }, '*');
+                        if (!canProceed) {
+                            alert('免费次数已用完或积分不足');
+                        }
+                    }).catch(e => {
+                        console.error('扣费失败', e);
+                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: false }, '*');
+                    });
                     return;
                 }
                 

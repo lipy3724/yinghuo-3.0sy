@@ -182,7 +182,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
     <!-- 导航栏 -->
     <div class="navbar">
@@ -309,9 +310,102 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
             
-            // 初始化：确保显示空结果状态
-            resultContainer.classList.add('hidden');
-            emptyResultState.classList.remove('hidden');
+            // 结果保持功能：检查是否有保存的结果
+            function loadSavedResults() {
+                const savedResults = sessionStorage.getItem('amazon-review-generator-results');
+                if (savedResults) {
+                    try {
+                        const results = JSON.parse(savedResults);
+                        
+                        // 清空评论容器
+                        reviewsContainer.innerHTML = '';
+                        
+                        // 恢复评论结果显示
+                        if (results.reviews && results.reviews.length > 0) {
+                            results.reviews.forEach((review, index) => {
+                                const reviewCard = document.createElement('div');
+                                reviewCard.className = 'review-card';
+                                
+                                const reviewContent = document.createElement('div');
+                                reviewContent.className = 'mb-2';
+                                
+                                // 添加星级评分
+                                const starsDiv = document.createElement('div');
+                                starsDiv.className = 'stars flex items-center mb-1';
+                                
+                                for (let i = 0; i < 5; i++) {
+                                    const starIcon = document.createElement('i');
+                                    starIcon.className = 'ri-star-fill mr-1';
+                                    starsDiv.appendChild(starIcon);
+                                }
+                                
+                                // 添加评论标题和内容
+                                const titleElement = document.createElement('h4');
+                                titleElement.className = 'font-medium text-gray-800 mb-1';
+                                titleElement.textContent = review.title || `评论 #${index + 1}`;
+                                
+                                const contentElement = document.createElement('p');
+                                contentElement.className = 'text-gray-700';
+                                contentElement.textContent = review.content;
+                                
+                                // 添加用户信息和日期
+                                const metaElement = document.createElement('div');
+                                metaElement.className = 'text-sm text-gray-500 mt-2';
+                                
+                                const date = new Date();
+                                date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+                                const formattedDate = date.toLocaleDateString();
+                                
+                                metaElement.textContent = `${review.username || '亚马逊用户'} | ${formattedDate} | 已验证购买`;
+                                
+                                // 组装评论卡片
+                                reviewContent.appendChild(starsDiv);
+                                reviewContent.appendChild(titleElement);
+                                reviewContent.appendChild(contentElement);
+                                reviewContent.appendChild(metaElement);
+                                
+                                reviewCard.appendChild(reviewContent);
+                                reviewsContainer.appendChild(reviewCard);
+                            });
+                        }
+                        
+                        // 显示结果区域
+                        resultContainer.classList.remove('hidden');
+                        emptyResultState.classList.add('hidden');
+                        
+                        console.log('已恢复保存的评论生成结果');
+                        return true;
+                    } catch (error) {
+                        console.error('恢复保存结果失败:', error);
+                        sessionStorage.removeItem('amazon-review-generator-results');
+                    }
+                }
+                return false;
+            }
+            
+            // 保存结果到sessionStorage
+            function saveResults(results) {
+                try {
+                    sessionStorage.setItem('amazon-review-generator-results', JSON.stringify(results));
+                    console.log('评论生成结果已保存');
+                } catch (error) {
+                    console.error('保存结果失败:', error);
+                }
+            }
+            
+            // 清除保存的结果
+            function clearSavedResults() {
+                sessionStorage.removeItem('amazon-review-generator-results');
+                console.log('已清除保存的评论生成结果');
+            }
+            
+            // 初始化：尝试加载保存的结果，如果没有则显示空状态
+            if (!loadSavedResults()) {
+                resultContainer.classList.add('hidden');
+                emptyResultState.classList.remove('hidden');
+            }
+            
+
             
             reviewGeneratorForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -406,6 +500,9 @@
                         reviewsContainer.appendChild(noReviewsMsg);
                     }
                     
+                    // 保存结果到localStorage
+                    saveResults(result.data);
+                    
                     // 隐藏加载中，显示结果
                     loadingOverlay.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
@@ -417,9 +514,6 @@
                     }
                     
                     // 特性追踪
-                    if (typeof trackFeatureUsage === 'function') {
-                        trackFeatureUsage('amazon_review_generator');
-                    }
                     
                 } catch (error) {
                     console.error('生成评论出错:', error);
@@ -487,6 +581,9 @@
             // 创建新评论按钮功能
             const newReviewsButton = document.getElementById('newReviewsButton');
             newReviewsButton.addEventListener('click', () => {
+                // 清除保存的结果
+                clearSavedResults();
+                
                 // 隐藏结果，显示空状态
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');
