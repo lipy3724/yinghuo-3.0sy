@@ -1,9 +1,34 @@
 /* 组件JavaScript文件 - 导航栏和侧边栏交互功能 */
 
+// 检查用户权限并重定向 - 核心功能函数
+function checkAuthAndRedirect(url) {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        // 在新标签页中打开功能页面
+        window.open(url, '_blank');
+    } else {
+        // 登录页面在当前页面打开
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(url);
+    }
+}
+
 // 等待DOM加载完成
 document.addEventListener('DOMContentLoaded', function() {
-    initializeComponents();
+    // 延迟初始化，确保导航栏HTML已加载
+    setTimeout(() => {
+        initializeComponents();
+    }, 300);
 });
+
+// 如果页面已经加载完成，立即初始化
+if (document.readyState === 'loading') {
+    // 文档仍在加载中，等待DOMContentLoaded
+} else {
+    // 文档已经加载完成
+    setTimeout(() => {
+        initializeComponents();
+    }, 300);
+}
 
 // 初始化所有组件
 function initializeComponents() {
@@ -15,11 +40,17 @@ function initializeComponents() {
 
 // 初始化导航栏功能
 function initializeNavbar() {
+    console.log('初始化导航栏功能...');
+    
     // 功能中心下拉菜单
     const featuresMenuBtn = document.getElementById('features-menu-btn');
     const featuresDropdown = document.getElementById('features-dropdown');
     
+    console.log('功能中心按钮:', featuresMenuBtn);
+    console.log('功能中心下拉菜单:', featuresDropdown);
+    
     if (featuresMenuBtn && featuresDropdown) {
+        console.log('功能中心下拉菜单初始化成功');
         let isMenuOpen = false;
         let hideTimeout;
         
@@ -70,74 +101,126 @@ function initializeNavbar() {
             clearTimeout(hideTimeout);
         });
         featuresDropdown.addEventListener('mouseleave', hideMenu);
+    } else {
+        console.log('功能中心下拉菜单元素未找到');
     }
     
     // 积分中心下拉菜单
     const creditsMenuBtn = document.getElementById('credits-menu-btn');
     const creditsDropdown = document.getElementById('credits-dropdown');
     
+    console.log('积分中心按钮:', creditsMenuBtn);
+    console.log('积分中心下拉菜单:', creditsDropdown);
+    
     if (creditsMenuBtn && creditsDropdown) {
-        creditsMenuBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            creditsDropdown.classList.toggle('hidden');
-            
-            const arrow = creditsMenuBtn.querySelector('.arrow-icon');
-            if (arrow) {
-                if (creditsDropdown.classList.contains('hidden')) {
-                    arrow.classList.remove('ri-arrow-up-s-line');
-                    arrow.classList.add('ri-arrow-down-s-line');
-                } else {
+        console.log('积分中心下拉菜单初始化成功');
+        let isCreditsMenuOpen = false;
+        let creditsHideTimeout;
+        
+        // 显示菜单
+        function showCreditsMenu() {
+            clearTimeout(creditsHideTimeout);
+            if (!isCreditsMenuOpen) {
+                creditsDropdown.classList.remove('hidden');
+                isCreditsMenuOpen = true;
+                
+                // 更新箭头图标
+                const arrow = creditsMenuBtn.querySelector('.arrow-icon');
+                if (arrow) {
                     arrow.classList.remove('ri-arrow-down-s-line');
                     arrow.classList.add('ri-arrow-up-s-line');
                 }
             }
-        });
+        }
         
-        // 点击外部关闭
-        document.addEventListener('click', function(e) {
-            if (!creditsMenuBtn.contains(e.target) && !creditsDropdown.contains(e.target)) {
-                creditsDropdown.classList.add('hidden');
+        // 隐藏菜单
+        function hideCreditsMenu() {
+            if (isCreditsMenuOpen) {
+                creditsHideTimeout = setTimeout(() => {
+                    creditsDropdown.classList.add('hidden');
+                }, 150);
+                isCreditsMenuOpen = false;
+                
+                // 更新箭头图标
                 const arrow = creditsMenuBtn.querySelector('.arrow-icon');
                 if (arrow) {
                     arrow.classList.remove('ri-arrow-up-s-line');
                     arrow.classList.add('ri-arrow-down-s-line');
                 }
             }
+        }
+        
+        // 事件监听
+        creditsMenuBtn.addEventListener('mouseenter', showCreditsMenu);
+        creditsMenuBtn.addEventListener('mouseleave', () => {
+            creditsHideTimeout = setTimeout(hideCreditsMenu, 100);
         });
+        
+        creditsDropdown.addEventListener('mouseenter', () => {
+            clearTimeout(creditsHideTimeout);
+        });
+        creditsDropdown.addEventListener('mouseleave', hideCreditsMenu);
+    } else {
+        console.log('积分中心下拉菜单元素未找到');
     }
     
     // 用户菜单下拉
     const userMenuBtn = document.getElementById('user-menu-btn');
     const userDropdown = document.getElementById('user-dropdown');
     
+    console.log('用户菜单按钮:', userMenuBtn);
+    console.log('用户菜单下拉:', userDropdown);
+    
     if (userMenuBtn && userDropdown) {
-        userMenuBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            userDropdown.classList.toggle('hidden');
-            
-            const arrow = userMenuBtn.querySelector('.arrow-icon');
-            if (arrow) {
-                if (userDropdown.classList.contains('hidden')) {
-                    arrow.classList.remove('ri-arrow-up-s-line');
-                    arrow.classList.add('ri-arrow-down-s-line');
-                } else {
+        console.log('用户菜单下拉初始化成功');
+        let isUserMenuOpen = false;
+        let userHideTimeout;
+        
+        // 显示菜单
+        function showUserMenu() {
+            clearTimeout(userHideTimeout);
+            if (!isUserMenuOpen) {
+                userDropdown.classList.remove('hidden');
+                isUserMenuOpen = true;
+                
+                // 更新箭头图标
+                const arrow = userMenuBtn.querySelector('.arrow-icon');
+                if (arrow) {
                     arrow.classList.remove('ri-arrow-down-s-line');
                     arrow.classList.add('ri-arrow-up-s-line');
                 }
             }
-        });
+        }
         
-        // 点击外部关闭
-        document.addEventListener('click', function(e) {
-            if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-                userDropdown.classList.add('hidden');
+        // 隐藏菜单
+        function hideUserMenu() {
+            if (isUserMenuOpen) {
+                userHideTimeout = setTimeout(() => {
+                    userDropdown.classList.add('hidden');
+                }, 150);
+                isUserMenuOpen = false;
+                
+                // 更新箭头图标
                 const arrow = userMenuBtn.querySelector('.arrow-icon');
                 if (arrow) {
                     arrow.classList.remove('ri-arrow-up-s-line');
                     arrow.classList.add('ri-arrow-down-s-line');
                 }
             }
+        }
+        
+        // 事件监听
+        userMenuBtn.addEventListener('mouseenter', showUserMenu);
+        userMenuBtn.addEventListener('mouseleave', () => {
+            userHideTimeout = setTimeout(hideUserMenu, 100);
         });
+        
+        userDropdown.addEventListener('mouseenter', () => {
+            clearTimeout(userHideTimeout);
+        });
+        userDropdown.addEventListener('mouseleave', hideUserMenu);
+    } else {
+        console.log('用户菜单下拉元素未找到');
     }
 }
 
@@ -328,19 +411,58 @@ function initializeQuickAccess() {
 
 // 初始化用户认证相关功能
 function initializeAuth() {
-    // 这里可以添加用户认证相关的初始化代码
-    // 例如检查登录状态、更新用户信息显示等
+    console.log('初始化认证功能...');
     
-    // 登出按钮
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            // 调用登出处理函数（需要在其他地方定义）
-            if (typeof handleLogout === 'function') {
-                handleLogout();
+    // 检查登录状态并更新UI
+    updateNavbarLoginStatus();
+}
+
+// 检查用户登录状态并更新导航栏UI
+function updateNavbarLoginStatus() {
+    const token = localStorage.getItem('authToken');
+    const userInfo = localStorage.getItem('user');
+    
+    const loginBtn = document.getElementById('login-btn');
+    const userInfoEl = document.getElementById('user-info');
+    
+    console.log('登录状态检查 - Token:', !!token, 'UserInfo:', !!userInfo);
+    console.log('登录按钮:', loginBtn, '用户信息元素:', userInfoEl);
+    
+    if (token && userInfo && loginBtn && userInfoEl) {
+        try {
+            const user = JSON.parse(userInfo);
+            console.log('用户信息:', user);
+            
+            // 更新UI显示登录状态
+            loginBtn.classList.add('hidden');
+            userInfoEl.classList.remove('hidden');
+            
+            const usernameDisplay = document.getElementById('username-display');
+            if (usernameDisplay) {
+                usernameDisplay.textContent = user.username || '用户';
             }
-        });
+            
+            // 添加登出功能
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                // 移除可能存在的旧事件监听器
+                const newLogoutBtn = logoutBtn.cloneNode(true);
+                logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+                
+                newLogoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                });
+            }
+        } catch (e) {
+            console.error('解析用户信息出错:', e);
+        }
+    } else if (loginBtn && userInfoEl) {
+        // 用户未登录，显示登录按钮
+        loginBtn.classList.remove('hidden');
+        userInfoEl.classList.add('hidden');
     }
 }
 

@@ -4,7 +4,8 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     min-height: 100vh;
-    overflow: hidden; /* 防止整个页面出现滚动条 */
+    overflow-x: hidden; /* 只隐藏水平滚动条 */
+    overflow-y: auto; /* 允许垂直滚动 */
 }
 
 /* 侧边栏项目样式 */
@@ -214,23 +215,57 @@ body.sidebar-collapsed .main-content {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     padding: 1rem 0;
-    margin-top: 20px !important;
+    margin-top: 8px !important;
     opacity: 0;
     visibility: hidden;
     transform: translateY(8px);
-    transition: none;
-    pointer-events: none;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto;
 }
 
 #features-dropdown.visible {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: auto;
 }
 
 #features-dropdown.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+}
+
+/* 积分中心下拉菜单样式 */
+#credits-dropdown {
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
+                0 5px 10px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin-top: 8px !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#credits-dropdown.hidden {
+    display: none;
+}
+
+/* 用户菜单下拉样式 */
+#user-dropdown {
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
+                0 5px 10px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin-top: 8px !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#user-dropdown.hidden {
     display: none;
 }
 
