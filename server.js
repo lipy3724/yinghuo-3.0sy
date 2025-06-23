@@ -85,6 +85,8 @@ const clothingSegmentationRoutes = require('./routes/clothingSegmentation');
 const globalStyleRoutes = require('./routes/globalStyle');
 // 导入亚马逊Listing路由
 const amazonListingRoutes = require('./routes/amazon-listing-api');
+// 导入客服路由（数据库版本）
+const kefuRoutes = require('./kefu/kefu-db');
 // 导入认证中间件
 const { protect } = require('./middleware/auth');
 // 导入功能访问中间件和功能配置
@@ -759,6 +761,8 @@ app.use('/api/cloth-segmentation', clothingSegmentationRoutes);
 app.use('/api/global-style', globalStyleRoutes);
 // 添加亚马逊Listing路由
 app.use('/api/amazon-listing', amazonListingRoutes);
+// 客服路由
+app.use('/api/kefu', kefuRoutes);
 
 // 视频风格重绘下载代理（必须在404处理之前注册）
 app.get('/api/video-style-repaint/download', async (req, res) => {
@@ -4369,6 +4373,15 @@ const startServer = async () => {
     
     // 启动定时清理任务
     startCleanupTasks();
+    
+    // 🎯 启动客服分配超时检查定时任务
+    try {
+      const assignmentScheduler = require('./utils/assignmentScheduler');
+      assignmentScheduler.start();
+      console.log('✅ 客服分配超时检查定时任务已启动');
+    } catch (error) {
+      console.error('❌ 启动客服分配超时检查失败:', error);
+    }
     
     // 启动服务器
     app.listen(port, () => {

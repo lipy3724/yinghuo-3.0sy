@@ -9,6 +9,36 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/js/logout-handler.js"></script>
     <script src="/js/auth-check.js"></script>
+    <script src="/components/components.js"></script>
+    
+    <!-- 客服组件调试脚本 -->
+    <script>
+        // 添加调试信息
+        console.log('首页脚本加载完成');
+        
+        // 页面加载完成后检查客服组件
+        window.addEventListener('load', function() {
+            console.log('页面完全加载完成，检查客服组件...');
+            
+            setTimeout(() => {
+                const component = document.getElementById('customer-service-component');
+                const floatBtn = document.getElementById('cs-float-button');
+                
+                console.log('客服组件检查结果:', {
+                    component: !!component,
+                    floatBtn: !!floatBtn,
+                    pathname: window.location.pathname
+                });
+                
+                if (!component || !floatBtn) {
+                    console.log('客服组件未找到，尝试手动加载...');
+                    if (window.loadCustomerService) {
+                        window.loadCustomerService();
+                    }
+                }
+            }, 2000);
+        });
+    </script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -2928,6 +2958,94 @@
                     checkAuthAndRedirect.isChecking = false;
                 }, 500);
             }
+        }
+    </script>
+
+    <!-- 客服组件容器 -->
+    <div id="customer-service-component"></div>
+    
+    <script>
+        // 客服组件加载函数 - 直接在index.html中定义
+        function loadCustomerServiceForIndex() {
+            console.log('🔧 开始加载客服组件...');
+            
+            return fetch('/components/customer-service.html')
+                .then(response => {
+                    console.log(`📡 客服组件请求响应: ${response.status}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // 检查是否已经加载了客服组件
+                    if (document.getElementById('cs-float-button')) {
+                        console.log('⚠️ 客服组件已存在，跳过加载');
+                        return;
+                    }
+                    
+                    console.log('📝 插入客服组件HTML...');
+                    
+                    // 直接插入HTML到body
+                    document.body.insertAdjacentHTML('beforeend', html);
+                    
+                    // 验证组件是否成功插入
+                    const floatBtn = document.getElementById('cs-float-button');
+                    const chatWindow = document.getElementById('cs-chat-window');
+                    
+                    if (floatBtn && chatWindow) {
+                        console.log('✅ 客服组件HTML加载成功');
+                        
+                        // 等待脚本执行完成
+                        setTimeout(() => {
+                            console.log('🔍 检查客服组件函数...');
+                            console.log(`toggleChatWindow: ${typeof window.toggleChatWindow}`);
+                            console.log(`openChatWindow: ${typeof window.openChatWindow}`);
+                            console.log(`closeChatWindow: ${typeof window.closeChatWindow}`);
+                            console.log(`sendMessage: ${typeof window.sendMessage}`);
+                            
+                            if (typeof window.toggleChatWindow === 'function') {
+                                console.log('✅ 客服组件JavaScript函数已就绪');
+                                
+                                // 手动绑定点击事件作为备用方案
+                                floatBtn.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    console.log('🖱️ 客服按钮被点击');
+                                    if (typeof window.toggleChatWindow === 'function') {
+                                        window.toggleChatWindow();
+                                    } else {
+                                        console.error('❌ toggleChatWindow函数不可用');
+                                    }
+                                });
+                                
+                                console.log('✅ 客服按钮事件绑定完成');
+                            } else {
+                                console.error('❌ 客服组件JavaScript函数未定义');
+                            }
+                        }, 1000);
+                    } else {
+                        console.error('❌ 客服组件加载失败，未找到必要元素');
+                    }
+                })
+                .catch(error => {
+                    console.error(`❌ 客服组件加载失败: ${error.message}`);
+                });
+        }
+        
+        // 页面加载完成后加载客服组件
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 页面DOM加载完成');
+            setTimeout(() => {
+                loadCustomerServiceForIndex();
+            }, 500);
+        });
+        
+        // 如果页面已经加载完成，立即加载
+        if (document.readyState !== 'loading') {
+            console.log('📄 页面已加载完成，立即加载客服组件');
+            setTimeout(() => {
+                loadCustomerServiceForIndex();
+            }, 500);
         }
     </script>
 </body>

@@ -1,0 +1,526 @@
+<!-- 客服系统组件 - 简化版本 -->
+<style>
+    /* 客服按钮样式 */
+    .cs-float-button {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 30px !important;
+        width: 60px !important;
+        height: 60px !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 50% !important;
+        border: none !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4) !important;
+        z-index: 9999 !important;
+        color: white !important;
+        font-size: 24px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: transform 0.2s ease !important;
+    }
+    
+    .cs-float-button:hover {
+        transform: scale(1.1) !important;
+    }
+    
+    /* 聊天窗口样式 */
+    .cs-chat-window {
+        position: fixed !important;
+        bottom: 100px !important;
+        right: 30px !important;
+        width: 350px !important;
+        height: 450px !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+        z-index: 10000 !important;
+        display: none !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border: 1px solid #e0e0e0 !important;
+    }
+    
+    .cs-chat-window.show {
+        display: flex !important;
+    }
+    
+    /* 聊天窗口头部 */
+    .cs-chat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        padding: 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    
+    .cs-chat-header-info {
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .cs-chat-avatar {
+        width: 40px !important;
+        height: 40px !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-right: 12px !important;
+        font-size: 20px !important;
+    }
+    
+    .cs-chat-title {
+        margin: 0 !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+    }
+    
+    .cs-chat-subtitle {
+        margin: 0 !important;
+        font-size: 12px !important;
+        opacity: 0.8 !important;
+    }
+    
+    .cs-close-btn {
+        background: none !important;
+        border: none !important;
+        color: white !important;
+        font-size: 20px !important;
+        cursor: pointer !important;
+        padding: 4px !important;
+        border-radius: 4px !important;
+    }
+    
+    .cs-close-btn:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* 聊天消息区域 */
+    .cs-chat-messages {
+        flex: 1 !important;
+        padding: 16px !important;
+        overflow-y: auto !important;
+        background: #f8f9fa !important;
+    }
+    
+    /* 聊天输入区域 */
+    .cs-chat-input-area {
+        padding: 16px !important;
+        border-top: 1px solid #e0e0e0 !important;
+        background: white !important;
+    }
+    
+    .cs-chat-input-container {
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .cs-chat-input {
+        flex: 1 !important;
+        border: 1px solid #ddd !important;
+        border-radius: 20px !important;
+        padding: 8px 16px !important;
+        font-size: 14px !important;
+        outline: none !important;
+    }
+    
+    .cs-chat-input:focus {
+        border-color: #667eea !important;
+    }
+    
+    .cs-send-btn {
+        background: #667eea !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 50% !important;
+        width: 36px !important;
+        height: 36px !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .cs-send-btn:hover {
+        background: #5a67d8 !important;
+    }
+    
+    /* 消息样式 */
+    .cs-message {
+        margin-bottom: 12px !important;
+        max-width: 80% !important;
+    }
+    
+    .cs-message.user {
+        margin-left: auto !important;
+        text-align: right !important;
+    }
+    
+    .cs-message-content {
+        padding: 8px 12px !important;
+        border-radius: 12px !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+    }
+    
+    .cs-message.user .cs-message-content {
+        background: #667eea !important;
+        color: white !important;
+        border-bottom-right-radius: 4px !important;
+    }
+    
+    .cs-message.admin .cs-message-content {
+        background: white !important;
+        color: #333 !important;
+        border: 1px solid #e0e0e0 !important;
+        border-bottom-left-radius: 4px !important;
+    }
+    
+    .cs-message-time {
+        font-size: 11px !important;
+        color: #999 !important;
+        margin-top: 4px !important;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 480px) {
+        .cs-chat-window {
+            width: calc(100vw - 20px) !important;
+            height: calc(100vh - 120px) !important;
+            right: 10px !important;
+            bottom: 80px !important;
+        }
+    }
+</style>
+
+<!-- 客服浮动按钮 -->
+<button class="cs-float-button" id="cs-float-button" onclick="toggleChatWindow()">
+    <i class="ri-customer-service-2-line"></i>
+</button>
+
+<!-- 聊天窗口 -->
+<div class="cs-chat-window" id="cs-chat-window">
+    <!-- 头部 -->
+    <div class="cs-chat-header">
+        <div class="cs-chat-header-info">
+            <div class="cs-chat-avatar">
+                <i class="ri-customer-service-2-fill"></i>
+            </div>
+            <div>
+                <h4 class="cs-chat-title">萤火AI客服</h4>
+                <p class="cs-chat-subtitle">我们会尽快回复您</p>
+            </div>
+        </div>
+        <button class="cs-close-btn" onclick="closeChatWindow()">
+            <i class="ri-close-line"></i>
+        </button>
+    </div>
+    
+    <!-- 消息区域 -->
+    <div class="cs-chat-messages" id="cs-chat-messages">
+        <div class="cs-message admin">
+            <div class="cs-message-content">
+                您好！欢迎使用萤火AI智能助手！有什么可以帮助您的吗？
+            </div>
+            <div class="cs-message-time">刚刚</div>
+        </div>
+    </div>
+    
+    <!-- 输入区域 -->
+    <div class="cs-chat-input-area">
+        <div class="cs-chat-input-container">
+            <input type="text" class="cs-chat-input" id="cs-chat-input" placeholder="请输入您的问题..." maxlength="500">
+            <button class="cs-send-btn" id="cs-send-btn" onclick="sendMessage()">
+                <i class="ri-send-plane-fill"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全局变量 - 直接定义在window对象上
+window.csIsChatOpen = false;
+window.csCurrentUserId = null;
+window.csUnreadCount = 0;
+
+// 调试日志函数
+function csLog(message) {
+    console.log('[客服系统] ' + message);
+}
+
+// 简化的用户ID获取函数
+function getUserId() {
+    csLog('🔍 开始获取用户ID');
+    
+    // 检查缓存
+    if (window.csCurrentUserId && typeof window.csCurrentUserId === 'number') {
+        csLog('✅ 使用缓存的用户ID: ' + window.csCurrentUserId);
+        return window.csCurrentUserId;
+    }
+    
+    // 尝试从localStorage获取用户信息
+    try {
+        var userInfo = localStorage.getItem('user');
+        if (userInfo && userInfo !== 'null') {
+            var user = JSON.parse(userInfo);
+            if (user && user.id && !isNaN(user.id)) {
+                var realUserId = parseInt(user.id);
+                window.csCurrentUserId = realUserId;
+                csLog('✅ 从localStorage获取到用户ID: ' + realUserId);
+                return realUserId;
+            }
+        }
+    } catch (error) {
+        csLog('❌ 解析用户信息失败: ' + error.message);
+    }
+    
+    // 生成访客ID
+    var guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    csLog('⚠️ 生成访客ID: ' + guestId);
+    return guestId;
+}
+
+// 切换聊天窗口 - 全局函数
+function toggleChatWindow() {
+    csLog('🖱️ 切换聊天窗口');
+    var chatWindow = document.getElementById('cs-chat-window');
+    
+    if (!chatWindow) {
+        csLog('❌ 找不到聊天窗口元素');
+        return;
+    }
+    
+    if (window.csIsChatOpen) {
+        closeChatWindow();
+    } else {
+        openChatWindow();
+    }
+}
+
+// 打开聊天窗口
+function openChatWindow() {
+    csLog('📖 打开聊天窗口');
+    var chatWindow = document.getElementById('cs-chat-window');
+    
+    if (chatWindow) {
+        chatWindow.classList.add('show');
+        window.csIsChatOpen = true;
+        loadMessages();
+        focusInput();
+    }
+}
+
+// 关闭聊天窗口
+function closeChatWindow() {
+    csLog('📕 关闭聊天窗口');
+    var chatWindow = document.getElementById('cs-chat-window');
+    
+    if (chatWindow) {
+        chatWindow.classList.remove('show');
+        window.csIsChatOpen = false;
+    }
+}
+
+// 发送消息
+function sendMessage() {
+    var input = document.getElementById('cs-chat-input');
+    var message = input.value.trim();
+    
+    if (!message) {
+        csLog('❌ 消息为空');
+        return;
+    }
+    
+    csLog('📤 发送消息: ' + message);
+    
+    // 显示用户消息
+    addMessage(message, 'user');
+    
+    // 清空输入框
+    input.value = '';
+    
+    // 发送到服务器
+    sendToServer(message);
+}
+
+// 添加消息到界面
+function addMessage(content, type) {
+    var messagesContainer = document.getElementById('cs-chat-messages');
+    var messageDiv = document.createElement('div');
+    messageDiv.className = 'cs-message ' + type;
+    
+    var now = new Date();
+    var timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                  now.getMinutes().toString().padStart(2, '0');
+    
+    messageDiv.innerHTML = 
+        '<div class="cs-message-content">' + escapeHtml(content) + '</div>' +
+        '<div class="cs-message-time">' + timeStr + '</div>';
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// HTML转义
+function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 发送消息到服务器
+function sendToServer(message) {
+    var userId = getUserId();
+    
+    // 检查是否为访客ID
+    if (userId.toString().startsWith('guest_')) {
+        csLog('⚠️ 访客用户，显示登录提示');
+        addMessage('抱歉，您需要先登录才能使用客服功能。请点击右上角登录按钮进行登录。', 'admin');
+        return;
+    }
+    
+    // 确保userId是数字类型
+    if (isNaN(userId)) {
+        csLog('❌ 用户ID格式错误: ' + userId);
+        addMessage('抱歉，您的登录信息有误，请重新登录后再试。', 'admin');
+        return;
+    }
+    
+    csLog('📡 发送到服务器，用户ID: ' + userId);
+    
+    fetch('/api/kefu/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            userId: parseInt(userId),
+            message: message,
+            type: 'user'
+        })
+    })
+    .then(function(response) {
+        csLog('📡 服务器响应: ' + response.status);
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            csLog('✅ 消息发送成功');
+        } else {
+            csLog('❌ 消息发送失败: ' + (data.error || '未知错误'));
+            addMessage('消息发送失败，请稍后重试。', 'admin');
+        }
+    })
+    .catch(function(error) {
+        csLog('❌ 发送失败: ' + error.message);
+        if (error.message.includes('404')) {
+            addMessage('客服服务暂时不可用，请稍后重试。', 'admin');
+        } else {
+            addMessage('网络连接异常，请检查网络后重试。', 'admin');
+        }
+    });
+}
+
+// 加载历史消息
+function loadMessages() {
+    var userId = getUserId();
+    
+    // 如果是访客用户，不加载历史消息
+    if (userId.toString().startsWith('guest_')) {
+        csLog('⚠️ 访客用户，不加载历史消息');
+        return;
+    }
+    
+    if (isNaN(userId)) {
+        csLog('❌ 用户ID格式错误，无法加载历史消息');
+        return;
+    }
+    
+    csLog('📥 加载历史消息，用户ID: ' + userId);
+    
+    fetch('/api/kefu/messages?userId=' + parseInt(userId))
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success && data.messages) {
+            csLog('✅ 加载了 ' + data.messages.length + ' 条历史消息');
+            displayMessages(data.messages);
+        }
+    })
+    .catch(function(error) {
+        csLog('❌ 加载消息失败: ' + error.message);
+    });
+}
+
+// 显示消息列表
+function displayMessages(messages) {
+    var messagesContainer = document.getElementById('cs-chat-messages');
+    // 清空现有消息（除了欢迎消息）
+    var welcomeMsg = messagesContainer.querySelector('.cs-message.admin');
+    messagesContainer.innerHTML = '';
+    if (welcomeMsg) {
+        messagesContainer.appendChild(welcomeMsg);
+    }
+    
+    // 添加历史消息
+    for (var i = 0; i < messages.length; i++) {
+        var msg = messages[i];
+        addMessage(msg.message, msg.type);
+    }
+}
+
+// 聚焦输入框
+function focusInput() {
+    setTimeout(function() {
+        var input = document.getElementById('cs-chat-input');
+        if (input) {
+            input.focus();
+        }
+    }, 100);
+}
+
+// 设置回车发送
+function setupInputEvents() {
+    var input = document.getElementById('cs-chat-input');
+    if (input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
+}
+
+// 初始化
+function initCustomerService() {
+    csLog('🚀 客服系统初始化');
+    setupInputEvents();
+    csLog('✅ 客服系统初始化完成');
+}
+
+// 页面加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomerService);
+} else {
+    initCustomerService();
+}
+
+// 确保函数在全局作用域中可用
+window.toggleChatWindow = toggleChatWindow;
+window.openChatWindow = openChatWindow;
+window.closeChatWindow = closeChatWindow;
+window.sendMessage = sendMessage;
+
+csLog('📝 客服组件脚本加载完成');
+</script> 

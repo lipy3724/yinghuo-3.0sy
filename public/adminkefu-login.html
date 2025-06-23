@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客服管理后台 - 登录</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-input.error {
+            border-color: #ff4757;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e6f7e6;
+            color: #00b894;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 24px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="ri-customer-service-2-fill"></i>
+            </div>
+            <h1 class="login-title">客服管理后台</h1>
+            <p class="login-subtitle">请使用您的管理员账户登录</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username" class="form-label">用户名</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-input" 
+                    placeholder="请输入用户名"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">密码</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    placeholder="请输入密码"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-button" id="login-button">
+                登录
+            </button>
+        </form>
+
+        <div class="footer-text">
+            萤火AI客服系统 © 2025
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const loginButton = document.getElementById('login-button');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            // 检查是否已经登录
+            checkExistingLogin();
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+
+                if (!username || !password) {
+                    showError('请填写完整的登录信息');
+                    return;
+                }
+
+                // 显示加载状态
+                setLoading(true);
+                hideMessages();
+
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            account: username,
+                            password: password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        // 检查用户是否有管理员权限
+                        if (!data.data.isAdmin && !data.data.isInternal) {
+                            showError('您没有客服管理后台的访问权限');
+                            setLoading(false);
+                            return;
+                        }
+
+                        // 保存登录信息
+                        localStorage.setItem('admin_token', data.data.token);
+                        localStorage.setItem('admin_user', JSON.stringify(data.data));
+
+                        showSuccess('登录成功，正在跳转...');
+                        
+                        // 延迟跳转到管理后台
+                        setTimeout(() => {
+                            window.location.href = '/adminkefu.html';
+                        }, 1000);
+
+                    } else {
+                        showError(data.message || '登录失败，请检查用户名和密码');
+                        setLoading(false);
+                    }
+
+                } catch (error) {
+                    console.error('登录错误:', error);
+                    showError('网络错误，请稍后重试');
+                    setLoading(false);
+                }
+            });
+
+            function checkExistingLogin() {
+                const token = localStorage.getItem('admin_token');
+                const user = localStorage.getItem('admin_user');
+
+                if (token && user) {
+                    try {
+                        const userData = JSON.parse(user);
+                        if (userData.isAdmin || userData.isInternal) {
+                            showSuccess('检测到已登录，正在跳转...');
+                            setTimeout(() => {
+                                window.location.href = '/adminkefu.html';
+                            }, 1000);
+                        }
+                    } catch (error) {
+                        // 清除无效的登录信息
+                        localStorage.removeItem('admin_token');
+                        localStorage.removeItem('admin_user');
+                    }
+                }
+            }
+
+            function setLoading(loading) {
+                if (loading) {
+                    loginButton.disabled = true;
+                    loginButton.innerHTML = '<span class="loading"></span> 登录中...';
+                } else {
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = '登录';
+                }
+            }
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+            }
+
+            function hideMessages() {
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -478,6 +478,8 @@ router.post('/login', async (req, res) => {
         id: user.id,
         username: user.username,
         phone: user.phone,
+        isAdmin: user.isAdmin,
+        isInternal: user.isInternal,
         createdAt: user.createdAt,
         token,
         expiresAt,
