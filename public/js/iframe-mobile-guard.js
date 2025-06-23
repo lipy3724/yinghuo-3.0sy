@@ -61,7 +61,7 @@
     description.style.marginBottom = '25px';
     description.style.lineHeight = '1.6';
     description.style.fontSize = '16px';
-    description.innerHTML = '为提供最佳体验，此功能仅支持电脑端访问。<br>请使用电脑浏览器访问我们的网站。';
+    description.innerHTML = '为提供最佳体验，请使用电脑浏览器访问我们的网站yinghuo.ai';
     
     // 组装弹窗
     alertContent.appendChild(iconDiv);

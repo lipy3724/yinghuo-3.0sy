@@ -64,7 +64,8 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="min-h-screen bg-white">
     <!-- 导航栏组件容器 -->
@@ -177,8 +178,8 @@
             const loginBtn = document.getElementById('login-btn');
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
             
-            // 检查用户登录状态
-            checkAuthStatus();
+            // 用户状态由统一的auth-check.js处理，这里只需要初始化UI
+            initializeUserUI();
             
             // 图片上传处理
             uploadArea.addEventListener('click', () => {
@@ -671,18 +672,21 @@
                 uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
             }
             
-            // 检查用户登录状态
-            function checkAuthStatus() {
+            // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
+            function initializeUserUI() {
                 const authToken = localStorage.getItem('authToken');
                 const userInfo = localStorage.getItem('user');
                 
                 if (authToken && userInfo) {
                     try {
                         const user = JSON.parse(userInfo);
-                        document.getElementById('username-display').textContent = user.username;
+                        const usernameElement = document.getElementById('username-display');
+                        if (usernameElement) {
+                            usernameElement.textContent = user.username;
+                        }
                         
-                        loginBtn.classList.add('hidden');
-                        userMenuBtn.classList.remove('hidden');
+                        if (loginBtn) loginBtn.classList.add('hidden');
+                        if (userMenuBtn) userMenuBtn.classList.remove('hidden');
                         
                         // 获取用户积分
                         fetch('/api/user/credits', {
@@ -692,19 +696,22 @@
                         })
                         .then(res => res.json())
                         .then(data => {
-                            document.getElementById('user-credits').textContent = `积分: ${data.credits || 0}`;
+                            const creditsElement = document.getElementById('user-credits');
+                            if (creditsElement) {
+                                creditsElement.textContent = `积分: ${data.credits || 0}`;
+                            }
                         })
                         .catch(err => {
                             console.error('获取积分失败:', err);
                         });
                     } catch (e) {
                         console.error('解析用户信息出错:', e);
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('user');
+                        // 不进行跳转，让auth-check.js处理
+                        console.log('图片上色页面：用户信息解析失败，由auth-check.js处理');
                     }
                 } else {
-                    userMenuBtn.classList.add('hidden');
-                    loginBtn.classList.remove('hidden');
+                    // 用户未登录，不进行跳转，让auth-check.js处理
+                    console.log('图片上色页面：用户未登录，由auth-check.js处理');
                 }
             }
         });

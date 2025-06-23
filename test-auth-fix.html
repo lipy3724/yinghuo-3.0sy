@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认证修复测试页面 - 萤火AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/components/styles.css" rel="stylesheet">
+    <script src="/js/auth-check.js"></script>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
+
+    <!-- 主内容区域 -->
+    <div class="w-full h-[calc(100vh-60px)] flex items-center justify-center" style="margin-top: 60px;">
+        <div class="max-w-4xl mx-auto p-8">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+                    <i class="ri-shield-check-line text-green-500 mr-2"></i>
+                    认证修复测试页面
+                </h1>
+                
+                <!-- 测试状态显示 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-blue-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-4 text-blue-800">
+                            <i class="ri-user-line mr-2"></i>当前登录状态
+                        </h3>
+                        <div id="auth-status" class="space-y-2">
+                            <p id="token-status" class="text-sm">Token状态: <span class="font-mono">检查中...</span></p>
+                            <p id="user-status" class="text-sm">用户信息: <span class="font-mono">检查中...</span></p>
+                            <p id="server-status" class="text-sm">服务器验证: <span class="font-mono">检查中...</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-4 text-green-800">
+                            <i class="ri-time-line mr-2"></i>认证检查日志
+                        </h3>
+                        <div id="auth-log" class="text-xs font-mono bg-gray-100 p-3 rounded max-h-32 overflow-y-auto">
+                            <p>等待认证检查...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 测试按钮 -->
+                <div class="flex flex-wrap gap-4 justify-center mb-8">
+                    <button id="manual-check-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                        <i class="ri-refresh-line mr-2"></i>手动检查认证
+                    </button>
+                    <button id="clear-storage-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 flex items-center">
+                        <i class="ri-delete-bin-line mr-2"></i>清除本地存储
+                    </button>
+                    <button id="simulate-login-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                        <i class="ri-login-line mr-2"></i>模拟登录状态
+                    </button>
+                </div>
+                
+                <!-- 功能页面链接测试 -->
+                <div class="bg-yellow-50 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4 text-yellow-800">
+                        <i class="ri-links-line mr-2"></i>功能页面跳转测试
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">点击以下链接测试是否会误跳转到登录页面：</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <a href="/image-colorization.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">图像上色</a>
+                        <a href="/local-redraw.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">局部重绘</a>
+                        <a href="/virtual-model-shoes.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">虚拟试鞋</a>
+                        <a href="/video-subtitle-removal.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">视频去字幕</a>
+                        <a href="/amazon-video-script.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">亚马逊脚本</a>
+                        <a href="/credits-usage.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">积分使用</a>
+                        <a href="/diantu.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">垫图</a>
+                        <a href="/text-to-video.html" class="text-blue-600 hover:text-blue-800 text-sm p-2 bg-white rounded border hover:border-blue-300 transition-colors">文生视频</a>
+                    </div>
+                </div>
+                
+                <!-- 返回首页 -->
+                <div class="text-center mt-8">
+                    <a href="/" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                        <i class="ri-home-line mr-2"></i>
+                        返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载导航栏组件
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
+            }
+            
+            // 初始化测试功能
+            initializeTestPage();
+        });
+        
+        function initializeTestPage() {
+            const tokenStatus = document.getElementById('token-status');
+            const userStatus = document.getElementById('user-status');
+            const serverStatus = document.getElementById('server-status');
+            const authLog = document.getElementById('auth-log');
+            
+            const manualCheckBtn = document.getElementById('manual-check-btn');
+            const clearStorageBtn = document.getElementById('clear-storage-btn');
+            const simulateLoginBtn = document.getElementById('simulate-login-btn');
+            
+            // 添加日志函数
+            function addLog(message) {
+                const time = new Date().toLocaleTimeString();
+                authLog.innerHTML += `<p>[${time}] ${message}</p>`;
+                authLog.scrollTop = authLog.scrollHeight;
+            }
+            
+            // 检查认证状态
+            function checkAuthStatus() {
+                addLog('开始检查认证状态...');
+                
+                // 检查本地存储
+                const token = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                
+                if (token) {
+                    tokenStatus.innerHTML = 'Token状态: <span class="text-green-600 font-mono">存在</span>';
+                    addLog('✓ 本地Token存在');
+                } else {
+                    tokenStatus.innerHTML = 'Token状态: <span class="text-red-600 font-mono">不存在</span>';
+                    addLog('✗ 本地Token不存在');
+                }
+                
+                if (userInfo) {
+                    try {
+                        const user = JSON.parse(userInfo);
+                        userStatus.innerHTML = `用户信息: <span class="text-green-600 font-mono">${user.username || '未知'}</span>`;
+                        addLog(`✓ 用户信息: ${user.username}`);
+                    } catch (e) {
+                        userStatus.innerHTML = '用户信息: <span class="text-red-600 font-mono">格式错误</span>';
+                        addLog('✗ 用户信息格式错误');
+                    }
+                } else {
+                    userStatus.innerHTML = '用户信息: <span class="text-red-600 font-mono">不存在</span>';
+                    addLog('✗ 用户信息不存在');
+                }
+                
+                // 服务器验证
+                if (token && typeof window.checkAuth === 'function') {
+                    addLog('开始服务器验证...');
+                    serverStatus.innerHTML = '服务器验证: <span class="text-yellow-600 font-mono">验证中...</span>';
+                    
+                    window.checkAuth(false).then(isValid => {
+                        if (isValid) {
+                            serverStatus.innerHTML = '服务器验证: <span class="text-green-600 font-mono">通过</span>';
+                            addLog('✓ 服务器验证通过');
+                        } else {
+                            serverStatus.innerHTML = '服务器验证: <span class="text-red-600 font-mono">失败</span>';
+                            addLog('✗ 服务器验证失败');
+                        }
+                    }).catch(error => {
+                        serverStatus.innerHTML = '服务器验证: <span class="text-red-600 font-mono">错误</span>';
+                        addLog(`✗ 服务器验证错误: ${error.message}`);
+                    });
+                } else {
+                    serverStatus.innerHTML = '服务器验证: <span class="text-gray-600 font-mono">跳过</span>';
+                    addLog('- 跳过服务器验证（无Token或checkAuth函数）');
+                }
+            }
+            
+            // 绑定按钮事件
+            manualCheckBtn.addEventListener('click', () => {
+                addLog('=== 手动检查认证 ===');
+                checkAuthStatus();
+            });
+            
+            clearStorageBtn.addEventListener('click', () => {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                addLog('=== 已清除本地存储 ===');
+                checkAuthStatus();
+            });
+            
+            simulateLoginBtn.addEventListener('click', () => {
+                // 模拟登录状态
+                const mockToken = 'mock-token-' + Date.now();
+                const mockUser = {
+                    id: 'test-user-id',
+                    username: '测试用户',
+                    email: 'test@example.com'
+                };
+                
+                localStorage.setItem('authToken', mockToken);
+                localStorage.setItem('user', JSON.stringify(mockUser));
+                
+                addLog('=== 模拟登录状态 ===');
+                addLog('已设置模拟Token和用户信息');
+                checkAuthStatus();
+            });
+            
+            // 初始检查
+            addLog('=== 页面加载完成 ===');
+            checkAuthStatus();
+        }
+    </script>
+</body>
+</html> 

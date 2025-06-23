@@ -76,6 +76,7 @@
         
 
     </style>
+    <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -767,15 +768,11 @@
             });
             
             // 验证登录状态
-            checkAuthStatus();
+            initializeUserUI();
             
-            function checkAuthStatus() {
-                const authToken = localStorage.getItem('authToken');
-                if (!authToken) {
-                    // 未登录，存储当前页面链接并跳转到登录页
-                    localStorage.setItem('redirectAfterLogin', window.location.href);
-                    window.location.href = '/login.html';
-                }
+            function initializeUserUI() {
+                // 用户状态由统一的auth-check.js处理，这里不进行认证检查
+                console.log('虚拟试鞋页面：用户状态由auth-check.js统一处理');
             }
         });
     </script>

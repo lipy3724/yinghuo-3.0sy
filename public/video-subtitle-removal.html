@@ -268,41 +268,41 @@
     </div>
 
     <script>
-        // 检查用户登录状态
-        function checkAuthStatus() {
+        // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
+        function initializeUserUI() {
             const authToken = localStorage.getItem('authToken');
             const userInfo = localStorage.getItem('user');
             const loginBtn = document.getElementById('login-btn');
             const userInfoElement = document.getElementById('user-info');
             
             if (authToken && userInfo) {
-                // 用户已登录
+                // 用户已登录，初始化UI
                 try {
                     const user = JSON.parse(userInfo);
-                    document.getElementById('username-display').textContent = user.username;
+                    const usernameElement = document.getElementById('username-display');
+                    if (usernameElement) {
+                        usernameElement.textContent = user.username;
+                    }
                     
                     // 显示用户信息，隐藏登录按钮
                     if (loginBtn) loginBtn.classList.add('hidden');
                     if (userInfoElement) userInfoElement.classList.remove('hidden');
                 } catch (e) {
                     console.error('解析用户信息出错:', e);
-                    // 清除无效的存储
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
+                    // 不进行清除和跳转，让auth-check.js处理
+                    console.log('视频字幕移除页面：用户信息解析失败，由auth-check.js处理');
                 }
             } else {
-                // 用户未登录
+                // 用户未登录，不进行跳转，让auth-check.js处理
+                console.log('视频字幕移除页面：用户未登录，由auth-check.js处理');
                 if (loginBtn) loginBtn.classList.remove('hidden');
                 if (userInfoElement) userInfoElement.classList.add('hidden');
-                
-                // 重定向到登录页面
-                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
             }
         }
         
         // 网页加载时检查用户登录状态
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
+            initializeUserUI();
             
             // UI交互逻辑
             const dropZone = document.getElementById('dropZone');

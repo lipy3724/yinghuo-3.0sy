@@ -6,8 +6,31 @@ let taskId = null;
 let pollingInterval = null;
 let customMusicFile = null;
 
-// 简化登录检查，不再立即重定向
-function checkLoginStatus() {
+// 使用统一的认证检查函数
+async function checkLoginStatus() {
+    // 优先使用统一的认证检查函数
+    if (typeof window.checkAuth === 'function') {
+        try {
+            const isAuthenticated = await window.checkAuth(false); // 不自动重定向
+            if (isAuthenticated) {
+                const userInfo = localStorage.getItem('user');
+                if (userInfo) {
+                    try {
+                        currentUser = JSON.parse(userInfo);
+                        return true;
+                    } catch (error) {
+                        console.error('解析用户信息错误:', error);
+                    }
+                }
+            }
+            return false;
+        } catch (error) {
+            console.error('认证检查出错:', error);
+            return false;
+        }
+    }
+    
+    // 后备的简单检查
     const authToken = localStorage.getItem('authToken');
     const userInfo = localStorage.getItem('user');
     
@@ -98,7 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 检查登录状态但不强制重定向
-    const isLoggedIn = checkLoginStatus();
+    let isLoggedIn = false;
+    checkLoginStatus().then(result => {
+        isLoggedIn = result;
+        console.log('多图转视频页面：登录状态检查完成，结果:', isLoggedIn);
+    }).catch(error => {
+        console.error('多图转视频页面：登录状态检查失败:', error);
+        isLoggedIn = false;
+    });
     
     // 图片上传处理
     if (uploadArea && imageUpload) {
@@ -142,18 +172,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 生成按钮点击
     if (generateBtn) {
-        generateBtn.addEventListener('click', () => {
+        generateBtn.addEventListener('click', async () => {
             if (uploadedImages.length < 2) {
                 alert('请至少上传2张图片！');
                 return;
             }
             
-            // 检查用户是否登录
-            if (!isLoggedIn) {
+            // 实时检查用户是否登录
+            console.log('多图转视频：开始生成，检查用户登录状态');
+            const currentLoginStatus = await checkLoginStatus();
+            if (!currentLoginStatus) {
+                console.log('多图转视频：用户未登录，跳转到登录页');
                 alert('请先登录！');
-                window.location.href = '/login.html';
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
+            console.log('多图转视频：用户登录状态验证通过');
             
             // 获取参数
             const scene = sceneType ? sceneType.value : 'costume'; // 默认为服饰场景

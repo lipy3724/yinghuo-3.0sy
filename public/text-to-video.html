@@ -12,7 +12,8 @@
 
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- 简化版导航栏 -->
@@ -225,6 +226,33 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
+            // 首先检查用户认证状态
+            console.log("页面加载：开始检查用户认证状态");
+            
+            // 检查本地存储
+            const authToken = localStorage.getItem("authToken");
+            const userInfo = localStorage.getItem("user");
+            
+            if (!authToken || !userInfo) {
+                console.log("页面加载：用户未登录，跳转到登录页");
+                window.location.href = "/login.html?redirect=" + encodeURIComponent(window.location.href);
+                return;
+            }
+            
+            // 如果有统一的认证检查函数，使用它
+            if (typeof window.checkAuth === "function") {
+                try {
+                    const isAuthenticated = await window.checkAuth(true);
+                    if (!isAuthenticated) {
+                        console.log("页面加载：认证检查失败");
+                        return; // checkAuth会自动处理重定向
+                    }
+                    console.log("页面加载：认证检查通过");
+                } catch (error) {
+                    console.error("页面加载：认证检查出错:", error);
+                    // 出错时也继续加载页面，但记录错误
+                }
+            }
             // 加载简化版导航栏组件
             try {
                 const navbarResponse = await fetch('/components/navbar-simple.html');

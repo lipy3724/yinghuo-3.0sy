@@ -104,7 +104,7 @@
           <div style="font-size: 60px; margin-bottom: 20px; line-height: 1;">📱→💻</div>
           <h3 style="color: #333; margin-bottom: 15px; font-size: 20px; font-weight: 600;">请在电脑上使用完整功能</h3>
           <p style="color: #666; margin-bottom: 25px; line-height: 1.6; font-size: 16px;">
-            为提供最佳体验，此功能仅支持电脑端访问。<br>请使用电脑浏览器访问我们的网站。
+            为提供最佳体验，请使用电脑浏览器访问我们的网站yinghuo.ai
           </p>
         </div>
       </div>

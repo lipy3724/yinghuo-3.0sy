@@ -1035,6 +1035,159 @@
         body.sidebar-collapsed #sidebar-toggle-btn {
             left: 0;
         }
+        body.sidebar-collapsed #toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* 移动端导航栏优化 */
+        @media (max-width: 768px) {
+            /* 隐藏所有功能菜单，只显示Logo */
+            .navbar .ml-8.flex.items-center.space-x-6 {
+                display: none;
+            }
+            
+            /* 隐藏右侧菜单 */
+            .navbar > div:last-child {
+                display: none;
+            }
+            
+            /* 调整导航栏布局 */
+            .navbar {
+                justify-content: space-between;
+            }
+            
+            /* 调整Logo大小 */
+            .logo-image {
+                height: 80px;
+                width: auto;
+                max-width: 250px;
+            }
+            
+            /* Logo容器样式优化 */
+            .logo-container {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+            }
+            
+            /* 移动端功能中心按钮 */
+            .mobile-features-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background-color: #f3f4f6;
+                border-radius: 8px;
+                color: #6b7280;
+                transition: all 0.2s;
+                cursor: pointer;
+            }
+            
+            .mobile-features-btn:hover {
+                background-color: #e5e7eb;
+                color: #374151;
+            }
+            
+            /* 移动端功能菜单 */
+            .mobile-features-dropdown {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 9999;
+                display: none;
+            }
+            
+            .mobile-features-content {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 85%;
+                max-width: 320px;
+                height: 100%;
+                background-color: white;
+                transform: translateX(100%);
+                transition: transform 0.3s ease-in-out;
+                overflow-y: auto;
+            }
+            
+            .mobile-features-dropdown.show .mobile-features-content {
+                transform: translateX(0);
+            }
+            
+            .mobile-features-header {
+                padding: 16px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #f9fafb;
+            }
+            
+            .mobile-features-grid {
+                padding: 16px;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .mobile-feature-category {
+                border-bottom: 1px solid #f3f4f6;
+                padding-bottom: 16px;
+            }
+            
+            .mobile-feature-category:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+            
+            .mobile-category-title {
+                font-size: 14px;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid #e5e7eb;
+            }
+            
+            .mobile-feature-list {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .mobile-feature-item {
+                padding: 12px;
+                background-color: #f9fafb;
+                border-radius: 8px;
+                color: #374151;
+                text-decoration: none;
+                transition: all 0.2s;
+                border: 1px solid #e5e7eb;
+            }
+            
+            .mobile-feature-item:hover {
+                background-color: #f3f4f6;
+                border-color: #d1d5db;
+                transform: translateY(-1px);
+            }
+            
+            /* 移动端默认收起侧边栏 */
+            body.sidebar-collapsed .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            body.sidebar-collapsed #sidebar-toggle-btn {
+                left: 0;
+            }
+            
+            body.sidebar-collapsed #toggle-icon {
+                transform: rotate(180deg);
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -1050,25 +1203,26 @@
                     <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
                 </div>
             </a>
-            <!-- 添加顶部导航功能菜单 -->
+            
+            <!-- 添加顶部导航功能菜单 - 移到左边 -->
             <div class="ml-8 flex items-center space-x-6">
                 <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/marketing-images.html')" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="ri-image-line mr-1"></i>
-                    <span>AI营销图</span>
+                    <span class="nav-text">AI营销图</span>
                 </a>
                 <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/translate')" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="ri-translate-2 mr-1"></i>
-                    <span>图片翻译</span>
+                    <span class="nav-text">图片翻译</span>
                 </a>
                 <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/cutout')" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="ri-image-edit-line mr-1"></i>
-                    <span>商品换背景</span>
+                    <span class="nav-text">商品换背景</span>
                 </a>
                 <!-- 功能中心下拉菜单 -->
                 <div class="relative features-menu-wrapper">
                         <button class="text-gray-600 hover:text-gray-900 flex items-center" id="features-menu-btn">
                             <i class="ri-apps-line mr-1"></i>
-                            <span>功能中心</span>
+                            <span class="nav-text">功能中心</span>
                         <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
                         </button>
                     <div class="features-menu-bridge"></div>
@@ -1145,11 +1299,17 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 移动端功能中心按钮 -->
+        <div class="mobile-features-btn hidden" id="mobile-features-btn">
+            <i class="ri-apps-line text-xl"></i>
+        </div>
+        
         <div class="flex items-center space-x-6">
             <div class="relative credits-menu-wrapper">
                 <button class="text-gray-600 hover:text-gray-900 flex items-center" id="credits-menu-btn">
                     <i class="ri-coin-line mr-1"></i>
-                    <span>积分中心</span>
+                    <span class="nav-text">积分中心</span>
                     <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
                 </button>
                 <div id="credits-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
@@ -1159,7 +1319,7 @@
             </div>
             <a href="/download-center.html" class="text-gray-600 hover:text-gray-900 flex items-center">
                 <i class="ri-download-2-line mr-1"></i>
-                <span>下载中心</span>
+                <span class="nav-text">下载中心</span>
             </a>
             <!-- 用户未登录时显示登录注册按钮 -->
             <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
@@ -1895,6 +2055,92 @@
         </div>
     </div>
 
+    <!-- 移动端功能菜单 -->
+    <div id="mobile-features-dropdown" class="mobile-features-dropdown">
+        <div class="mobile-features-content">
+            <div class="mobile-features-header">
+                <h3 class="font-semibold text-gray-900">功能中心</h3>
+                <button id="mobile-features-close" class="text-gray-400 hover:text-gray-600">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            <div class="mobile-features-grid">
+                <!-- 图像处理类 -->
+                <div class="mobile-feature-category">
+                    <h4 class="mobile-category-title">图像处理</h4>
+                    <div class="mobile-feature-list">
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="mobile-feature-item">场景图生成</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="mobile-feature-item">图像智能消除</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="mobile-feature-item">智能扩图</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="mobile-feature-item">模糊图片变清晰</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="mobile-feature-item">图像高清放大</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="mobile-feature-item">图像上色</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="mobile-feature-item">局部重绘</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="mobile-feature-item">全局风格化</a>
+                        <a onclick="checkAuthAndRedirect('/diantu.html')" class="mobile-feature-item">垫图</a>
+                    </div>
+                </div>
+                
+                <!-- 模特与服饰类 -->
+                <div class="mobile-feature-category">
+                    <h4 class="mobile-category-title">模特与服饰</h4>
+                    <div class="mobile-feature-list">
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="mobile-feature-item">模特换肤</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="mobile-feature-item">模拟试衣</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="mobile-feature-item">智能服饰分割</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="mobile-feature-item">智能虚拟模特试穿</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="mobile-feature-item">鞋靴虚拟试穿</a>
+                    </div>
+                </div>
+                
+                <!-- AI创作类 -->
+                <div class="mobile-feature-category">
+                    <h4 class="mobile-category-title">AI创作</h4>
+                    <div class="mobile-feature-list">
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="mobile-feature-item">文生图片</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="mobile-feature-item">指令编辑</a>
+                    </div>
+                </div>
+                
+                <!-- 视频处理类 -->
+                <div class="mobile-feature-category">
+                    <h4 class="mobile-category-title">视频处理</h4>
+                    <div class="mobile-feature-list">
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="mobile-feature-item">文生视频</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="mobile-feature-item">图生视频</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/multi-image-to-video.html')" class="mobile-feature-item">多图转视频</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="mobile-feature-item">视频风格重绘</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="mobile-feature-item">视频数字人</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="mobile-feature-item">视频去除字幕</a>
+                    </div>
+                </div>
+                
+                <!-- 亚马逊助手 -->
+                <div class="mobile-feature-category">
+                    <h4 class="mobile-category-title">亚马逊助手</h4>
+                    <div class="mobile-feature-list">
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="mobile-feature-item">Listing写作与优化</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="mobile-feature-item">后台搜索词</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')" class="mobile-feature-item">客户评论分析</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')" class="mobile-feature-item">消费者洞察</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-customer-email.html')" class="mobile-feature-item">客户邮件回复</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="mobile-feature-item">FBA索赔邮件</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="mobile-feature-item">评论生成</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="mobile-feature-item">评论回复</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="mobile-feature-item">品牌起名</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="mobile-feature-item">创建Post</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="mobile-feature-item">广告视频脚本</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="mobile-feature-item">产品对比</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="mobile-feature-item">品牌信息收集和总结</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="mobile-feature-item">选品的改款分析和建议</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="mobile-feature-item">亚马逊关键词推荐</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-case-creator.html')" class="mobile-feature-item">亚马逊客服case内容</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 获取用户信息
@@ -1923,6 +2169,56 @@
                 } catch (e) {
                     console.error('解析用户信息出错:', e);
                 }
+            }
+            
+            // 检测移动端并默认收起侧边栏
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+            
+            if (isMobile()) {
+                document.body.classList.add('sidebar-collapsed');
+                console.log('移动端检测：侧边栏默认收起');
+            }
+            
+            // 移动端功能中心菜单
+            const mobileFeaturesBtnEl = document.getElementById('mobile-features-btn');
+            const mobileFeaturesDropdownEl = document.getElementById('mobile-features-dropdown');
+            const mobileFeaturesCloseEl = document.getElementById('mobile-features-close');
+            
+            // 显示移动端功能菜单
+            function showMobileFeaturesMenu() {
+                mobileFeaturesDropdownEl.style.display = 'block';
+                setTimeout(() => {
+                    mobileFeaturesDropdownEl.classList.add('show');
+                }, 10);
+            }
+            
+            // 隐藏移动端功能菜单
+            function hideMobileFeaturesMenu() {
+                mobileFeaturesDropdownEl.classList.remove('show');
+                setTimeout(() => {
+                    mobileFeaturesDropdownEl.style.display = 'none';
+                }, 300);
+            }
+            
+            // 移动端功能按钮点击事件
+            if (mobileFeaturesBtnEl) {
+                mobileFeaturesBtnEl.addEventListener('click', showMobileFeaturesMenu);
+            }
+            
+            // 关闭按钮点击事件
+            if (mobileFeaturesCloseEl) {
+                mobileFeaturesCloseEl.addEventListener('click', hideMobileFeaturesMenu);
+            }
+            
+            // 点击背景关闭菜单
+            if (mobileFeaturesDropdownEl) {
+                mobileFeaturesDropdownEl.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideMobileFeaturesMenu();
+                    }
+                });
             }
             
             // 积分中心下拉菜单
@@ -2506,48 +2802,131 @@
         
         // 检查用户权限并在新窗口中打开
         async function checkAuthAndRedirect(url) {
-            // 如果有统一的auth-check.js提供的checkAuth函数，优先使用它
-            if (typeof window.checkAuth === 'function') {
-                const isAuthenticated = await window.checkAuth(false);
-                if (isAuthenticated) {
-                    window.open(url, '_blank'); // 在新窗口中打开
-                } else {
-                    window.location.href = '/login.html?redirect=' + encodeURIComponent(url);
-                }
+            console.log('checkAuthAndRedirect 被调用，目标URL:', url);
+            
+            // 防抖机制：避免快速重复点击导致的问题
+            if (checkAuthAndRedirect.isChecking) {
+                console.log('正在进行认证检查，忽略重复请求');
                 return;
             }
+            checkAuthAndRedirect.isChecking = true;
             
-            // 否则使用基本检查
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                // 进行额外的会话验证
+            try {
+                // 首先进行本地检查，增加延迟确保localStorage完全写入
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const token = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                
+                if (!token || !userInfo) {
+                    console.log('本地存储中没有认证信息，跳转到登录页');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // 解析用户信息，验证是否有效
                 try {
-                    const response = await fetch('/api/auth/verify', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    
-                    if (response.status === 401 || response.status === 403) {
-                        // 会话已失效，清除登录信息并重定向到登录页
-                        if (typeof window.logout === 'function') {
-                            window.logout();
-                        } else {
-                            localStorage.removeItem('authToken');
-                            localStorage.removeItem('user');
-                            window.location.href = '/login.html?redirect=' + encodeURIComponent(url);
-                        }
+                    const user = JSON.parse(userInfo);
+                    if (!user.id || !user.username) {
+                        console.log('用户信息格式无效，跳转到登录页');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html';
                         return;
                     }
-                    
-                    // 会话有效，在新窗口中打开请求的页面
-                    window.open(url, '_blank');
-                } catch (error) {
-                    console.error('验证会话时出错:', error);
-                    window.open(url, '_blank'); // 出错时也在新窗口中打开
+                } catch (e) {
+                    console.log('用户信息解析失败，跳转到登录页');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login.html';
+                    return;
                 }
-            } else {
-                window.location.href = '/login.html?redirect=' + encodeURIComponent(url);
+                
+                // 如果有统一的auth-check.js提供的checkAuth函数，优先使用它
+                if (typeof window.checkAuth === 'function') {
+                    try {
+                        console.log('使用统一的checkAuth函数进行验证');
+                        const isAuthenticated = await window.checkAuth(false);
+                        if (isAuthenticated) {
+                            console.log('认证成功，在新窗口中打开:', url);
+                            window.open(url, '_blank');
+                        } else {
+                            console.log('认证失败，跳转到登录页');
+                            window.location.href = '/login.html';
+                        }
+                    } catch (error) {
+                        console.error('统一认证检查出错:', error);
+                        // 出错时优先信任本地存储，直接打开页面
+                        console.log('统一认证出错，但本地有token，直接打开页面');
+                        window.open(url, '_blank');
+                    }
+                    return;
+                }
+                
+                // 使用改进的服务器验证（带重试机制）
+                const maxRetries = 2;
+                let retryCount = 0;
+                
+                while (retryCount <= maxRetries) {
+                    try {
+                        console.log(`尝试服务器验证 (第${retryCount + 1}次)`);
+                        
+                        // 设置更长的超时时间
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+                        
+                        const response = await fetch('/api/auth/verify', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            signal: controller.signal
+                        });
+                        
+                        clearTimeout(timeoutId);
+                        
+                        if (response.status === 401 || response.status === 403) {
+                            console.log('服务器确认会话已失效，状态码:', response.status);
+                            // 明确的认证失败，清除登录信息
+                            if (typeof window.userLogout === 'function') {
+                                window.userLogout();
+                            } else {
+                                localStorage.removeItem('authToken');
+                                localStorage.removeItem('user');
+                                window.location.href = '/login.html';
+                            }
+                            return;
+                        }
+                        
+                        if (response.ok) {
+                            console.log('服务器验证成功，在新窗口中打开:', url);
+                            window.open(url, '_blank');
+                            return;
+                        } else {
+                            console.warn(`验证API返回状态 ${response.status}，准备重试`);
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                    } catch (error) {
+                        retryCount++;
+                        console.warn(`验证尝试 ${retryCount} 失败:`, error.message);
+                        
+                        if (retryCount <= maxRetries) {
+                            // 等待后重试
+                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                        }
+                    }
+                }
+                
+                // 所有重试都失败了，但本地有有效token，优先信任本地状态
+                console.log('服务器验证失败，但本地token存在，直接打开页面让目标页面处理');
+                window.open(url, '_blank');
+                
+            } finally {
+                // 确保清除检查标志
+                setTimeout(() => {
+                    checkAuthAndRedirect.isChecking = false;
+                }, 500);
             }
         }
     </script>

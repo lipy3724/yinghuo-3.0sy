@@ -252,8 +252,8 @@
             });
         }
 
-        // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
-        function initializeUserUI() {
+        // 检查用户登录状态
+        function checkAuthStatus() {
             const authToken = localStorage.getItem('authToken');
             const userInfo = localStorage.getItem('user');
             const loginBtn = document.getElementById('login-btn');
@@ -263,10 +263,7 @@
                 // 用户已登录
                 try {
                     const user = JSON.parse(userInfo);
-                    const usernameElement = document.getElementById('username-display');
-                    if (usernameElement) {
-                        usernameElement.textContent = user.username;
-                    }
+                    document.getElementById('username-display').textContent = user.username;
                     
                     // 显示用户信息，隐藏登录按钮
                     if (loginBtn) loginBtn.classList.add('hidden');
@@ -276,12 +273,15 @@
                     loadUsageData();
                 } catch (e) {
                     console.error('解析用户信息出错:', e);
-                    // 不进行跳转，让auth-check.js处理
-                    console.log('积分使用页面：用户信息解析失败，由auth-check.js处理');
+                    // 清除无效的存储
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    // 重定向到登录页面
+                    window.location.href = '/login.html';
                 }
             } else {
-                // 用户未登录，不进行跳转，让auth-check.js处理
-                console.log('积分使用页面：用户未登录，由auth-check.js处理');
+                // 用户未登录，重定向到登录页面
+                window.location.href = '/login.html';
             }
         }
         
@@ -738,7 +738,7 @@
         
         // 页面加载时检查登录状态
         document.addEventListener('DOMContentLoaded', function() {
-            initializeUserUI();
+            checkAuthStatus();
         });
     </script>
 </body>
