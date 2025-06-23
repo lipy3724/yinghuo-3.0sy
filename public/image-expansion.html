@@ -13,13 +13,19 @@
         }
         .upload-area {
             border: 2px dashed #cbd5e0;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
         }
         .upload-area:hover {
             border-color: #6366f1;
-            background-color: #f9fafb;
+            background-color: #f8faff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+        .upload-area:active {
+            transform: translateY(0);
         }
         .result-section {
             border-left: 1px solid #e5e7eb;
@@ -119,6 +125,76 @@
             border-color: #6366f1;
         }
         
+        /* 确保左右区域滚动独立 */
+        .left-panel {
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            flex-shrink: 0;
+        }
+        
+        .right-panel {
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            flex-shrink: 0;
+        }
+        
+        /* 防止滚动传播 */
+        .left-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .left-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .left-panel::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .left-panel::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* 右侧面板滚动条样式 */
+        .right-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .right-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .right-panel::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .right-panel::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* 确保图片容器不会导致布局问题 */
+        #original-image-container,
+        #result-image-container {
+            min-height: 200px;
+            max-height: 400px;
+        }
+        
+        /* 禁用状态的按钮样式 */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed !important;
+        }
+        
+        /* 必填标识样式 */
+        .required {
+            color: #ef4444;
+        }
 
     </style>
 
@@ -130,10 +206,10 @@
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
+    <div class="fixed top-[60px] left-0 right-0 bottom-0 flex">
         <div class="flex flex-col lg:flex-row bg-white h-full w-full">
             <!-- 左侧：上传图片和提示词 -->
-            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
+            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full left-panel">
                 <h2 class="text-xl font-bold mb-3">智能扩图</h2>
                 
                 <div class="mb-4">
@@ -147,9 +223,10 @@
                     </div>
                 </div>
 
-                <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
-                    <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
+                <div id="upload-area" class="upload-area h-48 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
+                    <i class="ri-upload-cloud-line text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-500 text-center text-sm px-2 mb-1">点击或者拖动文件到这区域来上传</p>
+                    <p class="text-gray-400 text-center text-xs px-2">支持 JPG、PNG、WEBP 格式</p>
                     <input type="file" id="image-upload" class="hidden" accept="image/*">
                 </div>
                 <p class="text-xs text-gray-500 mb-4">上传图片</p>
@@ -198,9 +275,11 @@
 
                 <div class="flex-grow mb-4">
                     <div class="mb-2">
-                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入提示词:</label>
+                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">
+                            输入提示词: <span class="text-red-500">*</span>
+                        </label>
                     </div>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="请描述您希望在扩展区域看到的内容，例如：蓝天白云、绿色草地、城市景观等"></textarea>
+                    <textarea id="prompt-input" class="prompt-input" placeholder="请描述您希望在扩展区域看到的内容，例如：蓝天白云、绿色草地、城市景观等" required></textarea>
                 </div>
                 
                 <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
@@ -210,13 +289,13 @@
             </div>
             
             <!-- 右侧：效果展示 -->
-            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
+            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full right-panel">
                 <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
                 
                 <div class="flex flex-col md:flex-row gap-6 flex-grow">
                     <div class="w-full md:w-1/2">
                         <h3 class="text-base font-medium mb-3 text-center">原始图像</h3>
-                        <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                        <div id="original-image-container" class="h-64 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                             <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片">
                             <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
                         </div>
@@ -230,7 +309,7 @@
                                 保存到下载中心
                             </button>
                         </div>
-                        <div id="result-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                        <div id="result-image-container" class="h-64 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                             <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="生成的图片">
                             <p id="result-image-placeholder" class="text-gray-500 text-center px-4">生成结果将在这里显示</p>
                         </div>
@@ -331,11 +410,18 @@
             // 初始化滑块值显示
             updateScaleValueDisplay();
             
+            // 初始化按钮状态
+            updateGenerateButtonState();
+            
             // 添加滑块值变化事件
             leftScale.addEventListener('input', updateScaleValueDisplay);
             rightScale.addEventListener('input', updateScaleValueDisplay);
             topScale.addEventListener('input', updateScaleValueDisplay);
             bottomScale.addEventListener('input', updateScaleValueDisplay);
+            
+            // 添加提示词输入事件监听
+            promptInput.addEventListener('input', updateGenerateButtonState);
+            promptInput.addEventListener('blur', updateGenerateButtonState);
             
             // 重置按钮事件
             resetScales.addEventListener('click', function() {
@@ -369,6 +455,29 @@
                 rightScaleValue.textContent = rightScale.value;
                 topScaleValue.textContent = topScale.value;
                 bottomScaleValue.textContent = bottomScale.value;
+            }
+            
+            // 更新生成按钮状态
+            function updateGenerateButtonState() {
+                const prompt = promptInput.value.trim();
+                const hasImage = originalImage.src && !originalImage.classList.contains('hidden');
+                
+                if (!prompt) {
+                    generateBtn.disabled = true;
+                    generateBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    generateBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>请先输入提示词';
+                } else if (!hasImage) {
+                    generateBtn.disabled = true;
+                    generateBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    generateBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>请先上传图片';
+                } else {
+                    generateBtn.disabled = false;
+                    generateBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    generateBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                    generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>立即生成';
+                }
             }
             
             // 图片上传处理
@@ -413,6 +522,12 @@
                 
                 if (!originalImage.src || originalImage.classList.contains('hidden')) {
                     alert('请先上传图片！');
+                    return;
+                }
+                
+                if (!prompt) {
+                    alert('请输入提示词！描述您希望在扩展区域看到的内容。');
+                    promptInput.focus();
                     return;
                 }
                 
@@ -903,6 +1018,9 @@
                         resultImagePlaceholder.classList.remove('hidden');
                         downloadBtn.classList.add('hidden');
                         saveToDownloadsBtn.classList.add('hidden');
+                        
+                        // 更新生成按钮状态
+                        updateGenerateButtonState();
                     };
                     img.src = event.target.result;
                 };
@@ -924,6 +1042,57 @@
             function unhighlight() {
                 uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
             }
+            
+            // 防止左右区域滚动相互影响
+            function preventScrollPropagation() {
+                const leftPanel = document.querySelector('.left-panel');
+                const rightPanel = document.querySelector('.right-panel');
+                
+                // 禁用body的滚动
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                
+                if (leftPanel) {
+                    // 左侧面板滚动事件处理
+                    leftPanel.addEventListener('scroll', function(e) {
+                        e.stopPropagation();
+                    }, { passive: true });
+                    
+                    leftPanel.addEventListener('wheel', function(e) {
+                        e.stopPropagation();
+                        
+                        const atTop = leftPanel.scrollTop === 0;
+                        const atBottom = leftPanel.scrollTop >= (leftPanel.scrollHeight - leftPanel.clientHeight - 1);
+                        
+                        // 防止边界滚动传播到页面
+                        if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                }
+                
+                if (rightPanel) {
+                    // 右侧面板滚动事件处理
+                    rightPanel.addEventListener('scroll', function(e) {
+                        e.stopPropagation();
+                    }, { passive: true });
+                    
+                    rightPanel.addEventListener('wheel', function(e) {
+                        e.stopPropagation();
+                        
+                        const atTop = rightPanel.scrollTop === 0;
+                        const atBottom = rightPanel.scrollTop >= (rightPanel.scrollHeight - rightPanel.clientHeight - 1);
+                        
+                        // 防止边界滚动传播到页面
+                        if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                }
+            }
+            
+            // 初始化滚动防护
+            preventScrollPropagation();
         });
     </script>
 </body>

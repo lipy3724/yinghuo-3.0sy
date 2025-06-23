@@ -27,7 +27,7 @@ const tasksContainer = document.getElementById('tasks-container');
 const loadingOverlay = document.getElementById('loading-overlay');
 const loadingMessage = document.getElementById('loading-message');
 const refreshTasksBtn = document.getElementById('refresh-tasks-btn');
-const userCreditsElement = document.getElementById('user-credits');
+const userCreditsElement = document.getElementById('credits-display');
 const loginBtn = document.getElementById('login-btn');
 const userMenuBtn = document.getElementById('user-menu-btn');
 
@@ -95,6 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             currentUser = JSON.parse(userInfo);
             console.log('文生视频页面：初始化用户信息:', currentUser.username);
+            
+            // 获取用户积分（延迟执行，确保导航栏组件已加载）
+            setTimeout(() => {
+                fetchUserCredits();
+            }, 1000);
         } catch (e) {
             console.error('初始化用户信息失败:', e);
         }
@@ -212,13 +217,15 @@ function generateVideo() {
         return;
     }
     
-    // 积分检查
+    // 积分检查（前端仅作提示，最终检查由服务器端完成）
     const costPerSecond = 13.2; // Turbo模型固定为13.2积分/秒，5秒视频总计66积分
     const estimatedCost = costPerSecond * 5; // 假设5秒视频
     console.log('用户积分:', userCredits, '需要积分:', estimatedCost);
     
-    if (userCredits < estimatedCost) {
-        console.warn('积分不足，终止请求');
+    // 只有在确实获取到积分信息且积分不足时才阻止请求
+    // 如果积分为0可能是还没获取到，让服务器端来最终判断
+    if (userCredits > 0 && userCredits < estimatedCost) {
+        console.warn('前端检测积分不足，终止请求');
         showToast(`积分不足，需要约${estimatedCost}积分，请充值`, 'error');
         return;
     }
@@ -860,21 +867,43 @@ function checkAuthStatus() {
 // 获取用户积分
 function fetchUserCredits() {
     if (!localStorage.getItem('authToken')) {
+        console.log('文生视频页面：未找到认证token，跳过积分获取');
         return;
     }
+    
+    console.log('文生视频页面：开始获取用户积分...');
     
     fetch('/api/user/credits', {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('文生视频页面：积分API响应状态:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('文生视频页面：积分API响应数据:', data);
         userCredits = data.credits || 0;
-        userCreditsElement.textContent = `积分: ${userCredits}`;
+        
+        // 尝试更新导航栏中的积分显示
+        const creditsDisplay = document.getElementById('credits-display');
+        if (creditsDisplay) {
+            creditsDisplay.textContent = `积分: ${userCredits}`;
+            console.log('文生视频页面：已更新导航栏积分显示');
+        } else {
+            console.warn('文生视频页面：未找到积分显示元素，可能导航栏还未加载完成');
+        }
+        
+        console.log('文生视频页面：获取到用户积分:', userCredits);
     })
     .catch(error => {
-        console.error('获取用户积分出错:', error);
+        console.error('文生视频页面：获取用户积分出错:', error);
+        // 设置默认值，避免积分检查失败
+        userCredits = 0;
     });
 }
 

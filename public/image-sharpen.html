@@ -25,21 +25,6 @@
             border-left: 1px solid #e5e7eb;
         }
         /* 使用Tailwind自带的animate-spin替代自定义spinner */
-        .prompt-input {
-            resize: none;
-            min-height: 120px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        .prompt-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
         .instructions {
             font-size: 0.875rem;
             color: #4b5563;
@@ -96,14 +81,10 @@
                 </div>
                 <p class="text-xs text-gray-500 mb-4">上传图像</p>
 
-                <div class="flex-grow mb-4">
-                    <div class="mb-2">
-                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入指令:</label>
-                    </div>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="请输入提示词，如: 增强图像清晰度，提高细节，去除噪点"></textarea>
-                </div>
+                <!-- 这里添加flex-grow来占用剩余空间，让按钮推到底部 -->
+                <div class="flex-grow"></div>
                 
-                <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
+                <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center mt-auto">
                     <i class="ri-magic-line mr-2"></i>
                     立即生成
                 </button>
@@ -198,7 +179,6 @@
             const resultImage = document.getElementById('result-image');
             const resultImagePlaceholder = document.getElementById('result-image-placeholder');
             const generateBtn = document.getElementById('generate-btn');
-            const promptInput = document.getElementById('prompt-input');
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
@@ -242,8 +222,6 @@
             
             // 生成按钮点击
             generateBtn.addEventListener('click', async () => {
-                const prompt = promptInput.value.trim();
-                
                 if (!originalImage.src || originalImage.classList.contains('hidden')) {
                     alert('请先上传图片！');
                     return;
@@ -278,7 +256,7 @@
                     
                     let taskId;
                     try {
-                        taskId = await createSharpenTask(prompt, imageUrl);
+                        taskId = await createSharpenTask("", imageUrl);
                     } catch (taskError) {
                         console.error('创建任务错误:', taskError);
                         throw new Error(`创建图像锐化任务失败: ${taskError.message}`);
@@ -591,9 +569,6 @@
                     loadingOverlay.classList.remove('hidden');
                     loadingMessage.textContent = '正在保存到下载中心...';
                     
-                    // 获取提示文本
-                    const promptText = promptInput.value.trim() || '图像锐化';
-                    
                     console.log('准备保存图片到下载中心:', resultImage.src.substring(0, 50) + '...');
                     
                     // 调用API保存图片到下载中心
@@ -605,8 +580,8 @@
                         },
                         body: JSON.stringify({
                             imageUrl: resultImage.src,
-                            title: '模糊图片变清晰: ' + (promptText.substring(0, 30) + (promptText.length > 30 ? '...' : '')),
-                            description: promptText,
+                            title: '模糊图片变清晰',
+                            description: '图像锐化处理',
                             type: 'IMAGE_SHARPENING'
                         })
                     });

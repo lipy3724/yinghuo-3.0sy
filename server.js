@@ -113,6 +113,135 @@ const { v4: uuidv4 } = require('uuid');
 const https = require('https');
 const OSS = require('ali-oss');
 
+/**
+ * 鞋靴虚拟试穿任务失败时的退款函数
+ * @param {number} userId - 用户ID
+ * @param {string} taskId - 任务ID
+ */
+async function refundVirtualShoeModelCredits(userId, taskId) {
+  try {
+    console.log(`开始处理鞋靴虚拟试穿任务失败退款: 用户ID=${userId}, 任务ID=${taskId}`);
+    
+    // 检查全局任务记录中是否有该任务的积分信息
+    let creditCost = 0;
+    let wasRefunded = false;
+    
+    if (global.virtualShoeModelTasks && global.virtualShoeModelTasks[taskId]) {
+      const taskInfo = global.virtualShoeModelTasks[taskId];
+      creditCost = taskInfo.creditCost || 0;
+      wasRefunded = taskInfo.refunded || false;
+      
+      // 如果已经退款过了，不重复退款
+      if (wasRefunded) {
+        console.log(`任务 ${taskId} 已经退款过，跳过退款处理`);
+        return;
+      }
+      
+      // 标记为已退款，防止重复退款
+      global.virtualShoeModelTasks[taskId].refunded = true;
+    }
+    
+    // 如果没有积分消耗信息，从功能配置中获取
+    if (creditCost === 0) {
+      const { FEATURES } = require('./middleware/featureAccess');
+      const featureConfig = FEATURES['VIRTUAL_SHOE_MODEL'];
+      creditCost = featureConfig ? featureConfig.creditCost : 25;
+      console.log(`从功能配置获取积分消耗: ${creditCost}`);
+    }
+    
+    // 查找最近的该功能使用记录
+    const recentUsage = await FeatureUsage.findOne({
+      where: {
+        userId: userId,
+        featureName: 'VIRTUAL_SHOE_MODEL'
+      },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    if (!recentUsage) {
+      console.log(`未找到用户 ${userId} 的鞋靴虚拟试穿使用记录，无法执行退款`);
+      return;
+    }
+    
+    // 检查该使用记录是否为免费使用
+    const { FEATURES } = require('./middleware/featureAccess');
+    const featureConfig = FEATURES['VIRTUAL_SHOE_MODEL'];
+    
+    if (recentUsage.usageCount <= featureConfig.freeUsage) {
+      console.log(`用户 ${userId} 使用的是免费次数 (${recentUsage.usageCount}/${featureConfig.freeUsage})，仅回退使用次数，无需退还积分`);
+      
+      // 即使是免费使用，任务失败时也要回退使用次数，保留免费机会
+      if (recentUsage.usageCount > 0) {
+        recentUsage.usageCount -= 1;
+        await recentUsage.save();
+        console.log(`✅ 已回退免费使用次数: 用户ID=${userId}, 当前使用次数=${recentUsage.usageCount}/${featureConfig.freeUsage}`);
+      }
+      return;
+    }
+    
+    // 如果有积分消耗，执行退款
+    if (creditCost > 0) {
+      // 获取用户信息
+      const user = await User.findByPk(userId);
+      if (!user) {
+        console.error(`未找到用户 ${userId}，无法执行退款`);
+        return;
+      }
+      
+      // 退还积分
+      const originalCredits = user.credits;
+      user.credits += creditCost;
+      await user.save();
+      
+      // 完全撤销这次使用记录，而不是仅仅减少使用次数
+      if (recentUsage.usageCount > 0) {
+        recentUsage.usageCount -= 1;
+        
+        // 清除这次使用产生的积分消费记录
+        recentUsage.credits = Math.max(0, (recentUsage.credits || 0) - creditCost);
+        
+        // 如果使用次数回到免费范围内，清除相关的付费记录
+        const { FEATURES } = require('./middleware/featureAccess');
+        const featureConfig = FEATURES['VIRTUAL_SHOE_MODEL'];
+        if (recentUsage.usageCount < featureConfig.freeUsage) {
+          // 回到免费使用范围，清除所有付费相关的记录
+          recentUsage.credits = 0;
+        }
+        
+        await recentUsage.save();
+      }
+      
+      console.log(`✅ 鞋靴虚拟试穿任务失败退款成功: 用户ID=${userId}, 任务ID=${taskId}, 退款积分=${creditCost}, 原积分=${originalCredits}, 现积分=${user.credits}`);
+      console.log(`📊 使用记录已更新: 使用次数=${recentUsage.usageCount}, 积分消费=${recentUsage.credits}`);
+      
+      // 在详情中记录退款信息（用于审计）
+      try {
+        const details = JSON.parse(recentUsage.details || '{}');
+        if (!details.refunds) {
+          details.refunds = [];
+        }
+        details.refunds.push({
+          taskId: taskId,
+          refundCredits: creditCost,
+          refundTime: new Date(),
+          reason: '任务失败自动退款',
+          note: '已从积分使用情况中移除此次消费记录'
+        });
+        recentUsage.details = JSON.stringify(details);
+        await recentUsage.save();
+      } catch (detailError) {
+        console.error('记录退款详情失败:', detailError);
+      }
+    } else {
+      console.log(`用户 ${userId} 任务 ${taskId} 无积分消耗，无需退款`);
+    }
+    
+  } catch (error) {
+    console.error('鞋靴虚拟试穿退款处理错误:', error);
+    throw error;
+  }
+}
+
 // 引入阿里云SDK - 视频增强服务
 const videoenhan20200320 = require('@alicloud/videoenhan20200320');
 const OpenApi = require('@alicloud/openapi-client');
@@ -2675,8 +2804,36 @@ app.post('/api/create-shoe-model-task', protect, createUnifiedFeatureMiddleware(
       let errorDetails = '';
       
       if (apiError.response?.data) {
-        errorMessage = apiError.response.data.message || errorMessage;
+        const originalMessage = apiError.response.data.message || '';
+        const errorCode = apiError.response.data.code || '';
+        
+        // 针对特定错误代码提供用户友好的错误提示
+        if (errorCode === 'InvalidFile.Content' || originalMessage.includes('no suitable human-body') || originalMessage.includes('InvalidFile.Content')) {
+          errorMessage = '输入的人体图像没有合适的人体，请重新上传。';
+        } else if (errorCode === 'InvalidFile.Type' || originalMessage.includes('文件类型错误')) {
+          errorMessage = '图片的尺寸/格式不正确，请重新上传。';
+        } else if (errorCode === 'InvalidFile.Resolution' || originalMessage.includes('image resolution is invalid') || originalMessage.includes('aspect ratio')) {
+          errorMessage = '图片尺寸/格式有问题，请重新上传。';
+        } else if (errorCode === 'InvalidFile.Size' || originalMessage.includes('文件大小')) {
+          errorMessage = '图片文件过大，请上传小于5MB的图片。';
+        } else if (errorCode === 'InvalidParameter' || originalMessage.includes('参数错误')) {
+          errorMessage = '参数设置有误，请检查图片和设置后重试。';
+        } else if (errorCode === 'Throttling' || originalMessage.includes('请求过于频繁')) {
+          errorMessage = '请求过于频繁，请稍后再试。';
+        } else if (errorCode === 'InsufficientBalance' || originalMessage.includes('余额不足')) {
+          errorMessage = '账户余额不足，请充值后再试。';
+        } else {
+          errorMessage = originalMessage || errorMessage;
+        }
+        
         errorDetails = JSON.stringify(apiError.response.data);
+      }
+      
+      // 创建任务失败时也需要退款（因为中间件已经扣费了）
+      try {
+        await refundVirtualShoeModelCredits(req.user.id, 'CREATE_FAILED_' + Date.now());
+      } catch (refundError) {
+        console.error('创建任务失败退款处理错误:', refundError);
       }
       
       return res.status(500).json({
@@ -2786,14 +2943,42 @@ app.get('/api/check-task-status', protect, async (req, res) => {
           console.error('更新使用历史失败:', historyError);
         }
       } else if (taskStatus === 'FAILED') {
-        resultData.message = response.data.output.message || '任务执行失败';
-        resultData.code = response.data.output.code || '未知错误';
+        const originalMessage = response.data.output.message || '任务执行失败';
+        const errorCode = response.data.output.code || '未知错误';
+        
+        // 针对特定错误代码提供用户友好的错误提示
+        let friendlyMessage = originalMessage;
+        if (errorCode === 'InvalidFile.Content' || originalMessage.includes('no suitable human-body') || originalMessage.includes('InvalidFile.Content')) {
+          friendlyMessage = '输入的人体图像没有合适的人体，请重新上传。';
+        } else if (errorCode === 'InvalidFile.Type' || originalMessage.includes('文件类型错误')) {
+          friendlyMessage = '图片的尺寸/格式不正确，请重新上传。';
+        } else if (errorCode === 'InvalidFile.Resolution' || originalMessage.includes('image resolution is invalid') || originalMessage.includes('aspect ratio')) {
+          friendlyMessage = '图片尺寸/格式有问题，请重新上传。';
+        } else if (errorCode === 'InvalidFile.Size' || originalMessage.includes('文件大小')) {
+          friendlyMessage = '图片文件过大，请上传小于5MB的图片。';
+        } else if (errorCode === 'InvalidParameter' || originalMessage.includes('参数错误')) {
+          friendlyMessage = '参数设置有误，请检查图片和设置后重试。';
+        } else if (errorCode === 'Throttling' || originalMessage.includes('请求过于频繁')) {
+          friendlyMessage = '请求过于频繁，请稍后再试。';
+        } else if (errorCode === 'InsufficientBalance' || originalMessage.includes('余额不足')) {
+          friendlyMessage = '账户余额不足，请充值后再试。';
+        }
+        
+        resultData.message = friendlyMessage;
+        resultData.code = errorCode;
 
         // 更新全局变量中的任务状态
         if (global.virtualShoeModelTasks && global.virtualShoeModelTasks[taskId]) {
           global.virtualShoeModelTasks[taskId].status = 'FAILED';
           global.virtualShoeModelTasks[taskId].errorMessage = response.data.output.message || '任务执行失败';
           global.virtualShoeModelTasks[taskId].endTime = new Date();
+        }
+
+        // 任务失败时执行退款逻辑
+        try {
+          await refundVirtualShoeModelCredits(req.user.id, taskId);
+        } catch (refundError) {
+          console.error('鞋靴虚拟试穿任务失败退款处理错误:', refundError);
         }
 
         // 更新使用历史
@@ -2835,8 +3020,8 @@ app.get('/api/check-task-status', protect, async (req, res) => {
             ...(response.data.output.result_urls ? { result_urls: response.data.output.result_urls } : {})
           } : {}),
           ...(taskStatus === 'FAILED' ? { 
-            code: response.data.output.code || 'UnknownError',
-            message: response.data.output.message || '任务执行失败'
+            code: resultData.code || 'UnknownError',
+            message: resultData.message || '任务执行失败'
           } : {}),
           ...(taskStatus === 'RUNNING' ? {
             task_metrics: response.data.output.task_metrics || {
@@ -2902,12 +3087,14 @@ app.get('/api/tasks/:taskId', protect, async (req, res) => {
         hasResultUrl: !!response.data.output.result_url
       });
 
-      // 直接返回阿里云API的响应结果，确保格式完全一致
+      // 检查任务状态并处理退款
+      const taskStatus = response.data.output.task_status;
+      
       // 调试问题：检查响应数据完整性
       console.log('完整响应数据:', JSON.stringify(response.data, null, 2));
       
-      // 检查result_url是否存在
-      if (response.data.output.task_status === 'SUCCEEDED') {
+      // 处理任务成功的情况
+      if (taskStatus === 'SUCCEEDED') {
         if (!response.data.output.result_url) {
           console.warn('警告: 任务状态为成功但缺少result_url字段');
           
@@ -2934,8 +3121,16 @@ app.get('/api/tasks/:taskId', protect, async (req, res) => {
             }
           }
         }
+      } else if (taskStatus === 'FAILED') {
+        // 处理任务失败的情况 - 执行退款逻辑
+        try {
+          await refundVirtualShoeModelCredits(req.user.id, taskId);
+        } catch (refundError) {
+          console.error('鞋靴虚拟试穿任务失败退款处理错误 (路径参数API):', refundError);
+        }
       }
       
+      // 直接返回阿里云API的响应结果，确保格式完全一致
       res.status(200).json(response.data);
     } catch (apiError) {
       console.error('查询任务状态失败:', apiError.response?.data || apiError.message);

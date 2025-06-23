@@ -725,13 +725,32 @@ router.get('/usage', protect, async (req, res) => {
               console.log(`${featureName}功能去重后任务数量从${tasks.length}减少到${uniqueTasks.length}`);
               tasks = uniqueTasks;
             
-            // 计算时间范围内的积分消费 - 只统计非免费使用的积分消费
+            // 计算时间范围内的积分消费 - 只统计非免费使用且未退款的积分消费
+                // 获取退款记录
+                let refunds = [];
+                if (usage && usage.details) {
+                  try {
+                    const details = JSON.parse(usage.details);
+                    refunds = details.refunds || [];
+                  } catch (e) {
+                    console.error(`解析${featureName}功能的退款记录失败:`, e);
+                  }
+                }
+                
                 totalFeatureCreditCost = tasks.reduce((total, task) => {
                   // 如果是免费使用，则不计入积分消费
                   if (task.isFree) {
                     console.log(`跳过免费使用的任务ID=${task.taskId || '未知'}, 积分=0`);
                     return total;
                   }
+                  
+                  // 检查这个任务是否已经被退款
+                  const isRefunded = refunds.some(refund => refund.taskId === task.taskId);
+                  if (isRefunded) {
+                    console.log(`跳过已退款的任务ID=${task.taskId || '未知'}, 积分=0`);
+                    return total;
+                  }
+                  
                   const cost = task.creditCost || 0;
                   console.log(`统计付费任务ID=${task.taskId || '未知'}, 积分=${cost}`);
                   return total + cost;
@@ -747,7 +766,25 @@ router.get('/usage', protect, async (req, res) => {
                 if (tasks.length > 0) {
         console.log(`将${featureName}功能的${tasks.length}条任务添加到使用记录中`);
         
+        // 获取退款记录
+        let refunds = [];
+        if (usage && usage.details) {
+          try {
+            const details = JSON.parse(usage.details);
+            refunds = details.refunds || [];
+          } catch (e) {
+            console.error(`解析${featureName}功能的退款记录失败:`, e);
+          }
+        }
+        
         tasks.forEach(task => {
+          // 检查这个任务是否已经被退款
+          const isRefunded = refunds.some(refund => refund.taskId === task.taskId);
+          if (isRefunded) {
+            console.log(`跳过已退款的任务: ${task.taskId}`);
+            return; // 跳过已退款的任务，不添加到使用记录中
+          }
+          
           // 免费使用时积分为0
           const creditCost = task.isFree ? 0 : (task.creditCost || 0);
           const taskDate = new Date(task.timestamp || now);
@@ -796,8 +833,8 @@ router.get('/usage', protect, async (req, res) => {
             isFree: !!task.isFree // 确保将免费使用标记传递给前端
           });
           
-          // 更新对应日期的使用量 - 仅统计非免费使用
-          // 对于免费使用，不更新积分消费数据
+          // 更新对应日期的使用量 - 仅统计非免费使用且未退款的任务
+          // 对于免费使用或已退款任务，不更新积分消费数据
           if (!task.isFree) {
             const numericCreditCost = typeof creditCost === 'number' ? creditCost : 0;
             if (numericCreditCost > 0) {
@@ -888,8 +925,22 @@ router.get('/usage', protect, async (req, res) => {
         
         // 如果有任务记录，使用任务的数量而不是数据库中的usageCount
         if (tasks && tasks.length > 0) {
-          // 统计实际任务数即可，数据库记录可能重复
-          actualUsageCount = tasks.length;
+          // 获取退款记录
+          let refunds = [];
+          if (usage && usage.details) {
+            try {
+              const details = JSON.parse(usage.details);
+              refunds = details.refunds || [];
+            } catch (e) {
+              console.error(`解析${featureName}功能的退款记录失败:`, e);
+            }
+          }
+          
+          // 统计未退款的任务数作为实际使用次数
+          const nonRefundedTasks = tasks.filter(task => {
+            return !refunds.some(refund => refund.taskId === task.taskId);
+          });
+          actualUsageCount = nonRefundedTasks.length;
           
           // 根据功能名称设置显示名称
           let featureNameDisplay = '';
@@ -920,11 +971,11 @@ router.get('/usage', protect, async (req, res) => {
               featureNameDisplay = getLocalFeatureName(featureName);
           }
           
-          console.log(`${featureNameDisplay}功能使用任务数量作为实际使用次数: ${actualUsageCount}`);
+          console.log(`${featureNameDisplay}功能使用未退款任务数量作为实际使用次数: ${actualUsageCount} (总任务数: ${tasks.length}, 退款数: ${tasks.length - actualUsageCount})`);
           
-          // 计算免费任务和付费任务的数量
-          const freeTasks = tasks.filter(task => task.isFree === true);
-          const paidTasks = tasks.filter(task => !task.isFree);
+          // 计算免费任务和付费任务的数量（只计算未退款的任务）
+          const freeTasks = nonRefundedTasks.filter(task => task.isFree === true);
+          const paidTasks = nonRefundedTasks.filter(task => !task.isFree);
           console.log(`${featureNameDisplay}功能免费任务数: ${freeTasks.length}, 付费任务数: ${paidTasks.length}`);
           
           // 验证积分消费是否正确
@@ -979,13 +1030,38 @@ router.get('/usage', protect, async (req, res) => {
         }
         
         // 确保功能统计数据正确反映实际使用情况，包括免费使用和付费使用
+        // 计算免费和付费任务数量（如果有任务记录）
+        let freeTaskCount = 0;
+        let paidTaskCount = 0;
+        
+        if (tasks && tasks.length > 0) {
+          // 获取退款记录
+          let refunds = [];
+          if (usage && usage.details) {
+            try {
+              const details = JSON.parse(usage.details);
+              refunds = details.refunds || [];
+            } catch (e) {
+              console.error(`解析${featureName}功能的退款记录失败:`, e);
+            }
+          }
+          
+          // 统计未退款的任务
+          const nonRefundedTasks = tasks.filter(task => {
+            return !refunds.some(refund => refund.taskId === task.taskId);
+          });
+          
+          freeTaskCount = nonRefundedTasks.filter(task => task.isFree === true).length;
+          paidTaskCount = nonRefundedTasks.filter(task => !task.isFree).length;
+        }
+        
         featureUsageStats[featureName] = {
           name: getLocalFeatureName(featureName),
           credits: totalFeatureCreditCost,
           count: actualUsageCount,
           usageCount: actualUsageCount,
-          freeTasks: tasks ? tasks.filter(task => task.isFree === true).length : 0,
-          paidTasks: tasks ? tasks.filter(task => !task.isFree).length : 0
+          freeTasks: freeTaskCount,
+          paidTasks: paidTaskCount
         };
         
         // 仅累加付费使用的积分消费
@@ -993,7 +1069,7 @@ router.get('/usage', protect, async (req, res) => {
         totalAllTimeCreditsUsed += allTimeFeatureCreditCost;
         totalUsageCount += actualUsageCount;
         
-        console.log(`设置${featureName}功能的最终统计: 总次数=${featureUsageStats[featureName].usageCount}, 积分消费=${totalFeatureCreditCost}, 免费次数=${featureUsageStats[featureName].freeTasks}, 付费次数=${featureUsageStats[featureName].paidTasks}`);
+        console.log(`设置${featureName}功能的最终统计: 总次数=${featureUsageStats[featureName].usageCount}, 积分消费=${totalFeatureCreditCost}, 免费次数=${freeTaskCount}, 付费次数=${paidTaskCount}`);
       } else {
         // 获取正确的使用次数 - 对于大多数功能，我们应该使用实际任务数
         // 对于亚马逊助手功能，需要额外处理可能出现的重复计数问题
@@ -1164,8 +1240,40 @@ router.get('/usage', protect, async (req, res) => {
     
     Object.keys(featureUsageStats).forEach(key => {
       const stat = featureUsageStats[key];
-      // 添加所有有使用记录的功能，即使credits为0
+      // 只添加有积分消费或者有成功任务的功能记录
+      // 如果积分为0且使用次数大于0，说明可能是免费使用或者已退款，需要进一步判断
       if (stat.count > 0) {
+        // 对于鞋靴虚拟试穿等功能，如果积分为0但使用次数大于0，检查是否有成功的任务
+        if (stat.credits === 0 && stat.count > 0) {
+          // 检查是否有成功的任务记录
+          const usage = usages.find(u => u.featureName === key);
+          let hasSuccessfulTasks = false;
+          
+          if (usage && usage.details) {
+            try {
+              const details = JSON.parse(usage.details);
+              if (details.tasks && Array.isArray(details.tasks)) {
+                // 检查是否有成功的任务（没有退款记录的任务）
+                hasSuccessfulTasks = details.tasks.some(task => {
+                  // 如果没有退款记录，或者退款记录中没有包含这个任务，则认为是成功的
+                  if (!details.refunds || !Array.isArray(details.refunds)) {
+                    return true; // 没有退款记录，任务是成功的
+                  }
+                  return !details.refunds.some(refund => refund.taskId === task.taskId);
+                });
+              }
+            } catch (e) {
+              console.error(`解析功能 ${key} 的详情失败:`, e);
+            }
+          }
+          
+          // 如果没有成功的任务，跳过显示
+          if (!hasSuccessfulTasks) {
+            console.log(`功能 ${key} 积分为0且无成功任务，跳过显示`);
+            return;
+          }
+        }
+        
         // 为多图转视频功能添加usageCount属性，用于前端统计
         const item = {
           name: stat.name,
@@ -1186,6 +1294,8 @@ router.get('/usage', protect, async (req, res) => {
           console.log(`添加视频风格重绘使用次数: ${stat.count}`);
         } else if (key === 'VIDEO_SUBTITLE_REMOVER') {
           console.log(`添加视频去除字幕使用次数: ${stat.count}`);
+        } else if (key === 'VIRTUAL_SHOE_MODEL') {
+          console.log(`添加鞋靴虚拟试穿使用次数: ${stat.count}, 积分: ${stat.credits}`);
         }
         
         featureUsage.push(item);

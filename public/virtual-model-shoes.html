@@ -700,20 +700,29 @@
                                 // 任务失败
                                 clearInterval(taskCheckInterval);
                                 loadingContainer.classList.add('hidden');
-                                let errorMsg = `试穿任务失败`;
                                 
-                                // 优先使用output字段中的错误信息
-                                if (errorMessage) {
-                                    errorMsg += `: ${errorMessage}`;
+                                // 针对特定错误代码提供用户友好的错误提示
+                                let friendlyMessage = '试穿任务失败';
+                                if (errorCode === 'InvalidFile.Content' || (errorMessage && (errorMessage.includes('no suitable human-body') || errorMessage.includes('InvalidFile.Content')))) {
+                                    friendlyMessage = '输入的人体图像没有合适的人体，请重新上传。';
+                                } else if (errorCode === 'InvalidFile.Type' || (errorMessage && errorMessage.includes('文件类型错误'))) {
+                                    friendlyMessage = '图片的尺寸/格式不正确，请重新上传。';
+                                } else if (errorCode === 'InvalidFile.Resolution' || (errorMessage && (errorMessage.includes('image resolution is invalid') || errorMessage.includes('aspect ratio')))) {
+                                    friendlyMessage = '图片尺寸/格式有问题，请重新上传。';
+                                } else if (errorCode === 'InvalidFile.Size' || (errorMessage && errorMessage.includes('文件大小'))) {
+                                    friendlyMessage = '图片文件过大，请上传小于5MB的图片。';
+                                } else if (errorCode === 'InvalidParameter' || (errorMessage && errorMessage.includes('参数错误'))) {
+                                    friendlyMessage = '参数设置有误，请检查图片和设置后重试。';
+                                } else if (errorCode === 'Throttling' || (errorMessage && errorMessage.includes('请求过于频繁'))) {
+                                    friendlyMessage = '请求过于频繁，请稍后再试。';
+                                } else if (errorCode === 'InsufficientBalance' || (errorMessage && errorMessage.includes('余额不足'))) {
+                                    friendlyMessage = '账户余额不足，请充值后再试。';
+                                } else if (errorMessage) {
+                                    friendlyMessage = `试穿任务失败: ${errorMessage}`;
                                 }
                                 
-                                // 优先使用output字段中的错误代码
-                                if (errorCode) {
-                                    errorMsg += `\n错误代码: ${errorCode}`;
-                                }
-                                
-                                console.error(errorMsg);
-                                alert(errorMsg);
+                                console.error('任务失败详情:', { errorCode, errorMessage, friendlyMessage });
+                                alert(friendlyMessage);
                             }
                             
                             // 如果检查次数过多（超过5分钟），自动取消

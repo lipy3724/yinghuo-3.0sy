@@ -83,7 +83,27 @@ async function callClothSegmentationApi(params) {
         
         // 提取阿里云API的错误信息
         if (error.response && error.response.data) {
-            throw new Error(`阿里云API错误: ${error.response.data.Message || error.message}`);
+            const errorData = error.response.data;
+            const errorCode = errorData.Code || '';
+            const errorMessage = errorData.Message || error.message;
+            
+            // 针对特定错误代码提供用户友好的错误提示
+            if (errorCode === 'InvalidFile.Type') {
+                throw new Error('图片的尺寸/格式不正确，请重新上传。');
+            } else if (errorCode === 'InvalidFile.Size') {
+                throw new Error('图片文件过大，请上传小于3MB的图片。');
+            } else if (errorCode === 'InvalidImage.Content') {
+                throw new Error('请检查图片内容，图像中没有服饰，请重新上传。');
+            } else if (errorCode === 'InvalidParameter') {
+                throw new Error('参数设置有误，请检查图片和设置后重试。');
+            } else if (errorCode === 'Throttling') {
+                throw new Error('请求过于频繁，请稍后再试。');
+            } else if (errorCode === 'InsufficientBalance') {
+                throw new Error('账户余额不足，请充值后再试。');
+            } else {
+                // 其他错误保持原有格式
+                throw new Error(`阿里云API错误: ${errorMessage}`);
+            }
         }
         
         throw error;
@@ -177,10 +197,44 @@ async function callDashScopeClothSegmentation(params) {
             errorCode = responseData.code || responseData.error_code || 'InternalError';
         }
         
-        throw {
-            Message: `DashScope API错误: ${errorMessage}`,
-            Code: errorCode
-        };
+        // 针对特定错误代码提供用户友好的错误提示
+        if (errorCode === 'InvalidFile.Type' || errorMessage.includes('文件类型错误') || errorMessage.includes('InvalidFile.Type')) {
+            throw {
+                Message: '图片的尺寸/格式不正确，请重新上传。',
+                Code: errorCode
+            };
+        } else if (errorCode === 'InvalidFile.Size' || errorMessage.includes('文件大小')) {
+            throw {
+                Message: '图片文件过大，请上传小于3MB的图片。',
+                Code: errorCode
+            };
+        } else if (errorCode === 'InvalidImage.Content' || errorMessage.includes('图像中没有服饰') || errorMessage.includes('noClothError')) {
+            throw {
+                Message: '请检查图片内容，图像中没有服饰，请重新上传。',
+                Code: errorCode
+            };
+        } else if (errorCode === 'InvalidParameter' || errorMessage.includes('参数错误')) {
+            throw {
+                Message: '参数设置有误，请检查图片和设置后重试。',
+                Code: errorCode
+            };
+        } else if (errorCode === 'Throttling' || errorMessage.includes('请求过于频繁')) {
+            throw {
+                Message: '请求过于频繁，请稍后再试。',
+                Code: errorCode
+            };
+        } else if (errorCode === 'InsufficientBalance' || errorMessage.includes('余额不足')) {
+            throw {
+                Message: '账户余额不足，请充值后再试。',
+                Code: errorCode
+            };
+        } else {
+            // 其他错误保持原有格式
+            throw {
+                Message: `DashScope API错误: ${errorMessage}`,
+                Code: errorCode
+            };
+        }
     }
 }
 

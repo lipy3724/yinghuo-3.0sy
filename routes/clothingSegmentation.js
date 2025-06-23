@@ -6,6 +6,164 @@ const { callClothSegmentationApi } = require('../utils/aliyunApiProxy');
 const axios = require('axios');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
 const uploadFromUrl = require('../utils/uploadFromUrl'); // 新增: OSS 转存工具
+const { FeatureUsage } = require('../models/FeatureUsage');
+
+/**
+ * 智能服饰分割退款函数
+ * 当任务失败时，退还已扣除的积分
+ */
+async function refundClothSegmentationCredits(userId, taskId, reason = '任务失败') {
+    try {
+        console.log(`开始处理智能服饰分割退款: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason}`);
+        
+        // 查找该功能的使用记录
+        const usage = await FeatureUsage.findOne({
+            where: {
+                userId: userId,
+                featureName: 'CLOTH_SEGMENTATION'
+            }
+        });
+        
+        if (!usage) {
+            console.log(`未找到用户${userId}的智能服饰分割使用记录，无需退款`);
+            return false;
+        }
+        
+        // 解析details字段，查找对应的任务记录
+        let details = {};
+        if (usage.details) {
+            try {
+                details = JSON.parse(usage.details);
+            } catch (e) {
+                console.error('解析details字段失败:', e);
+                details = {};
+            }
+        }
+        
+        // 确保refunds数组存在
+        if (!details.refunds) {
+            details.refunds = [];
+        }
+        
+        // 查找对应的任务记录
+        const tasks = details.tasks || [];
+        let task = null;
+        
+        if (taskId) {
+            // 如果提供了taskId，先尝试精确匹配
+            task = tasks.find(t => t.taskId === taskId);
+            
+            // 检查是否已经退款过
+            const existingRefund = details.refunds.find(refund => refund.taskId === taskId);
+            if (existingRefund) {
+                console.log(`任务${taskId}已经退款过，跳过重复退款`);
+                return false;
+            }
+        }
+        
+        // 如果没找到任务记录或没有提供taskId，尝试从最近的任务中推断
+        if (!task && tasks.length > 0) {
+            // 按时间排序，取最近的一个没有退款的任务
+            const sortedTasks = tasks.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            for (const t of sortedTasks) {
+                const existingRefund = details.refunds.find(refund => refund.taskId === t.taskId);
+                if (!existingRefund) {
+                    task = t;
+                    console.log(`使用最近的未退款任务记录进行退款: ${task.taskId}`);
+                    break;
+                }
+            }
+        }
+        
+        if (!task) {
+            console.log(`未找到任务记录，无法退款`);
+            return false;
+        }
+        
+        const creditCost = task.creditCost || 0;
+        const isFree = task.isFree || false;
+        
+        console.log(`找到任务记录: 积分=${creditCost}, 是否免费=${isFree}`);
+        
+        // 如果是免费使用，只需要回退使用次数，不退还积分
+        if (isFree) {
+            console.log('免费使用失败，回退使用次数');
+            
+            // 减少使用次数
+            if (usage.usageCount > 0) {
+                usage.usageCount -= 1;
+            }
+            
+            // 记录退款信息（标记为免费退款）
+            details.refunds.push({
+                taskId: task.taskId, // 使用实际的任务ID
+                creditCost: 0,
+                isFree: true,
+                reason: reason,
+                refundTime: new Date().toISOString()
+            });
+            
+            usage.details = JSON.stringify(details);
+            await usage.save();
+            
+            console.log(`智能服饰分割免费使用退款完成: 用户ID=${userId}, 回退使用次数`);
+            return true;
+        }
+        
+        // 付费使用退款
+        if (creditCost > 0) {
+            console.log(`开始退还积分: ${creditCost}`);
+            
+            // 获取用户信息
+            const User = require('../models/User');
+            const user = await User.findByPk(userId);
+            
+            if (!user) {
+                console.error(`未找到用户ID=${userId}`);
+                return false;
+            }
+            
+            // 退还积分
+            user.credits += creditCost;
+            await user.save();
+            
+            // 减少该功能的积分消费记录
+            if (usage.credits >= creditCost) {
+                usage.credits -= creditCost;
+            } else {
+                usage.credits = 0;
+            }
+            
+            // 减少使用次数
+            if (usage.usageCount > 0) {
+                usage.usageCount -= 1;
+            }
+            
+            // 记录退款信息
+            details.refunds.push({
+                taskId: task.taskId, // 使用实际的任务ID
+                creditCost: creditCost,
+                isFree: false,
+                reason: reason,
+                refundTime: new Date().toISOString()
+            });
+            
+            usage.details = JSON.stringify(details);
+            await usage.save();
+            
+            console.log(`智能服饰分割积分退款完成: 用户ID=${userId}, 退还积分=${creditCost}, 用户当前积分=${user.credits}`);
+            return true;
+        }
+        
+        console.log(`任务${taskId}无需退款: 积分=${creditCost}, 免费=${isFree}`);
+        return false;
+        
+    } catch (error) {
+        console.error('智能服饰分割退款失败:', error);
+        return false;
+    }
+}
 
 /**
  * 服饰分割API - 创建任务
@@ -45,17 +203,60 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('CLOTH_SEGME
         
         console.log('调用阿里云API参数:', apiParams);
         
+        // 积分已在统一中间件中扣除，先记录任务信息（无论API是否成功）
+        const creditCost = req.featureUsage?.creditCost || 0;
+        const isFree = req.featureUsage?.isFree || false;
+        
+        // 生成唯一任务ID
+        const taskId = uuidv4();
+        
+        // 立即保存任务记录到数据库（确保退款时能找到）
+        try {
+            const { FeatureUsage } = require('../models/FeatureUsage');
+            
+            // 更新数据库中的使用记录
+            let usage = await FeatureUsage.findOne({
+                where: { userId: req.user.id, featureName: 'CLOTH_SEGMENTATION' }
+            });
+            
+            if (usage) {
+                // 已有记录，只更新任务详情
+                let details = {};
+                try {
+                    details = usage.details ? JSON.parse(usage.details) : {};
+                } catch (e) {
+                    details = {};
+                }
+                
+                if (!details.tasks) {
+                    details.tasks = [];
+                }
+                
+                // 添加新的任务记录
+                details.tasks.push({
+                    taskId: taskId,
+                    creditCost: creditCost,
+                    isFree: isFree,
+                    timestamp: new Date(),
+                    status: 'pending' // 标记为待处理
+                });
+                
+                // 更新使用记录
+                usage.details = JSON.stringify(details);
+                usage.lastUsedAt = new Date();
+                await usage.save();
+            }
+            
+            console.log(`服饰分割任务记录已预保存: 用户ID=${req.user.id}, 任务ID=${taskId}, 积分=${creditCost}, 是否免费=${isFree}`);
+        } catch (dbError) {
+            console.error('预保存服饰分割使用记录失败:', dbError);
+            // 继续处理，不影响用户使用
+        }
+        
         // 调用阿里云标准API
         try {
             const apiResult = await callClothSegmentationApi(apiParams);
             console.log('阿里云API返回结果:', JSON.stringify(apiResult, null, 2));
-            
-            // 积分已在统一中间件中扣除，这里只记录任务信息
-            const creditCost = req.featureUsage?.creditCost || 0;
-            const isFree = req.featureUsage?.isFree || false;
-            
-            // 生成唯一任务ID
-            const taskId = uuidv4();
             
             // 保存任务信息到全局变量
             if (!global.clothingSegmentationTasks) {
@@ -73,45 +274,30 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('CLOTH_SEGME
                 result: apiResult
             };
             
-            // 保存任务记录到数据库（积分已在中间件中扣除）
+            // 更新数据库中的任务状态为成功
             try {
                 const { FeatureUsage } = require('../models/FeatureUsage');
                 
-                // 更新数据库中的使用记录
                 let usage = await FeatureUsage.findOne({
                     where: { userId: req.user.id, featureName: 'CLOTH_SEGMENTATION' }
                 });
                 
-                if (usage) {
-                    // 已有记录，只更新任务详情
-                    let details = {};
-                    try {
-                        details = usage.details ? JSON.parse(usage.details) : {};
-                    } catch (e) {
-                        details = {};
+                if (usage && usage.details) {
+                    let details = JSON.parse(usage.details);
+                    if (details.tasks) {
+                        // 找到对应的任务并更新状态
+                        const task = details.tasks.find(t => t.taskId === taskId);
+                        if (task) {
+                            task.status = 'completed';
+                            usage.details = JSON.stringify(details);
+                            await usage.save();
+                        }
                     }
-                    
-                    if (!details.tasks) {
-                        details.tasks = [];
-                    }
-                    
-                    // 添加新的任务记录
-                    details.tasks.push({
-                        taskId: taskId,
-                        creditCost: creditCost,
-                        isFree: isFree,
-                        timestamp: new Date()
-                    });
-                    
-                    // 更新使用记录（不重复扣除积分）
-                    usage.details = JSON.stringify(details);
-                    usage.lastUsedAt = new Date();
-                    await usage.save();
                 }
                 
-                console.log(`服饰分割任务记录已保存: 用户ID=${req.user.id}, 任务ID=${taskId}, 积分=${creditCost}, 是否免费=${isFree}`);
+                console.log(`服饰分割任务状态已更新为完成: 任务ID=${taskId}`);
             } catch (dbError) {
-                console.error('保存服饰分割使用记录失败:', dbError);
+                console.error('更新服饰分割任务状态失败:', dbError);
                 // 继续处理，不影响用户使用
             }
             
@@ -164,6 +350,11 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('CLOTH_SEGME
             return res.status(200).json(apiResult);
         } catch (apiError) {
             console.error('阿里云API调用失败:', apiError);
+            
+            // API调用失败，进行退款
+            console.log(`智能服饰分割API调用失败，开始退款流程: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+            await refundClothSegmentationCredits(req.user.id, taskId, `API调用失败: ${apiError.message}`);
+            
             return res.status(500).json({
                 RequestId: uuidv4().replace(/-/g, '').toUpperCase(),
                 Message: apiError.message || '服务器处理请求时出错',
@@ -173,6 +364,13 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('CLOTH_SEGME
         }
     } catch (error) {
         console.error('服饰分割API错误:', error);
+        
+        // 如果有taskId，进行退款
+        if (typeof taskId !== 'undefined') {
+            console.log(`智能服饰分割服务器错误，开始退款流程: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+            await refundClothSegmentationCredits(req.user.id, taskId, `服务器错误: ${error.message}`);
+        }
+        
         return res.status(500).json({ 
             RequestId: uuidv4().replace(/-/g, '').toUpperCase(),
             Message: '服务器处理请求时出错', 
@@ -250,10 +448,15 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
         }
         // 如果任务失败
         else if (taskStatus === 'FAILED') {
+            // 任务失败，进行退款
+            console.log(`智能服饰分割任务失败，开始退款流程: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+            const failureReason = response.data.output.message || '服饰分割任务失败';
+            await refundClothSegmentationCredits(req.user.id, taskId, failureReason);
+            
             return res.status(500).json({
                 success: false,
                 RequestId: response.data.request_id,
-                Message: response.data.output.message || '服饰分割任务失败',
+                Message: failureReason,
                 Code: response.data.output.code || 'TaskFailed',
                 Data: null
             });
