@@ -6,6 +6,7 @@
     <title>积分管理 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -122,90 +123,15 @@
             border-color: #6366f1;
         }
         
-        /* 导航栏高度 */
-        .navbar {
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background-color: white;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Logo样式 */
-        .logo-container {
-            display: flex;
-            align-items: center;
-            position: relative;
-            z-index: 5;
-            transition: transform 0.2s ease;
-            margin-top: 10px;
-        }
-        
-        .logo-container:hover .logo-image {
-            transform: scale(1.02);
-        }
-        
-        .logo-image {
-            max-height: 92px;
-            height: auto;
-            width: auto;
-            transition: all 0.2s ease;
-        }
-        
-        .logo-link {
-            position: relative;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo-link:hover {
-            background-color: transparent;
-        }
-        
-        .logo-link:after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            left: 50%;
-            width: 0;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
-            transform: translateX(-50%);
-            transition: width 0.2s ease;
-            opacity: 0;
-        }
-        
-        .logo-link:hover:after {
-            width: 60%;
-            opacity: 0.6;
-        }
+
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
+        <link rel="icon" href="/images/favicon.png" type="image/png">
+    <script src="/js/mobile-guard.js"></script>
+</head>
 <body class="bg-gray-50">
-    <!-- 导航栏 -->
-    <nav class="navbar flex items-center justify-between px-4">
-        <div class="flex items-center">
-            <a href="/" class="flex items-center logo-link">
-                <div class="logo-container">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
-                </div>
-            </a>
-        </div>
-        <div class="flex items-center space-x-6">
-            <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center">
-                <i class="ri-home-line mr-1"></i>
-                <span>首页</span>
-            </a>
-        </div>
-    </nav>
+    <!-- 完整版导航栏 -->
+    <div id="navbar-full"></div>
 
     <div class="max-w-4xl mx-auto mt-8 px-4" style="margin-top: 88px;">
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -319,6 +245,27 @@
             <!-- 已移除我的使用记录组件 -->
         </div>
     </div>
+
+    <script>
+        // 异步加载完整版导航栏
+        async function loadNavbar() {
+            try {
+                const response = await fetch('/components/navbar-full.html');
+                const html = await response.text();
+                document.getElementById('navbar-full').innerHTML = html;
+                
+                // 加载导航栏的JavaScript功能
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('加载导航栏失败:', error);
+            }
+        }
+
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', loadNavbar);
+    </script>
 
     <script>
         // 全局变量
