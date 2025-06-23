@@ -182,8 +182,11 @@
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="文生图片">
                         文生图片
                     </button>
-                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="other">
-                        其他处理
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像高清放大">
+                        图像高清放大
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="指令编辑">
+                        指令编辑
                     </button>
                 </div>
                 
@@ -954,6 +957,12 @@
                 const filtered = allImages.filter(item => {
                     // 首先将内部处理类型代码转换为对应的显示名称
                     let displayType = item.processType || '';
+                    
+                    // 如果已经是中文显示名称，直接使用
+                    if (displayType === '图像指令编辑') {
+                        displayType = '指令编辑';
+                    }
+                    
                     switch (displayType) {
                         case 'IMAGE_EXPANSION':
                             displayType = '智能扩图';
@@ -980,22 +989,19 @@
                         case 'TEXT_TO_IMAGE':
                             displayType = '文生图片';
                             break;
+                        case 'IMAGE_UPSCALER':
+                        case 'IMAGE_UPSCALING':
+                            displayType = '图像高清放大';
+                            break;
+                        case 'PROMPT_EDITOR':
+                        case 'PROMPT_EDITING':
+                        case 'IMAGE_EDIT':
+                            displayType = '指令编辑';
+                            break;
                     }
                     
-                    // 然后根据转换后的显示名称进行过滤
-                    if (type === 'other') {
-                        // 如果是"其他"类别，则排除所有已知类型
-                        const knownTypes = [
-                            '图片翻译', '营销图生成', '商品换背景', '场景图生成', 
-                            '图像智能消除', '模特换肤', '模拟试衣', '智能扩图',
-                            '模糊图片变清晰', '图像上色', '全局风格化', '垫图',
-                            '局部重绘', '智能服饰分割', '文生图片'
-                        ];
-                        return !knownTypes.includes(displayType);
-                    } else {
-                        // 否则，匹配指定类型
-                        return displayType === type;
-                    }
+                    // 直接匹配指定类型
+                    return displayType === type;
                 });
                 renderImages(filtered);
             }
@@ -1092,6 +1098,15 @@
                 case 'TEXT_TO_IMAGE':
                     processType = '文生图片';
                     break;
+                case 'IMAGE_UPSCALER':
+                case 'IMAGE_UPSCALING':
+                    processType = '图像高清放大';
+                    break;
+                case 'PROMPT_EDITOR':
+                case 'PROMPT_EDITING':
+                case 'IMAGE_EDIT':
+                    processType = '指令编辑';
+                    break;
                 // 保留其他已有的功能名称
                 case '图片翻译':
                 case '营销图生成':
@@ -1101,6 +1116,10 @@
                 case '模特换肤':
                 case '模拟试衣':
                 case '全局风格化':
+                case '图像高清放大':
+                case '指令编辑':
+                case '图像指令编辑':
+                    processType = '指令编辑';
                     break;
                 default:
                     // 如果是其他未知类型，保持原样
