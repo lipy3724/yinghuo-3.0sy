@@ -8,6 +8,91 @@
         </a>
     </div>
     <div class="flex items-center space-x-6">
-        <!-- 右侧空白区域 -->
+        <!-- 用户状态显示 -->
+        <div id="user-status-container" class="flex items-center space-x-4">
+            <!-- 未登录状态 -->
+            <div id="login-section" class="hidden">
+                <a href="/login.html" class="text-gray-600 hover:text-gray-900 flex items-center transition-colors duration-200">
+                    <i class="ri-login-line mr-1"></i>
+                    <span>登录</span>
+                </a>
+            </div>
+            
+            <!-- 已登录状态 -->
+            <div id="user-section" class="hidden relative">
+                <div class="flex items-center space-x-2 text-gray-700">
+                    <i class="ri-user-line"></i>
+                    <span id="username-display" class="text-sm">用户名</span>
+                    <span id="credits-display" class="text-xs text-gray-500">积分: 0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 返回首页按钮 -->
+        <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center transition-colors duration-200">
+            <i class="ri-home-line mr-1"></i>
+            <span>返回首页</span>
+        </a>
     </div>
-</nav> 
+</nav>
+
+<script>
+// 简化版导航栏的用户状态初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSimpleNavbarUserStatus();
+});
+
+function initializeSimpleNavbarUserStatus() {
+    const loginSection = document.getElementById('login-section');
+    const userSection = document.getElementById('user-section');
+    const usernameDisplay = document.getElementById('username-display');
+    const creditsDisplay = document.getElementById('credits-display');
+    
+    const authToken = localStorage.getItem('authToken');
+    const userInfo = localStorage.getItem('user');
+    
+    if (authToken && userInfo) {
+        try {
+            const user = JSON.parse(userInfo);
+            if (user.id && user.username) {
+                // 显示用户信息
+                usernameDisplay.textContent = user.username;
+                userSection.classList.remove('hidden');
+                loginSection.classList.add('hidden');
+                
+                // 获取用户积分
+                fetch('/api/user/credits', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        creditsDisplay.textContent = `积分: ${data.credits || 0}`;
+                    }
+                })
+                .catch(err => {
+                    console.error('获取积分失败:', err);
+                    creditsDisplay.textContent = '积分: --';
+                });
+                
+                return;
+            }
+        } catch (e) {
+            console.error('解析用户信息失败:', e);
+        }
+    }
+    
+    // 显示登录按钮
+    loginSection.classList.remove('hidden');
+    userSection.classList.add('hidden');
+}
+
+// 监听localStorage变化，实时更新用户状态
+window.addEventListener('storage', function(e) {
+    if (e.key === 'authToken' || e.key === 'user') {
+        initializeSimpleNavbarUserStatus();
+    }
+});
+</script> 

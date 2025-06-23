@@ -6,14 +6,143 @@
     <title>积分使用情况 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="/components/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/js/auth-check.js"></script>
-    <link rel="icon" href="/images/favicon.png" type="image/png">
-</head>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .sidebar-item.active {
+            background-color: #f3f0ff;
+            color: #6366f1;
+        }
+        .sidebar-item:hover:not(.active) {
+            background-color: #f9fafb;
+        }
+        .sidebar-item.active i {
+            color: #6366f1;
+        }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+                /* Logo容器样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 5;
+            transition: transform 0.2s ease;
+            }
+        
+        /* Logo图片样式 - 适配导航栏高度 */
+        .logo-image {
+            max-height: 92px;
+            height: auto;
+            width: auto;
+            transition: all 0.2s ease;
+        }
+        
+        /* 导航栏高度 */
+        .navbar {
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-container {
+            margin-top: 10px;
+        }
+        
+        .logo-container:hover .logo-image {
+            transform: scale(1.02);
+        }
+        
+        /* Logo链接样式 */
+        .logo-link {
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-link:hover {
+            background-color: transparent;
+        }
+        
+        .logo-link:after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
+            transform: translateX(-50%);
+            transition: width 0.2s ease;
+            opacity: 0;
+        }
+        
+        .logo-link:hover:after {
+            width: 60%;
+            opacity: 0.6;
+        }
+    </style>
+
+    <link rel="icon" href="/images/favicon.png" type="image/png"></head>
 <body class="bg-gray-50">
-    <!-- 完整版导航栏 -->
-    <div id="navbar-full"></div>
+    <!-- 导航栏 -->
+    <nav class="navbar flex items-center justify-between px-4">
+        <div class="flex items-center">
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center space-x-6">
+            <div class="relative">
+                <button class="text-gray-600 hover:text-gray-900 flex items-center" id="credits-menu-btn">
+                    <i class="ri-coin-line mr-1"></i>
+                    <span>积分中心</span>
+                    <i class="ri-arrow-down-s-line ml-1"></i>
+                </button>
+                <div id="credits-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
+                    <a href="/credits-usage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分使用情况</a>
+                </div>
+            </div>
+            <a href="#" class="text-gray-600 hover:text-gray-900 flex items-center">
+                <i class="ri-download-2-line mr-1"></i>
+                <span>下载中心</span>
+            </a>
+            <!-- 用户未登录时显示登录注册按钮 -->
+            <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                登录注册
+            </a>
+            <!-- 用户已登录时显示用户信息 -->
+            <div id="user-info" class="hidden relative">
+                <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-gray-900">
+                    <i class="ri-user-3-line mr-1 text-lg"></i>
+                    <span id="username-display">用户名</span>
+                    <i class="ri-arrow-down-s-line ml-1"></i>
+                </button>
+                <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">我的账户</a>
+                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
+                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     <div class="container mx-auto px-4 py-8" style="margin-top: 60px;">
         <h1 class="text-2xl font-bold mb-6">积分使用情况</h1>
@@ -22,7 +151,7 @@
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-medium text-lg">积分概览</h3>
                 <div class="text-sm text-gray-500">
-                    <select id="time-filter" class="border rounded px-2 py-1">
+                    <select id="time-filter" class="border rounded px-2 py-1 hidden">
                         <option value="7">最近7天</option>
                         <option value="30" selected>最近30天</option>
                         <option value="90">最近90天</option>
@@ -88,47 +217,85 @@
         </div>
     </div>
 
-    <!-- 组件加载脚本 -->
     <script>
-        // 异步加载完整版导航栏组件
-        fetch('/components/navbar-full.html')
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('navbar-full').innerHTML = html;
-                
-                // 加载组件JavaScript
-                const script = document.createElement('script');
-                script.src = '/components/components.js';
-                document.head.appendChild(script);
-            })
-            .catch(error => {
-                console.error('加载导航栏组件失败:', error);
+        // 积分中心菜单切换
+        const creditsMenuBtn = document.getElementById('credits-menu-btn');
+        const creditsDropdown = document.getElementById('credits-dropdown');
+        
+        if (creditsMenuBtn) {
+            creditsMenuBtn.addEventListener('click', () => {
+                creditsDropdown.classList.toggle('hidden');
             });
+        
+            // 点击菜单外区域关闭下拉菜单
+            document.addEventListener('click', (event) => {
+                if (!creditsMenuBtn.contains(event.target) && !creditsDropdown.contains(event.target)) {
+                    creditsDropdown.classList.add('hidden');
+                }
+            });
+        }
 
-        // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
-        function initializeUserUI() {
+        // 用户菜单切换
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        if (userMenuBtn) {
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
+        
+            // 点击菜单外区域关闭下拉菜单
+            document.addEventListener('click', (event) => {
+                if (!userMenuBtn.contains(event.target) && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // 检查用户登录状态
+        function checkAuthStatus() {
             const authToken = localStorage.getItem('authToken');
             const userInfo = localStorage.getItem('user');
-            
-            console.log('积分使用页面：初始化用户界面，authToken存在:', !!authToken, 'userInfo存在:', !!userInfo);
+            const loginBtn = document.getElementById('login-btn');
+            const userInfoElement = document.getElementById('user-info');
             
             if (authToken && userInfo) {
                 // 用户已登录
                 try {
                     const user = JSON.parse(userInfo);
-                    console.log('积分使用页面：用户已登录，用户名:', user.username);
+                    document.getElementById('username-display').textContent = user.username;
+                    
+                    // 显示用户信息，隐藏登录按钮
+                    if (loginBtn) loginBtn.classList.add('hidden');
+                    if (userInfoElement) userInfoElement.classList.remove('hidden');
                     
                     // 加载积分使用数据
                     loadUsageData();
                 } catch (e) {
                     console.error('解析用户信息出错:', e);
-                    // 不进行跳转，让auth-check.js处理
-                    console.log('积分使用页面：用户信息解析失败，由auth-check.js处理');
+                    // 清除无效的存储
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    // 重定向到登录页面
+                    window.location.href = '/login.html';
                 }
             } else {
-                // 用户未登录，不进行跳转，让auth-check.js处理
-                console.log('积分使用页面：用户未登录，由auth-check.js处理');
+                // 用户未登录，重定向到登录页面
+                window.location.href = '/login.html';
             }
+        }
+        
+        // 处理退出登录
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // 清除认证信息
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                // 重定向到登录页面
+                window.location.href = '/login.html';
+            });
         }
         
         // 从服务器获取用户积分使用数据的函数
@@ -137,11 +304,8 @@
                 // 获取认证令牌
                 const authToken = localStorage.getItem('authToken');
                 if (!authToken) {
-                    console.error('积分使用页面：用户未登录，无法获取数据');
                     throw new Error('用户未登录');
                 }
-                
-                console.log(`积分使用页面：开始请求API /api/credits/usage?days=${days}`);
                 
                 // 调用API获取积分使用数据
                 const response = await fetch(`/api/credits/usage?days=${days}`, {
@@ -150,26 +314,18 @@
                     }
                 });
                 
-                console.log('积分使用页面：API响应状态', response.status, response.statusText);
-                
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('积分使用页面：API请求失败', response.status, errorText);
-                    throw new Error(`获取数据失败: ${response.status} ${response.statusText}`);
+                    throw new Error('获取数据失败');
                 }
                 
                 const result = await response.json();
-                console.log('积分使用页面：API返回结果', result);
-                
                 if (result.success && result.data) {
-                    console.log('积分使用页面：数据获取成功');
                     return result.data;
                 } else {
-                    console.error('积分使用页面：API返回失败', result.message);
                     throw new Error(result.message || '获取数据失败');
                 }
             } catch (error) {
-                console.error('积分使用页面：获取积分使用数据失败:', error);
+                console.error('获取积分使用数据失败:', error);
                 // 出错时返回空数据
                 return {
                     summary: {
@@ -206,47 +362,30 @@
         
         // 加载积分使用数据
         async function loadUsageData() {
-            try {
-                console.log('积分使用页面：开始加载积分使用数据');
-                
-                // 从服务器获取数据
-                const data = await fetchUserCreditsUsage(
-                    document.getElementById('time-filter').value
-                );
-                
-                console.log('积分使用页面：获取到数据', data);
-                
-                // 更新本地数据
-                usageData = data;
-                
-                // 更新概览数据 - 使用totalCreditsUsed作为所选时间范围内累计消费积分
-                document.getElementById('total-credits-used').textContent = usageData.summary?.totalCreditsUsed || 0;
-                document.getElementById('total-usage-count').textContent = usageData.summary?.totalUsageCount || 0;
-                document.getElementById('feature-count').textContent = usageData.summary?.featureCount || 0;
-                
-                console.log('积分使用页面：更新概览数据完成');
-                
-                // 渲染使用趋势图表
-                renderUsageChart();
-                
-                // 渲染功能使用占比
-                renderFeaturePieChart();
-                
-                // 渲染功能列表
-                renderFeatureList();
-                
-                // 渲染使用记录列表
-                renderUsageRecords();
-                
-                console.log('积分使用页面：所有渲染完成');
-            } catch (error) {
-                console.error('积分使用页面：加载数据失败', error);
-                
-                // 显示错误信息给用户
-                document.getElementById('total-credits-used').textContent = '加载失败';
-                document.getElementById('total-usage-count').textContent = '加载失败';
-                document.getElementById('feature-count').textContent = '加载失败';
-            }
+            // 从服务器获取数据
+            const data = await fetchUserCreditsUsage(
+                document.getElementById('time-filter').value
+            );
+            
+            // 更新本地数据
+            usageData = data;
+            
+            // 更新概览数据 - 使用totalCreditsUsed作为所选时间范围内累计消费积分
+            document.getElementById('total-credits-used').textContent = usageData.summary?.totalCreditsUsed || 0;
+            document.getElementById('total-usage-count').textContent = usageData.summary?.totalUsageCount || 0;
+            document.getElementById('feature-count').textContent = usageData.summary?.featureCount || 0;
+            
+            // 渲染使用趋势图表
+            renderUsageChart();
+            
+            // 渲染功能使用占比
+            renderFeaturePieChart();
+            
+            // 渲染功能列表
+            renderFeatureList();
+            
+            // 渲染使用记录列表
+            renderUsageRecords();
         }
         
         // 绑定时间筛选事件
@@ -599,20 +738,7 @@
         
         // 页面加载时检查登录状态
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('积分使用页面：DOM加载完成，开始初始化');
-            
-            // 确保时间筛选器存在
-            const timeFilter = document.getElementById('time-filter');
-            if (!timeFilter) {
-                console.error('积分使用页面：时间筛选器元素未找到');
-                return;
-            }
-            
-            // 延迟初始化，确保auth-check.js有时间完成认证
-            setTimeout(() => {
-                console.log('积分使用页面：开始延迟初始化');
-                initializeUserUI();
-            }, 1000);
+            checkAuthStatus();
         });
     </script>
 </body>

@@ -66,9 +66,8 @@
             try {
                 const token = localStorage.getItem('authToken');
                 if (!token) {
-                    console.warn('用户未登录，使用默认配置');
-                    // 使用默认配置
-                    window.INTL_OP_FRAME_SDK_CONFIG.appKey = '';
+                    console.log('图片智能消除页面：用户未登录，跳转到登录页');
+                    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
                     return;
                 }
                 

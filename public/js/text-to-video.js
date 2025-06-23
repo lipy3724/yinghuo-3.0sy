@@ -31,21 +31,46 @@ const userCreditsElement = document.getElementById('user-credits');
 const loginBtn = document.getElementById('login-btn');
 const userMenuBtn = document.getElementById('user-menu-btn');
 
-// 立即检查用户登录状态
-(function checkLoginStatus() {
+// 使用统一的认证检查，避免立即跳转
+async function checkInitialAuth() {
+    // 优先使用统一的认证检查函数
+    if (typeof window.checkAuth === 'function') {
+        try {
+            const isAuthenticated = await window.checkAuth(false); // 不自动重定向
+            if (!isAuthenticated) {
+                console.log('文生视频：用户未登录，跳转到登录页');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                return false;
+            }
+            console.log('文生视频：认证检查通过');
+            return true;
+        } catch (error) {
+            console.error('文生视频：认证检查出错:', error);
+            return false;
+        }
+    }
+    
+    // 后备的简单检查
     const authToken = localStorage.getItem('authToken');
     const userInfo = localStorage.getItem('user');
     
     if (!authToken || !userInfo) {
-        // 用户未登录，将目标URL保存为主页而非当前页面，然后重定向到登录页面
-        localStorage.setItem('redirectAfterLogin', '/');
-        window.location.href = '/login.html';
+        console.log('文生视频：用户未登录，跳转到登录页');
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+        return false;
     }
-})();
+    
+    return true;
+}
+
+// 移除延迟执行的认证检查，改为在DOMContentLoaded中处理
 
 // 初始化页面
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('文生视频页面初始化...');
+    
+    // 移除重复的认证检查，避免与HTML页面中的认证检查冲突
+    // HTML页面已经有统一的认证检查，这里不再重复检查
     
     // 检查按钮是否正确找到
     if (!generateBtn) {
@@ -61,7 +86,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    checkAuthStatus();
+    // 移除checkAuthStatus()调用，避免重复认证检查冲突
+    // checkAuthStatus();
+    
+    // 简单初始化用户状态（不进行认证检查和跳转）
+    const userInfo = localStorage.getItem('user');
+    if (userInfo) {
+        try {
+            currentUser = JSON.parse(userInfo);
+            console.log('文生视频页面：初始化用户信息:', currentUser.username);
+        } catch (e) {
+            console.error('初始化用户信息失败:', e);
+        }
+    }
+    
     loadUserTasks();
     
     // 视频分辨率选择
@@ -170,7 +208,7 @@ function generateVideo() {
     if (!currentUser) {
         console.warn('用户未登录，终止请求');
         showToast('请先登录', 'error');
-        window.location.href = '/login.html';
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
         return;
     }
     
@@ -790,24 +828,32 @@ function checkAuthStatus() {
         // 用户已登录
         try {
             currentUser = JSON.parse(userInfo);
-            userMenuBtn.querySelector('span').textContent = currentUser.username;
             
-            // 显示用户菜单，隐藏登录按钮
-            loginBtn.classList.add('hidden');
-            userMenuBtn.classList.remove('hidden');
+            // 检查页面元素是否存在（避免在某些页面调用时出错）
+            if (typeof userMenuBtn !== 'undefined' && userMenuBtn && userMenuBtn.querySelector('span')) {
+                userMenuBtn.querySelector('span').textContent = currentUser.username;
+                
+                // 显示用户菜单，隐藏登录按钮
+                if (typeof loginBtn !== 'undefined' && loginBtn) {
+                    loginBtn.classList.add('hidden');
+                }
+                userMenuBtn.classList.remove('hidden');
+            }
             
             // 获取用户积分
             fetchUserCredits();
+            
+            console.log('文生视频页面：用户认证状态正常，用户:', currentUser.username);
         } catch (e) {
             console.error('解析用户信息出错:', e);
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
+            console.log('文生视频页面：用户信息解析失败，但不跳转（由HTML页面统一处理认证）');
+            // 不再自动跳转，让HTML页面的统一认证检查来处理
         }
     } else {
-        // 用户未登录
-        loginBtn.classList.remove('hidden');
-        userMenuBtn.classList.add('hidden');
-        userCreditsElement.textContent = '积分: 请登录';
+        console.log('文生视频页面：用户未登录，但不跳转（由HTML页面统一处理认证）');
+        // 不再自动跳转，让HTML页面的统一认证检查来处理
     }
 }
 

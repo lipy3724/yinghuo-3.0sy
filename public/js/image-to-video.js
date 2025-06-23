@@ -6,19 +6,44 @@ let taskId = null;
 let pollingInterval = null;
 let videoUrl = null;
 
-// 立即检查用户登录状态
-(function checkLoginStatus() {
+// 使用统一的认证检查，避免立即跳转
+async function checkInitialAuth() {
+    // 优先使用统一的认证检查函数
+    if (typeof window.checkAuth === 'function') {
+        try {
+            const isAuthenticated = await window.checkAuth(false); // 不自动重定向
+            if (!isAuthenticated) {
+                console.log('图生视频：用户未登录，跳转到登录页');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                return false;
+            }
+            console.log('图生视频：认证检查通过');
+            return true;
+        } catch (error) {
+            console.error('图生视频：认证检查出错:', error);
+            return false;
+        }
+    }
+    
+    // 后备的简单检查
     const authToken = localStorage.getItem('authToken');
     const userInfo = localStorage.getItem('user');
     
     if (!authToken || !userInfo) {
-        // 用户未登录，将目标URL保存为主页而非当前页面，然后重定向到登录页面
-        localStorage.setItem('redirectAfterLogin', '/');
-        window.location.href = '/login.html';
+        console.log('图生视频：用户未登录，跳转到登录页');
+        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+        return false;
     }
-})();
+    
+    return true;
+}
 
-document.addEventListener('DOMContentLoaded', function() {
+// 移除延迟执行的认证检查，改为在DOMContentLoaded中处理
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // 图生视频页面初始化（认证检查已在HTML中完成）
+    console.log('图生视频JS初始化...');
+    
     // 获取DOM元素
     const uploadArea = document.getElementById('upload-area');
     const imageUpload = document.getElementById('image-upload');
@@ -68,8 +93,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 检查用户登录状态
-    checkAuthStatus();
+    // 移除checkAuthStatus()调用，避免重复认证检查冲突
+    // checkAuthStatus();
+    
+    // 简单初始化用户状态（不进行认证检查和跳转）
+    const userInfo = localStorage.getItem('user');
+    if (userInfo) {
+        try {
+            currentUser = JSON.parse(userInfo);
+            console.log('图生视频页面：初始化用户信息:', currentUser.username);
+        } catch (e) {
+            console.error('初始化用户信息失败:', e);
+        }
+    }
     
     // 图片上传处理
     uploadArea.addEventListener('click', () => {
@@ -124,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
             alert('请先登录！');
-            window.location.href = '/login.html';
+            window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
             return;
         }
         
@@ -545,24 +581,35 @@ function checkAuthStatus() {
         // 用户已登录
         try {
             currentUser = JSON.parse(userInfo);
-            document.getElementById('username-display').textContent = currentUser.username;
             
-            // 显示用户菜单，隐藏登录按钮
-            loginBtn.classList.add('hidden');
-            userMenuBtn.classList.remove('hidden');
+            // 检查页面元素是否存在（避免在某些页面调用时出错）
+            if (typeof userMenuBtn !== 'undefined' && userMenuBtn) {
+                const usernameDisplay = document.getElementById('username-display');
+                if (usernameDisplay) {
+                    usernameDisplay.textContent = currentUser.username;
+                }
+                
+                // 显示用户菜单，隐藏登录按钮
+                if (typeof loginBtn !== 'undefined' && loginBtn) {
+                    loginBtn.classList.add('hidden');
+                }
+                userMenuBtn.classList.remove('hidden');
+            }
             
             // 获取用户积分
             fetchUserCredits();
+            
+            console.log('图生视频页面：用户认证状态正常，用户:', currentUser.username);
         } catch (e) {
             console.error('解析用户信息出错:', e);
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
+            console.log('图生视频页面：用户信息解析失败，但不跳转（由HTML页面统一处理认证）');
+            // 不再自动跳转，让HTML页面的统一认证检查来处理
         }
     } else {
-        // 用户未登录
-        loginBtn.classList.remove('hidden');
-        userMenuBtn.classList.add('hidden');
-        userCreditsElement.textContent = '积分: 请登录';
+        console.log('图生视频页面：用户未登录，但不跳转（由HTML页面统一处理认证）');
+        // 不再自动跳转，让HTML页面的统一认证检查来处理
     }
 }
 

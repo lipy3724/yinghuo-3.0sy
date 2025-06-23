@@ -6,6 +6,7 @@
     <title>FBA索赔邮件 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
     <script src="/feature-tracker.js"></script>
     <style>
         body {
@@ -168,15 +169,12 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
-    <!-- 导航栏 -->
-    <div class="navbar">
-        <h1 class="text-xl font-bold text-indigo-600">
-            <i class="ri-file-claim-line mr-2"></i>FBA索赔邮件
-        </h1>
-    </div>
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
     <div class="page-container">
@@ -292,7 +290,20 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 加载导航栏组件
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
+            }
             // FBA索赔邮件表单提交
             const fbaClaimForm = document.getElementById('fbaClaimForm');
             const generateClaimButton = document.getElementById('generateClaimButton');

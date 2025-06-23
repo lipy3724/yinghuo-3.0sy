@@ -13,6 +13,8 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         .card {
             transition: all 0.3s ease;
@@ -54,7 +56,7 @@
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="container mx-auto p-8" style="margin-top: 60px;">
+    <div class="container mx-auto p-8 min-h-screen overflow-y-auto" style="margin-top: 60px; max-height: calc(100vh - 60px);">
         <h1 class="text-2xl font-bold mb-6">图像高清放大</h1>
         
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -174,16 +176,32 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 验证用户会话
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 首先检查用户认证状态
+            console.log('图片放大页面：开始检查用户认证状态');
+            
+            // 检查本地存储
+            const authToken = localStorage.getItem('authToken');
+            const userInfo = localStorage.getItem('user');
+            
+            if (!authToken || !userInfo) {
+                console.log('图片放大页面：用户未登录，跳转到登录页');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            
+            // 如果有统一的认证检查函数，使用它
             if (typeof window.checkAuth === 'function') {
-                window.checkAuth();
-            } else {
-                // 兼容处理，检查本地存储中的令牌
-                const authToken = localStorage.getItem('authToken');
-                if (!authToken) {
-                    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
-                    return;
+                try {
+                    const isAuthenticated = await window.checkAuth(true);
+                    if (!isAuthenticated) {
+                        console.log('图片放大页面：认证检查失败');
+                        return; // checkAuth会自动处理重定向
+                    }
+                    console.log('图片放大页面：认证检查通过');
+                } catch (error) {
+                    console.error('图片放大页面：认证检查出错:', error);
+                    // 出错时也继续加载页面，但记录错误
                 }
             }
             

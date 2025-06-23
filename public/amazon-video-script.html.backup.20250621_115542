@@ -359,10 +359,13 @@
     </div>
 
     <script>
-        // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
-        function initializeUserUI() {
-            // 用户状态由统一的auth-check.js处理，这里不进行认证检查
-            console.log('亚马逊视频脚本页面：用户状态由auth-check.js统一处理');
+        // 检查认证状态
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+                return false;
+            }
             return true;
         }
         
@@ -410,7 +413,7 @@
 
         // 页面加载时检查认证
         document.addEventListener('DOMContentLoaded', function() {
-            initializeUserUI();
+            checkAuthStatus();
             
             // 尝试加载保存的结果
             loadSavedResults();// 监听浏览器标签页关闭或导航离开
@@ -438,7 +441,7 @@
         scriptCreatorForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            if (!initializeUserUI()) return;
+            if (!checkAuthStatus()) return;
             
             const productName = document.getElementById('productName').value.trim();
             const productFeaturesText = document.getElementById('productFeatures').value.trim();

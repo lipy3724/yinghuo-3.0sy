@@ -18,9 +18,26 @@
         .instructions { font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem; line-height: 1.5; }
         .preview-area { background-color: #f9fafb; border-radius: 0.5rem; min-height: 500px; display: flex; align-items: center; justify-content: center; }
         img { -webkit-user-drag: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
+        
+        /* 自定义滚动条样式 */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 6px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="min-h-screen bg-white">
     <!-- 导航栏组件容器 -->
@@ -30,7 +47,7 @@
     <div class="w-full min-h-screen flex" style="margin-top: 60px;">
         <div class="flex flex-col lg:flex-row bg-white h-full w-full">
             <!-- 左侧：上传图片和提示词 -->
-            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
+            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col overflow-y-auto" style="max-height: calc(100vh - 60px);">
                 <h2 class="text-xl font-bold mb-3">垫图</h2>
                 
                 <div class="mb-4">
@@ -70,7 +87,7 @@
             </div>
             
             <!-- 右侧：效果展示 -->
-            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
+            <div class="w-full lg:w-2/3 p-6 flex flex-col">
                 <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
                 
                 <div class="flex flex-col md:flex-row gap-6 flex-grow">
@@ -120,7 +137,35 @@
 
     <!-- 引用外部Javascript文件 -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 首先检查用户认证状态
+            console.log('垫图页面：开始检查用户认证状态');
+            
+            // 检查本地存储
+            const authToken = localStorage.getItem('authToken');
+            const userInfo = localStorage.getItem('user');
+            
+            if (!authToken || !userInfo) {
+                console.log('垫图页面：用户未登录，跳转到登录页');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            
+            // 如果有统一的认证检查函数，使用它
+            if (typeof window.checkAuth === 'function') {
+                try {
+                    const isAuthenticated = await window.checkAuth(true);
+                    if (!isAuthenticated) {
+                        console.log('垫图页面：认证检查失败');
+                        return; // checkAuth会自动处理重定向
+                    }
+                    console.log('垫图页面：认证检查通过');
+                } catch (error) {
+                    console.error('垫图页面：认证检查出错:', error);
+                    // 出错时也继续加载页面，但记录错误
+                }
+            }
+            
             // DOM元素
             const uploadArea = document.getElementById('upload-area');
             const imageUpload = document.getElementById('image-upload');
@@ -139,7 +184,7 @@
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
             
             // 检查用户登录状态
-            checkAuthStatus();
+            initializeUserUI();
             
             // 图片上传处理
             uploadArea.addEventListener('click', () => {
@@ -538,20 +583,22 @@
                 uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
             }
 
-            // 检查用户登录状态
-            function checkAuthStatus() {
+            // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
+            function initializeUserUI() {
                 const authToken = localStorage.getItem('authToken');
                 const userInfo = localStorage.getItem('user');
                 if (authToken && userInfo) {
                     try {
                         const user = JSON.parse(userInfo);
-                        if (document.getElementById('username-display')) {
-                            document.getElementById('username-display').textContent = user.username;
+                        const usernameElement = document.getElementById('username-display');
+                        if (usernameElement) {
+                            usernameElement.textContent = user.username;
                         }
                         if (loginBtn) loginBtn.classList.add('hidden');
                         if (userMenuBtn) userMenuBtn.classList.remove('hidden');
                         // 获取用户积分
-                        if (document.getElementById('user-credits')) {
+                        const creditsElement = document.getElementById('user-credits');
+                        if (creditsElement) {
                             fetch('/api/user/credits', {
                                 headers: {
                                     'Authorization': `Bearer ${authToken}`
@@ -559,7 +606,7 @@
                             })
                             .then(res => res.json())
                             .then(data => {
-                                document.getElementById('user-credits').textContent = `积分: ${data.credits || 0}`;
+                                creditsElement.textContent = `积分: ${data.credits || 0}`;
                             })
                             .catch(err => {
                                 console.error('获取积分失败:', err);
@@ -567,10 +614,12 @@
                         }
                     } catch (e) {
                         console.error('解析用户信息出错:', e);
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('user');
+                        // 不进行跳转，让auth-check.js处理
+                        console.log('垫图页面：用户信息解析失败，由auth-check.js处理');
                     }
                 } else {
+                    // 用户未登录，不进行跳转，让auth-check.js处理
+                    console.log('垫图页面：用户未登录，由auth-check.js处理');
                     if (userMenuBtn) userMenuBtn.classList.add('hidden');
                     if (loginBtn) loginBtn.classList.remove('hidden');
                 }
@@ -587,10 +636,8 @@
                     document.body.removeChild(link);
                 }
             });
-        });
-
-        // 加载导航栏组件
-        document.addEventListener('DOMContentLoaded', async function() {
+            
+            // 加载导航栏组件
             try {
                 const response = await fetch('/components/navbar-simple.html');
                 const navbarHtml = await response.text();

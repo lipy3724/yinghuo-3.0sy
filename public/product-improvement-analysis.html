@@ -6,6 +6,7 @@
     <title>选品的改款分析和建议 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
     <script src="/feature-tracker.js"></script>
     <style>
         body {
@@ -310,15 +311,12 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body>
-    <!-- 导航栏 -->
-    <div class="navbar">
-        <h1 class="text-xl font-bold text-indigo-600">
-            <i class="ri-tools-line mr-2"></i>选品的改款分析和建议
-        </h1>
-    </div>
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
 
     <!-- 主内容区 -->
     <div class="main-content">
@@ -454,7 +452,21 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载导航栏组件
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
+            }
+            
             // 特性追踪 - 使用已加载的feature-tracker.js
         });
         

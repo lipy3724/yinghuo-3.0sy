@@ -178,15 +178,29 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/components/styles.css">
+    <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
-    <!-- 导航栏 -->
-    <div class="navbar">
-        <h1 class="text-xl font-bold text-indigo-600">
-            <i class="ri-article-line mr-2"></i>创建亚马逊Post
-        </h1>
-    </div>
+    <!-- 简化版导航栏 - 用于功能页面 -->
+    <nav class="navbar flex items-center justify-between px-4">
+        <div class="flex items-center">
+            <a href="/" class="flex items-center logo-link">
+                <div class="logo-container">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center space-x-6">
+            <!-- 返回首页按钮 -->
+            <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center transition-colors duration-200">
+                <i class="ri-home-line mr-1"></i>
+                <span>返回首页</span>
+            </a>
+        </div>
+    </nav>
 
     <!-- 主内容区域 -->
     <div class="page-container">

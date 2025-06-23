@@ -3,147 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能扩图 - 萤火AI</title>
+    <title>垫图 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link rel="stylesheet" href="/components/styles.css">
+    <link href="/components/styles.css" rel="stylesheet">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-        .upload-area {
-            border: 2px dashed #cbd5e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .upload-area:hover {
-            border-color: #6366f1;
-            background-color: #f9fafb;
-        }
-        .result-section {
-            border-left: 1px solid #e5e7eb;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .upload-area { border: 2px dashed #cbd5e0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .upload-area:hover { border-color: #6366f1; background-color: #f9fafb; }
+        .result-section { border-left: 1px solid #e5e7eb; }
         /* 使用Tailwind自带的animate-spin替代自定义spinner */
-        .prompt-input {
-            resize: none;
-            min-height: 120px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        .prompt-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
-        .instructions {
-            font-size: 0.875rem;
-            color: #4b5563;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
-        .preview-area {
-            background-color: #f9fafb;
-            border-radius: 0.5rem;
-            min-height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        /* 滑块样式自定义 */
-        input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 6px;
-            background: linear-gradient(to right, #4f46e5, #818cf8);
-            border-radius: 10px;
-            outline: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #ffffff;
-            border: 2px solid #4f46e5;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        input[type="range"]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: #ffffff;
-            border: 2px solid #4f46e5;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        /* 图片拖动禁用 */
-        img {
-            -webkit-user-drag: none;
-            user-select: none;
-            -moz-user-select: none;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-        }
-        .expansion-direction {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .direction-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .direction-btn:hover {
-            background-color: #f3f4f6;
-        }
-        .direction-btn.active {
-            background-color: #6366f1;
-            color: white;
-            border-color: #6366f1;
-        }
-        
-
+        .prompt-input { resize: none; min-height: 120px; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.75rem; width: 100%; font-size: 0.9rem; line-height: 1.5; }
+        .prompt-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 1px #4f46e5; }
+        .instructions { font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem; line-height: 1.5; }
+        .preview-area { background-color: #f9fafb; border-radius: 0.5rem; min-height: 500px; display: flex; align-items: center; justify-content: center; }
+        img { -webkit-user-drag: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/auth-check.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="min-h-screen bg-white">
-    <!-- 简化版导航栏 -->
+    <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
+    <div class="w-full min-h-screen flex" style="margin-top: 60px;">
         <div class="flex flex-col lg:flex-row bg-white h-full w-full">
             <!-- 左侧：上传图片和提示词 -->
             <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-3">智能扩图</h2>
+                <h2 class="text-xl font-bold mb-3">垫图</h2>
                 
                 <div class="mb-4">
                     <p class="text-sm text-gray-600 mb-2">使用提示:</p>
                     <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2">此功能可以智能扩展图像的边界，实现图像无缝延伸。</p>
-                        <p class="mb-2">选择扩展方向，然后在提示框中描述您希望在扩展区域出现的内容。</p>
-                        <p class="mb-2">提示词越详细，生成结果越符合预期，例如"蓝天白云"、"延续城市景观"等。</p>
-                        <p class="mb-2">图片上传尺寸最小为512×512像素，最大不超过2048×2048像素。</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        <p class="mb-2"><strong>使用场景：</strong>垫图适用于卡通IP开发（基于已有卡通形象生成新场景）、儿童教育（为儿童读物或教育材料生成卡通插图）等。</p>
+                        <p class="mb-2"><strong>提示词技巧：</strong>提示词需详细描述卡通形象的行动，建议采用格式"卡通形象……"，描述越具体，生成效果越好。</p>
+                        <p class="mb-2"><strong>图像限制：</strong></p>
+                        <ul class="list-disc pl-5 text-sm">
+                            <li>图像格式：JPG、JPEG、PNG、BMP、TIFF、WEBP。</li>
+                            <li>图像分辨率：图像的宽度和高度范围为[512, 4096]像素。</li>
+                            <li>图像大小：不超过10MB。</li>
+                            <li>URL地址中不能包含中文字符。</li>
+                        </ul>
+                        <p class="text-red-500 font-medium mt-2">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
                     </div>
                 </div>
 
@@ -152,55 +55,13 @@
                     <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
                     <input type="file" id="image-upload" class="hidden" accept="image/*">
                 </div>
-                <p class="text-xs text-gray-500 mb-4">上传图片</p>
-
-                <!-- 扩展方向控制 - 使用滑块 -->
-                <div class="mb-4">
-                    <h3 class="text-sm font-medium text-gray-700 mb-3">扩展方向与比例控制:</h3>
-                    
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs text-gray-600">向左扩展</label>
-                            <span class="text-xs text-gray-600" id="left-scale-value">1</span>
-                        </div>
-                        <input type="range" id="left-scale" min="0" max="2" step="0.1" value="1" class="w-full">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs text-gray-600">向右扩展</label>
-                            <span class="text-xs text-gray-600" id="right-scale-value">1</span>
-                        </div>
-                        <input type="range" id="right-scale" min="0" max="2" step="0.1" value="1" class="w-full">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs text-gray-600">向上扩展</label>
-                            <span class="text-xs text-gray-600" id="top-scale-value">1</span>
-                        </div>
-                        <input type="range" id="top-scale" min="0" max="2" step="0.1" value="1" class="w-full">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs text-gray-600">向下扩展</label>
-                            <span class="text-xs text-gray-600" id="bottom-scale-value">1</span>
-                        </div>
-                        <input type="range" id="bottom-scale" min="0" max="2" step="0.1" value="1" class="w-full">
-                    </div>
-                    
-                    <div class="flex justify-between mt-2">
-                        <button id="reset-scales" class="text-xs text-indigo-600 hover:text-indigo-800">重置为默认值</button>
-                        <button id="equal-scales" class="text-xs text-indigo-600 hover:text-indigo-800">四周均匀扩展</button>
-                    </div>
-                </div>
+                <p class="text-xs text-gray-500 mb-4">上传图像</p>
 
                 <div class="flex-grow mb-4">
                     <div class="mb-2">
-                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入提示词:</label>
+                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入指令:</label>
                     </div>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="请描述您希望在扩展区域看到的内容，例如：蓝天白云、绿色草地、城市景观等"></textarea>
+                    <textarea id="prompt-input" class="prompt-input" placeholder="请输入提示词，如: 添加柔和背景垫图，突出主体"></textarea>
                 </div>
                 
                 <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
@@ -215,16 +76,16 @@
                 
                 <div class="flex flex-col md:flex-row gap-6 flex-grow">
                     <div class="w-full md:w-1/2">
-                        <h3 class="text-base font-medium mb-3 text-center">原始图像</h3>
-                        <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                            <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片">
+                        <h3 class="text-base font-medium mb-3 text-center">原始图像:</h3>
+                        <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden relative">
+                            <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片" draggable="false">
                             <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
                         </div>
                     </div>
                     
                     <div class="w-full md:w-1/2">
                         <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-medium text-center">生成结果</h3>
+                            <h3 class="text-base font-medium text-center">生成结果:</h3>
                             <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-1 px-2 rounded-md hover:bg-indigo-700 text-sm flex items-center">
                                 <i class="ri-save-line mr-1"></i>
                                 保存到下载中心
@@ -252,7 +113,7 @@
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
             <div class="flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                <p id="loading-message" class="text-lg font-medium">处理中，请耐心等待...</p>
+                <p id="loading-message" class="text-gray-700 text-center">处理中，请耐心等待...</p>
             <p class="text-sm text-gray-500 mt-2">处理时间约为5-10秒</p>
             </div>
         </div>
@@ -262,14 +123,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
             // 首先检查用户认证状态
-            console.log('图片扩展页面：开始检查用户认证状态');
+            console.log('垫图页面：开始检查用户认证状态');
             
             // 检查本地存储
             const authToken = localStorage.getItem('authToken');
             const userInfo = localStorage.getItem('user');
             
             if (!authToken || !userInfo) {
-                console.log('图片扩展页面：用户未登录，跳转到登录页');
+                console.log('垫图页面：用户未登录，跳转到登录页');
                 window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
@@ -279,28 +140,14 @@
                 try {
                     const isAuthenticated = await window.checkAuth(true);
                     if (!isAuthenticated) {
-                        console.log('图片扩展页面：认证检查失败');
+                        console.log('垫图页面：认证检查失败');
                         return; // checkAuth会自动处理重定向
                     }
-                    console.log('图片扩展页面：认证检查通过');
+                    console.log('垫图页面：认证检查通过');
                 } catch (error) {
-                    console.error('图片扩展页面：认证检查出错:', error);
+                    console.error('垫图页面：认证检查出错:', error);
                     // 出错时也继续加载页面，但记录错误
                 }
-            }
-            
-            // 加载简化版导航栏组件
-            try {
-                const navbarResponse = await fetch('/components/navbar-simple.html');
-                const navbarHtml = await navbarResponse.text();
-                document.getElementById('navbar-simple').innerHTML = navbarHtml;
-                
-                // 加载组件JavaScript
-                const componentsScript = document.createElement('script');
-                componentsScript.src = '/components/components.js';
-                document.head.appendChild(componentsScript);
-            } catch (error) {
-                console.error('加载导航栏组件失败:', error);
             }
             
             // DOM元素
@@ -316,60 +163,12 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
+            const userMenuBtn = document.getElementById('user-menu-btn');
+            const loginBtn = document.getElementById('login-btn');
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
-            const leftScale = document.getElementById('left-scale');
-            const rightScale = document.getElementById('right-scale');
-            const topScale = document.getElementById('top-scale');
-            const bottomScale = document.getElementById('bottom-scale');
-            const leftScaleValue = document.getElementById('left-scale-value');
-            const rightScaleValue = document.getElementById('right-scale-value');
-            const topScaleValue = document.getElementById('top-scale-value');
-            const bottomScaleValue = document.getElementById('bottom-scale-value');
-            const resetScales = document.getElementById('reset-scales');
-            const equalScales = document.getElementById('equal-scales');
             
-            // 初始化滑块值显示
-            updateScaleValueDisplay();
-            
-            // 添加滑块值变化事件
-            leftScale.addEventListener('input', updateScaleValueDisplay);
-            rightScale.addEventListener('input', updateScaleValueDisplay);
-            topScale.addEventListener('input', updateScaleValueDisplay);
-            bottomScale.addEventListener('input', updateScaleValueDisplay);
-            
-            // 重置按钮事件
-            resetScales.addEventListener('click', function() {
-                leftScale.value = 1;
-                rightScale.value = 1;
-                topScale.value = 1;
-                bottomScale.value = 1;
-                updateScaleValueDisplay();
-            });
-            
-            // 四周均匀扩展按钮事件
-            equalScales.addEventListener('click', function() {
-                const value = prompt('请输入四周均匀扩展比例 (0-2):', '1.5');
-                if (value !== null) {
-                    const numValue = parseFloat(value);
-                    if (!isNaN(numValue) && numValue >= 0 && numValue <= 2) {
-                        leftScale.value = numValue;
-                        rightScale.value = numValue;
-                        topScale.value = numValue;
-                        bottomScale.value = numValue;
-                        updateScaleValueDisplay();
-                    } else {
-                        alert('请输入0到2之间的有效数值');
-                    }
-                }
-            });
-            
-            // 更新滑块值显示
-            function updateScaleValueDisplay() {
-                leftScaleValue.textContent = leftScale.value;
-                rightScaleValue.textContent = rightScale.value;
-                topScaleValue.textContent = topScale.value;
-                bottomScaleValue.textContent = bottomScale.value;
-            }
+            // 检查用户登录状态
+            checkAuthStatus();
             
             // 图片上传处理
             uploadArea.addEventListener('click', () => {
@@ -439,20 +238,20 @@
                     
                     console.log('图片上传成功，获取到的URL:', imageUrl);
                     
-                    // 2. 调用API创建智能扩图任务
-                    loadingMessage.textContent = '正在创建智能扩图任务...';
-                    console.log('正在创建智能扩图任务...');
+                    // 2. 调用API创建垫图任务
+                    loadingMessage.textContent = '正在创建垫图任务...';
+                    console.log('正在创建垫图任务...');
                     
                     let taskId;
                     try {
-                        taskId = await createExpansionTask(prompt, imageUrl);
+                        taskId = await createDiantuTask(prompt, imageUrl);
                     } catch (taskError) {
                         console.error('创建任务错误:', taskError);
-                        throw new Error(`创建智能扩图任务失败: ${taskError.message}`);
+                        throw new Error(`创建垫图任务失败: ${taskError.message}`);
                     }
                     
                     if (!taskId) {
-                        throw new Error('创建智能扩图任务失败，未获取到任务ID');
+                        throw new Error('创建垫图任务失败，未获取到任务ID');
                     }
                     
                     console.log('创建任务成功，任务ID:', taskId);
@@ -564,35 +363,22 @@
                 return new Blob(byteArrays, { type: mimeType });
             }
             
-            // 创建智能扩图任务
-            async function createExpansionTask(prompt, imageUrl) {
+            // 创建垫图任务
+            async function createDiantuTask(prompt, imageUrl) {
                 try {
-                    // 获取各个方向的扩展比例
-                    const leftScaleValue = parseFloat(leftScale.value);
-                    const rightScaleValue = parseFloat(rightScale.value);
-                    const topScaleValue = parseFloat(topScale.value);
-                    const bottomScaleValue = parseFloat(bottomScale.value);
-                    
-                    // 准备请求数据 - 使用expand功能
+                    // 构建请求数据
                     const requestData = {
                         model: "wanx2.1-imageedit",
                         input: {
-                            function: "expand",
-                            prompt: prompt || "延续图像内容",
+                            function: "control_cartoon_feature",
+                            prompt: prompt || "为图片添加垫图效果",
                             base_image_url: imageUrl
                         },
                         parameters: {
-                            n: 1,
-                            left_scale: leftScaleValue,
-                            right_scale: rightScaleValue,
-                            top_scale: topScaleValue,
-                            bottom_scale: bottomScaleValue
+                            n: 1
                         }
                     };
-                    
-                    console.log('发送创建智能扩图任务请求:', JSON.stringify(requestData));
-                    
-                    // 通过服务器代理调用API
+                    // 通过服务器代理调用阿里云API
                     const response = await fetch('/api/image-edit/create-task', {
                         method: 'POST',
                         headers: {
@@ -601,11 +387,7 @@
                         },
                         body: JSON.stringify(requestData)
                     });
-                    
                     const data = await response.json();
-                    
-                    console.log('创建任务响应:', data);
-                    
                     if (!response.ok) {
                         if (data.message && data.message.includes('积分不足')) {
                             throw new Error('您的积分不足，请充值后再试');
@@ -613,7 +395,6 @@
                             throw new Error(data.message || '创建任务失败');
                         }
                     }
-                    
                     return data.output?.task_id;
                 } catch (error) {
                     console.error('创建任务错误:', error);
@@ -624,192 +405,61 @@
             // 轮询任务状态
             async function pollTaskStatus(taskId) {
                 return new Promise((resolve, reject) => {
-                    // 计数器，防止无限轮询
                     let attempts = 0;
                     let errorCount = 0;
                     const maxAttempts = 60; // 最多轮询60次，约10分钟
-                    
-                    // 轮询间隔，首次10秒，后续每次10秒
-                    const pollInterval = 10000;
-                    
-                    // 轮询函数
+                    const pollInterval = 10000; // 轮询间隔10秒
                     async function checkStatus() {
                         if (attempts >= maxAttempts) {
                             clearTimeout(timeoutId);
                             reject(new Error('任务处理超时，请稍后重试'));
                             return;
                         }
-                        
                         attempts++;
                         loadingMessage.textContent = `处理中，请耐心等待... (${attempts}/${maxAttempts})`;
-                        
                         try {
                             const response = await fetch(`/api/image-edit/task-status/${taskId}`, {
                                 headers: {
                                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                                 }
                             });
-                            
                             if (!response.ok) {
                                 throw new Error('获取任务状态失败，服务器错误');
                             }
-                            
                             const data = await response.json();
-                            console.log(`轮询结果 (${attempts}/${maxAttempts}):`, data);
-                            
-                            // 详细记录API响应结构，便于调试
-                            console.log('API响应详情 - request_id:', data.request_id);
-                            console.log('API响应详情 - output:', data.output);
-                            if (data.output) {
-                                console.log('API响应详情 - task_status:', data.output.task_status);
-                                console.log('API响应详情 - task_id:', data.output.task_id);
-                                if (data.output.results) {
-                                    console.log('API响应详情 - results:', JSON.stringify(data.output.results));
-                                } else if (data.output.images) {
-                                    console.log('API响应详情 - images:', JSON.stringify(data.output.images));
-                                }
-                                if (data.output.task_metrics) {
-                                    console.log('API响应详情 - task_metrics:', JSON.stringify(data.output.task_metrics));
-                                }
-                            }
-                            
-                            // 如果存在顶层错误码和错误信息，说明API调用直接失败
-                            if (data.code && data.message) {
-                                clearTimeout(timeoutId);
-                                reject(new Error(`API错误: ${data.code}: ${data.message}`));
-                                return;
-                            }
-                            
-                            // 检查任务状态
                             const taskStatus = data.output?.task_status;
-                            
                             if (taskStatus === 'SUCCEEDED') {
-                                // 成功完成，优先检查images字段(新版API)
-                                if (data.output?.images && data.output.images.length > 0) {
-                                    const resultImageUrl = data.output.images[0].url;
-                                    clearTimeout(timeoutId);
-                                    resolve(resultImageUrl);
-                                    return;
-                                }
-                                
-                                // 然后检查results字段(旧版API)
                                 const resultsList = data.output?.results || [];
                                 if (resultsList.length > 0) {
-                                    // 检查是否有部分失败的情况
                                     const successResults = resultsList.filter(result => result.url);
-                                    const failedResults = resultsList.filter(result => result.code);
-                                    
                                     if (successResults.length > 0) {
-                                        // 至少有一个成功的结果
-                                        const resultImageUrl = successResults[0].url;
                                         clearTimeout(timeoutId);
-                                        
-                                        // 如果有部分失败，在控制台记录
-                                        if (failedResults.length > 0) {
-                                            console.warn('部分任务失败:');
-                                            failedResults.forEach(item => {
-                                                console.warn(`- 错误码: ${item.code}, 信息: ${item.message}`);
-                                            });
-                                            
-                                            // 显示部分成功信息
-                                            const totalTasks = resultsList.length;
-                                            const successTasks = successResults.length;
-                                            console.log(`任务部分成功: ${successTasks}/${totalTasks} 成功`);
-                                            
-                                            // 记录task_metrics信息
-                                            if (data.output.task_metrics) {
-                                                const metrics = data.output.task_metrics;
-                                                console.log(`任务统计: 总数=${metrics.TOTAL}, 成功=${metrics.SUCCEEDED}, 失败=${metrics.FAILED}`);
-                                            }
-                                        }
-                                        
-                                        resolve(resultImageUrl);
-                                        return;
-                                    } else {
-                                        // 所有结果都失败
-                                        const error = failedResults[0] || {};
-                                        clearTimeout(timeoutId);
-                                        reject(new Error(`生成失败: ${error.code ? `${error.code}: ` : ''}${error.message || '图像处理失败'}`));
+                                        resolve(successResults[0].url);
                                         return;
                                     }
-                                } else {
-                                    clearTimeout(timeoutId);
-                                    reject(new Error('任务成功但未找到结果图像'));
-                                    return;
                                 }
-                            } 
-                            else if (taskStatus === 'FAILED') {
-                                // 任务失败，获取错误详情
                                 clearTimeout(timeoutId);
-                                
-                                // 根据官方文档，FAILED状态下code和message字段直接在output对象下
-                                let errorMsg = '未知错误';
-                                let errorCode = '';
-                                
-                                if (data.output.code) {
-                                    // 标准格式：错误码在output.code
-                                    errorCode = data.output.code;
-                                    errorMsg = data.output.message || '未知错误';
-                                } else if (data.output.error) {
-                                    // 兼容格式：错误在error对象内
-                                    errorCode = data.output.error.code || '';
-                                    errorMsg = data.output.error.message || '未知错误';
-                                } else if (data.output.message) {
-                                    // 只有错误信息
-                                    errorMsg = data.output.message;
-                                }
-                                
-                                console.log(`任务失败，错误码: ${errorCode}, 错误信息: ${errorMsg}`);
-                                reject(new Error(`任务执行失败: ${errorCode ? `${errorCode}: ` : ''}${errorMsg}`));
+                                reject(new Error('任务成功但未找到结果，请重试'));
+                                return;
+                            } else if (taskStatus === 'FAILED') {
+                                clearTimeout(timeoutId);
+                                reject(new Error(data.output?.message || '任务执行失败'));
                                 return;
                             }
-                            else if (taskStatus === 'CANCELED') {
-                                // 任务被取消
-                                clearTimeout(timeoutId);
-                                reject(new Error('任务已被取消，请重试'));
-                                return;
-                            }
-                            else if (taskStatus === 'UNKNOWN') {
-                                // 任务状态未知
-                                clearTimeout(timeoutId);
-                                reject(new Error('任务状态未知，请重试'));
-                                return;
-                            }
-                            // 状态为PENDING或RUNNING，继续轮询
-                            console.log(`任务状态: ${taskStatus}, 继续轮询...`);
                             timeoutId = setTimeout(checkStatus, pollInterval);
                         } catch (error) {
-                            console.error(`轮询出错 (${attempts}/${maxAttempts}):`, error);
                             errorCount++;
-                            
-                            // 如果连续错误超过3次，则放弃
                             if (errorCount >= 3) {
                                 clearTimeout(timeoutId);
                                 reject(new Error('网络连接不稳定，请检查网络后重试'));
                                 return;
                             }
-                            
-                            // 继续轮询
                             timeoutId = setTimeout(checkStatus, pollInterval);
                         }
                     }
-                    
-                    // 开始轮询
-                    let timeoutId = setTimeout(checkStatus, 3000); // 首次延迟3秒后开始轮询
+                    let timeoutId = setTimeout(checkStatus, 3000);
                 });
             }
-            
-            // 下载按钮
-            downloadBtn.addEventListener('click', () => {
-                if (resultImage.src) {
-                    const link = document.createElement('a');
-                    link.href = resultImage.src;
-                    link.download = 'expanded-image.png';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-            });
             
             // 保存到下载中心按钮
             saveToDownloadsBtn.addEventListener('click', async () => {
@@ -821,7 +471,7 @@
                     loadingMessage.textContent = '正在保存到下载中心...';
                     
                     // 获取提示文本
-                    const promptText = promptInput.value.trim() || '智能扩图';
+                    const promptText = promptInput.value.trim() || '垫图';
                     
                     console.log('准备保存图片到下载中心:', resultImage.src.substring(0, 50) + '...');
                     
@@ -834,9 +484,9 @@
                         },
                         body: JSON.stringify({
                             imageUrl: resultImage.src,
-                            title: '智能扩图: ' + (promptText.substring(0, 30) + (promptText.length > 30 ? '...' : '')),
+                            title: '垫图: ' + (promptText.substring(0, 30) + (promptText.length > 30 ? '...' : '')),
                             description: promptText,
-                            type: 'IMAGE_EXPANSION'
+                            type: 'DIANTU'
                         })
                     });
                     
@@ -862,7 +512,7 @@
                     loadingOverlay.classList.add('hidden');
                 }
             });
-            
+
             // 辅助函数
             function handleImageFile(file) {
                 // 检查文件类型
@@ -870,13 +520,11 @@
                     alert('请上传图片文件！支持的格式包括JPG、PNG和WEBP');
                     return;
                 }
-                
                 // 检查文件大小
                 if (file.size > 10 * 1024 * 1024) { // 10MB 限制
                     alert('图片大小不能超过10MB！');
                     return;
                 }
-                
                 // 创建预览并检查图片尺寸
                 const reader = new FileReader();
                 reader.onload = (event) => {
@@ -887,17 +535,14 @@
                             alert('图片尺寸太小，请上传最小512×512像素的图片');
                             return;
                         }
-                        
-                        if (img.width > 2048 || img.height > 2048) {
-                            alert('图片尺寸过大，请上传不超过2048×2048像素的图片');
+                        if (img.width > 4000 || img.height > 4000) {
+                            alert('图片尺寸过大，请上传不超过4000×4000像素的图片');
                             return;
                         }
-                        
                         // 显示原始图片
                         originalImage.src = event.target.result;
                         originalImage.classList.remove('hidden');
                         originalImagePlaceholder.classList.add('hidden');
-                        
                         // 重置结果区域
                         resultImage.classList.add('hidden');
                         resultImagePlaceholder.classList.remove('hidden');
@@ -911,18 +556,79 @@
                 };
                 reader.readAsDataURL(file);
             }
-            
             function preventDefaults(e) {
                 e.preventDefault();
                 e.stopPropagation();
             }
-            
             function highlight() {
                 uploadArea.classList.add('border-indigo-500', 'bg-indigo-50');
             }
-            
             function unhighlight() {
                 uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
+            }
+
+            // 检查用户登录状态
+            function checkAuthStatus() {
+                const authToken = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                if (authToken && userInfo) {
+                    try {
+                        const user = JSON.parse(userInfo);
+                        if (document.getElementById('username-display')) {
+                            document.getElementById('username-display').textContent = user.username;
+                        }
+                        if (loginBtn) loginBtn.classList.add('hidden');
+                        if (userMenuBtn) userMenuBtn.classList.remove('hidden');
+                        // 获取用户积分
+                        if (document.getElementById('user-credits')) {
+                            fetch('/api/user/credits', {
+                                headers: {
+                                    'Authorization': `Bearer ${authToken}`
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                document.getElementById('user-credits').textContent = `积分: ${data.credits || 0}`;
+                            })
+                            .catch(err => {
+                                console.error('获取积分失败:', err);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('解析用户信息出错:', e);
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                    }
+                } else {
+                    if (userMenuBtn) userMenuBtn.classList.add('hidden');
+                    if (loginBtn) loginBtn.classList.remove('hidden');
+                }
+            }
+
+            // 下载按钮
+            downloadBtn.addEventListener('click', () => {
+                if (resultImage.src) {
+                    const link = document.createElement('a');
+                    link.href = resultImage.src;
+                    link.download = 'diantu-result.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+            
+            // 加载导航栏组件
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
             }
         });
     </script>
