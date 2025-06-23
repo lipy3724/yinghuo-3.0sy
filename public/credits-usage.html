@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/auth-check.js"></script>
     <link rel="icon" href="/images/favicon.png" type="image/png">
 </head>
 <body class="bg-gray-50">
@@ -21,7 +22,7 @@
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-medium text-lg">积分概览</h3>
                 <div class="text-sm text-gray-500">
-                    <select id="time-filter" class="border rounded px-2 py-1 hidden">
+                    <select id="time-filter" class="border rounded px-2 py-1">
                         <option value="7">最近7天</option>
                         <option value="30" selected>最近30天</option>
                         <option value="90">最近90天</option>
@@ -109,18 +110,13 @@
             const authToken = localStorage.getItem('authToken');
             const userInfo = localStorage.getItem('user');
             
+            console.log('积分使用页面：初始化用户界面，authToken存在:', !!authToken, 'userInfo存在:', !!userInfo);
+            
             if (authToken && userInfo) {
                 // 用户已登录
                 try {
                     const user = JSON.parse(userInfo);
-                    const usernameElement = document.getElementById('username-display');
-                    if (usernameElement) {
-                        usernameElement.textContent = user.username;
-                    }
-                    
-                    // 显示用户信息，隐藏登录按钮
-                    if (loginBtn) loginBtn.classList.add('hidden');
-                    if (userInfoElement) userInfoElement.classList.remove('hidden');
+                    console.log('积分使用页面：用户已登录，用户名:', user.username);
                     
                     // 加载积分使用数据
                     loadUsageData();
@@ -141,8 +137,11 @@
                 // 获取认证令牌
                 const authToken = localStorage.getItem('authToken');
                 if (!authToken) {
+                    console.error('积分使用页面：用户未登录，无法获取数据');
                     throw new Error('用户未登录');
                 }
+                
+                console.log(`积分使用页面：开始请求API /api/credits/usage?days=${days}`);
                 
                 // 调用API获取积分使用数据
                 const response = await fetch(`/api/credits/usage?days=${days}`, {
@@ -151,18 +150,26 @@
                     }
                 });
                 
+                console.log('积分使用页面：API响应状态', response.status, response.statusText);
+                
                 if (!response.ok) {
-                    throw new Error('获取数据失败');
+                    const errorText = await response.text();
+                    console.error('积分使用页面：API请求失败', response.status, errorText);
+                    throw new Error(`获取数据失败: ${response.status} ${response.statusText}`);
                 }
                 
                 const result = await response.json();
+                console.log('积分使用页面：API返回结果', result);
+                
                 if (result.success && result.data) {
+                    console.log('积分使用页面：数据获取成功');
                     return result.data;
                 } else {
+                    console.error('积分使用页面：API返回失败', result.message);
                     throw new Error(result.message || '获取数据失败');
                 }
             } catch (error) {
-                console.error('获取积分使用数据失败:', error);
+                console.error('积分使用页面：获取积分使用数据失败:', error);
                 // 出错时返回空数据
                 return {
                     summary: {
@@ -199,30 +206,47 @@
         
         // 加载积分使用数据
         async function loadUsageData() {
-            // 从服务器获取数据
-            const data = await fetchUserCreditsUsage(
-                document.getElementById('time-filter').value
-            );
-            
-            // 更新本地数据
-            usageData = data;
-            
-            // 更新概览数据 - 使用totalCreditsUsed作为所选时间范围内累计消费积分
-            document.getElementById('total-credits-used').textContent = usageData.summary?.totalCreditsUsed || 0;
-            document.getElementById('total-usage-count').textContent = usageData.summary?.totalUsageCount || 0;
-            document.getElementById('feature-count').textContent = usageData.summary?.featureCount || 0;
-            
-            // 渲染使用趋势图表
-            renderUsageChart();
-            
-            // 渲染功能使用占比
-            renderFeaturePieChart();
-            
-            // 渲染功能列表
-            renderFeatureList();
-            
-            // 渲染使用记录列表
-            renderUsageRecords();
+            try {
+                console.log('积分使用页面：开始加载积分使用数据');
+                
+                // 从服务器获取数据
+                const data = await fetchUserCreditsUsage(
+                    document.getElementById('time-filter').value
+                );
+                
+                console.log('积分使用页面：获取到数据', data);
+                
+                // 更新本地数据
+                usageData = data;
+                
+                // 更新概览数据 - 使用totalCreditsUsed作为所选时间范围内累计消费积分
+                document.getElementById('total-credits-used').textContent = usageData.summary?.totalCreditsUsed || 0;
+                document.getElementById('total-usage-count').textContent = usageData.summary?.totalUsageCount || 0;
+                document.getElementById('feature-count').textContent = usageData.summary?.featureCount || 0;
+                
+                console.log('积分使用页面：更新概览数据完成');
+                
+                // 渲染使用趋势图表
+                renderUsageChart();
+                
+                // 渲染功能使用占比
+                renderFeaturePieChart();
+                
+                // 渲染功能列表
+                renderFeatureList();
+                
+                // 渲染使用记录列表
+                renderUsageRecords();
+                
+                console.log('积分使用页面：所有渲染完成');
+            } catch (error) {
+                console.error('积分使用页面：加载数据失败', error);
+                
+                // 显示错误信息给用户
+                document.getElementById('total-credits-used').textContent = '加载失败';
+                document.getElementById('total-usage-count').textContent = '加载失败';
+                document.getElementById('feature-count').textContent = '加载失败';
+            }
         }
         
         // 绑定时间筛选事件
@@ -575,7 +599,20 @@
         
         // 页面加载时检查登录状态
         document.addEventListener('DOMContentLoaded', function() {
-            initializeUserUI();
+            console.log('积分使用页面：DOM加载完成，开始初始化');
+            
+            // 确保时间筛选器存在
+            const timeFilter = document.getElementById('time-filter');
+            if (!timeFilter) {
+                console.error('积分使用页面：时间筛选器元素未找到');
+                return;
+            }
+            
+            // 延迟初始化，确保auth-check.js有时间完成认证
+            setTimeout(() => {
+                console.log('积分使用页面：开始延迟初始化');
+                initializeUserUI();
+            }, 1000);
         });
     </script>
 </body>

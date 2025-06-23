@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分API测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">积分API测试</h1>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="font-medium text-lg mb-4">认证状态</h3>
+            <div id="auth-status" class="mb-4"></div>
+            <button id="test-api" class="bg-blue-500 text-white px-4 py-2 rounded">测试积分API</button>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="font-medium text-lg mb-4">API响应</h3>
+            <pre id="api-response" class="bg-gray-100 p-4 rounded text-sm overflow-auto max-h-96"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const authStatusEl = document.getElementById('auth-status');
+            const testApiBtn = document.getElementById('test-api');
+            const apiResponseEl = document.getElementById('api-response');
+            
+            // 检查认证状态
+            function checkAuthStatus() {
+                const authToken = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                
+                if (authToken && userInfo) {
+                    try {
+                        const user = JSON.parse(userInfo);
+                        authStatusEl.innerHTML = `
+                            <p class="text-green-600">✅ 已登录</p>
+                            <p>用户: ${user.username}</p>
+                            <p>Token: ${authToken.substring(0, 20)}...</p>
+                        `;
+                    } catch (e) {
+                        authStatusEl.innerHTML = '<p class="text-red-600">❌ 用户信息解析失败</p>';
+                    }
+                } else {
+                    authStatusEl.innerHTML = '<p class="text-red-600">❌ 未登录</p>';
+                }
+            }
+            
+            // 测试API
+            async function testCreditsAPI() {
+                try {
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        apiResponseEl.textContent = '错误: 未找到认证令牌';
+                        return;
+                    }
+                    
+                    apiResponseEl.textContent = '正在请求API...';
+                    
+                    const response = await fetch('/api/credits/usage?days=30', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const responseText = await response.text();
+                    
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                    } catch (e) {
+                        result = { error: '响应不是有效的JSON', responseText };
+                    }
+                    
+                    const output = {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: Object.fromEntries(response.headers.entries()),
+                        body: result
+                    };
+                    
+                    apiResponseEl.textContent = JSON.stringify(output, null, 2);
+                } catch (error) {
+                    apiResponseEl.textContent = `请求失败: ${error.message}`;
+                }
+            }
+            
+            checkAuthStatus();
+            testApiBtn.addEventListener('click', testCreditsAPI);
+        });
+    </script>
+</body>
+</html> 
