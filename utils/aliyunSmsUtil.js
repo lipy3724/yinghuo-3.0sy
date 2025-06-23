@@ -92,10 +92,39 @@ async function sendSmsCode(phoneNumber, code) {
     
     console.log('阿里云短信发送结果:', response.body);
     
+    // 处理阿里云返回的错误信息
+    let message = response.body.message;
+    
+    // 如果不是成功状态，检查是否需要转换错误信息
+    if (response.body.code !== 'OK') {
+      // 检查是否是频繁操作错误
+      if (message && (
+        message.includes('触发分钟级流控') || 
+        message.includes('触发小时级流控') ||
+        message.includes('触发天级流控') ||
+        message.includes('Permits:') ||
+        message.includes('流控') ||
+        message.includes('频繁') ||
+        message.includes('限流')
+      )) {
+        message = '禁止频繁操作，请稍后重试';
+      }
+      // 检查其他常见错误
+      else if (message && message.includes('签名不合法')) {
+        message = '短信服务配置错误，请联系客服';
+      }
+      else if (message && message.includes('模板不存在')) {
+        message = '短信模板配置错误，请联系客服';
+      }
+      else if (message && message.includes('余额不足')) {
+        message = '短信服务余额不足，请联系客服';
+      }
+    }
+    
     // 返回发送结果
     return {
       success: response.body.code === 'OK',
-      message: response.body.message,
+      message: message,
       requestId: response.body.requestId,
       bizId: response.body.bizId
     };
@@ -107,9 +136,35 @@ async function sendSmsCode(phoneNumber, code) {
       console.error('错误详情:', error.data);
     }
     
+    // 处理特定的阿里云错误
+    let userFriendlyMessage = error.message || '发送短信验证码失败';
+    
+    // 检查是否是频繁操作错误
+    if (error.message && (
+      error.message.includes('触发分钟级流控') || 
+      error.message.includes('触发小时级流控') ||
+      error.message.includes('触发天级流控') ||
+      error.message.includes('Permits:') ||
+      error.message.includes('流控') ||
+      error.message.includes('频繁') ||
+      error.message.includes('限流')
+    )) {
+      userFriendlyMessage = '禁止频繁操作，请稍后重试';
+    }
+    // 检查是否是其他常见错误
+    else if (error.message && error.message.includes('签名不合法')) {
+      userFriendlyMessage = '短信服务配置错误，请联系客服';
+    }
+    else if (error.message && error.message.includes('模板不存在')) {
+      userFriendlyMessage = '短信模板配置错误，请联系客服';
+    }
+    else if (error.message && error.message.includes('余额不足')) {
+      userFriendlyMessage = '短信服务余额不足，请联系客服';
+    }
+    
     return {
       success: false,
-      message: error.message || '发送短信验证码失败',
+      message: userFriendlyMessage,
       error: error
     };
   }
