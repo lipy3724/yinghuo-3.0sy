@@ -226,9 +226,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-        <div class="flex items-center -ml-36">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-28 w-28 mr-1 mt-4">
-                    <span class="text-base font-semibold mt-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">FireflyAI</span>
+                        <div class="flex items-center -ml-36">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-32 w-32 mr-1 mt-4 object-contain">
                 </div>
                 
                 <!-- 桌面导航菜单 -->
@@ -265,7 +264,7 @@
                     <a href="javascript:void(0)" class="text-gray-600 hover:text-indigo-600 transition-colors">使用教程</a>
                     <a href="#pricing" class="text-gray-600 hover:text-indigo-600 transition-colors">套餐方案</a>
                     <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">关于我们</a>
-                </div>
+                            </div>
                 
                                 <!-- 操作按钮 -->
                 <div class="flex items-center space-x-4">
@@ -516,9 +515,9 @@
                         </div>
                         <div class="mb-2">
                             <span class="text-2xl font-bold text-indigo-600">350积分</span>
-                        </div>
-                        <div class="text-sm text-gray-500 mb-8">¥0.17/积分</div>
                     </div>
+                        <div class="text-sm text-gray-500 mb-8">¥0.17/积分</div>
+                </div>
                 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
@@ -545,7 +544,7 @@
                     <!-- 推荐标签 -->
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                         <span class="bg-indigo-500 text-white px-6 py-2 rounded-full text-sm font-medium">推荐</span>
-                    </div>
+                </div>
                 
                     <div class="text-center">
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">专业创作</h3>
@@ -555,9 +554,9 @@
                         </div>
                         <div class="mb-2">
                             <span class="text-2xl font-bold text-indigo-600">3980积分</span>
-                        </div>
-                        <div class="text-sm text-gray-500 mb-8">¥0.10/积分</div>
                     </div>
+                        <div class="text-sm text-gray-500 mb-8">¥0.10/积分</div>
+                </div>
                 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
@@ -593,9 +592,9 @@
                         </div>
                         <div class="mb-2">
                             <span class="text-2xl font-bold text-indigo-600">12500积分</span>
-                        </div>
-                        <div class="text-sm text-gray-500 mb-8">¥0.08/积分</div>
                     </div>
+                        <div class="text-sm text-gray-500 mb-8">¥0.08/积分</div>
+                </div>
                 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
@@ -623,14 +622,14 @@
                     <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-900 text-white py-4 rounded-xl font-semibold hover:bg-gray-800 transition-colors">
                         立即购买
                     </button>
-                </div>
-            </div>
+                            </div>
+                        </div>
             
             <!-- 额外套餐提示 -->
             <div class="mt-12 text-center">
                 <p class="text-gray-600">我们还提供更多定制化方案，请联系客服了解详情</p>
             </div>
-        </div>
+                    </div>
     </section>
 
     <!-- 关于我们区域 -->
@@ -806,9 +805,9 @@
                         });
                     }, 400 + (index * 120)); // 减少基础延迟和间隔时间
                 });
-            });
-        }
-        
+                });
+            }
+            
         // 数字动画
         function animateNumbers() {
             const stats = [
@@ -850,9 +849,9 @@
                     const targetId = this.getAttribute('href');
                     
                     if (targetId) {
-                        const targetElement = document.querySelector(targetId);
-                        
-                        if (targetElement) {
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
                             // 计算偏移量，考虑固定导航栏的高度
                             const navbarHeight = document.querySelector('nav').offsetHeight;
                             const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
@@ -888,7 +887,7 @@
             const sections = document.querySelectorAll('section');
             sections.forEach(section => {
                 if (!section.classList.contains('hero-gradient')) { // 排除英雄区域
-                    section.classList.add('scroll-animation');
+                section.classList.add('scroll-animation');
                     // 直接添加visible类，确保内容可见
                     section.classList.add('visible');
                 }
