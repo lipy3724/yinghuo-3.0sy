@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "userId": "user_1750644891453_x2oil8615",
+    "message": "你好",
+    "type": "user",
+    "timestamp": "2025-06-23T02:19:21.607Z",
+    "status": "unread"
+  },
+  {
+    "id": 2,
+    "userId": "user_1750644891453_x2oil8615",
+    "message": "你好",
+    "type": "admin",
+    "timestamp": "2025-06-23T02:27:30.219Z",
+    "status": "unread"
+  }
+]

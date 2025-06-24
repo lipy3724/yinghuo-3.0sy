@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客服管理后台 - 萤火AI</title>
+    <!-- 登录检查脚本 -->
+    <script>
+        // 检查登录状态
+        (function() {
+            const token = localStorage.getItem('admin_token');
+            const user = localStorage.getItem('admin_user');
+            
+            if (!token || !user) {
+                // 未登录，跳转到登录页面
+                window.location.href = '/adminkefu-login.html';
+                return;
+            }
+            
+            try {
+                const userData = JSON.parse(user);
+                if (!userData.isAdmin && !userData.isInternal) {
+                    // 没有管理员权限
+                    alert('您没有客服管理后台的访问权限');
+                    window.location.href = '/adminkefu-login.html';
+                    return;
+                }
+                
+                // 保存当前登录的客服信息到全局变量
+                window.currentAdmin = userData;
+                console.log('当前登录客服:', userData);
+                
+            } catch (error) {
+                console.error('解析用户信息失败:', error);
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                window.location.href = '/adminkefu-login.html';
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            color: #1a202c;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .main-container {
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .stat-card:hover {
+            border-color: #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1a202c;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.875rem;
+            font-weight: 400;
+            margin-top: 0.5rem;
+        }
+        
+        .chat-container {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            height: 650px;
+            display: flex;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-list-panel {
+            width: 360px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .user-list-header {
+            padding: 1rem;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: #ffffff;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .user-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        
+        .user-item {
+            padding: 0.875rem;
+            margin-bottom: 0.125rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            background: #ffffff;
+        }
+        
+        .user-item:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        
+        .user-item.active {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+        
+        .user-item.active .user-message {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .user-item.active .user-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            flex-shrink: 0;
+        }
+        
+        .user-item.active .user-avatar {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+        
+        .user-info {
+            flex: 1;
+            min-width: 0;
+            margin-left: 0.75rem;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-item.active .user-name {
+            color: white;
+        }
+        
+                 .user-message {
+             font-size: 0.875rem;
+             color: #6b7280;
+             margin-bottom: 0.5rem;
+             display: -webkit-box;
+             -webkit-line-clamp: 2;
+             line-clamp: 2;
+             -webkit-box-orient: vertical;
+             overflow: hidden;
+         }
+        
+        .user-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+        
+        .user-time {
+            color: #9ca3af;
+        }
+        
+        .user-count {
+            color: #9ca3af;
+        }
+        
+        .unread-badge {
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .chat-header {
+            padding: 1rem 1.25rem;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .chat-user-avatar {
+            width: 36px;
+            height: 36px;
+            background: #4f46e5;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 0.8125rem;
+        }
+        
+        .chat-user-details h3 {
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+            font-size: 1rem;
+        }
+        
+        .chat-user-details p {
+            color: #6b7280;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+        
+        .online-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #10b981;
+            font-weight: 500;
+        }
+        
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #4a5568;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .action-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        
+        .action-btn.primary {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: transparent;
+        }
+        
+        .action-btn.primary:hover {
+            background: #4338ca;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+        
+        .message-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .message-bubble {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-user {
+            background: #ffffff;
+            color: #1a202c;
+            margin-right: auto;
+            border-bottom-left-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .message-admin {
+            background: #4f46e5;
+            color: #ffffff;
+            margin-left: auto;
+            border-bottom-right-radius: 6px;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        
+        .message-user .message-time {
+            text-align: left;
+        }
+        
+        .chat-input-area {
+            padding: 1rem 1.25rem;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 0.875rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            resize: none;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            background: #ffffff;
+            transition: all 0.2s ease;
+            max-height: 120px;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .send-button {
+            padding: 0.875rem 1.5rem;
+            background: #4f46e5;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .send-button:hover {
+            background: #4338ca;
+        }
+        
+        .send-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .input-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9ca3af;
+            text-align: center;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.75rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success {
+            background: #10b981;
+        }
+        
+        .toast.error {
+            background: #ef4444;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 滚动条样式 */
+        .user-list::-webkit-scrollbar,
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .user-list::-webkit-scrollbar-track,
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+        
+        .user-list::-webkit-scrollbar-thumb,
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        .user-list::-webkit-scrollbar-thumb:hover,
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .user-list-panel {
+                width: 300px;
+            }
+            
+            .chat-container {
+                height: 500px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .user-list-panel {
+                width: 100%;
+                height: 300px;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 顶部导航 -->
+        <div class="header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <a href="/" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+                        <i class="ri-arrow-left-line text-xl"></i>
+                        <span class="font-medium">返回首页</span>
+                    </a>
+                    <div class="h-6 w-px bg-gray-300"></div>
+                    <h1 class="text-xl font-semibold text-gray-900">
+                        客服管理后台
+                    </h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- 客服信息 -->
+                    <div class="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-md">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium" id="admin-avatar">
+                            A
+                        </div>
+                        <div class="text-sm">
+                            <div class="font-medium text-gray-900" id="admin-name">客服</div>
+                            <div class="text-gray-500 text-xs" id="admin-role">管理员</div>
+                        </div>
+                    </div>
+                    
+                    <button id="refresh-btn" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-sm">
+                        <i class="ri-refresh-line"></i>
+                        <span>刷新</span>
+                    </button>
+                    
+                    <button id="logout-btn" class="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors text-sm text-red-600">
+                        <i class="ri-logout-box-line"></i>
+                        <span>退出登录</span>
+                    </button>
+                    
+                    <div class="text-sm text-gray-500">
+                        <span id="current-time"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 p-5">
+            <!-- 统计信息 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="stat-number" id="total-messages">0</div>
+                            <div class="stat-label">总消息数</div>
+                        </div>
+                        <i class="ri-message-3-line text-2xl text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="stat-number" id="unread-messages">0</div>
+                            <div class="stat-label">用户未读消息</div>
+                        </div>
+                        <i class="ri-notification-3-line text-2xl text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="stat-number" id="total-users">0</div>
+                            <div class="stat-label">用户数</div>
+                        </div>
+                        <i class="ri-user-line text-2xl text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="stat-number" id="today-messages">0</div>
+                            <div class="stat-label">今日用户消息</div>
+                        </div>
+                        <i class="ri-calendar-line text-2xl text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主要内容区域 -->
+            <div class="chat-container">
+                <!-- 左侧用户列表 -->
+                <div class="user-list-panel">
+                    <div class="user-list-header">
+                        <div class="search-box">
+                            <i class="ri-search-line search-icon"></i>
+                            <input type="text" id="search-input" class="search-input" placeholder="搜索用户...">
+                        </div>
+                        <select id="filter-status" class="filter-select">
+                            <option value="all">全部用户</option>
+                            <option value="unread">有未读消息</option>
+                            <option value="read">已读消息</option>
+                        </select>
+                    </div>
+                    <div class="user-list" id="user-list-container">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            加载用户列表...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧对话区域 -->
+                <div class="chat-panel">
+                    <!-- 对话头部 -->
+                    <div id="chat-header" class="chat-header" style="display: none;">
+                        <div class="chat-user-info">
+                            <div class="chat-user-avatar" id="chat-user-avatar">U</div>
+                            <div class="chat-user-details">
+                                <h3 id="current-user-name">用户名</h3>
+                                <p id="current-user-id">ID: </p>
+                                <p id="assignment-info" class="text-xs text-blue-600 mt-1" style="display: none;">
+                                    <i class="ri-user-settings-line"></i>
+                                    <span id="assignment-text">分配信息</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="online-status">
+                                <div class="online-dot"></div>
+                                <span>在线</span>
+                            </div>
+                            <div class="chat-actions">
+                                <button id="mark-all-read-btn" class="action-btn">
+                                    <i class="ri-check-double-line"></i>
+                                    标记已读
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 消息区域 -->
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="empty-state">
+                            <i class="ri-chat-3-line empty-icon text-gray-300 text-6xl mb-4"></i>
+                            <h3 class="text-lg font-medium mb-2 text-gray-700">选择一个用户开始对话</h3>
+                            <p class="text-gray-500 text-sm">点击左侧用户列表中的用户查看对话记录</p>
+                        </div>
+                    </div>
+
+                    <!-- 输入区域 -->
+                    <div id="chat-input-area" class="chat-input-area" style="display: none;">
+                        <div class="input-container">
+                            <textarea 
+                                id="reply-input" 
+                                class="message-input" 
+                                placeholder="输入回复消息..."
+                                rows="2"
+                                maxlength="500"
+                            ></textarea>
+                            <button id="send-reply-btn" class="send-button" disabled>
+                                <i class="ri-send-plane-fill"></i>
+                                <span>发送</span>
+                            </button>
+                        </div>
+                        <div class="input-meta">
+                            <span>按 Ctrl+Enter 快速发送</span>
+                            <span id="char-count">0/500</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allMessages = [];
+        let currentFilter = 'all';
+        let currentUserId = null;
+        let userStats = {};
+        let searchQuery = '';
+        
+        // 防重复提交变量
+        let isSubmitting = false;
+        let lastSubmitTime = 0;
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 显示当前登录的客服信息
+            displayAdminInfo();
+            
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            
+            loadMessages();
+            
+            // 启动消息轮询（替代原来的30秒刷新）
+            setTimeout(() => {
+                startMessagePolling();
+            }, 2000); // 延迟2秒启动，确保初始加载完成
+            
+            // 绑定事件
+            document.getElementById('refresh-btn').addEventListener('click', loadMessages);
+            document.getElementById('filter-status').addEventListener('change', function() {
+                currentFilter = this.value;
+                renderUserList();
+            });
+            
+            // 搜索功能
+            document.getElementById('search-input').addEventListener('input', function() {
+                searchQuery = this.value.toLowerCase();
+                renderUserList();
+            });
+            
+            // 输入框事件
+            const replyInput = document.getElementById('reply-input');
+            const sendBtn = document.getElementById('send-reply-btn');
+            const charCount = document.getElementById('char-count');
+            
+            replyInput.addEventListener('input', function() {
+                const length = this.value.length;
+                charCount.textContent = `${length}/500`;
+                sendBtn.disabled = length === 0;
+                
+                // 自动调整高度
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+            
+            replyInput.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    sendReply();
+                }
+            });
+            
+            sendBtn.addEventListener('click', sendReply);
+            document.getElementById('mark-all-read-btn').addEventListener('click', markAllRead);
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            
+            // 页面卸载时停止轮询
+            window.addEventListener('beforeunload', stopMessagePolling);
+        });
+        
+        // 更新当前时间
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+        
+        // 消息轮询相关变量
+        let messagePollingInterval = null;
+        let lastMessageTime = null;
+        
+        // 加载消息
+        async function loadMessages() {
+            try {
+                // 构建请求URL，如果不是超级管理员，只获取分配给当前客服的消息
+                let url = '/api/kefu/messages';
+                const currentAdminId = window.currentAdmin ? window.currentAdmin.id : null;
+                
+                // 如果是普通内部用户（非超级管理员），只显示分配给自己的用户消息
+                if (currentAdminId && !window.currentAdmin.isAdmin) {
+                    url += `?adminId=${currentAdminId}`;
+                    console.log(`📋 [客服${window.currentAdmin.username}] 加载分配给自己的用户消息`);
+                } else {
+                    console.log(`📋 [管理员] 加载所有用户消息`);
+                }
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.success) {
+                    allMessages = result.messages;
+                    
+                    // 更新最后消息时间
+                    if (allMessages.length > 0) {
+                        lastMessageTime = allMessages.reduce((latest, msg) => {
+                            return new Date(msg.timestamp) > new Date(latest) ? msg.timestamp : latest;
+                        }, allMessages[0].timestamp);
+                    }
+                    
+                    processUserStats();
+                    updateStats();
+                    renderUserList();
+                    
+                    // 如果当前有选中的用户，刷新对话
+                    if (currentUserId) {
+                        showUserChat(currentUserId);
+                    }
+                } else {
+                    showError('加载消息失败');
+                }
+            } catch (error) {
+                console.error('加载消息失败:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+        
+        // 开始消息轮询
+        function startMessagePolling() {
+            // 如果已经在轮询，先停止
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                console.log('⚠️ [管理员后台] 停止现有轮询');
+            }
+            
+            console.log('🔄 [管理员后台] 开始消息轮询 (每3秒)');
+            
+            // 每3秒检查一次新消息
+            messagePollingInterval = setInterval(function() {
+                checkForNewMessages();
+            }, 3000);
+        }
+        
+        // 停止消息轮询
+        function stopMessagePolling() {
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                messagePollingInterval = null;
+                console.log('⏹️ [管理员后台] 停止消息轮询');
+            }
+        }
+        
+        // 检查新消息
+        async function checkForNewMessages() {
+            try {
+                // 构建请求URL
+                let url = '/api/kefu/messages';
+                const currentAdminId = window.currentAdmin ? window.currentAdmin.id : null;
+                
+                // 添加时间戳参数
+                const params = [];
+                if (lastMessageTime) {
+                    params.push('since=' + encodeURIComponent(lastMessageTime));
+                }
+                
+                // 如果是普通内部用户（非超级管理员），只获取分配给自己的用户消息
+                if (currentAdminId && !window.currentAdmin.isAdmin) {
+                    params.push(`adminId=${currentAdminId}`);
+                }
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                
+                console.log(`[管理员后台] 轮询URL: ${url}`);
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.success && result.messages && result.messages.length > 0) {
+                    const newMessages = result.messages;
+                    let actualNewMessages = [];
+                    
+                    // 去重：只添加真正的新消息（基于消息ID和时间戳）
+                    newMessages.forEach(newMsg => {
+                        const exists = allMessages.some(existingMsg => 
+                            existingMsg.id === newMsg.id || 
+                            (existingMsg.userId === newMsg.userId && 
+                             existingMsg.message === newMsg.message && 
+                             existingMsg.timestamp === newMsg.timestamp)
+                        );
+                        
+                        if (!exists) {
+                            actualNewMessages.push(newMsg);
+                        }
+                    });
+                    
+                    if (actualNewMessages.length > 0) {
+                        console.log(`📨 [管理员后台] 新增 ${actualNewMessages.length} 条消息`);
+                        
+                        // 只添加真正的新消息
+                        allMessages = [...allMessages, ...actualNewMessages];
+                        
+                        // 更新最后消息时间
+                        actualNewMessages.forEach(msg => {
+                            if (!lastMessageTime || new Date(msg.timestamp) > new Date(lastMessageTime)) {
+                                lastMessageTime = msg.timestamp;
+                            }
+                        });
+                        
+                        // 重新处理统计和渲染
+                        processUserStats();
+                        updateStats();
+                        renderUserList();
+                        
+                        // 如果当前有选中的用户，且该用户有新消息，刷新对话
+                        if (currentUserId) {
+                            const hasNewMessagesForCurrentUser = actualNewMessages.some(msg => msg.userId === currentUserId);
+                            if (hasNewMessagesForCurrentUser) {
+                                showUserChat(currentUserId);
+                                
+                                // 自动滚动到底部
+                                setTimeout(() => {
+                                    const chatContainer = document.getElementById('chat-messages');
+                                    if (chatContainer) {
+                                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                                    }
+                                }, 100);
+                            }
+                        }
+                        
+                        // 播放新消息提示音（可选）
+                        playNotificationSound();
+                    } else {
+                        // 如果没有新消息，但有消息返回，更新时间戳防止重复查询
+                        if (newMessages.length > 0) {
+                            const latestMsg = newMessages.reduce((latest, msg) => {
+                                return new Date(msg.timestamp) > new Date(latest.timestamp) ? msg : latest;
+                            });
+                            if (!lastMessageTime || new Date(latestMsg.timestamp) > new Date(lastMessageTime)) {
+                                lastMessageTime = latestMsg.timestamp;
+                            }
+                        }
+                    }
+                    // 如果没有新消息，静默处理，不输出日志
+                } else {
+                    // 即使没有消息返回，也要更新时间戳避免重复查询
+                    if (!lastMessageTime) {
+                        lastMessageTime = new Date().toISOString();
+                    }
+                }
+            } catch (error) {
+                // 静默处理轮询错误，避免控制台spam
+                console.error('[管理员后台] 检查新消息失败:', error);
+            }
+        }
+        
+        // 播放提示音
+        function playNotificationSound() {
+            try {
+                // 创建简单的提示音
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (error) {
+                // 如果浏览器不支持Web Audio API，忽略错误
+            }
+        }
+        
+        // 处理用户统计
+        function processUserStats() {
+            userStats = {};
+            
+            allMessages.forEach(msg => {
+                if (!userStats[msg.userId]) {
+                    // 优先使用从数据库获取的用户信息
+                    const userName = msg.userName || msg.userInfo?.username || `访客${msg.userId.slice(-4)}`;
+                    const userPhone = msg.userPhone || msg.userInfo?.phone;
+                    
+                    userStats[msg.userId] = {
+                        userId: msg.userId,
+                        userName: userName,
+                        userPhone: userPhone,
+                        userInfo: msg.userInfo, // 保存完整的用户信息
+                        messages: [],
+                        unreadCount: 0,
+                        lastMessage: null,
+                        lastActiveTime: null
+                    };
+                }
+                
+                userStats[msg.userId].messages.push(msg);
+                
+                if (msg.status === 'unread' && (msg.type === 'user' || !msg.isAdmin)) {
+                    userStats[msg.userId].unreadCount++;
+                }
+                
+                if (!userStats[msg.userId].lastActiveTime || 
+                    new Date(msg.timestamp) > new Date(userStats[msg.userId].lastActiveTime)) {
+                    userStats[msg.userId].lastActiveTime = msg.timestamp;
+                    userStats[msg.userId].lastMessage = msg;
+                    
+                    // 更新用户信息（以最新消息的用户信息为准）
+                    if (msg.userName) {
+                        userStats[msg.userId].userName = msg.userName;
+                    }
+                    if (msg.userPhone) {
+                        userStats[msg.userId].userPhone = msg.userPhone;
+                    }
+                    if (msg.userInfo) {
+                        userStats[msg.userId].userInfo = msg.userInfo;
+                    }
+                }
+            });
+            
+            // 按最后活跃时间排序
+            Object.values(userStats).forEach(user => {
+                user.messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            });
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            // 总消息数（所有消息）
+            const totalMessages = allMessages.length;
+            
+            // 未读消息数（只统计用户发送的未读消息）
+            const unreadMessages = allMessages.filter(msg => 
+                msg.status === 'unread' && (msg.type === 'user' || !msg.isAdmin)
+            ).length;
+            
+            // 用户数
+            const uniqueUsers = Object.keys(userStats).length;
+            
+            // 今日消息数（只统计用户发送的消息）
+            const today = new Date().toDateString();
+            const todayUserMessages = allMessages.filter(msg => {
+                const isToday = new Date(msg.timestamp).toDateString() === today;
+                const isUserMessage = (msg.type === 'user' || !msg.isAdmin);
+                return isToday && isUserMessage;
+            }).length;
+            
+            // 动画效果更新数字
+            animateNumber('total-messages', totalMessages);
+            animateNumber('unread-messages', unreadMessages);
+            animateNumber('total-users', uniqueUsers);
+            animateNumber('today-messages', todayUserMessages);
+        }
+        
+        // 数字动画效果
+        function animateNumber(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const currentValue = parseInt(element.textContent) || 0;
+            const increment = Math.ceil((targetValue - currentValue) / 10);
+            
+            if (currentValue !== targetValue) {
+                element.textContent = Math.min(currentValue + increment, targetValue);
+                if (parseInt(element.textContent) < targetValue) {
+                    setTimeout(() => animateNumber(elementId, targetValue), 50);
+                }
+            }
+        }
+        
+        // 渲染用户列表
+        function renderUserList() {
+            const container = document.getElementById('user-list-container');
+            
+            let filteredUsers = Object.values(userStats);
+            
+            // 应用搜索过滤
+            if (searchQuery) {
+                filteredUsers = filteredUsers.filter(user => 
+                    user.userName.toLowerCase().includes(searchQuery) ||
+                    user.userId.toLowerCase().includes(searchQuery) ||
+                    (user.lastMessage && user.lastMessage.message.toLowerCase().includes(searchQuery))
+                );
+            }
+            
+            // 应用状态过滤器
+            if (currentFilter === 'unread') {
+                filteredUsers = filteredUsers.filter(user => user.unreadCount > 0);
+            } else if (currentFilter === 'read') {
+                filteredUsers = filteredUsers.filter(user => user.unreadCount === 0);
+            }
+            
+            // 按最后活跃时间排序
+            filteredUsers.sort((a, b) => 
+                new Date(b.lastActiveTime) - new Date(a.lastActiveTime)
+            );
+            
+            if (filteredUsers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-user-line empty-icon"></i>
+                        <p class="text-lg font-medium mb-1">暂无用户</p>
+                        <p class="text-sm">没有找到符合条件的用户</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = filteredUsers.map(user => {
+                // 使用真实用户名或回退到默认显示
+                const displayName = user.userName || `访客${user.userId.slice(-4)}`;
+                const initials = displayName.slice(0, 2).toUpperCase();
+                
+                return `
+                    <div class="user-item ${currentUserId === user.userId ? 'active' : ''}" 
+                         onclick="selectUser('${user.userId}')">
+                        <div class="flex items-start gap-3">
+                            <div class="user-avatar">${initials}</div>
+                            <div class="user-info">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="user-name">${escapeHtml(displayName)}</div>
+                                    ${user.unreadCount > 0 ? `<div class="unread-badge">${user.unreadCount}</div>` : ''}
+                                </div>
+                                <div class="user-message">
+                                    ${user.lastMessage ? escapeHtml(user.lastMessage.message) : '暂无消息'}
+                                </div>
+                                <div class="user-meta">
+                                    <span class="user-time">${formatTime(user.lastActiveTime)}</span>
+                                    <span class="user-count">${user.messages.length} 条消息</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        // 选择用户
+        async function selectUser(userId) {
+            currentUserId = userId;
+            
+            // 自动标记该用户的所有未读消息为已读
+            await markUserMessagesAsRead(userId);
+            
+            renderUserList(); // 重新渲染以更新选中状态
+            showUserChat(userId);
+        }
+        
+        // 标记用户消息为已读
+        async function markUserMessagesAsRead(userId) {
+            try {
+                const user = userStats[userId];
+                if (!user || user.unreadCount === 0) return;
+                
+                // 立即更新UI状态（优先显示效果）
+                const originalUnreadCount = user.unreadCount;
+                user.unreadCount = 0;
+                
+                // 找到所有未读的用户消息
+                const unreadUserMessages = user.messages.filter(msg => 
+                    msg.status === 'unread' && (msg.type === 'user' || !msg.isAdmin)
+                );
+                
+                // 立即更新本地消息状态
+                user.messages.forEach(msg => {
+                    if ((msg.type === 'user' || !msg.isAdmin) && msg.status === 'unread') {
+                        msg.status = 'read';
+                    }
+                });
+                
+                // 更新统计数据
+                updateStats();
+                
+                // 异步批量标记为已读（后台处理）
+                Promise.all(unreadUserMessages.map(msg => 
+                    fetch(`/api/kefu/read/${msg.id}`, { method: 'PUT' })
+                        .catch(error => {
+                            console.error(`标记消息 ${msg.id} 已读失败:`, error);
+                            // 如果请求失败，恢复状态
+                            msg.status = 'unread';
+                        })
+                )).then(() => {
+                    console.log(`成功标记用户 ${userId} 的 ${unreadUserMessages.length} 条消息为已读`);
+                }).catch(error => {
+                    console.error('批量标记已读失败:', error);
+                    // 如果批量操作失败，恢复未读计数
+                    user.unreadCount = originalUnreadCount;
+                    updateStats();
+                    renderUserList();
+                });
+                
+            } catch (error) {
+                console.error('标记已读失败:', error);
+            }
+        }
+        
+        // 显示用户对话
+        function showUserChat(userId) {
+            const user = userStats[userId];
+            if (!user) return;
+            
+            // 显示对话头部和输入区域
+            document.getElementById('chat-header').style.display = 'flex';
+            document.getElementById('chat-input-area').style.display = 'block';
+            
+            // 更新头部信息
+            const displayName = user.userName || `访客${userId.slice(-4)}`;
+            const userPhone = user.userPhone ? ` | ${user.userPhone}` : '';
+            
+            document.getElementById('current-user-name').textContent = displayName;
+            document.getElementById('current-user-id').textContent = `ID: ${userId}${userPhone}`;
+            document.getElementById('chat-user-avatar').textContent = displayName.slice(0, 2).toUpperCase();
+            
+            // 🎯 获取并显示分配信息
+            showAssignmentInfo(userId);
+            
+            // 渲染消息
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            if (user.messages.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-chat-3-line empty-icon"></i>
+                        <h3 class="text-xl font-semibold mb-2">暂无对话记录</h3>
+                        <p>还没有与该用户的对话记录</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const messagesHtml = user.messages.map(msg => {
+                const isAdmin = msg.type === 'admin' || msg.isAdmin;
+                return `
+                    <div class="message-group">
+                        <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'}">
+                            <div class="message-bubble ${isAdmin ? 'message-admin' : 'message-user'}">
+                                <div>${escapeHtml(msg.message)}</div>
+                                <div class="message-time">
+                                    ${new Date(msg.timestamp).toLocaleString('zh-CN')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            messagesContainer.innerHTML = messagesHtml;
+            
+            // 滚动到底部
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
+        }
+        
+        // 🎯 显示分配信息
+        async function showAssignmentInfo(userId) {
+            try {
+                // 解析用户ID
+                let dbUserId = null;
+                if (userId.toString().startsWith('user_')) {
+                    const extracted = userId.replace('user_', '').split('_')[0];
+                    if (!isNaN(extracted)) {
+                        dbUserId = parseInt(extracted);
+                    }
+                }
+                
+                if (!dbUserId) return;
+                
+                const response = await fetch(`/api/kefu/assignments?userId=${dbUserId}`);
+                const result = await response.json();
+                
+                const assignmentInfo = document.getElementById('assignment-info');
+                const assignmentText = document.getElementById('assignment-text');
+                
+                if (result.success && result.assignments && result.assignments.length > 0) {
+                    const assignment = result.assignments[0];
+                    const assignedAdmin = assignment.admin;
+                    const currentAdmin = window.currentAdmin;
+                    
+                    // 🕐 检查分配是否接近超时
+                    const now = new Date();
+                    const lastActiveTime = new Date(assignment.lastActiveAt || assignment.assignedAt);
+                    const hoursSinceLastActive = (now - lastActiveTime) / (1000 * 60 * 60);
+                    const isNearTimeout = hoursSinceLastActive >= 10; // 10小时后开始提醒
+                    const isTimeout = hoursSinceLastActive >= 12; // 12小时超时
+                    
+                    let assignmentMessage = '';
+                    let textColor = 'text-blue-600';
+                    let icon = 'ri-user-settings-line';
+                    
+                    if (isTimeout) {
+                        // 已超时，下次发消息会重新分配
+                        assignmentMessage = `⏰ 分配已超时 (${hoursSinceLastActive.toFixed(1)}h) - 下次发消息将重新分配`;
+                        textColor = 'text-red-600';
+                        icon = 'ri-time-line';
+                    } else if (isNearTimeout) {
+                        // 接近超时
+                        const remainingHours = (12 - hoursSinceLastActive).toFixed(1);
+                        if (assignedAdmin.id === currentAdmin.id) {
+                            assignmentMessage = `⚠️ 分配给我 - ${remainingHours}h后超时`;
+                            textColor = 'text-orange-600';
+                        } else {
+                            assignmentMessage = `⚠️ 分配给: ${assignedAdmin.username} - ${remainingHours}h后超时`;
+                            textColor = 'text-orange-600';
+                        }
+                        icon = 'ri-alarm-warning-line';
+                    } else {
+                        // 正常分配状态
+                        if (assignedAdmin.id === currentAdmin.id) {
+                            assignmentMessage = `分配给我 (${assignment.assignmentMethod === 'auto' ? '自动分配' : '手动分配'})`;
+                            textColor = 'text-green-600';
+                        } else {
+                            assignmentMessage = `分配给: ${assignedAdmin.username} (${assignment.assignmentMethod === 'auto' ? '自动分配' : '手动分配'})`;
+                            textColor = 'text-orange-600';
+                        }
+                    }
+                    
+                    // 添加活跃时间信息
+                    const timeAgo = formatTimeAgo(lastActiveTime);
+                    assignmentMessage += ` · 最后活跃: ${timeAgo}`;
+                    
+                    assignmentText.innerHTML = `<i class="${icon}"></i> ${assignmentMessage}`;
+                    assignmentInfo.className = `text-xs ${textColor} mt-1`;
+                    assignmentInfo.style.display = 'block';
+                } else {
+                    // 未分配
+                    assignmentText.innerHTML = '<i class="ri-user-add-line"></i> 未分配客服 - 首次发消息时自动分配';
+                    assignmentInfo.className = 'text-xs text-gray-500 mt-1';
+                    assignmentInfo.style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('获取分配信息失败:', error);
+                // 静默处理错误，不影响主要功能
+            }
+        }
+        
+        // 格式化时间差显示
+        function formatTimeAgo(time) {
+            const now = new Date();
+            const diffMs = now - new Date(time);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return '刚刚';
+            if (diffMins < 60) return `${diffMins}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            
+            return new Date(time).toLocaleDateString('zh-CN');
+        }
+        
+        // 发送回复
+        async function sendReply() {
+            if (!currentUserId) return;
+            
+            // 防重复提交检查
+            const now = Date.now();
+            if (isSubmitting) {
+                console.log('🚫 正在发送中，忽略重复请求');
+                return;
+            }
+            
+            if (now - lastSubmitTime < 1000) { // 1秒内不允许重复发送
+                console.log('🚫 发送间隔太短，忽略请求');
+                showError('发送间隔太短，请稍后再试');
+                return;
+            }
+            
+            const input = document.getElementById('reply-input');
+            const message = input.value.trim();
+            
+            if (!message) {
+                showError('请输入回复内容');
+                return;
+            }
+            
+            // 设置提交状态
+            isSubmitting = true;
+            lastSubmitTime = now;
+            
+            const sendBtn = document.getElementById('send-reply-btn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i><span>发送中...</span>';
+            
+            try {
+                // 获取当前登录的客服信息
+                const adminId = window.currentAdmin ? window.currentAdmin.id : null;
+                
+                const response = await fetch('/api/kefu/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        message: message,
+                        type: 'admin',
+                        adminId: adminId // 添加客服ID
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    input.value = '';
+                    input.style.height = 'auto';
+                    document.getElementById('char-count').textContent = '0/500';
+                    
+                    loadMessages(); // 重新加载消息
+                    showSuccess('回复发送成功');
+                } else {
+                    showError('发送失败: ' + (result.error || result.message));
+                }
+            } catch (error) {
+                console.error('发送回复失败:', error);
+                showError('网络错误，请稍后重试');
+            } finally {
+                // 重置提交状态
+                isSubmitting = false;
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="ri-send-plane-fill"></i><span>发送</span>';
+            }
+        }
+        
+        // 显示客服信息
+        function displayAdminInfo() {
+            if (window.currentAdmin) {
+                const admin = window.currentAdmin;
+                const adminName = admin.username || '客服';
+                const adminRole = admin.isAdmin ? '管理员' : (admin.isInternal ? '内部用户' : '客服');
+                const adminAvatar = adminName.charAt(0).toUpperCase();
+                
+                document.getElementById('admin-name').textContent = adminName;
+                document.getElementById('admin-role').textContent = adminRole;
+                document.getElementById('admin-avatar').textContent = adminAvatar;
+                
+                console.log('显示客服信息:', { adminName, adminRole, adminId: admin.id });
+            }
+        }
+        
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                // 清除登录信息
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                
+                // 停止轮询
+                stopMessagePolling();
+                
+                // 跳转到登录页面
+                window.location.href = '/adminkefu-login.html';
+            }
+        }
+        
+        // 标记所有消息为已读
+        async function markAllRead() {
+            if (!currentUserId) return;
+            
+            const btn = document.getElementById('mark-all-read-btn');
+            const user = userStats[currentUserId];
+            
+            if (!user || user.unreadCount === 0) {
+                showSuccess('没有未读消息');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i>处理中...';
+            
+            try {
+                // 重新标记该用户的消息为已读
+                await markUserMessagesAsRead(currentUserId);
+                showSuccess('已标记为已读');
+            } catch (error) {
+                console.error('标记已读失败:', error);
+                showError('操作失败，请稍后重试');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ri-check-double-line"></i>标记已读';
+            }
+        }
+        
+        // 工具函数
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffMs = now - time;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return '刚刚';
+            if (diffMins < 60) return `${diffMins}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            
+            return time.toLocaleDateString('zh-CN');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showSuccess(message) {
+            showToast(message, 'success');
+        }
+        
+        function showError(message) {
+            showToast(message, 'error');
+        }
+        
+        function showToast(message, type) {
+            // 移除现有的toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    toast.style.animation = 'slideOut 0.3s ease forwards';
+                    setTimeout(() => {
+                        if (document.body.contains(toast)) {
+                            document.body.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
