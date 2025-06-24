@@ -13,6 +13,40 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         
+        /* 页面预加载 */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        
+        .page-loader.loaded {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            border-top-color: #8b5cf6;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* 渐变背景 */
         .hero-gradient {
             background: linear-gradient(135deg, #a5b4fc 0%, #8b5cf6 50%, #d8b4fe 100%);
@@ -26,6 +60,56 @@
         
         .float-animation {
             animation: float 6s ease-in-out infinite;
+        }
+        
+        /* 从左侧进入的动画 */
+        @keyframes slideInFromLeft {
+            0% { 
+                transform: translate3d(-50px, 0, 0); 
+                opacity: 0;
+            }
+            100% { 
+                transform: translate3d(0, 0, 0);
+                opacity: 1;
+            }
+        }
+        
+        /* 从右侧进入的动画 */
+        @keyframes slideInFromRight {
+            0% { 
+                transform: translate3d(50px, 0, 0);
+                opacity: 0;
+            }
+            100% { 
+                transform: translate3d(0, 0, 0);
+                opacity: 1;
+            }
+        }
+        
+        .hero-left {
+            will-change: transform, opacity;
+            animation: slideInFromLeft 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            backface-visibility: hidden;
+        }
+        
+        .hero-right {
+            will-change: transform, opacity;
+            animation: slideInFromRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            backface-visibility: hidden;
+        }
+        
+        /* 功能卡片的交错动画 */
+        .feature-card-item {
+            opacity: 0;
+            transform: translate3d(0, 20px, 0);
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+        }
+        
+        .feature-card-item.visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
         }
         
         /* 卡片悬停效果 */
@@ -61,8 +145,8 @@
         
         /* 滚动动画 */
         .scroll-animation {
-                opacity: 0;
-            transform: translateY(30px);
+                opacity: 0.1;
+            transform: translateY(20px);
             transition: all 0.6s ease;
         }
         
@@ -132,6 +216,11 @@
     </style>
 </head>
 <body class="bg-white">
+    <!-- 页面预加载器 -->
+    <div class="page-loader">
+        <div class="loader-spinner"></div>
+    </div>
+    
     <!-- 导航栏 -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -191,7 +280,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <!-- 左侧内容 -->
-                <div class="text-white">
+                <div class="text-white hero-left">
                     <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                         专业级AI智能创作
                         <span class="block text-yellow-300">轻松出图创视频</span>
@@ -229,25 +318,25 @@
                 </div>
                 
                 <!-- 右侧展示 -->
-                <div class="relative">
+                <div class="relative hero-right">
                     <!-- 功能卡片展示 -->
-                    <div class="grid grid-cols-2 gap-4 float-animation">
-                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white feature-card-item">
                             <i class="ri-image-line text-3xl mb-3 text-yellow-300"></i>
                             <h3 class="font-semibold mb-2">AI图像处理</h3>
                             <p class="text-sm text-white/80">智能修图、扩图、上色</p>
                     </div>
-                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white feature-card-item">
                             <i class="ri-video-line text-3xl mb-3 text-yellow-300"></i>
                             <h3 class="font-semibold mb-2">AI视频创作</h3>
                             <p class="text-sm text-white/80">文生视频、图生视频</p>
                 </div>
-                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white feature-card-item">
                             <i class="ri-user-3-line text-3xl mb-3 text-yellow-300"></i>
                             <h3 class="font-semibold mb-2">AI模特换装</h3>
                             <p class="text-sm text-white/80">虚拟试衣、换肤换装</p>
                     </div>
-                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white feature-card-item">
                             <i class="ri-store-line text-3xl mb-3 text-yellow-300"></i>
                             <h3 class="font-semibold mb-2">亚马逊助手</h3>
                             <p class="text-sm text-white/80">Listing优化、关键词</p>
@@ -411,131 +500,137 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- 标题 -->
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">选择适合您的套餐</h2>
-                <p class="text-xl text-gray-600">灵活的定价方案，满足不同规模的需求</p>
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">优质套餐</h2>
+                <p class="text-xl text-gray-600">灵活的套餐方案，满足不同使用需求</p>
                 </div>
                 
             <!-- 套餐卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- 基础版 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+                <!-- 基础套餐 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg transition-all hover:shadow-xl hover:translate-y-[-8px]">
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">基础版</h3>
-                        <p class="text-gray-600 mb-6">适合个人用户和小型工作室</p>
-                        <div class="mb-8">
-                            <span class="text-4xl font-bold text-gray-900">免费</span>
-                            <span class="text-gray-600">/月</span>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">入门体验</h3>
+                        <p class="text-gray-600 mb-6">适合个人轻度使用</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900">¥59</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-2xl font-bold text-indigo-600">350积分</span>
+                        </div>
+                        <div class="text-sm text-gray-500 mb-8">¥0.17/积分</div>
                     </div>
-                </div>
                 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">每日10次免费使用</span>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
+                            <span class="text-gray-700">基础AI功能使用</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">基础AI图像处理</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">标准画质输出</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">社区技术支持</span>
                         </li>
                     </ul>
                     
-                    <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-100 text-gray-900 py-3 rounded-full font-semibold hover:bg-gray-200 transition-colors">
-                        开始使用
+                    <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-100 text-gray-900 py-4 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
+                        立即购买
                     </button>
                 </div>
                 
-                <!-- 专业版 -->
-                <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-indigo-500 relative transform scale-105">
+                <!-- 推荐套餐 -->
+                <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-indigo-500 relative transform scale-105 hover:shadow-2xl hover:translate-y-[-8px] transition-all">
                     <!-- 推荐标签 -->
                     <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <span class="bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-medium">推荐</span>
-                </div>
+                        <span class="bg-indigo-500 text-white px-6 py-2 rounded-full text-sm font-medium">推荐</span>
+                    </div>
                 
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">专业版</h3>
-                        <p class="text-gray-600 mb-6">适合专业创作者和中小企业</p>
-                        <div class="mb-8">
-                            <span class="text-4xl font-bold text-indigo-600">¥99</span>
-                            <span class="text-gray-600">/月</span>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">专业创作</h3>
+                        <p class="text-gray-600 mb-6">适合专业创作者</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-indigo-600">¥399</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-2xl font-bold text-indigo-600">3980积分</span>
+                        </div>
+                        <div class="text-sm text-gray-500 mb-8">¥0.10/积分</div>
                     </div>
-                </div>
                 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">每日1000次使用额度</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">全部AI功能解锁</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">高清4K输出</span>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
+                            <span class="text-gray-700">高清画质输出</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">优先处理队列</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">邮件技术支持</span>
                         </li>
                     </ul>
                     
-                    <button onclick="handleStartUsing()" class="block w-full text-center btn-primary text-white py-3 rounded-full font-semibold">
-                        开始使用
+                    <button onclick="handleStartUsing()" class="block w-full text-center bg-indigo-600 text-white py-4 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
+                        立即购买
                     </button>
                 </div>
                 
-                <!-- 企业版 -->
-                <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+                <!-- 高级套餐 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg transition-all hover:shadow-xl hover:translate-y-[-8px]">
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold text-gray-900 mb-2">企业版</h3>
-                        <p class="text-gray-600 mb-6">适合大型企业和团队协作</p>
-                        <div class="mb-8">
-                            <span class="text-4xl font-bold text-gray-900">¥299</span>
-                            <span class="text-gray-600">/月</span>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">企业方案</h3>
+                        <p class="text-gray-600 mb-6">适合团队和企业用户</p>
+                        <div class="mb-6">
+                            <span class="text-4xl font-bold text-gray-900">¥999</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-2xl font-bold text-indigo-600">12500积分</span>
+                        </div>
+                        <div class="text-sm text-gray-500 mb-8">¥0.08/积分</div>
                     </div>
-                </div>
                 
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">无限使用次数</span>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
+                            <span class="text-gray-700">全部高级功能</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
+                            <span class="text-gray-700">4K超高清输出</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">团队协作功能</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">API接口调用</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
                             <span class="text-gray-700">专属客服支持</span>
                         </li>
                         <li class="flex items-center">
-                            <i class="ri-check-line text-green-500 mr-3"></i>
-                            <span class="text-gray-700">定制化服务</span>
+                            <i class="ri-check-line text-green-500 mr-3 bg-green-100 p-1 rounded-full"></i>
+                            <span class="text-gray-700">最高性价比</span>
                         </li>
                     </ul>
                     
-                    <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-900 text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors">
-                        开始使用
+                    <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-900 text-white py-4 rounded-xl font-semibold hover:bg-gray-800 transition-colors">
+                        立即购买
                     </button>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+            
+            <!-- 额外套餐提示 -->
+            <div class="mt-12 text-center">
+                <p class="text-gray-600">我们还提供更多定制化方案，请联系客服了解详情</p>
+            </div>
+        </div>
     </section>
 
     <!-- 关于我们区域 -->
@@ -668,19 +763,52 @@
 
     <!-- JavaScript交互功能 -->
     <script>
-        // 滚动动画
-        function animateOnScroll() {
-            const elements = document.querySelectorAll('.scroll-animation');
-            elements.forEach(element => {
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 150;
-                
-                if (elementTop < window.innerHeight - elementVisible) {
-                    element.classList.add('visible');
-                    }
-                });
-            }
+        // 页面预加载处理
+        const pageLoader = document.querySelector('.page-loader');
+        
+        function hideLoader() {
+            pageLoader.classList.add('loaded');
+            // 页面完全加载后，再启动动画
+            initAnimations();
             
+            // 确保所有内容在初始加载时可见
+            setTimeout(function() {
+                document.querySelectorAll('section').forEach(section => {
+                    section.classList.add('visible');
+                });
+                document.querySelectorAll('.scroll-animation').forEach(element => {
+                    element.classList.add('visible');
+                });
+            }, 100);
+        }
+        
+        // 页面资源加载完成后隐藏预加载器
+        window.addEventListener('load', hideLoader);
+        
+        // 如果加载时间过长，也强制隐藏预加载器
+        setTimeout(hideLoader, 2000);
+        
+        // 初始化所有动画
+        function initAnimations() {
+            // 启动数字动画
+            animateNumbers();
+            
+            // 功能卡片交错动画 - 优化版本
+            const featureCards = document.querySelectorAll('.feature-card-item');
+            
+            // 使用requestAnimationFrame确保动画流畅
+            requestAnimationFrame(() => {
+                featureCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        // 使用requestAnimationFrame确保在下一帧渲染前添加class
+                        requestAnimationFrame(() => {
+                            card.classList.add('visible');
+                        });
+                    }, 400 + (index * 120)); // 减少基础延迟和间隔时间
+                });
+            });
+        }
+        
         // 数字动画
         function animateNumbers() {
             const stats = [
@@ -759,11 +887,12 @@
             // 添加滚动动画类
             const sections = document.querySelectorAll('section');
             sections.forEach(section => {
-                section.classList.add('scroll-animation');
+                if (!section.classList.contains('hero-gradient')) { // 排除英雄区域
+                    section.classList.add('scroll-animation');
+                    // 直接添加visible类，确保内容可见
+                    section.classList.add('visible');
+                }
             });
-            
-            // 启动数字动画
-            setTimeout(animateNumbers, 1000);
             
             // 绑定事件
             window.addEventListener('scroll', animateOnScroll);
@@ -772,6 +901,16 @@
             
             // 初始检查滚动位置
             animateOnScroll();
+            
+            // 备用方案：确保3秒后所有内容都可见
+            setTimeout(function() {
+                document.querySelectorAll('.scroll-animation').forEach(element => {
+                    element.classList.add('visible');
+                });
+            }, 3000);
+            
+            // 注意：功能卡片动画现在由initAnimations函数处理
+            // 预加载器隐藏后会自动调用
         });
         
         // 处理开始使用按钮点击
@@ -786,6 +925,20 @@
                 // 未登录，跳转到登录页面
                 window.location.href = '/public/login.html';
             }
+        }
+        
+        // 添加滚动动画函数，之前代码缺少这个函数
+        function animateOnScroll() {
+            const elements = document.querySelectorAll('.scroll-animation');
+            const windowHeight = window.innerHeight;
+            
+            elements.forEach(element => {
+                const elementPosition = element.getBoundingClientRect().top;
+                // 当元素进入视口时添加visible类
+                if (elementPosition < windowHeight * 0.85) { // 当元素进入视口的85%位置时触发
+                    element.classList.add('visible');
+                }
+            });
         }
         
         // 将函数暴露到全局作用域
