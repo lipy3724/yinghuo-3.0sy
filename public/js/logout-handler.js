@@ -21,9 +21,9 @@ function logout() {
         
         // 如果不在home页面，才跳转到登录页面
         if (!isHomePage) {
-            setTimeout(function() {
-                window.location.href = '/login.html';
-            }, 100);
+        setTimeout(function() {
+            window.location.href = '/login.html';
+        }, 100);
         }
         
         return true;
@@ -196,8 +196,8 @@ async function verifySession() {
                 
                 // 如果不在home页面，才显示提示消息
                 if (!isHomePage) {
-                    // 显示提示消息
-                    alert('您的账号已被管理员强制下线，请重新登录');
+                // 显示提示消息
+                alert('您的账号已被管理员强制下线，请重新登录');
                 }
             }
             

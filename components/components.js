@@ -459,7 +459,7 @@ function updateNavbarLoginStatus() {
                     
                     // 如果不在home页面，才进行跳转
                     if (!isHomePage) {
-                        window.location.href = '/';
+                    window.location.href = '/';
                     } else {
                         // 在home页面，只更新UI状态
                         console.log('在home页面退出登录，不进行跳转');
