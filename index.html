@@ -7,7 +7,6 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <script src="/components/components.js"></script>
     
     <style>
         body {
@@ -16,7 +15,7 @@
         
         /* 渐变背景 */
         .hero-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background: linear-gradient(135deg, #a5b4fc 0%, #8b5cf6 50%, #d8b4fe 100%);
         }
         
         /* 动态效果 */
@@ -41,7 +40,7 @@
         
         /* 按钮动效 */
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #a5b4fc 0%, #8b5cf6 100%);
             transition: all 0.3s ease;
         }
         
@@ -71,6 +70,65 @@
             opacity: 1;
             transform: translateY(0);
         }
+        
+        /* 下拉菜单样式 */
+        .dropdown-menu {
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(165, 180, 252, 0.2);
+            backdrop-filter: blur(8px);
+        }
+        
+        .group:hover .dropdown-menu {
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 12px 16px;
+            margin: 4px;
+            border-radius: 8px;
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(139, 92, 246, 0.08);
+        }
+        
+        .dropdown-item i {
+            transition: transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #a5b4fc, #8b5cf6);
+            border-radius: 6px;
+            color: white;
+            margin-right: 10px;
+        }
+        
+        .dropdown-item:hover i {
+            transform: scale(1.1);
+        }
+        
+        .dropdown-item:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #a5b4fc, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+        
+        .dropdown-item:hover:after {
+            width: 100%;
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -79,19 +137,46 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-        <div class="flex items-center">
-                    <img src="/images/favicon.png" alt="萤火AI" class="h-8 w-8 mr-3">
-                    <span class="logo-text text-xl font-bold">萤火AI</span>
-                    <span class="text-sm text-gray-500 ml-2">FireflyAI</span>
+        <div class="flex items-center -ml-36">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-28 w-28 mr-1 mt-4">
+                    <span class="text-base font-semibold mt-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">FireflyAI</span>
                 </div>
                 
                 <!-- 桌面导航菜单 -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors">功能特色</a>
-                    <a href="#cases" class="text-gray-600 hover:text-indigo-600 transition-colors">成功案例</a>
+                <div class="hidden md:flex items-center space-x-8 -ml-40">
+                    <!-- 功能特色下拉菜单 -->
+                    <div class="relative group">
+                        <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors flex items-center group-hover:text-indigo-600 font-medium">
+                            功能特色
+                            <i class="ri-arrow-down-s-line ml-1 transition-transform duration-300 group-hover:rotate-180"></i>
+                        </a>
+                        <!-- 下拉菜单 -->
+                        <div class="absolute left-0 mt-2 w-64 bg-white/95 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 dropdown-menu">
+                            <div class="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                            <div class="py-3">
+                                <a href="#image-processing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-image-line"></i>
+                                    <span>AI图像处理</span>
+                                </a>
+                                <a href="#video-creation" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-video-line"></i>
+                                    <span>AI视频创作</span>
+                                </a>
+                                <a href="#model-dressing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-user-3-line"></i>
+                                    <span>AI模特换装</span>
+                                </a>
+                                <a href="#amazon-assistant" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-store-line"></i>
+                                    <span>亚马逊助手</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="javascript:void(0)" class="text-gray-600 hover:text-indigo-600 transition-colors">使用教程</a>
                     <a href="#pricing" class="text-gray-600 hover:text-indigo-600 transition-colors">套餐方案</a>
                     <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">关于我们</a>
-                            </div>
+                </div>
                 
                                 <!-- 操作按钮 -->
                 <div class="flex items-center space-x-4">
@@ -185,7 +270,7 @@
             <!-- 功能卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- AI图像处理 -->
-                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                <div id="image-processing" class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
                     <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="ri-image-line text-2xl text-white"></i>
                     </div>
@@ -200,7 +285,7 @@
                 </div>
                 
                 <!-- AI视频创作 -->
-                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                <div id="video-creation" class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
                     <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="ri-video-line text-2xl text-white"></i>
                     </div>
@@ -215,7 +300,7 @@
                 </div>
                 
                 <!-- AI模特换装 -->
-                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                <div id="model-dressing" class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
                     <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="ri-user-3-line text-2xl text-white"></i>
                     </div>
@@ -230,7 +315,7 @@
                 </div>
                 
                 <!-- 亚马逊助手 -->
-                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                <div id="amazon-assistant" class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
                     <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <i class="ri-store-line text-2xl text-white"></i>
                     </div>
@@ -635,13 +720,21 @@
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     const targetId = this.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
                     
-                    if (targetElement) {
-                        targetElement.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
+                    if (targetId) {
+                        const targetElement = document.querySelector(targetId);
+                        
+                        if (targetElement) {
+                            // 计算偏移量，考虑固定导航栏的高度
+                            const navbarHeight = document.querySelector('nav').offsetHeight;
+                            const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+                            const offsetPosition = targetPosition - navbarHeight - 20; // 额外的20px空间
+                            
+                            window.scrollTo({
+                                top: offsetPosition,
+                                behavior: 'smooth'
+                            });
+                        }
                     }
                 });
             });
@@ -697,11 +790,6 @@
         
         // 将函数暴露到全局作用域
         window.handleStartUsing = handleStartUsing;
-        
-        // 客服组件加载
-        if (typeof loadComponent === 'function') {
-            loadComponent('customer-service');
-        }
     </script>
 </body>
 </html>

@@ -480,6 +480,7 @@ router.post('/login', async (req, res) => {
         phone: user.phone,
         isAdmin: user.isAdmin,
         isInternal: user.isInternal,
+        isCustomerService: user.isCustomerService,
         createdAt: user.createdAt,
         token,
         expiresAt,

@@ -75,6 +75,12 @@ router.get('/users', protect, checkAdmin, async (req, res) => {
       userData.activeSessionCount = sessionCountMap[user.id] || 0;
       // 确保备注字段存在并正确传递
       console.log(`用户 ${userData.id} ${userData.username} 的备注:`, userData.remark);
+      // 添加调试日志，查看用户类型字段
+      console.log(`用户 ${userData.id} ${userData.username} 的类型:`, {
+        isAdmin: userData.isAdmin, 
+        isInternal: userData.isInternal, 
+        isCustomerService: userData.isCustomerService
+      });
       return userData;
     });
     
@@ -1058,6 +1064,19 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
   try {
     const { username, password, phone, credits, isAdmin, isInternal, isCustomerService } = req.body;
     
+    // 添加调试日志，查看传入的用户类型字段
+    console.log('创建用户请求参数:', {
+      username,
+      phone,
+      credits,
+      isAdmin,
+      isInternal,
+      isCustomerService,
+      isAdminType: typeof isAdmin,
+      isInternalType: typeof isInternal,
+      isCustomerServiceType: typeof isCustomerService
+    });
+    
     // 基本验证
     if (!username || !password) {
       return res.status(400).json({
@@ -1098,9 +1117,24 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
       password,
       phone: phone || null,
       credits: credits ? parseInt(credits) : 0,
-      isAdmin: Boolean(isAdmin),
-      isInternal: Boolean(isInternal),
-      isCustomerService: Boolean(isCustomerService)
+      isAdmin: isAdmin === true || isAdmin === 'true',
+      isInternal: isInternal === true || isInternal === 'true',
+      isCustomerService: isCustomerService === true || isCustomerService === 'true'
+    });
+    
+    // 添加调试日志，查看创建后的用户对象
+    console.log('创建用户后的对象:', {
+      id: user.id,
+      username: user.username,
+      isAdmin: user.isAdmin,
+      isInternal: user.isInternal,
+      isCustomerService: user.isCustomerService,
+      rawIsAdmin: isAdmin,
+      rawIsInternal: isInternal,
+      rawIsCustomerService: isCustomerService,
+      convertedIsAdmin: isAdmin === true || isAdmin === 'true',
+      convertedIsInternal: isInternal === true || isInternal === 'true',
+      convertedIsCustomerService: isCustomerService === true || isCustomerService === 'true'
     });
     
     res.status(201).json({
@@ -1555,6 +1589,51 @@ router.post('/logout', protect, checkAdmin, async (req, res) => {
       success: false,
       message: '服务器错误，登出失败',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+/**
+ * @route   POST /api/admin/clear-customer-service-data
+ * @desc    清除所有客服分配记录和聊天记录
+ * @access  私有 (仅管理员)
+ */
+router.post('/clear-customer-service-data', protect, checkAdmin, async (req, res) => {
+  try {
+    const { clearAssignments, clearMessages } = req.body;
+    let result = { success: true, assignmentsDeleted: 0, messagesDeleted: 0 };
+    
+    // 清除客服分配记录
+    if (clearAssignments) {
+      const CustomerAssignment = require('../models/CustomerAssignment');
+      const deletedAssignments = await CustomerAssignment.destroy({
+        where: {},
+        truncate: true // 使用truncate选项可以更快速地清空表
+      });
+      
+      console.log(`已清除所有客服分配记录: ${deletedAssignments} 条记录被删除`);
+      result.assignmentsDeleted = deletedAssignments;
+    }
+    
+    // 清除聊天记录
+    if (clearMessages) {
+      const CustomerMessage = require('../models/CustomerMessage');
+      const deletedMessages = await CustomerMessage.destroy({
+        where: {},
+        truncate: true // 使用truncate选项可以更快速地清空表
+      });
+      
+      console.log(`已清除所有客服聊天记录: ${deletedMessages} 条记录被删除`);
+      result.messagesDeleted = deletedMessages;
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('清除客服数据失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '清除客服数据失败',
+      error: error.message
     });
   }
 });

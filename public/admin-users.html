@@ -332,6 +332,10 @@
                                 <label for="edit-user-type-internal" class="ml-2 block text-sm text-gray-700">内部用户</label>
                             </div>
                             <div class="flex items-center">
+                                <input type="radio" id="edit-user-type-customer-service" name="user-type" value="customer_service" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                                <label for="edit-user-type-customer-service" class="ml-2 block text-sm text-gray-700">客服</label>
+                            </div>
+                            <div class="flex items-center">
                                 <input type="radio" id="edit-user-type-admin" name="user-type" value="admin" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
                                 <label for="edit-user-type-admin" class="ml-2 block text-sm text-gray-700">管理员</label>
                             </div>
@@ -601,6 +605,10 @@
                                     <label for="new-user-type-internal" class="ml-2 block text-sm text-gray-700">内部用户</label>
                                 </div>
                                 <div class="flex items-center">
+                                    <input type="radio" id="new-user-type-customer-service" name="user-type" value="customer_service" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300">
+                                    <label for="new-user-type-customer-service" class="ml-2 block text-sm text-gray-700">客服</label>
+                                </div>
+                                <div class="flex items-center">
                                     <input type="radio" id="new-user-type-admin" name="user-type" value="admin" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300">
                                     <label for="new-user-type-admin" class="ml-2 block text-sm text-gray-700">管理员</label>
                                 </div>
@@ -832,11 +840,13 @@
                 // 为用户类型分配权重
                 const getRoleWeight = (user) => {
                     if (sortType === 'admin-first') {
-                        return user.isAdmin ? 1 : (user.isInternal ? 2 : 3);
+                        return user.isAdmin ? 1 : (user.isCustomerService ? 2 : (user.isInternal ? 3 : 4));
+                    } else if (sortType === 'customer-service-first') {
+                        return user.isCustomerService ? 1 : (user.isAdmin ? 2 : (user.isInternal ? 3 : 4));
                     } else if (sortType === 'internal-first') {
-                        return user.isInternal ? 1 : (user.isAdmin ? 2 : 3);
+                        return user.isInternal ? 1 : (user.isAdmin ? 2 : (user.isCustomerService ? 3 : 4));
                     } else if (sortType === 'normal-first') {
-                        return (!user.isAdmin && !user.isInternal) ? 1 : (user.isInternal ? 2 : 3);
+                        return (!user.isAdmin && !user.isInternal && !user.isCustomerService) ? 1 : (user.isInternal ? 2 : (user.isCustomerService ? 3 : 4));
                     }
                     return 0;
                 };
@@ -848,11 +858,14 @@
         
         // 切换角色排序类型
         function toggleRoleSort() {
-            // 循环切换排序类型：无排序 -> 管理员优先 -> 内部用户优先 -> 普通用户优先 -> 无排序
+            // 循环切换排序类型：无排序 -> 管理员优先 -> 客服优先 -> 内部用户优先 -> 普通用户优先 -> 无排序
             if (roleSort === 'none') {
                 roleSort = 'admin-first';
                 updateRoleSortIcon('管理员优先');
             } else if (roleSort === 'admin-first') {
+                roleSort = 'customer-service-first';
+                updateRoleSortIcon('客服优先');
+            } else if (roleSort === 'customer-service-first') {
                 roleSort = 'internal-first';
                 updateRoleSortIcon('内部用户优先');
             } else if (roleSort === 'internal-first') {
@@ -962,6 +975,13 @@
             }
             
             users.forEach(user => {
+                // 添加调试日志，查看用户类型字段
+                console.log(`渲染用户 ${user.id} ${user.username} 的类型:`, {
+                    isAdmin: user.isAdmin,
+                    isInternal: user.isInternal,
+                    isCustomerService: user.isCustomerService
+                });
+                
                 // 格式化创建时间
                 const createdAt = new Date(user.createdAt);
                 const formattedDate = `${createdAt.getFullYear()}-${(createdAt.getMonth() + 1).toString().padStart(2, '0')}-${createdAt.getDate().toString().padStart(2, '0')}`;
@@ -970,6 +990,8 @@
                 let roleTag = '';
                 if (user.isAdmin) {
                     roleTag = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">管理员</span>';
+                } else if (user.isCustomerService) {
+                    roleTag = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">客服</span>';
                 } else if (user.isInternal) {
                     roleTag = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">内部用户</span>';
                 } else {
@@ -1134,8 +1156,9 @@
                     document.getElementById('edit-phone').value = user.phone || '';
                     document.getElementById('edit-credits').value = user.credits;
                     document.getElementById('edit-remark').value = user.remark || '';
-                    document.getElementById('edit-user-type-normal').checked = !user.isAdmin && !user.isInternal;
+                    document.getElementById('edit-user-type-normal').checked = !user.isAdmin && !user.isInternal && !user.isCustomerService;
                     document.getElementById('edit-user-type-internal').checked = user.isInternal;
+                    document.getElementById('edit-user-type-customer-service').checked = user.isCustomerService;
                     document.getElementById('edit-user-type-admin').checked = user.isAdmin;
                     
                     // 显示模态框
@@ -1168,7 +1191,8 @@
                     credits: parseInt(document.getElementById('edit-credits').value),
                     remark: document.getElementById('edit-remark').value.trim() || null,
                     isAdmin: document.getElementById('edit-user-type-admin').checked,
-                    isInternal: document.getElementById('edit-user-type-internal').checked
+                    isInternal: document.getElementById('edit-user-type-internal').checked,
+                    isCustomerService: document.getElementById('edit-user-type-customer-service').checked
                 };
                 
                 // 发送更新请求
@@ -1821,11 +1845,12 @@
                     const phone = prompt('请输入手机号 (可选):');
                     const credits = parseInt(prompt('请输入初始积分:', '0')) || 0;
                     
-                    const userTypePrompt = '请选择用户类型:\n1 - 普通用户\n2 - 内部用户\n3 - 管理员';
+                    const userTypePrompt = '请选择用户类型:\n1 - 普通用户\n2 - 内部用户\n3 - 客服\n4 - 管理员';
                     const userType = prompt(userTypePrompt, '1');
                     
-                    const isAdmin = userType === '3';
+                    const isAdmin = userType === '4';
                     const isInternal = userType === '2';
+                    const isCustomerService = userType === '3';
                     
                     const remark = prompt('请输入备注 (可选):');
                     
@@ -1837,7 +1862,8 @@
                         credits,
                         remark: remark || null,
                         isAdmin,
-                        isInternal
+                        isInternal,
+                        isCustomerService
                     };
                     
                     // 调用创建用户API
@@ -1898,9 +1924,25 @@
                 const credits = parseInt(document.getElementById('new-credits').value);
                 const remark = document.getElementById('new-remark').value.trim() || null;
                 
-                // 获取用户类型
-                const isAdmin = document.getElementById('new-user-type-admin').checked;
-                const isInternal = document.getElementById('new-user-type-internal').checked;
+                // 获取用户类型 - 使用更明确的方式检查单选按钮
+                const userType = document.querySelector('input[name="user-type"]:checked').value;
+                
+                // 根据选择的类型设置用户角色标志
+                const isAdmin = userType === 'admin';
+                const isInternal = userType === 'internal';
+                const isCustomerService = userType === 'customer_service';
+                
+                // 添加调试日志
+                console.log('创建用户表单数据:', {
+                    username,
+                    phone,
+                    credits,
+                    remark,
+                    userType,
+                    isAdmin,
+                    isInternal,
+                    isCustomerService
+                });
                 
                 // 构建用户数据
                 const userData = {
@@ -1910,7 +1952,8 @@
                     credits,
                     remark,
                     isAdmin,
-                    isInternal
+                    isInternal,
+                    isCustomerService
                 };
                 
                 // 请求创建用户
@@ -1959,11 +2002,22 @@
                 const phone = prompt('请输入手机号 (可选):');
                 const credits = parseInt(prompt('请输入初始积分:', '0')) || 0;
                 
-                const userTypePrompt = '请选择用户类型:\n1 - 普通用户\n2 - 内部用户\n3 - 管理员';
+                const userTypePrompt = '请选择用户类型:\n1 - 普通用户\n2 - 内部用户\n3 - 客服\n4 - 管理员';
                 const userType = prompt(userTypePrompt, '1');
                 
-                const isAdmin = userType === '3';
+                // 根据选择的类型设置用户角色标志
+                const isAdmin = userType === '4';
                 const isInternal = userType === '2';
+                const isCustomerService = userType === '3';
+                
+                // 添加调试日志
+                console.log('备用方法创建用户:', {
+                    username,
+                    userType,
+                    isAdmin,
+                    isInternal,
+                    isCustomerService
+                });
                 
                 const remark = prompt('请输入备注 (可选):');
                 
@@ -1975,7 +2029,8 @@
                     credits,
                     remark: remark || null,
                     isAdmin,
-                    isInternal
+                    isInternal,
+                    isCustomerService
                 };
                 
                 // 调用创建用户API
@@ -2095,15 +2150,19 @@
             userTypeLabel.style.fontWeight = '500';
             userTypeGroup.appendChild(userTypeLabel);
             
-            // 普通用户
+            // 普通用户 - 确保value属性正确
             const normalUserType = createRadioOption('user-type', 'normal', '普通用户', true);
             userTypeGroup.appendChild(normalUserType);
             
-            // 内部用户
+            // 内部用户 - 确保value属性正确
             const internalUserType = createRadioOption('user-type', 'internal', '内部用户', false);
             userTypeGroup.appendChild(internalUserType);
             
-            // 管理员
+            // 客服 - 确保value属性正确
+            const customerServiceUserType = createRadioOption('user-type', 'customer_service', '客服', false);
+            userTypeGroup.appendChild(customerServiceUserType);
+            
+            // 管理员 - 确保value属性正确
             const adminUserType = createRadioOption('user-type', 'admin', '管理员', false);
             userTypeGroup.appendChild(adminUserType);
             
@@ -2170,9 +2229,28 @@
                 const credits = parseInt(document.getElementById('credits').value) || 0;
                 const remark = document.getElementById('remark').value.trim() || null;
                 
-                // 获取用户类型
-                const isAdmin = document.querySelector('input[name="user-type"][value="admin"]').checked;
-                const isInternal = document.querySelector('input[name="user-type"][value="internal"]').checked;
+                // 获取用户类型 - 使用更明确的方式检查单选按钮
+                const userTypeRadios = document.querySelectorAll('input[name="user-type"]');
+                let userType = 'normal'; // 默认为普通用户
+                userTypeRadios.forEach(radio => {
+                    if (radio.checked) {
+                        userType = radio.value;
+                    }
+                });
+                
+                // 根据选择的类型设置用户角色标志
+                const isAdmin = userType === 'admin';
+                const isInternal = userType === 'internal';
+                const isCustomerService = userType === 'customer_service';
+                
+                // 添加调试日志
+                console.log('动态模态框创建用户:', {
+                    username,
+                    userType,
+                    isAdmin,
+                    isInternal,
+                    isCustomerService
+                });
                 
                 // 验证必填字段
                 if (!username) {
@@ -2192,7 +2270,8 @@
                     credits,
                     remark,
                     isAdmin,
-                    isInternal
+                    isInternal,
+                    isCustomerService
                 };
                 
                 // 调用创建用户API
@@ -2259,10 +2338,14 @@
             input.value = value;
             input.checked = checked;
             input.style.marginRight = '5px';
+            // 确保ID与value一致，方便调试
+            input.id = name + '-' + value;
+            
             container.appendChild(input);
             
             const labelElement = document.createElement('label');
             labelElement.textContent = label;
+            labelElement.htmlFor = input.id; // 关联label和input
             container.appendChild(labelElement);
             
             return container;

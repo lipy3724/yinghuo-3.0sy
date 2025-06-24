@@ -252,6 +252,11 @@
                         localStorage.setItem('admin_user', JSON.stringify(data.data));
                         showSuccess('登录成功，正在跳转...');
                         
+                        // 添加调试日志
+                        console.log('登录成功，用户数据:', data.data);
+                        console.log('isAdmin:', data.data.isAdmin);
+                        console.log('isCustomerService:', data.data.isCustomerService);
+                        
                         // 延迟跳转到管理后台
                         setTimeout(() => {
                             window.location.href = '/adminkefu.html';
