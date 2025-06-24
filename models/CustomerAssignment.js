@@ -126,7 +126,7 @@ CustomerAssignment.findByUserId = function(userId) {
       {
         model: User,
         as: 'admin',
-        attributes: ['id', 'username', 'isAdmin', 'isInternal']
+        attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
       }
     ]
   });
@@ -156,12 +156,9 @@ CustomerAssignment.getActiveAdmins = async function() {
       {
         model: User,
         as: 'admin',
-        attributes: ['id', 'username', 'isAdmin', 'isInternal'],
+        attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService'],
         where: {
-          [require('sequelize').Op.or]: [
-            { isAdmin: true },
-            { isInternal: true }
-          ]
+          isCustomerService: true  // 只查询客服类型用户
         }
       }
     ],
@@ -187,7 +184,7 @@ CustomerAssignment.autoAssignCustomerService = async function(userId) {
         {
           model: User,
           as: 'admin',
-          attributes: ['id', 'username', 'isAdmin', 'isInternal']
+          attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
         }
       ]
     });
@@ -195,19 +192,19 @@ CustomerAssignment.autoAssignCustomerService = async function(userId) {
     if (existingAnyAssignment) {
       console.log(`🔄 发现用户 ${userId} 已有分配记录（状态: ${existingAnyAssignment.status}），检查是否需要重新分配`);
       
-      // 检查现有分配是否分配给管理员
-      if (existingAnyAssignment.admin && existingAnyAssignment.admin.isAdmin && !existingAnyAssignment.admin.isInternal) {
-        console.log(`🔄 现有分配给管理员 ${existingAnyAssignment.admin.username}，需要重新分配给内部用户`);
+      // 检查现有分配是否分配给非客服用户（管理员或内部用户）
+      if (existingAnyAssignment.admin && !existingAnyAssignment.admin.isCustomerService) {
+        console.log(`🔄 现有分配给非客服用户 ${existingAnyAssignment.admin.username}，需要重新分配给客服`);
         
         // 将旧分配标记为非活跃
         await existingAnyAssignment.update({
           status: 'inactive',
-          notes: `重新分配给内部用户 - 原分配给管理员 ${existingAnyAssignment.admin.username}`
+          notes: `重新分配给客服 - 原分配给非客服用户 ${existingAnyAssignment.admin.username}`
         });
         
         // 继续执行新分配逻辑（不返回，让代码继续执行到创建新分配）
       } else {
-        // 如果记录存在且分配给内部用户，重新激活它
+        // 如果记录存在且分配给客服，重新激活它
         if (existingAnyAssignment.status !== 'active') {
           await existingAnyAssignment.update({
             status: 'active',
@@ -228,16 +225,16 @@ CustomerAssignment.autoAssignCustomerService = async function(userId) {
       }
     }
     
-    // 只获取内部用户作为可用客服
+    // 只获取客服类型用户作为可用客服
     const availableAdmins = await User.findAll({
       where: {
-        isInternal: true
+        isCustomerService: true  // 只选择客服类型用户
       },
-      attributes: ['id', 'username', 'isAdmin', 'isInternal']
+      attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
     });
     
     if (availableAdmins.length === 0) {
-      throw new Error('没有可用的内部客服人员');
+      throw new Error('没有可用的客服人员');
     }
     
     // 获取每个客服当前的工作负载
@@ -288,7 +285,7 @@ CustomerAssignment.autoAssignCustomerService = async function(userId) {
         {
           model: User,
           as: 'admin',
-          attributes: ['id', 'username', 'isAdmin', 'isInternal']
+          attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
         }
       ]
     });
@@ -306,16 +303,16 @@ CustomerAssignment.autoAssignCustomerService = async function(userId) {
 // 🔄 重新分配客服（超时或手动触发）
 CustomerAssignment.reassignCustomerService = async function(userId, reason = '重新分配') {
   try {
-    // 只获取内部用户作为可用客服
+    // 只获取客服类型用户作为可用客服
     const availableAdmins = await User.findAll({
       where: {
-        isInternal: true
+        isCustomerService: true  // 只选择客服类型用户
       },
-      attributes: ['id', 'username', 'isAdmin', 'isInternal']
+      attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
     });
     
     if (availableAdmins.length === 0) {
-      throw new Error('没有可用的内部客服人员进行重新分配');
+      throw new Error('没有可用的客服人员进行重新分配');
     }
     
     // 获取每个客服当前的工作负载
@@ -366,7 +363,7 @@ CustomerAssignment.reassignCustomerService = async function(userId, reason = '�
         {
           model: User,
           as: 'admin',
-          attributes: ['id', 'username', 'isAdmin', 'isInternal']
+          attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
         }
       ]
     });

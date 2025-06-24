@@ -19,9 +19,8 @@
             
             try {
                 const userData = JSON.parse(user);
-                if (!userData.isAdmin && !userData.isInternal) {
-                    // 没有管理员权限
-                    alert('您没有客服管理后台的访问权限');
+                if (!userData.isAdmin && !userData.isCustomerService) {
+                    alert('您没有权限访问客服系统');
                     window.location.href = '/adminkefu-login.html';
                     return;
                 }
@@ -975,26 +974,11 @@
         // 检查新消息
         async function checkForNewMessages() {
             try {
-                // 构建请求URL
-                let url = '/api/kefu/messages';
-                const currentAdminId = window.currentAdmin ? window.currentAdmin.id : null;
-                
-                // 添加时间戳参数
-                const params = [];
+                let url = '/api/kefu/messages?limit=100';
                 if (lastMessageTime) {
-                    params.push('since=' + encodeURIComponent(lastMessageTime));
+                    url += '&since=' + encodeURIComponent(lastMessageTime);
                 }
                 
-                // 如果是普通内部用户（非超级管理员），只获取分配给自己的用户消息
-                if (currentAdminId && !window.currentAdmin.isAdmin) {
-                    params.push(`adminId=${currentAdminId}`);
-                }
-                
-                if (params.length > 0) {
-                    url += '?' + params.join('&');
-                }
-                
-                console.log(`[管理员后台] 轮询URL: ${url}`);
                 const response = await fetch(url);
                 const result = await response.json();
                 
@@ -1018,6 +1002,33 @@
                     
                     if (actualNewMessages.length > 0) {
                         console.log(`📨 [管理员后台] 新增 ${actualNewMessages.length} 条消息`);
+                        
+                        // 🎯 自动标记已读逻辑：如果客服正在与该用户聊天，自动标记该用户的新消息为已读
+                        if (currentUserId) {
+                            const currentUserNewMessages = actualNewMessages.filter(msg => 
+                                msg.userId === currentUserId && 
+                                (msg.type === 'user' || !msg.isAdmin) && 
+                                msg.status === 'unread'
+                            );
+                            
+                            if (currentUserNewMessages.length > 0) {
+                                console.log(`🔄 客服正在与用户 ${currentUserId} 聊天，自动标记 ${currentUserNewMessages.length} 条新消息为已读`);
+                                
+                                // 自动标记该用户的新消息为已读
+                                try {
+                                    await markUserMessagesAsRead(currentUserId);
+                                    
+                                    // 更新本地消息状态为已读
+                                    currentUserNewMessages.forEach(msg => {
+                                        msg.status = 'read';
+                                    });
+                                    
+                                    console.log(`✅ 已自动标记用户 ${currentUserId} 的新消息为已读`);
+                                } catch (error) {
+                                    console.error('自动标记已读失败:', error);
+                                }
+                            }
+                        }
                         
                         // 只添加真正的新消息
                         allMessages = [...allMessages, ...actualNewMessages];
@@ -1556,7 +1567,9 @@
             if (window.currentAdmin) {
                 const admin = window.currentAdmin;
                 const adminName = admin.username || '客服';
-                const adminRole = admin.isAdmin ? '管理员' : (admin.isInternal ? '内部用户' : '客服');
+                const adminRole = admin.isAdmin ? '管理员' : 
+                                 (admin.isCustomerService ? '客服' : 
+                                 (admin.isInternal ? '内部用户' : '普通用户'));
                 const adminAvatar = adminName.charAt(0).toUpperCase();
                 
                 document.getElementById('admin-name').textContent = adminName;

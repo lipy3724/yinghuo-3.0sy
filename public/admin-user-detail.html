@@ -79,6 +79,7 @@
                     <select id="user-type" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                         <option value="normal">普通用户</option>
                         <option value="internal">内部用户</option>
+                        <option value="customer_service">客服</option>
                         <option value="admin">管理员</option>
                     </select>
                 </div>
@@ -453,6 +454,8 @@
                     let userType = 'normal';
                     if (user.isAdmin) {
                         userType = 'admin';
+                    } else if (user.isCustomerService) {
+                        userType = 'customer_service';
                     } else if (user.isInternal) {
                         userType = 'internal';
                     }
@@ -662,6 +665,7 @@
                     credits: parseInt(credits),
                     isAdmin: userType === 'admin',
                     isInternal: userType === 'internal',
+                    isCustomerService: userType === 'customer_service',
                     remark
                 };
                 

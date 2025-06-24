@@ -245,24 +245,22 @@
                     const data = await response.json();
 
                     if (response.ok && data.success) {
-                        // 检查用户是否有管理员权限
-                        if (!data.data.isAdmin && !data.data.isInternal) {
-                            showError('您没有客服管理后台的访问权限');
-                            setLoading(false);
-                            return;
-                        }
-
-                        // 保存登录信息
+                        // 检查用户权限 - 只有管理员和客服可以访问客服系统
+                        if (data.data.isAdmin || data.data.isCustomerService) {
+                            // 有权限，保存登录信息并跳转
                         localStorage.setItem('admin_token', data.data.token);
                         localStorage.setItem('admin_user', JSON.stringify(data.data));
-
                         showSuccess('登录成功，正在跳转...');
                         
                         // 延迟跳转到管理后台
                         setTimeout(() => {
                             window.location.href = '/adminkefu.html';
                         }, 1000);
-
+                        } else {
+                            // 没有权限，显示错误信息
+                            showError('您没有权限访问客服系统，只有管理员和客服人员可以登录');
+                            setLoading(false);
+                        }
                     } else {
                         showError(data.message || '登录失败，请检查用户名和密码');
                         setLoading(false);
@@ -282,7 +280,7 @@
                 if (token && user) {
                     try {
                         const userData = JSON.parse(user);
-                        if (userData.isAdmin || userData.isInternal) {
+                        if (userData.isAdmin || userData.isCustomerService) {
                             showSuccess('检测到已登录，正在跳转...');
                             setTimeout(() => {
                                 window.location.href = '/adminkefu.html';

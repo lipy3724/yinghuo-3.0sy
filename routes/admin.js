@@ -40,7 +40,7 @@ router.get('/users', protect, checkAdmin, async (req, res) => {
     // 查询用户列表
     const { count, rows: users } = await User.findAndCountAll({
       where: whereCondition,
-      attributes: ['id', 'username', 'phone', 'credits', 'isAdmin', 'isInternal', 'remark', 'createdAt', 'lastRechargeTime', 'isBanned', 'banReason', 'banExpireAt'],
+      attributes: ['id', 'username', 'phone', 'credits', 'isAdmin', 'isInternal', 'isCustomerService', 'remark', 'createdAt', 'lastRechargeTime', 'isBanned', 'banReason', 'banExpireAt'],
       order: [['createdAt', 'DESC']],
       limit,
       offset
@@ -114,7 +114,7 @@ router.get('/users/:id', protect, checkAdmin, async (req, res) => {
     
     // 查询用户信息
     const user = await User.findByPk(userId, {
-      attributes: ['id', 'username', 'phone', 'credits', 'isAdmin', 'isInternal', 'remark', 'createdAt', 'lastRechargeTime', 'isBanned', 'banReason', 'banExpireAt', 'lastActiveAt']
+      attributes: ['id', 'username', 'phone', 'credits', 'isAdmin', 'isInternal', 'isCustomerService', 'remark', 'createdAt', 'lastRechargeTime', 'isBanned', 'banReason', 'banExpireAt', 'lastActiveAt']
     });
     
     if (!user) {
@@ -174,7 +174,7 @@ router.get('/users/:id', protect, checkAdmin, async (req, res) => {
 router.put('/users/:id', protect, checkAdmin, async (req, res) => {
   try {
     const userId = req.params.id;
-    const { username, phone, credits, isAdmin, isInternal, remark, password } = req.body;
+    const { username, phone, credits, isAdmin, isInternal, isCustomerService, remark, password } = req.body;
     
     // 查询用户
     const user = await User.findByPk(userId);
@@ -192,6 +192,7 @@ router.put('/users/:id', protect, checkAdmin, async (req, res) => {
     if (credits !== undefined) user.credits = parseInt(credits);
     if (isAdmin !== undefined) user.isAdmin = Boolean(isAdmin);
     if (isInternal !== undefined) user.isInternal = Boolean(isInternal);
+    if (isCustomerService !== undefined) user.isCustomerService = Boolean(isCustomerService);
     if (remark !== undefined) user.remark = remark;
     
     // 如果提供了新密码，更新密码
@@ -211,6 +212,7 @@ router.put('/users/:id', protect, checkAdmin, async (req, res) => {
         credits: user.credits,
         isAdmin: user.isAdmin,
         isInternal: user.isInternal,
+        isCustomerService: user.isCustomerService,
         remark: user.remark,
         createdAt: user.createdAt,
         lastRechargeTime: user.lastRechargeTime
@@ -1054,7 +1056,7 @@ router.post('/delete-user-usage', protect, checkAdmin, async (req, res) => {
  */
 router.post('/users', protect, checkAdmin, async (req, res) => {
   try {
-    const { username, password, phone, credits, isAdmin, isInternal } = req.body;
+    const { username, password, phone, credits, isAdmin, isInternal, isCustomerService } = req.body;
     
     // 基本验证
     if (!username || !password) {
@@ -1097,7 +1099,8 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
       phone: phone || null,
       credits: credits ? parseInt(credits) : 0,
       isAdmin: Boolean(isAdmin),
-      isInternal: Boolean(isInternal)
+      isInternal: Boolean(isInternal),
+      isCustomerService: Boolean(isCustomerService)
     });
     
     res.status(201).json({
@@ -1110,6 +1113,7 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
         credits: user.credits,
         isAdmin: user.isAdmin,
         isInternal: user.isInternal,
+        isCustomerService: user.isCustomerService,
         createdAt: user.createdAt
       }
     });

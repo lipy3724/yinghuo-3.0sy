@@ -85,6 +85,12 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false // 默认不是内部用户
   },
+  // 是否为客服人员
+  isCustomerService: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false // 默认不是客服人员
+  },
   // 用户备注
   remark: {
     type: DataTypes.STRING(200),
@@ -210,6 +216,46 @@ User.prototype.checkBanStatus = function() {
     reason: this.banReason || '违反用户协议',
     expireAt: this.banExpireAt
   };
+};
+
+// 实例方法 - 获取用户类型
+User.prototype.getUserType = function() {
+  if (this.isAdmin) {
+    return 'admin';
+  } else if (this.isInternal) {
+    return 'internal';
+  } else if (this.isCustomerService) {
+    return 'customer_service';
+  } else {
+    return 'regular';
+  }
+};
+
+// 实例方法 - 获取用户类型中文名称
+User.prototype.getUserTypeName = function() {
+  const type = this.getUserType();
+  const typeNames = {
+    'admin': '管理员',
+    'internal': '内部用户',
+    'customer_service': '客服',
+    'regular': '普通用户'
+  };
+  return typeNames[type] || '未知类型';
+};
+
+// 实例方法 - 检查是否可以访问客服系统
+User.prototype.canAccessCustomerService = function() {
+  return this.isAdmin || this.isCustomerService;
+};
+
+// 实例方法 - 检查是否可以访问管理后台
+User.prototype.canAccessAdmin = function() {
+  return this.isAdmin;
+};
+
+// 实例方法 - 检查是否可以被分配为客服
+User.prototype.canBeAssignedAsCustomerService = function() {
+  return this.isCustomerService;
 };
 
 module.exports = User; 
