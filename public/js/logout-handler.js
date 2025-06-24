@@ -16,10 +16,15 @@ function logout() {
         
         console.log('已清除所有登录信息');
         
-        // 重定向到登录页面
-        setTimeout(function() {
-            window.location.href = '/login.html';
-        }, 100);
+        // 检查当前是否在home.html页面
+        const isHomePage = window.location.pathname.includes('home.html') || window.location.pathname === '/' || window.location.pathname === '/index.html';
+        
+        // 如果不在home页面，才跳转到登录页面
+        if (!isHomePage) {
+            setTimeout(function() {
+                window.location.href = '/login.html';
+            }, 100);
+        }
         
         return true;
     } catch (e) {
@@ -73,8 +78,11 @@ async function userLogout() {
         
         console.log('已清除用户登录信息');
         
+        // 检查当前是否在home.html页面
+        const isHomePage = window.location.pathname.includes('home.html') || window.location.pathname === '/' || window.location.pathname === '/index.html';
+        
         // 如果当前是用户页面，但不在home.html，则重定向到登录页面
-        if (!window.location.pathname.includes('admin') && !window.location.pathname.includes('home.html')) {
+        if (!window.location.pathname.includes('admin') && !isHomePage) {
             setTimeout(function() {
                 window.location.href = '/login.html';
             }, 100);
@@ -182,8 +190,15 @@ async function verifySession() {
             
             if (isForceLogout) {
                 console.log('管理员已强制登出此用户的所有设备');
-                // 显示提示消息
-                alert('您的账号已被管理员强制下线，请重新登录');
+                
+                // 检查当前是否在home.html页面
+                const isHomePage = window.location.pathname.includes('home.html') || window.location.pathname === '/' || window.location.pathname === '/index.html';
+                
+                // 如果不在home页面，才显示提示消息
+                if (!isHomePage) {
+                    // 显示提示消息
+                    alert('您的账号已被管理员强制下线，请重新登录');
+                }
             }
             
             // 仅执行用户登出，不影响管理员登录状态

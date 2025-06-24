@@ -453,7 +453,22 @@ function updateNavbarLoginStatus() {
                     e.preventDefault();
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('user');
-                    window.location.href = '/';
+                    
+                    // 检查当前是否在home.html页面
+                    const isHomePage = window.location.pathname.includes('home.html') || window.location.pathname === '/' || window.location.pathname === '/index.html';
+                    
+                    // 如果不在home页面，才进行跳转
+                    if (!isHomePage) {
+                        window.location.href = '/';
+                    } else {
+                        // 在home页面，只更新UI状态
+                        console.log('在home页面退出登录，不进行跳转');
+                        // 如果存在这些元素，更新UI状态
+                        const userInfo = document.getElementById('user-info');
+                        const loginBtn = document.getElementById('login-btn');
+                        if (userInfo) userInfo.classList.add('hidden');
+                        if (loginBtn) loginBtn.classList.remove('hidden');
+                    }
                 });
             }
         } catch (e) {

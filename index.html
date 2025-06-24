@@ -777,7 +777,7 @@
         // 处理开始使用按钮点击
         function handleStartUsing() {
             // 检查用户是否已登录
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
             
             if (token) {
                 // 已登录，跳转到home.html
