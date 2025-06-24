@@ -367,12 +367,12 @@
                     
                     button.innerHTML = '<i class="fas fa-check"></i>&nbsp; 登录成功!';
                     
-                    // 始终跳转到首页，忽略redirectAfterLogin
+                    // 登录成功后跳转到home.html
                     setTimeout(() => {
                         // 清除可能存在的重定向URL
                         localStorage.removeItem('redirectAfterLogin');
-                        // 登录成功后跳转到首页
-                        window.location.href = '/';
+                        // 登录成功后跳转到home.html
+                        window.location.href = '/home.html';
                     }, 800); // 添加一点延迟，让用户看到加载动画
                 } else {
                     // 恢复按钮状态

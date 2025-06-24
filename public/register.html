@@ -457,9 +457,9 @@
                     // 清除可能存在的重定向URL
                     localStorage.removeItem('redirectAfterLogin');
                     
-                    // 注册成功后跳转到首页
+                    // 注册成功后跳转到home.html
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = '/home.html';
                     }, 800);
                 } else {
                     // 显示错误消息

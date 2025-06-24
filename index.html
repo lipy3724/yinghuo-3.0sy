@@ -3,82 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>萤火AI - 智能图像处理与创作</title>
+    <title>萤火AI - 专业级AI智能创作平台</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <script src="/js/logout-handler.js"></script>
-    <script src="/js/auth-check.js"></script>
     <script src="/components/components.js"></script>
     
-    <!-- 客服组件调试脚本 -->
-    <script>
-        // 添加调试信息
-        console.log('首页脚本加载完成');
-        
-        // 页面加载完成后检查客服组件
-        window.addEventListener('load', function() {
-            console.log('页面完全加载完成，检查客服组件...');
-            
-            setTimeout(() => {
-                const component = document.getElementById('customer-service-component');
-                const floatBtn = document.getElementById('cs-float-button');
-                
-                console.log('客服组件检查结果:', {
-                    component: !!component,
-                    floatBtn: !!floatBtn,
-                    pathname: window.location.pathname
-                });
-                
-                if (!component || !floatBtn) {
-                    console.log('客服组件未找到，尝试手动加载...');
-                    if (window.loadCustomerService) {
-                        window.loadCustomerService();
-                    }
-                }
-            }, 2000);
-        });
-    </script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            min-height: 100vh;
-            overflow: hidden; /* 防止整个页面出现滚动条 */
         }
-        .sidebar-item.active {
-            background-color: #f3f0ff;
-            color: #6366f1;
+        
+        /* 渐变背景 */
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         }
-        .sidebar-item:hover:not(.active) {
-            background-color: #f9fafb;
+        
+        /* 动态效果 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
-        .sidebar-item.active i {
-            color: #6366f1;
+        
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
         }
-        .card {
-            transition: all 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
+        
+        /* 卡片悬停效果 */
         .feature-card {
-            background-color: white;
-            border-radius: 0.5rem;
-            overflow: hidden;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
+        
         .feature-card:hover {
-            transform: scale(1.03);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            z-index: 10;
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
-        @keyframes firefly-glow {
-            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.2); }
-            50% { text-shadow: 0 0 8px rgba(99, 102, 241, 0.3); }
-            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.2); }
+        
+        /* 按钮动效 */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
         }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Logo样式 */
         .logo-text {
             font-weight: 600;
             letter-spacing: 0.02em;
@@ -86,2966 +58,649 @@
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 1px 1px rgba(99, 102, 241, 0.2));
-        }
-        .logo-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
-            border-radius: 50%;
-            margin-left: 2px;
-            margin-right: 2px;
-            position: relative;
-            top: -1px;
-            box-shadow: 0 0 4px rgba(99, 102, 241, 0.4);
         }
         
-        /* 添加logo容器样式，增加间距和对齐 */
-        .logo-container {
-            display: flex;
-            align-items: center;
-            position: relative;
-            z-index: 5;
-            transition: transform 0.2s ease;
-            margin-top: 10px;
-        }
-        
-        /* 添加logo的hover效果 - 简化版 */
-        .logo-container:hover .logo-text {
-            filter: drop-shadow(0 1px 2px rgba(99, 102, 241, 0.3));
-        }
-        
-        .logo-container:hover .logo-dot {
-            box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
-        }
-        
-        /* Logo图片样式 */
-        .logo-image {
-            max-height: 92px;
-            height: auto;
-            width: auto;
-            transition: all 0.2s ease;
-        }
-        
-        .logo-container:hover .logo-image {
-            transform: scale(1.02);
-        }
-        
-        /* Logo链接样式 - 简化版 */
-        .logo-link {
-            position: relative;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo-link:hover {
-            background-color: transparent;
-        }
-        
-        .logo-link:after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            left: 50%;
-            width: 0;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #8b5cf6, transparent);
-            transform: translateX(-50%);
-            transition: width 0.2s ease;
-            opacity: 0;
-        }
-        
-        .logo-link:hover:after {
-            width: 60%;
-            opacity: 0.6;
-        }
-        
-        /* 优化英文名称样式 */
-        .logo-subtitle {
-            font-size: 0.7rem;
-            color: #6b7280;
-            font-weight: 400;
-            letter-spacing: 0.05em;
-            margin-left: 4px;
-            opacity: 0.8;
-            transition: all 0.2s ease;
-        }
-        
-        a:hover .logo-subtitle {
-            color: #6366f1;
-            opacity: 0.9;
-        }
-        
-        /* 导航栏高度 */
-        .navbar {
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background-color: white;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        /* 主内容区域样式 - 修改为全宽 */
-        .main-content {
-            margin-left: 0;
-            margin-top: 60px; /* 与导航栏高度一致 */
-            padding: 2rem;
-            height: calc(100vh - 60px); /* 减去导航栏高度 */
-            overflow-y: auto;
-        }
-        
-        /* 确保下拉箭头图标可见 */
-        .ri-arrow-down-s-line {
-            display: inline-block !important;
-            font-size: 1.1rem;
-            vertical-align: middle;
-            color: currentColor;
-            opacity: 0.8;
-        }
-        
-        .ri-arrow-up-s-line {
-            display: inline-block !important;
-            font-size: 1.1rem;
-            vertical-align: middle;
-            color: currentColor;
-            opacity: 0.8;
-        }
-        
-        /* 箭头切换过渡效果 */
-        .features-menu-wrapper .arrow-icon,
-        .credits-menu-wrapper .arrow-icon,
-        .user-menu-wrapper .arrow-icon,
-        .language-menu-wrapper .arrow-icon {
-            transition: transform 0.2s ease;
-            display: inline-block;
-            will-change: transform;
-        }
-        
-        /* 功能中心下拉菜单样式 - 现代化设计 */
-        #features-dropdown {
-            max-height: 80vh;
-            overflow-y: auto;
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
-                        0 5px 10px rgba(0, 0, 0, 0.04),
-                        0 0 0 1px rgba(0, 0, 0, 0.03);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 1rem 0;
-            margin-top: 20px !important;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(8px);
-            transition: none;
-            pointer-events: none;
-        }
-        
-        #features-dropdown.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: auto;
-        }
-        
-        /* 移除所有子元素的独立动画 */
-        #features-dropdown *,
-        #features-dropdown .grid,
-        #features-dropdown h3,
-        #features-dropdown ul,
-        #features-dropdown li,
-        #features-dropdown a {
-            transition: none !important;
-            backface-visibility: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        /* 确保内容在菜单隐藏时立即隐藏 */
-        #features-dropdown.hidden {
-            display: none;
-        }
-        
-        #features-dropdown .grid,
-        #features-dropdown h3,
-        #features-dropdown ul,
-        #features-dropdown li,
-        #features-dropdown a {
-            opacity: 1;
-        }
-        
-        #features-dropdown.hidden .grid,
-        #features-dropdown.hidden h3,
-        #features-dropdown.hidden ul,
-        #features-dropdown.hidden li,
-        #features-dropdown.hidden a {
-            opacity: 0;
-        }
-        
-        #features-dropdown .grid {
-            opacity: 0;
-            transform: translateY(5px);
-            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-            will-change: transform, opacity;
-        }
-        
-        #features-dropdown.visible .grid {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        /* 美化滚动条 */
-        #features-dropdown::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        #features-dropdown::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 4px 0;
-        }
-        
-        #features-dropdown::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.1);
-            border-radius: 100px;
-        }
-        
-        #features-dropdown::-webkit-scrollbar-thumb:hover {
-            background: rgba(0,0,0,0.2);
-        }
-        
-        /* 下拉菜单中的链接样式 - 现代化设计 */
-        #features-dropdown ul {
-            margin: 0.5rem 0;
-        }
-        
-        #features-dropdown ul li a {
-            transition: all 0.15s ease;
-            display: block;
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            color: #4b5563;
-            border-radius: 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        #features-dropdown ul li a:hover {
-            background-color: rgba(99, 102, 241, 0.04);
-            color: #6366f1;
-            padding-left: 1.25rem;
-        }
-        
-        #features-dropdown ul li a:active {
-            background-color: rgba(99, 102, 241, 0.08);
-            transform: scale(0.98);
-        }
-        
-        /* 分类标题样式 - 现代化设计 */
-        #features-dropdown h3 {
-            color: #6366f1;
-            font-weight: 600;
-            padding: 0.75rem 1rem 0.5rem;
-            margin-bottom: 0.25rem;
-            border-bottom: none;
-            font-size: 0.875rem;
-            letter-spacing: -0.01em;
-            display: flex;
-            align-items: center;
-        }
-        
-        /* 分类容器样式 */
-        #features-dropdown .grid > div {
-            position: relative;
-        }
-        
-        #features-dropdown .grid > div:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 10%;
-            right: 0;
-            height: 80%;
-            width: 1px;
-            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.05), transparent);
-        }
-        
-        /* 导航菜单项的悬停效果 */
-        .navbar a:hover, .navbar button:hover {
-            color: #6366f1;
-        }
-        
-        /* 侧边栏样式 - 修改为可见 */
-        .sidebar {
-            display: block;
-            position: fixed;
-            top: 60px; /* 与导航栏高度一致 */
-            left: 0;
-            bottom: 0;
-            width: 16rem;
-            overflow-y: auto;
-            background-color: white;
-            border-right: 1px solid #e5e7eb;
-            z-index: 40;
-            box-shadow: 1px 0 5px rgba(0,0,0,0.05);
-            transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        
-        /* 折叠状态下隐藏侧边栏并让主内容全宽 */
-        body.sidebar-collapsed .sidebar {
-            transform: translateX(-100%);
-        }
-        body.sidebar-collapsed .main-content {
-            margin-left: 0 !important;
-        }
-        
-        /* 主内容区域样式 - 为侧边栏留出空间 */
-        .main-content {
-            margin-left: 16rem;
-            margin-top: 60px; /* 与导航栏高度一致 */
-            padding: 2rem;
-            height: calc(100vh - 60px); /* 减去导航栏高度 */
-            overflow-y: auto;
-        }
-        
-        /* 快捷访问按钮样式 */
-        .quick-access-btn {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            transition: all 0.3s ease;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
-            position: relative;
-            overflow: hidden;
-            border: none;
-        }
-        
-        .quick-access-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        /* 滚动动画 */
+        .scroll-animation {
+                opacity: 0;
+            transform: translateY(30px);
             transition: all 0.6s ease;
         }
         
-        .quick-access-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.25);
-        }
-        
-        .quick-access-btn:hover::before {
-            left: 100%;
-        }
-        
-        .quick-access-btn:active {
+        .scroll-animation.visible {
+            opacity: 1;
             transform: translateY(0);
-        }
-        
-        /* 快捷访问下拉菜单样式 - 现代化设计 */
-        #quick-access-dropdown {
-            position: absolute;
-            left: 16.5rem;
-            top: 80px;
-            width: 200px; /* 减小宽度 */
-            background-color: white;
-            border-radius: 12px; /* 更圆润的边角 */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
-                        0 5px 10px rgba(0, 0, 0, 0.04),
-                        0 0 0 1px rgba(0, 0, 0, 0.03); /* 更精致的阴影 */
-            z-index: 50;
-            padding: 0;
-            border: none;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); /* 更平滑的动画 */
-            opacity: 0;
-            transform: translateY(-10px) scale(0.98);
-            pointer-events: none;
-            overflow: hidden;
-            backdrop-filter: blur(8px); /* 毛玻璃效果 */
-            -webkit-backdrop-filter: blur(8px);
-        }
-        
-        /* 添加小尖尖 - 更现代的设计 */
-        #quick-access-dropdown::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 20px;
-            width: 12px;
-            height: 12px;
-            background-color: white;
-            transform: rotate(45deg);
-            box-shadow: -1px 1px 3px rgba(0, 0, 0, 0.05);
-            border-radius: 2px;
-        }
-        
-        /* 确保小尖尖不会被滚动条遮挡 */
-        #quick-access-dropdown::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 12px;
-            width: 20px;
-            height: 32px;
-            background-color: white;
-            z-index: -1;
-        }
-        
-        #quick-access-dropdown.hidden {
-            opacity: 0;
-            transform: translateY(-10px) scale(0.98);
-            pointer-events: none;
-        }
-        
-        #quick-access-dropdown:not(.hidden) {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-        }
-        
-        /* 下拉菜单头部样式 - 更现代的设计 */
-        #quick-access-dropdown .dropdown-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.875rem 1rem; /* 增加内边距 */
-            margin-bottom: 0;
-            border-bottom: 1px solid rgba(0,0,0,0.04);
-            position: sticky;
-            top: 0;
-            background-color: rgba(255,255,255,0.95);
-            z-index: 2;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-        
-        #quick-access-dropdown .dropdown-header h3 {
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 0.9375rem;
-            letter-spacing: -0.01em; /* 更现代的字体间距 */
-        }
-        
-        #quick-access-dropdown .dropdown-header #selected-count {
-            background-color: #f0f0f5;
-            padding: 0.125rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            color: #6366f1;
-            margin-left: 0.5rem;
-            font-weight: 500;
-        }
-        
-        #quick-access-dropdown .dropdown-header #close-dropdown {
-            width: 1.75rem;
-            height: 1.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
-            color: #6b7280;
-        }
-        
-        #quick-access-dropdown .dropdown-header #close-dropdown:hover {
-            background-color: #f3f4f6;
-            color: #111827;
-        }
-        
-        /* 滚动区域样式 - 更现代的设计 */
-        .feature-list-scroll {
-            max-height: 450px;
-            overflow-y: auto;
-            padding: 0.5rem 0.75rem 1rem;
-            scroll-behavior: smooth; /* 平滑滚动 */
-        }
-        
-        /* 美化滚动条 - 更现代的设计 */
-        .feature-list-scroll::-webkit-scrollbar {
-            width: 3px;
-        }
-        
-        .feature-list-scroll::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 4px 0;
-        }
-        
-        .feature-list-scroll::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.1);
-            border-radius: 100px;
-        }
-        
-        .feature-list-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(0,0,0,0.2);
-        }
-        
-        /* 分类标题样式 - 更现代的设计 */
-        #quick-access-dropdown h4 {
-            color: #6366f1;
-            font-weight: 600;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            padding-bottom: 0.25rem;
-            border-bottom: none;
-            font-size: 0.8125rem;
-            display: flex;
-            align-items: center;
-            letter-spacing: 0.02em;
-        }
-        
-        #quick-access-dropdown h4 i {
-            margin-right: 0.375rem;
-            font-size: 0.9375rem;
-        }
-        
-        /* 分类容器样式 - 更现代的设计 */
-        #quick-access-dropdown .mb-5 {
-            margin-bottom: 1.25rem;
-            position: relative;
-        }
-        
-        #quick-access-dropdown .mb-5:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            bottom: -0.75rem;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(to right, transparent, rgba(0,0,0,0.05), transparent);
-        }
-        
-        /* 调整网格间距 - 更现代的设计 */
-        #quick-access-dropdown .grid.gap-1 {
-            gap: 0.25rem;
-        }
-        
-        /* 快捷访问下拉菜单项样式 - 更现代的设计 */
-        .feature-checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 0.3rem 0.625rem;
-            border-radius: 8px;
-            transition: all 0.15s ease;
-            cursor: pointer;
-            margin-bottom: 0.125rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .feature-checkbox-item:hover {
-            background-color: rgba(99, 102, 241, 0.04);
-        }
-        
-        .feature-checkbox-item:active {
-            background-color: rgba(99, 102, 241, 0.08);
-            transform: scale(0.98);
-        }
-        
-        /* 美化复选框 - 更现代的设计 */
-        .feature-checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 0.625rem;
-            cursor: pointer;
-            border-radius: 6px;
-            border: 1.5px solid #d1d5db;
-            appearance: none;
-            -webkit-appearance: none;
-            position: relative;
-            transition: all 0.2s ease;
-            background-color: white;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        
-        .feature-checkbox-item input[type="checkbox"]:checked {
-            background-color: #6366f1;
-            border-color: #6366f1;
-            box-shadow: 0 1px 3px rgba(99, 102, 241, 0.3);
-        }
-        
-        .feature-checkbox-item input[type="checkbox"]:checked::after {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 3px;
-            width: 5px;
-            height: 9px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-            animation: checkmark 0.2s ease-in-out;
-        }
-        
-        @keyframes checkmark {
-            0% {
-                opacity: 0;
-                transform: rotate(45deg) scale(0.8);
-            }
-            50% {
-                opacity: 1;
-                transform: rotate(45deg) scale(1.2);
-            }
-            100% {
-                transform: rotate(45deg) scale(1);
-            }
-        }
-        
-        .feature-checkbox-item:hover input[type="checkbox"]:not(:checked) {
-            border-color: #a5a6f6;
-        }
-        
-        .feature-checkbox-item span {
-            font-size: 0.875rem;
-            color: #374151;
-            font-weight: 450;
-            letter-spacing: -0.01em;
-        }
-        
-        /* 更新Beta标签样式 - 更现代的设计 */
-        .beta-tag {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            background-color: rgba(245, 158, 11, 0.15);
-            color: #d97706;
-            border-radius: 4px;
-            margin-left: 0.5rem;
-            font-weight: 500;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            border: 1px solid rgba(245, 158, 11, 0.25);
-        }
-        
-        /* 添加New标签样式 - 更现代的设计 */
-        .new-tag {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #dc2626;
-            border-radius: 4px;
-            margin-left: 0.5rem;
-            font-weight: 500;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-        }
-        
-        /* 侧边栏功能项样式 - 更现代的设计 */
-        .sidebar-feature-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            background-color: white;
-            border-radius: 10px;
-            margin-bottom: 0.625rem;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(0,0,0,0.03);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        }
-        
-        .sidebar-feature-item:hover {
-            background-color: #f9f7ff;
-            border-color: rgba(99, 102, 241, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.04);
-        }
-        
-        .sidebar-feature-item .feature-info {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        
-        .sidebar-feature-item .feature-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 10px;
-            margin-right: 0.875rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        
-        .sidebar-feature-item:hover .feature-icon {
-            transform: scale(1.05) rotate(-5deg);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-        }
-        
-        .sidebar-feature-item .remove-btn {
-            color: #9ca3af;
-            cursor: pointer;
-            width: 1.75rem;
-            height: 1.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
-            opacity: 0.6;
-        }
-        
-        .sidebar-feature-item:hover .remove-btn {
-            opacity: 1;
-        }
-        
-        .sidebar-feature-item .remove-btn:hover {
-            color: #ef4444;
-            background-color: rgba(239, 68, 68, 0.1);
-        }
-        
-        /* 空状态提示样式优化 */
-        .empty-state {
-            padding: 2rem 1rem;
-            text-align: center;
-            color: #9ca3af;
-            transition: all 0.3s ease;
-        }
-        
-        .empty-state i {
-            font-size: 2.5rem;
-            color: #d1d5db;
-            margin-bottom: 1rem;
-            opacity: 0.8;
-        }
-        
-        .empty-state p {
-            font-size: 0.875rem;
-            line-height: 1.5;
-            max-width: 200px;
-            margin: 0 auto;
-        }
-        
-        /* 添加图标到分类标题 */
-        #features-dropdown h3::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background-color: #6366f1;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-            opacity: 0.7;
-        }
-        
-        /* 为每个分类添加特定图标 */
-        #features-dropdown h3.image-processing::before {
-            background-color: #10b981; /* 绿色 */
-        }
-        
-        #features-dropdown h3.model-clothing::before {
-            background-color: #8b5cf6; /* 紫色 */
-        }
-        
-        #features-dropdown h3.ai-creation::before {
-            background-color: #3b82f6; /* 蓝色 */
-        }
-        
-        #features-dropdown h3.video-processing::before {
-            background-color: #ef4444; /* 红色 */
-        }
-        
-        #features-dropdown h3.amazon-assistant::before {
-            background-color: #f59e0b; /* 橙色 */
-        }
-        
-        /* 菜单项悬停效果增强 */
-        #features-dropdown ul li a::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 1rem;
-            width: 0;
-            height: 1px;
-            background-color: #6366f1;
-            transition: width 0.2s ease;
-        }
-        
-        #features-dropdown ul li a:hover::after {
-            width: calc(100% - 2rem);
-        }
-        
-        /* 下拉菜单整体动画效果 */
-        @keyframes menu-appear {
-            from {
-                opacity: 0;
-                transform: translateY(-8px) scale(0.98);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        
-        #features-dropdown {
-            animation: menu-appear 0.2s ease-out forwards;
-            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
-        }
-        
-        #features-dropdown.hidden {
-            opacity: 0;
-            transform: translateY(-8px) scale(0.98);
-            visibility: hidden;
-            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s 0.2s;
-        }
-        
-        /* 添加一个桥接区域，连接按钮和下拉菜单 */
-        .features-menu-wrapper {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .features-menu-bridge {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 20px; /* 增加桥接区域高度 */
-            top: 100%;
-            background: transparent;
-            z-index: 9;
-        }
-        
-        /* 调整下拉菜单的位置 */
-        .features-menu-wrapper #features-dropdown {
-            position: absolute;
-            top: calc(100% + 8px); /* 调整菜单的垂直位置，减小了距离 */
-            left: -20px; /* 向左偏移，避免遮挡按钮 */
-        }
-        
-        /* 添加一个小箭头指示器 */
-        #features-dropdown::before {
-            content: '';
-            position: absolute;
-            top: -8px; /* 调整箭头位置 */
-            left: 40px; /* 箭头水平位置 */
-            width: 16px;
-            height: 16px;
-            background: white;
-            transform: rotate(45deg);
-            border-radius: 2px;
-            box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.04);
-            z-index: -1;
-        }
-        
-        /* 确保箭头下方有白色背景 */
-        #features-dropdown::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 32px; /* 与箭头位置对应 */
-            width: 32px;
-            height: 16px;
-            background: white;
-            z-index: 1;
-        }
-        
-        /* 调整内容区域的层级 */
-        #features-dropdown .grid {
-            position: relative;
-            z-index: 2;
-        }
-        
-        /* 积分中心下拉菜单样式 */
-        #credits-dropdown {
-            max-height: 80vh;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
-                        0 5px 10px rgba(0, 0, 0, 0.04),
-                        0 0 0 1px rgba(0, 0, 0, 0.03);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 0;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(8px);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-        
-        #credits-dropdown.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-        
-        /* 用户菜单下拉菜单样式 */
-        #user-dropdown {
-            max-height: 80vh;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
-                        0 5px 10px rgba(0, 0, 0, 0.04),
-                        0 0 0 1px rgba(0, 0, 0, 0.03);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 0;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(8px);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-        
-        #user-dropdown.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-        
-        /* 语言选择下拉菜单样式 */
-        #language-dropdown {
-            max-height: 80vh;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
-                        0 5px 10px rgba(0, 0, 0, 0.04),
-                        0 0 0 1px rgba(0, 0, 0, 0.03);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 0;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(8px);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-        
-        #language-dropdown.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-        
-        /* CSS 增加旋转动画 */
-        #sidebar-toggle-btn i{
-            transition: transform 0.35s cubic-bezier(0.22,0.61,0.36,1);
-        }
-        #sidebar-toggle-btn.collapsed i{
-            transform: rotate(180deg);
-        }
-        
-        /* 侧边栏折叠按钮主样式 */
-        #sidebar-toggle-btn {
-            position: fixed;
-            top: 50%;
-            left: 16rem;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #ffffff;
-            border: 1px solid rgba(0,0,0,0.06);
-            border-left: none;
-            border-radius: 0 5px 5px 0;
-            box-shadow: 2px 0 6px rgba(0,0,0,0.04);
-            cursor: pointer;
-            transition: left 0.35s cubic-bezier(0.22,0.61,0.36,1), background 0.2s ease, box-shadow 0.2s ease;
-            z-index: 60;
-        }
-        #sidebar-toggle-btn:hover {
-            background: #f3f4f6;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.06);
-        }
-        body.sidebar-collapsed #sidebar-toggle-btn {
-            left: 0;
-        }
-        body.sidebar-collapsed #toggle-icon {
-            transform: rotate(180deg);
-        }
-        
-        /* 移动端导航栏优化 */
-        @media (max-width: 768px) {
-            /* 隐藏所有功能菜单，只显示Logo */
-            .navbar .ml-8.flex.items-center.space-x-6 {
-                display: none;
-            }
-            
-            /* 隐藏右侧菜单 */
-            .navbar > div:last-child {
-                display: none;
-            }
-            
-            /* 调整导航栏布局 */
-            .navbar {
-                justify-content: space-between;
-            }
-            
-            /* 调整Logo大小 */
-            .logo-image {
-                height: 80px;
-                width: auto;
-                max-width: 250px;
-            }
-            
-            /* Logo容器样式优化 */
-            .logo-container {
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-            }
-            
-            /* 移动端功能中心按钮 */
-            .mobile-features-btn {
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                background-color: #f3f4f6;
-                border-radius: 8px;
-                color: #6b7280;
-                transition: all 0.2s;
-                cursor: pointer;
-            }
-            
-            .mobile-features-btn:hover {
-                background-color: #e5e7eb;
-                color: #374151;
-            }
-            
-            /* 移动端功能菜单 */
-            .mobile-features-dropdown {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0, 0, 0, 0.5);
-                z-index: 9999;
-                display: none;
-            }
-            
-            .mobile-features-content {
-                position: absolute;
-                top: 0;
-                right: 0;
-                width: 85%;
-                max-width: 320px;
-                height: 100%;
-                background-color: white;
-                transform: translateX(100%);
-                transition: transform 0.3s ease-in-out;
-                overflow-y: auto;
-            }
-            
-            .mobile-features-dropdown.show .mobile-features-content {
-                transform: translateX(0);
-            }
-            
-            .mobile-features-header {
-                padding: 16px;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background-color: #f9fafb;
-            }
-            
-            .mobile-features-grid {
-                padding: 16px;
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-            
-            .mobile-feature-category {
-                border-bottom: 1px solid #f3f4f6;
-                padding-bottom: 16px;
-            }
-            
-            .mobile-feature-category:last-child {
-                border-bottom: none;
-                padding-bottom: 0;
-            }
-            
-            .mobile-category-title {
-                font-size: 14px;
-                font-weight: 600;
-                color: #374151;
-                margin-bottom: 12px;
-                padding-bottom: 8px;
-                border-bottom: 2px solid #e5e7eb;
-            }
-            
-            .mobile-feature-list {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            
-            .mobile-feature-item {
-                padding: 12px;
-                background-color: #f9fafb;
-                border-radius: 8px;
-                color: #374151;
-                text-decoration: none;
-                transition: all 0.2s;
-                border: 1px solid #e5e7eb;
-            }
-            
-            .mobile-feature-item:hover {
-                background-color: #f3f4f6;
-                border-color: #d1d5db;
-                transform: translateY(-1px);
-            }
-            
-            /* 移动端默认收起侧边栏 */
-            body.sidebar-collapsed .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            body.sidebar-collapsed #sidebar-toggle-btn {
-                left: 0;
-            }
-            
-            body.sidebar-collapsed #toggle-icon {
-                transform: rotate(180deg);
-            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-white">
     <!-- 导航栏 -->
-    <nav class="navbar flex items-center justify-between px-4">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
         <div class="flex items-center">
-            <!-- 侧边栏折叠/展开按钮 -->
-            <button id="sidebar-toggle-nav" class="hidden">
-                <i class="ri-menu-fold-line text-lg"></i>
-            </button>
-            <a href="#" class="flex items-center logo-link">
-                <div class="logo-container">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
+                    <img src="/images/favicon.png" alt="萤火AI" class="h-8 w-8 mr-3">
+                    <span class="logo-text text-xl font-bold">萤火AI</span>
+                    <span class="text-sm text-gray-500 ml-2">FireflyAI</span>
                 </div>
-            </a>
-            
-            <!-- 添加顶部导航功能菜单 - 移到左边 -->
-            <div class="ml-8 flex items-center space-x-6">
-                <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/marketing-images.html')" class="text-gray-600 hover:text-gray-900 flex items-center">
-                    <i class="ri-image-line mr-1"></i>
-                    <span class="nav-text">AI营销图</span>
-                </a>
-                <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/translate')" class="text-gray-600 hover:text-gray-900 flex items-center">
-                    <i class="ri-translate-2 mr-1"></i>
-                    <span class="nav-text">图片翻译</span>
-                </a>
-                <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/cutout')" class="text-gray-600 hover:text-gray-900 flex items-center">
-                    <i class="ri-image-edit-line mr-1"></i>
-                    <span class="nav-text">商品换背景</span>
-                </a>
-                <!-- 功能中心下拉菜单 -->
-                <div class="relative features-menu-wrapper">
-                        <button class="text-gray-600 hover:text-gray-900 flex items-center" id="features-menu-btn">
-                            <i class="ri-apps-line mr-1"></i>
-                            <span class="nav-text">功能中心</span>
-                        <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
-                        </button>
-                    <div class="features-menu-bridge"></div>
-                    <div id="features-dropdown" class="hidden absolute left-0 mt-2 w-[800px] bg-white rounded-md shadow-lg py-4 z-10">
-                        <div class="grid grid-cols-4 gap-2 px-4">
-                            <!-- 图像处理类 -->
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing">图像处理</h3>
-                                <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">场景图生成</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像智能消除</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能扩图</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模糊图片变清晰</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像高清放大</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像上色</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">局部重绘</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">全局风格化</a></li>
-                                    <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">垫图</a></li>
-                                </ul>
+                
+                <!-- 桌面导航菜单 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors">功能特色</a>
+                    <a href="#cases" class="text-gray-600 hover:text-indigo-600 transition-colors">成功案例</a>
+                    <a href="#pricing" class="text-gray-600 hover:text-indigo-600 transition-colors">套餐方案</a>
+                    <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">关于我们</a>
                             </div>
-                            <!-- 模特/服饰类 -->
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b model-clothing">模特与服饰</h3>
-                                <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模特换肤</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模拟试衣</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能服饰分割</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能虚拟模特试穿</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">鞋靴虚拟试穿</a></li>
-                                </ul>
-                                
-                                <h3 class="text-sm font-semibold text-gray-900 mt-4 mb-2 pb-1 border-b ai-creation">AI创作</h3>
-                                <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">文生图片</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">指令编辑</a></li>
-                                </ul>
-                            </div>
-                            <!-- 视频处理类 -->
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b video-processing">视频处理</h3>
-                                <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">文生视频</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图生视频</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/multi-image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">多图转视频</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频风格重绘</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频数字人</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频去除字幕</a></li>
-                                </ul>
-                            </div>
-                            <!-- 亚马逊助手 -->
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b amazon-assistant">亚马逊助手</h3>
-                                <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">Listing写作与优化</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">后台搜索词</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">客户评论分析</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">消费者洞察</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-customer-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">客户邮件回复</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">FBA索赔邮件</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">评论生成</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">评论回复</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">品牌起名</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">创建Post</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">广告视频脚本</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">产品对比</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">品牌信息收集和总结</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">选品的改款分析和建议</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">亚马逊关键词推荐</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-case-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">亚马逊客服case内容</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                
+                                <!-- 操作按钮 -->
+                <div class="flex items-center space-x-4">
+                    <button onclick="handleStartUsing()" class="btn-primary text-white px-6 py-2 rounded-full font-medium">开始使用</button>
                 </div>
-            </div>
-        </div>
-        
-        <!-- 移动端功能中心按钮 -->
-        <div class="mobile-features-btn hidden" id="mobile-features-btn">
-            <i class="ri-apps-line text-xl"></i>
-        </div>
-        
-        <div class="flex items-center space-x-6">
-            <div class="relative credits-menu-wrapper">
-                <button class="text-gray-600 hover:text-gray-900 flex items-center" id="credits-menu-btn">
-                    <i class="ri-coin-line mr-1"></i>
-                    <span class="nav-text">积分中心</span>
-                    <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
-                </button>
-                <div id="credits-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="/credits-usage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分使用情况</a>
-                </div>
-            </div>
-            <a href="/download-center.html" class="text-gray-600 hover:text-gray-900 flex items-center">
-                <i class="ri-download-2-line mr-1"></i>
-                <span class="nav-text">下载中心</span>
-            </a>
-            <!-- 用户未登录时显示登录注册按钮 -->
-            <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                登录/注册
-            </a>
-            <!-- 用户已登录时显示用户信息 -->
-            <div id="user-info" class="hidden relative user-menu-wrapper">
-                <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-gray-900">
-                    <i class="ri-user-3-line mr-1 text-lg"></i>
-                    <span id="username-display">用户名</span>
-                    <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
-                </button>
-                <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">我的账户</a>
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
-                </div>
-            </div>
-        </div>
+                            </div>
+                            </div>
     </nav>
 
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-        <!-- 全局折叠按钮 -->
-        <button id="sidebar-toggle-btn-inner" style="display:none">
-            <i class="ri-menu-fold-line text-lg text-gray-600"></i>
-        </button>
-        <div class="py-4 px-3">
-            <ul class="space-y-2">
-                <!-- 添加快捷访问按钮 -->
-                <li>
-                    <button id="quick-access-btn" class="quick-access-btn w-full flex items-center justify-center p-3 text-base font-medium rounded-lg mb-3">
-                        <i class="ri-add-line mr-2 text-lg"></i>
-                        <span>添加快捷访问</span>
+    <!-- 英雄区域 -->
+    <section class="hero-gradient pt-20 pb-16 min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- 左侧内容 -->
+                <div class="text-white">
+                    <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                        专业级AI智能创作
+                        <span class="block text-yellow-300">轻松出图创视频</span>
+                    </h1>
+                    <p class="text-xl mb-8 text-white/90 leading-relaxed">
+                        每天有数万创作者用萤火AI生成<br>
+                        高质量图片和视频内容，提升创作效率10倍
+                    </p>
+                    
+                    <!-- CTA按钮 -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-12">
+                        <button onclick="handleStartUsing()" class="bg-white text-indigo-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all transform hover:scale-105 text-center">
+                            开始使用
+                        </button>
+                        <button onclick="handleStartUsing()" class="border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-indigo-600 transition-all text-center">
+                            进入工作台
+                        </button>
+                </div>
+                    
+                    <!-- 统计数据 -->
+                    <div class="grid grid-cols-3 gap-8 text-center">
+                        <div>
+                            <div class="text-3xl font-bold text-yellow-300" id="stat1">50,000+</div>
+                            <div class="text-white/80 text-sm">日活用户</div>
+                    </div>
+                        <div>
+                            <div class="text-3xl font-bold text-yellow-300" id="stat2">1,000,000+</div>
+                            <div class="text-white/80 text-sm">生成作品</div>
+                </div>
+                        <div>
+                            <div class="text-3xl font-bold text-yellow-300" id="stat3">98%</div>
+                            <div class="text-white/80 text-sm">满意度</div>
+        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧展示 -->
+                <div class="relative">
+                    <!-- 功能卡片展示 -->
+                    <div class="grid grid-cols-2 gap-4 float-animation">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                            <i class="ri-image-line text-3xl mb-3 text-yellow-300"></i>
+                            <h3 class="font-semibold mb-2">AI图像处理</h3>
+                            <p class="text-sm text-white/80">智能修图、扩图、上色</p>
+                    </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                            <i class="ri-video-line text-3xl mb-3 text-yellow-300"></i>
+                            <h3 class="font-semibold mb-2">AI视频创作</h3>
+                            <p class="text-sm text-white/80">文生视频、图生视频</p>
+                </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                            <i class="ri-user-3-line text-3xl mb-3 text-yellow-300"></i>
+                            <h3 class="font-semibold mb-2">AI模特换装</h3>
+                            <p class="text-sm text-white/80">虚拟试衣、换肤换装</p>
+                    </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                            <i class="ri-store-line text-3xl mb-3 text-yellow-300"></i>
+                            <h3 class="font-semibold mb-2">亚马逊助手</h3>
+                            <p class="text-sm text-white/80">Listing优化、关键词</p>
+                </div>
+                    </div>
+                </div>
+                    </div>
+                </div>
+    </section>
+
+    <!-- 功能特色区域 -->
+    <section id="features" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">四大核心功能</h2>
+                <p class="text-xl text-gray-600">专业级AI工具，满足您的所有创作需求</p>
+                </div>
+                
+            <!-- 功能卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- AI图像处理 -->
+                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="ri-image-line text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">AI图像处理</h3>
+                    <p class="text-gray-600 mb-6">智能扩图、人像修复、图像上色、背景移除等专业功能</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li>• 智能扩图放大</li>
+                        <li>• 人像修复美化</li>
+                        <li>• 黑白照片上色</li>
+                        <li>• 背景一键移除</li>
+                    </ul>
+                </div>
+                
+                <!-- AI视频创作 -->
+                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="ri-video-line text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">AI视频创作</h3>
+                    <p class="text-gray-600 mb-6">文生视频、图生视频、视频字幕移除等创新功能</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li>• 文本生成视频</li>
+                        <li>• 图片生成视频</li>
+                        <li>• 视频字幕移除</li>
+                        <li>• 视频智能剪辑</li>
+                    </ul>
+                </div>
+                
+                <!-- AI模特换装 -->
+                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="ri-user-3-line text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">AI模特换装</h3>
+                    <p class="text-gray-600 mb-6">虚拟试衣、模特换装、服装展示等电商必备工具</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li>• 虚拟模特试衣</li>
+                        <li>• 服装款式替换</li>
+                        <li>• 模特肤色调整</li>
+                        <li>• 产品展示优化</li>
+                    </ul>
+                </div>
+                
+                <!-- 亚马逊助手 -->
+                <div class="feature-card bg-white rounded-2xl p-8 text-center shadow-lg">
+                    <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="ri-store-line text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">亚马逊助手</h3>
+                    <p class="text-gray-600 mb-6">16个专业工具助力亚马逊卖家提升销量</p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li>• Listing标题优化</li>
+                        <li>• 关键词研究分析</li>
+                        <li>• 产品对比分析</li>
+                        <li>• 竞品监控报告</li>
+                    </ul>
+                            </div>
+                        </div>
+                    </div>
+    </section>
+
+    <!-- 成功案例区域 -->
+    <section id="cases" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">成功案例展示</h2>
+                <p class="text-xl text-gray-600">看看其他创作者如何用萤火AI提升工作效率</p>
+                </div>
+                
+            <!-- 案例网格 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- 案例1 -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="ri-palette-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">电商产品图优化</h3>
+                    <p class="text-gray-600 mb-4">某服装品牌使用AI模特换装功能，节省拍摄成本80%，销量提升150%</p>
+                    <div class="text-sm text-blue-600 font-medium">节省成本: ¥50,000/月</div>
+                </div>
+                
+                <!-- 案例2 -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="ri-video-add-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">短视频内容创作</h3>
+                    <p class="text-gray-600 mb-4">自媒体博主用文生视频功能，每日产出10+条优质视频内容</p>
+                    <div class="text-sm text-green-600 font-medium">效率提升: 1000%</div>
+                </div>
+                
+                <!-- 案例3 -->
+                <div class="bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="ri-image-edit-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">老照片修复上色</h3>
+                    <p class="text-gray-600 mb-4">摄影工作室批量处理老照片，客户满意度达99%</p>
+                    <div class="text-sm text-purple-600 font-medium">客户满意度: 99%</div>
+                </div>
+                
+                <!-- 案例4 -->
+                <div class="bg-gradient-to-br from-orange-50 to-red-100 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="ri-store-2-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">亚马逊店铺优化</h3>
+                    <p class="text-gray-600 mb-4">跨境电商卖家使用亚马逊助手工具，订单量增长200%</p>
+                    <div class="text-sm text-orange-600 font-medium">订单增长: 200%</div>
+                </div>
+                
+                <!-- 案例5 -->
+                <div class="bg-gradient-to-br from-pink-50 to-rose-100 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="ri-brush-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">设计师工作流</h3>
+                    <p class="text-gray-600 mb-4">平面设计师将AI工具整合到工作流程，项目完成速度提升3倍</p>
+                    <div class="text-sm text-pink-600 font-medium">速度提升: 300%</div>
+                </div>
+                
+                <!-- 案例6 -->
+                <div class="bg-gradient-to-br from-teal-50 to-cyan-100 rounded-2xl p-6 hover:shadow-lg transition-all">
+                    <div class="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center mb-4">
+                        <i class="ri-camera-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">婚纱摄影后期</h3>
+                    <p class="text-gray-600 mb-4">婚纱摄影工作室使用AI修图，后期处理时间减少70%</p>
+                    <div class="text-sm text-teal-600 font-medium">时间节省: 70%</div>
+                            </div>
+                        </div>
+                    </div>
+    </section>
+
+    <!-- 套餐方案区域 -->
+    <section id="pricing" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">选择适合您的套餐</h2>
+                <p class="text-xl text-gray-600">灵活的定价方案，满足不同规模的需求</p>
+                </div>
+                
+            <!-- 套餐卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 基础版 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">基础版</h3>
+                        <p class="text-gray-600 mb-6">适合个人用户和小型工作室</p>
+                        <div class="mb-8">
+                            <span class="text-4xl font-bold text-gray-900">免费</span>
+                            <span class="text-gray-600">/月</span>
+                    </div>
+                </div>
+                
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">每日10次免费使用</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">基础AI图像处理</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">标准画质输出</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">社区技术支持</span>
+                        </li>
+                    </ul>
+                    
+                    <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-100 text-gray-900 py-3 rounded-full font-semibold hover:bg-gray-200 transition-colors">
+                        开始使用
                     </button>
-                </li>
-                <!-- 快捷访问功能列表容器 -->
-                <div id="sidebar-features-container" class="mt-4">
-                    <!-- 这里将动态添加用户选择的功能 -->
-                    <div class="text-center text-gray-400 text-sm py-6 empty-state hidden">
-                        <i class="ri-function-line text-3xl mb-2 block"></i>
-                        <p>点击上方按钮添加您常用的功能</p>
+                </div>
+                
+                <!-- 专业版 -->
+                <div class="bg-white rounded-2xl p-8 shadow-xl border-2 border-indigo-500 relative transform scale-105">
+                    <!-- 推荐标签 -->
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-indigo-500 text-white px-4 py-1 rounded-full text-sm font-medium">推荐</span>
+                </div>
+                
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">专业版</h3>
+                        <p class="text-gray-600 mb-6">适合专业创作者和中小企业</p>
+                        <div class="mb-8">
+                            <span class="text-4xl font-bold text-indigo-600">¥99</span>
+                            <span class="text-gray-600">/月</span>
                     </div>
                 </div>
-            </ul>
+                
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">每日1000次使用额度</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">全部AI功能解锁</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">高清4K输出</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">优先处理队列</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">邮件技术支持</span>
+                        </li>
+                    </ul>
+                    
+                    <button onclick="handleStartUsing()" class="block w-full text-center btn-primary text-white py-3 rounded-full font-semibold">
+                        开始使用
+                    </button>
+                </div>
+                
+                <!-- 企业版 -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg border-2 border-transparent hover:border-indigo-200 transition-all">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">企业版</h3>
+                        <p class="text-gray-600 mb-6">适合大型企业和团队协作</p>
+                        <div class="mb-8">
+                            <span class="text-4xl font-bold text-gray-900">¥299</span>
+                            <span class="text-gray-600">/月</span>
+                    </div>
+                </div>
+                
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">无限使用次数</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">团队协作功能</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">API接口调用</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">专属客服支持</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="ri-check-line text-green-500 mr-3"></i>
+                            <span class="text-gray-700">定制化服务</span>
+                        </li>
+                    </ul>
+                    
+                    <button onclick="handleStartUsing()" class="block w-full text-center bg-gray-900 text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors">
+                        开始使用
+                    </button>
+                            </div>
+                        </div>
+                    </div>
+    </section>
+
+    <!-- 关于我们区域 -->
+    <section id="about" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <!-- 左侧内容 -->
+                <div>
+                    <h2 class="text-4xl font-bold text-gray-900 mb-6">为什么选择萤火AI？</h2>
+                    <p class="text-xl text-gray-600 mb-8">
+                        我们致力于为全球创作者提供最先进的AI工具，让每个人都能轻松创作出专业级的内容。
+                    </p>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-4 mt-1">
+                                <i class="ri-rocket-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">技术领先</h3>
+                                <p class="text-gray-600">采用最新的AI算法和深度学习技术，确保输出质量始终处于行业领先水平</p>
+                    </div>
+                </div>
+                
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-4 mt-1">
+                                <i class="ri-shield-check-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">安全可靠</h3>
+                                <p class="text-gray-600">企业级安全保障，数据加密传输，严格保护用户隐私和作品版权</p>
+                    </div>
+                </div>
+                
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-4 mt-1">
+                                <i class="ri-customer-service-line text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">专业服务</h3>
+                                <p class="text-gray-600">7×24小时技术支持，专业团队随时为您解答问题，确保使用体验</p>
+                        </div>
+                    </div>
+                </div>
+                
+                    <div class="mt-10">
+                        <button onclick="handleStartUsing()" class="btn-primary text-white px-8 py-4 rounded-full font-semibold text-lg inline-block">
+                            开始使用
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 右侧统计 -->
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="text-center p-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
+                        <div class="text-4xl font-bold text-indigo-600 mb-2">50万+</div>
+                        <div class="text-gray-600">注册用户</div>
+                            </div>
+                    <div class="text-center p-8 bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl">
+                        <div class="text-4xl font-bold text-green-600 mb-2">1000万+</div>
+                        <div class="text-gray-600">生成作品</div>
+                        </div>
+                    <div class="text-center p-8 bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl">
+                        <div class="text-4xl font-bold text-purple-600 mb-2">99.9%</div>
+                        <div class="text-gray-600">服务可用性</div>
+                    </div>
+                    <div class="text-center p-8 bg-gradient-to-br from-orange-50 to-red-100 rounded-2xl">
+                        <div class="text-4xl font-bold text-orange-600 mb-2">24/7</div>
+                        <div class="text-gray-600">技术支持</div>
+                </div>
+                            </div>
+                        </div>
+                    </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- 公司信息 -->
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center mb-4">
+                        <img src="/images/favicon.png" alt="萤火AI" class="h-8 w-8 mr-3">
+                        <span class="text-xl font-bold">萤火AI</span>
+                            </div>
+                    <p class="text-gray-400 mb-6">
+                        专业级AI智能创作平台，为全球创作者提供最先进的AI工具和服务。
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="ri-wechat-line text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="ri-qq-line text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="ri-mail-line text-xl"></i>
+                        </a>
         </div>
     </div>
 
-    <!-- 折叠 / 展开侧边栏按钮（紧贴侧边栏右侧） -->
-    <button id="sidebar-toggle-btn">
-        <i id="toggle-icon" class="ri-arrow-left-s-line text-xl text-gray-600"></i>
-    </button>
+                <!-- 产品链接 -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">产品功能</h3>
+                    <ul class="space-y-2">
+                        <li><a href="/workspace.html" class="text-gray-400 hover:text-white transition-colors">AI图像处理</a></li>
+                        <li><a href="/workspace.html" class="text-gray-400 hover:text-white transition-colors">AI视频创作</a></li>
+                        <li><a href="/workspace.html" class="text-gray-400 hover:text-white transition-colors">AI模特换装</a></li>
+                        <li><a href="/workspace.html" class="text-gray-400 hover:text-white transition-colors">亚马逊助手</a></li>
+                    </ul>
+                </div>
+                
+                <!-- 支持链接 -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">支持与帮助</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">使用教程</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">常见问题</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">联系客服</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">意见反馈</a></li>
+                    </ul>
+                    </div>
+                </div>
+                
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 萤火AI. 保留所有权利。</p>
+                    </div>
+                </div>
+    </footer>
 
-    <!-- 快捷访问下拉菜单 -->
-    <div id="quick-access-dropdown" class="hidden">
-        <div class="dropdown-header">
-            <div class="flex items-center">
-                <h3>添加快捷访问</h3>
-                <span id="selected-count" class="text-gray-500">(0/10)</span>
-            </div>
-            <button id="close-dropdown" class="text-gray-400 hover:text-gray-600">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-        <!-- 滚动内容区域 -->
-        <div class="feature-list-scroll">
-            <div class="feature-list">
-                <!-- 图像处理类 -->
-                <div class="mb-5">
-                    <h4 class="flex items-center">
-                        <i class="ri-image-edit-line mr-1 text-indigo-500"></i>
-                        图像处理
-                    </h4>
-                    <div class="grid grid-cols-1 gap-1">
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="场景图生成" data-icon="ri-landscape-line" data-bg="bg-emerald-100" data-color="text-emerald-500" data-url="/scene-generator.html">
-                            <span>场景图生成</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="图像智能消除" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/image-removal.html">
-                        <span>图像智能消除</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="智能扩图" data-icon="ri-crop-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/image-expansion.html">
-                            <span>智能扩图</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="模糊图片变清晰" data-icon="ri-image-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/image-sharpen.html">
-                            <span>模糊图片变清晰</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="图像高清放大" data-icon="ri-zoom-in-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/image-upscaler.html">
-                            <span>图像高清放大</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="图像上色" data-icon="ri-paint-brush-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/image-colorization.html">
-                            <span>图像上色</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="局部重绘" data-icon="ri-brush-3-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/local-redraw.html">
-                            <span>局部重绘</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="全局风格化" data-icon="ri-palette-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/global-style.html">
-                            <span>全局风格化</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="垫图" data-icon="ri-collage-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/diantu.html">
-                            <span>垫图</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- 模特与服饰类 -->
-                <div class="mb-5">
-                    <h4 class="flex items-center">
-                        <i class="ri-t-shirt-line mr-1 text-indigo-500"></i>
-                        模特与服饰
-                    </h4>
-                    <div class="grid grid-cols-1 gap-1">
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="模特换肤" data-icon="ri-user-5-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/model-skin-changer.html">
-                        <span>模特换肤</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="模拟试衣" data-icon="ri-t-shirt-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/clothing-simulation.html">
-                        <span>模拟试衣</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="智能服饰分割" data-icon="ri-scissors-cut-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/clothing-segmentation.html">
-                        <span>智能服饰分割</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="智能虚拟模特试穿" data-icon="ri-t-shirt-2-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/virtual-model">
-                        <span>智能虚拟模特试穿</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="鞋靴虚拟试穿" data-icon="ri-footprint-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/virtual-model-shoes.html">
-                        <span>鞋靴虚拟试穿</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- AI创作类 -->
-                <div class="mb-5">
-                    <h4 class="flex items-center">
-                        <i class="ri-brush-line mr-1 text-indigo-500"></i>
-                        AI创作
-                    </h4>
-                    <div class="grid grid-cols-1 gap-1">
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="文生图片" data-icon="ri-image-add-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/text-to-image.html">
-                        <span>文生图片</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="指令编辑" data-icon="ri-edit-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/prompt-editor.html">
-                            <span>指令编辑</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- 视频处理类 -->
-                <div class="mb-5">
-                    <h4 class="flex items-center">
-                        <i class="ri-movie-line mr-1 text-indigo-500"></i>
-                        视频处理
-                    </h4>
-                    <div class="grid grid-cols-1 gap-1">
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="文生视频" data-icon="ri-movie-2-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/text-to-video.html">
-                        <span>文生视频</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="图生视频" data-icon="ri-vidicon-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/image-to-video.html">
-                        <span>图生视频</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="多图转视频" data-icon="ri-film-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/multi-image-to-video.html">
-                        <span>多图转视频</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="视频风格重绘" data-icon="ri-paint-brush-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/video-style-repaint.html">
-                        <span>视频风格重绘</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="视频数字人" data-icon="ri-user-voice-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/digital-human-video.html">
-                        <span>视频数字人</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="视频去除字幕" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/video-subtitle-remover.html">
-                        <span>视频去除字幕</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- 亚马逊助手 -->
-                <div class="mb-5">
-                    <h4 class="flex items-center">
-                        <i class="ri-amazon-line mr-1 text-indigo-500"></i>
-                        亚马逊助手
-                    </h4>
-                    <div class="grid grid-cols-1 gap-1">
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="Listing写作与优化" data-icon="ri-draft-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/amazon-listing.html">
-                            <span>Listing写作与优化</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="后台搜索词" data-icon="ri-search-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-search-term.html">
-                            <span>后台搜索词</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="客户评论分析" data-icon="ri-chat-poll-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/amazon-review-analysis.html">
-                            <span>客户评论分析</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="消费者洞察" data-icon="ri-spy-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/amazon-consumer-insights.html">
-                            <span>消费者洞察</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="客户邮件回复" data-icon="ri-mail-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/amazon-customer-email.html">
-                            <span>客户邮件回复</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="FBA索赔邮件" data-icon="ri-mail-star-line" data-bg="bg-amber-100" data-color="text-amber-500" data-url="/fba-claim-email.html">
-                        <span>FBA索赔邮件</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="评论生成" data-icon="ri-chat-new-line" data-bg="bg-rose-100" data-color="text-rose-500" data-url="/amazon-review-generator.html">
-                            <span>评论生成</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="评论回复" data-icon="ri-reply-line" data-bg="bg-teal-100" data-color="text-teal-500" data-url="/amazon-review-response.html">
-                            <span>评论回复</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="品牌起名" data-icon="ri-price-tag-3-line" data-bg="bg-orange-100" data-color="text-orange-500" data-url="/amazon-brand-naming.html">
-                            <span>品牌起名</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="创建Post" data-icon="ri-article-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-post-creator.html">
-                            <span>创建Post</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="广告视频脚本" data-icon="ri-video-chat-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/amazon-video-script.html">
-                            <span>广告视频脚本</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="产品对比" data-icon="ri-scales-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/product-comparison.html">
-                            <span>产品对比</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="品牌信息收集和总结" data-icon="ri-file-info-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-brand-info.html">
-                            <span>品牌信息收集和总结</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="选品的改款分析和建议" data-icon="ri-tools-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/product-improvement-analysis.html">
-                            <span>选品的改款分析和建议</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="亚马逊关键词推荐" data-icon="ri-hashtag" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/amazon-keyword-recommender.html">
-                            <span>亚马逊关键词推荐</span>
-                        </label>
-                        <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="亚马逊客服case内容" data-icon="ri-customer-service-2-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/amazon-case-creator.html">
-                            <span>亚马逊客服case内容</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 主内容区域 -->
-    <div class="main-content">
-        <!-- 热门作图部分 -->
-        <div class="mb-10">
-            <h2 class="text-2xl font-bold mb-6">热门功能</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                <!-- 模特试衣 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/clothing-simulation.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/before-after-model.jpg" onerror="this.src='https://picsum.photos/400/300?random=1'; console.log('请将图片放置到 /public/images/clothing/before-after-model.jpg 路径');" class="h-full w-full object-cover" alt="模特试衣">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-lg mr-2">
-                                <i class="ri-t-shirt-line text-lg text-indigo-500"></i>
-                            </div>
-                            <h3 class="font-semibold">模特试衣</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">智能试衣，平铺图秒变上身效果，让你的服装瞬间焕发魅力！</p>
-                    </div>
-                </div>
-                
-                <!-- 图像智能消除 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/image-removal.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/Intelligent elimination.png" class="h-full w-full object-cover" alt="图像智能消除">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-lg mr-2">
-                                <i class="ri-eraser-line text-lg text-purple-500"></i>
-                            </div>
-                            <h3 class="font-semibold">图像智能消除</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">智能去除图片中不需要的元素，完美修复画面</p>
-                    </div>
-                </div>
-                
-                <!-- AI换模特 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/model-skin-changer.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/AI Changing Models.png" onerror="this.src='https://picsum.photos/400/300?random=2'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="AI换模特">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg mr-2">
-                                <i class="ri-user-5-line text-lg text-blue-500"></i>
-                            </div>
-                            <h3 class="font-semibold">AI换模特</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">上传人台图/真人试穿图，一键换模特，降低商拍成本</p>
-                    </div>
-                </div>
-                
-                <!-- AI营销图 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/marketing-images.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/AI-Marketing.png" onerror="this.src='https://picsum.photos/400/300?random=3'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="AI营销图">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-green-100 rounded-lg mr-2">
-                                <i class="ri-layout-grid-line text-lg text-green-500"></i>
-                            </div>
-                            <h3 class="font-semibold">AI营销图</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">上传商品图，AI生成打造您的专属商品图</p>
-                    </div>
-                </div>
-                
-                <!-- 图片翻译 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/translate')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/Image translation.png" onerror="this.src='https://picsum.photos/400/300?random=4'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="图片翻译">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-orange-100 rounded-lg mr-2">
-                                <i class="ri-translate-2 text-lg text-orange-500"></i>
-                            </div>
-                            <h3 class="font-semibold">图片翻译</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">上传图片，AI自动识别并翻译内容，支持多语言互译</p>
-                    </div>
-                </div>
-                
-                <!-- 文生图片 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/text-to-image.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/wenshengtupian.png" onerror="this.src='https://picsum.photos/400/300?random=9'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="文生图片">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg mr-2">
-                                <i class="ri-image-add-line text-lg text-blue-500"></i>
-                            </div>
-                            <h3 class="font-semibold">文生图片</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">输入文本描述，AI自动生成精美图片内容</p>
-                    </div>
-                </div>
-                
-                <!-- 智能扩图 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/image-expansion.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/kuotu.png" onerror="this.src='https://picsum.photos/400/300?random=10'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="智能扩图">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg mr-2">
-                                <i class="ri-crop-line text-lg text-red-500"></i>
-                            </div>
-                            <h3 class="font-semibold">智能扩图</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">无缝扩展图像边界，保持自然过渡和高质量效果</p>
-                    </div>
-                </div>
-                
-                <!-- 局部重绘 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/local-redraw.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/jbchonghui.png" onerror="this.src='https://picsum.photos/400/300?random=11'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="局部重绘">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-pink-100 rounded-lg mr-2">
-                                <i class="ri-brush-3-line text-lg text-pink-500"></i>
-                            </div>
-                            <h3 class="font-semibold">局部重绘</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">精确选择区域重绘，AI智能填充，自然融合</p>
-                    </div>
-                </div>
-                
-                <!-- 全局风格化 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/global-style.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/qjfgh.png" onerror="this.src='https://picsum.photos/400/300?random=12'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="全局风格化">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg mr-2">
-                                <i class="ri-palette-line text-lg text-blue-500"></i>
-                            </div>
-                            <h3 class="font-semibold">全局风格化</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">一键转换图像风格，多种艺术效果可选</p>
-                    </div>
-                </div>
-                
-                <!-- 商品换背景 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/cutout')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/huanbeijing.png" onerror="this.src='https://picsum.photos/400/300?random=13'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="商品换背景">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-orange-100 rounded-lg mr-2">
-                                <i class="ri-image-edit-line text-lg text-orange-500"></i>
-                            </div>
-                            <h3 class="font-semibold">商品换背景</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">智能抠图，一键替换商品背景，突显产品特色</p>
-                    </div>
-                </div>
-                
-                <!-- 智能服饰分割 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/clothing-segmentation.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/fushifenge.png" onerror="this.src='https://picsum.photos/400/300?random=14'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="智能服饰分割">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-lg mr-2">
-                                <i class="ri-scissors-cut-line text-lg text-purple-500"></i>
-                            </div>
-                            <h3 class="font-semibold">智能服饰分割</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">精准分割服饰元素，自动生成透明背景图</p>
-                    </div>
-                </div>
-                
-                <!-- 指令编辑 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/prompt-editor.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/AIzhiling.png" onerror="this.src='https://picsum.photos/400/300?random=15'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="指令编辑">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-lg mr-2">
-                                <i class="ri-edit-line text-lg text-indigo-500"></i>
-                            </div>
-                            <h3 class="font-semibold">指令编辑</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">高级AI指令编辑工具，精确控制生成结果</p>
-                    </div>
-                </div>
-                
-                <!-- 模糊图片变清晰 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/image-sharpen.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/Blurred image.png" class="h-full w-full object-cover" alt="模糊图片变清晰">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-pink-100 rounded-lg mr-2">
-                                <i class="ri-focus-2-line text-lg text-pink-500"></i>
-                            </div>
-                            <h3 class="font-semibold">模糊图片变清晰</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">模糊图片一键变清晰，提升图像质量</p>
-                    </div>
-                </div>
-                
-                <!-- 图像上色 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/image-colorization.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/Image coloring.png" class="h-full w-full object-cover" alt="图像上色">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-teal-100 rounded-lg mr-2">
-                                <i class="ri-paint-brush-line text-lg text-teal-500"></i>
-                            </div>
-                            <h3 class="font-semibold">图像上色</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">黑白老照片秒变彩色，AI智能上色技术</p>
-                    </div>
-                </div>
-                
-                <!-- 文生视频 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/text-to-video.html')">
-                    <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/wensheng.png" onerror="this.src='https://picsum.photos/400/300?random=8'; console.log('请将图片放置到 /public/images/clothing/wensheng.png 路径');" class="h-full w-full object-cover" alt="文生视频">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex items-center justify-center mb-2">
-                            <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-lg mr-2">
-                                <i class="ri-movie-2-line text-lg text-indigo-500"></i>
-                            </div>
-                            <h3 class="font-semibold">文生视频</h3>
-                        </div>
-                        <p class="text-sm text-gray-600 text-center">输入文本描述，AI自动生成精美视频内容</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 最流行部分 -->
-        <div>
-            <h2 class="text-2xl font-bold mb-6">亚马逊助手</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                <!-- 亚马逊搜索词 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-search-term.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
-                                <i class="ri-search-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">亚马逊搜索词</h3>
-                        <p class="text-sm text-gray-600 text-center">生成高质量亚马逊后台搜索词，提高产品搜索排名</p>
-                    </div>
-                </div>
-                
-                <!-- 亚马逊Listing优化 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-listing.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center text-purple-600">
-                                <i class="ri-file-list-3-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">亚马逊Listing优化</h3>
-                        <p class="text-sm text-gray-600 text-center">全面优化亚马逊Listing内容，提高转化率</p>
-                    </div>
-                </div>
-                
-                <!-- 亚马逊评论分析 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-red-100 rounded-md flex items-center justify-center text-red-600">
-                                <i class="ri-chat-3-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">亚马逊评论分析</h3>
-                        <p class="text-sm text-gray-600 text-center">深入分析客户评论，提取有价值的产品改进建议</p>
-                    </div>
-                </div>
-                
-                <!-- 消费者洞察 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-green-100 rounded-md flex items-center justify-center text-green-600">
-                                <i class="ri-spy-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">消费者洞察</h3>
-                        <p class="text-sm text-gray-600 text-center">分析目标客户群体需求和购买行为，挖掘市场机会</p>
-                    </div>
-                </div>
-                
-                <!-- 客户邮件回复 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-customer-email.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
-                                <i class="ri-mail-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">客户邮件回复</h3>
-                        <p class="text-sm text-gray-600 text-center">快速生成专业客户邮件回复，提升客户满意度</p>
-                    </div>
-                </div>
-                
-                <!-- FBA索赔邮件 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/fba-claim-email.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-amber-100 rounded-md flex items-center justify-center text-amber-600">
-                                <i class="ri-mail-star-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">FBA索赔邮件</h3>
-                        <p class="text-sm text-gray-600 text-center">高效生成FBA仓库损坏、丢失产品的索赔邮件</p>
-                    </div>
-                </div>
-                
-                <!-- 评论生成 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-generator.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-rose-100 rounded-md flex items-center justify-center text-rose-600">
-                                <i class="ri-chat-new-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">评论生成</h3>
-                        <p class="text-sm text-gray-600 text-center">为产品创建真实、自然的用户评论模板</p>
-                    </div>
-                </div>
-                
-                <!-- 评论回复 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-response.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-teal-100 rounded-md flex items-center justify-center text-teal-600">
-                                <i class="ri-reply-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">评论回复</h3>
-                        <p class="text-sm text-gray-600 text-center">专业回复客户评论，处理负面反馈，增强品牌形象</p>
-                    </div>
-                </div>
-                
-                <!-- 品牌起名 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-orange-100 rounded-md flex items-center justify-center text-orange-600">
-                                <i class="ri-price-tag-3-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">品牌起名</h3>
-                        <p class="text-sm text-gray-600 text-center">生成独特有吸引力的品牌名称，促进品牌识别</p>
-                    </div>
-                </div>
-                
-                <!-- 创建Post -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-post-creator.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-indigo-100 rounded-md flex items-center justify-center text-indigo-600">
-                                <i class="ri-article-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">创建Post</h3>
-                        <p class="text-sm text-gray-600 text-center">快速创建引人入胜的亚马逊品牌Post内容</p>
-                    </div>
-                </div>
-                
-                <!-- 广告视频脚本 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-video-script.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-red-100 rounded-md flex items-center justify-center text-red-600">
-                                <i class="ri-video-chat-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">广告视频脚本</h3>
-                        <p class="text-sm text-gray-600 text-center">生成专业产品广告视频脚本，提升转化率</p>
-                    </div>
-                </div>
-                
-                <!-- 产品对比 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/product-comparison.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-sky-100 rounded-md flex items-center justify-center text-sky-600">
-                                <i class="ri-scales-3-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">产品对比</h3>
-                        <p class="text-sm text-gray-600 text-center">全面对比分析竞品优劣势，找出差异化竞争点</p>
-                    </div>
-                </div>
-                
-                <!-- 品牌信息收集和总结 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-brand-info.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-lime-100 rounded-md flex items-center justify-center text-lime-600">
-                                <i class="ri-file-info-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">品牌信息收集</h3>
-                        <p class="text-sm text-gray-600 text-center">快速收集并总结竞争对手品牌信息，洞察市场动态</p>
-                    </div>
-                </div>
-                
-                <!-- 选品的改款分析和建议 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-violet-100 rounded-md flex items-center justify-center text-violet-600">
-                                <i class="ri-tools-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">改款分析建议</h3>
-                        <p class="text-sm text-gray-600 text-center">深入分析产品改进方向，提供具体可执行的改款建议</p>
-                    </div>
-                </div>
-                
-                <!-- 亚马逊关键词推荐 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-cyan-100 rounded-md flex items-center justify-center text-cyan-600">
-                                <i class="ri-key-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">关键词推荐</h3>
-                        <p class="text-sm text-gray-600 text-center">智能推荐高流量、相关性强的亚马逊搜索关键词</p>
-                    </div>
-                </div>
-                
-                <!-- 亚马逊客服case内容 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-case-creator.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-fuchsia-100 rounded-md flex items-center justify-center text-fuchsia-600">
-                                <i class="ri-customer-service-2-line text-2xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="font-semibold text-center mb-3">客服Case内容</h3>
-                        <p class="text-sm text-gray-600 text-center">生成专业亚马逊客服案例回复，解决常见售后问题</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 移动端功能菜单 -->
-    <div id="mobile-features-dropdown" class="mobile-features-dropdown">
-        <div class="mobile-features-content">
-            <div class="mobile-features-header">
-                <h3 class="font-semibold text-gray-900">功能中心</h3>
-                <button id="mobile-features-close" class="text-gray-400 hover:text-gray-600">
-                    <i class="ri-close-line text-xl"></i>
-                </button>
-            </div>
-            <div class="mobile-features-grid">
-                <!-- 图像处理类 -->
-                <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">图像处理</h4>
-                    <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="mobile-feature-item">场景图生成</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="mobile-feature-item">图像智能消除</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="mobile-feature-item">智能扩图</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="mobile-feature-item">模糊图片变清晰</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="mobile-feature-item">图像高清放大</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="mobile-feature-item">图像上色</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="mobile-feature-item">局部重绘</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="mobile-feature-item">全局风格化</a>
-                        <a onclick="checkAuthAndRedirect('/diantu.html')" class="mobile-feature-item">垫图</a>
-                    </div>
-                </div>
-                
-                <!-- 模特与服饰类 -->
-                <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">模特与服饰</h4>
-                    <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="mobile-feature-item">模特换肤</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="mobile-feature-item">模拟试衣</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="mobile-feature-item">智能服饰分割</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="mobile-feature-item">智能虚拟模特试穿</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="mobile-feature-item">鞋靴虚拟试穿</a>
-                    </div>
-                </div>
-                
-                <!-- AI创作类 -->
-                <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">AI创作</h4>
-                    <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="mobile-feature-item">文生图片</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="mobile-feature-item">指令编辑</a>
-                    </div>
-                </div>
-                
-                <!-- 视频处理类 -->
-                <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">视频处理</h4>
-                    <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="mobile-feature-item">文生视频</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="mobile-feature-item">图生视频</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/multi-image-to-video.html')" class="mobile-feature-item">多图转视频</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="mobile-feature-item">视频风格重绘</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="mobile-feature-item">视频数字人</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="mobile-feature-item">视频去除字幕</a>
-                    </div>
-                </div>
-                
-                <!-- 亚马逊助手 -->
-                <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">亚马逊助手</h4>
-                    <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="mobile-feature-item">Listing写作与优化</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="mobile-feature-item">后台搜索词</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')" class="mobile-feature-item">客户评论分析</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')" class="mobile-feature-item">消费者洞察</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-customer-email.html')" class="mobile-feature-item">客户邮件回复</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="mobile-feature-item">FBA索赔邮件</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="mobile-feature-item">评论生成</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="mobile-feature-item">评论回复</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="mobile-feature-item">品牌起名</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="mobile-feature-item">创建Post</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="mobile-feature-item">广告视频脚本</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="mobile-feature-item">产品对比</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="mobile-feature-item">品牌信息收集和总结</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="mobile-feature-item">选品的改款分析和建议</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="mobile-feature-item">亚马逊关键词推荐</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-case-creator.html')" class="mobile-feature-item">亚马逊客服case内容</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- JavaScript交互功能 -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 获取用户信息
-            const token = localStorage.getItem('authToken');
-            const userInfo = localStorage.getItem('user');
-            
-            // 快捷访问相关元素
-            const quickAccessBtn = document.getElementById('quick-access-btn');
-            const quickAccessDropdown = document.getElementById('quick-access-dropdown');
-            const closeDropdownBtn = document.getElementById('close-dropdown');
-            const sidebarFeaturesContainer = document.getElementById('sidebar-features-container');
-            const selectedCountEl = document.getElementById('selected-count');
-            const MAX_FEATURES = 10;
-            
-            if (token && userInfo) {
-                try {
-                    // 解析用户信息
-                    const user = JSON.parse(userInfo);
-                    
-                    // 用户已登录
-                    document.getElementById('login-btn').classList.add('hidden');
-                    document.getElementById('user-info').classList.remove('hidden');
-                    document.getElementById('username-display').textContent = user.username || '用户';
-                    
-                    console.log('用户已登录:', user.username);
-                } catch (e) {
-                    console.error('解析用户信息出错:', e);
-                }
-            }
-            
-            // 检测移动端并默认收起侧边栏
-            function isMobile() {
-                return window.innerWidth <= 768;
-            }
-            
-            if (isMobile()) {
-                document.body.classList.add('sidebar-collapsed');
-                console.log('移动端检测：侧边栏默认收起');
-            }
-            
-            // 移动端功能中心菜单
-            const mobileFeaturesBtnEl = document.getElementById('mobile-features-btn');
-            const mobileFeaturesDropdownEl = document.getElementById('mobile-features-dropdown');
-            const mobileFeaturesCloseEl = document.getElementById('mobile-features-close');
-            
-            // 显示移动端功能菜单
-            function showMobileFeaturesMenu() {
-                mobileFeaturesDropdownEl.style.display = 'block';
-                setTimeout(() => {
-                    mobileFeaturesDropdownEl.classList.add('show');
-                }, 10);
-            }
-            
-            // 隐藏移动端功能菜单
-            function hideMobileFeaturesMenu() {
-                mobileFeaturesDropdownEl.classList.remove('show');
-                setTimeout(() => {
-                    mobileFeaturesDropdownEl.style.display = 'none';
-                }, 300);
-            }
-            
-            // 移动端功能按钮点击事件
-            if (mobileFeaturesBtnEl) {
-                mobileFeaturesBtnEl.addEventListener('click', showMobileFeaturesMenu);
-            }
-            
-            // 关闭按钮点击事件
-            if (mobileFeaturesCloseEl) {
-                mobileFeaturesCloseEl.addEventListener('click', hideMobileFeaturesMenu);
-            }
-            
-            // 点击背景关闭菜单
-            if (mobileFeaturesDropdownEl) {
-                mobileFeaturesDropdownEl.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        hideMobileFeaturesMenu();
+        // 滚动动画
+        function animateOnScroll() {
+            const elements = document.querySelectorAll('.scroll-animation');
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.classList.add('visible');
                     }
                 });
             }
             
-            // 积分中心下拉菜单
-        const creditsMenuBtn = document.getElementById('credits-menu-btn');
-        const creditsDropdown = document.getElementById('credits-dropdown');
-            const creditsMenuWrapper = document.querySelector('.credits-menu-wrapper');
+        // 数字动画
+        function animateNumbers() {
+            const stats = [
+                { id: 'stat1', target: 50000, suffix: '+' },
+                { id: 'stat2', target: 1000000, suffix: '+' },
+                { id: 'stat3', target: 98, suffix: '%' }
+            ];
             
-            let creditsHideTimeout;
-            let isMouseOverCreditsMenu = false;
-            
-            // 显示积分中心下拉菜单
-            function showCreditsDropdown() {
-                clearTimeout(creditsHideTimeout);
-                
-                // 立即改变箭头方向为向上
-                const arrowIcon = creditsMenuBtn.querySelector('.arrow-icon');
-                arrowIcon.style.transform = 'rotate(180deg)';
-                
-                // 先移除 hidden 类并设置显示
-                creditsDropdown.classList.remove('hidden');
-                creditsDropdown.style.display = '';
-                
-                // 强制重排，确保过渡效果正常工作
-                creditsDropdown.offsetHeight;
-                
-                // 添加可见类
-                requestAnimationFrame(() => {
-                    creditsDropdown.classList.add('visible');
-                });
-                
-                // 关闭其他下拉菜单
-                featuresDropdown.classList.add('hidden');
-                if (userDropdown) userDropdown.classList.add('hidden');
-            }
-            
-            // 隐藏积分中心下拉菜单
-            function hideCreditsDropdown() {
-                if (!isMouseOverCreditsMenu) {
-                    // 立即改变箭头方向为向下
-                    const arrowIcon = creditsMenuBtn.querySelector('.arrow-icon');
-                    arrowIcon.style.transform = 'rotate(0deg)';
-                    
-                    // 移除可见类，触发淡出动画
-                    creditsDropdown.classList.remove('visible');
-                    
-                    // 延长隐藏延迟，给用户更多时间移动到下拉菜单
-                    creditsHideTimeout = setTimeout(() => {
-                        if (!isMouseOverCreditsMenu) {
-                            creditsDropdown.classList.add('hidden');
-                            creditsDropdown.style.display = 'none';
+            stats.forEach(stat => {
+                const element = document.getElementById(stat.id);
+                if (element) {
+                    let current = 0;
+                    const increment = stat.target / 100;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= stat.target) {
+                            current = stat.target;
+                            clearInterval(timer);
                         }
-                    }, 300); // 延长延迟时间，给用户更多反应时间
+                        
+                        if (stat.target >= 1000000) {
+                            element.textContent = (current / 1000000).toFixed(1) + 'M' + stat.suffix;
+                        } else if (stat.target >= 1000) {
+                            element.textContent = (current / 1000).toFixed(0) + 'K' + stat.suffix;
+                        } else {
+                            element.textContent = Math.floor(current) + stat.suffix;
+                        }
+                    }, 20);
                 }
-            }
-            
-            // 优化鼠标事件处理
-            creditsMenuWrapper.addEventListener('mouseenter', () => {
-                isMouseOverCreditsMenu = true;
-                showCreditsDropdown();
             });
-            
-            creditsMenuWrapper.addEventListener('mouseleave', () => {
-                isMouseOverCreditsMenu = false;
-                // 增加延迟，让用户有时间移动到下拉菜单
-                setTimeout(() => {
-                    if (!isMouseOverCreditsMenu) {
-                        hideCreditsDropdown();
-                    }
-                }, 100); // 添加短暂延迟
-            });
-            
-            // 下拉菜单的鼠标事件
-            creditsDropdown.addEventListener('mouseenter', () => {
-                isMouseOverCreditsMenu = true;
-                clearTimeout(creditsHideTimeout);
-            });
-            
-            creditsDropdown.addEventListener('mouseleave', () => {
-                isMouseOverCreditsMenu = false;
-                // 添加短延迟，防止意外鼠标移动导致菜单消失
-                setTimeout(() => {
-                    if (!isMouseOverCreditsMenu) {
-                        hideCreditsDropdown();
-                    }
-                }, 100);
-            });
-            
-            // 移除原来的点击事件
-            creditsMenuBtn.removeEventListener('click', function() {
-                creditsDropdown.classList.toggle('hidden');
-            });
+        }
         
-            // 用户菜单下拉
-        const userMenuBtn = document.getElementById('user-menu-btn');
-        const userDropdown = document.getElementById('user-dropdown');
-            const userMenuWrapper = document.querySelector('.user-menu-wrapper');
-            
-            let userHideTimeout;
-            let isMouseOverUserMenu = false;
-            
-            // 显示用户下拉菜单
-            function showUserDropdown() {
-                clearTimeout(userHideTimeout);
-                
-                // 立即改变箭头方向为向上
-                const arrowIcon = userMenuBtn.querySelector('.arrow-icon');
-                arrowIcon.style.transform = 'rotate(180deg)';
-                
-                // 先移除 hidden 类并设置显示
-                userDropdown.classList.remove('hidden');
-                userDropdown.style.display = '';
-                
-                // 强制重排，确保过渡效果正常工作
-                userDropdown.offsetHeight;
-                
-                // 添加可见类
-                requestAnimationFrame(() => {
-                    userDropdown.classList.add('visible');
-                });
-                
-                // 关闭其他下拉菜单
-                featuresDropdown.classList.add('hidden');
-                creditsDropdown.classList.add('hidden');
-            }
-            
-            // 隐藏用户下拉菜单
-            function hideUserDropdown() {
-                if (!isMouseOverUserMenu) {
-                    // 立即改变箭头方向为向下
-                    const arrowIcon = userMenuBtn.querySelector('.arrow-icon');
-                    arrowIcon.style.transform = 'rotate(0deg)';
-                    
-                    // 移除可见类，触发淡出动画
-                    userDropdown.classList.remove('visible');
-                    
-                    // 延长隐藏延迟，给用户更多时间移动到下拉菜单
-                    userHideTimeout = setTimeout(() => {
-                        if (!isMouseOverUserMenu) {
-                            userDropdown.classList.add('hidden');
-                            userDropdown.style.display = 'none';
-                        }
-                    }, 300); // 延长延迟时间，给用户更多反应时间
-                }
-            }
-        
-        if (userMenuBtn) {
-                // 优化鼠标事件处理
-                userMenuWrapper.addEventListener('mouseenter', () => {
-                    isMouseOverUserMenu = true;
-                    showUserDropdown();
-                });
-                
-                userMenuWrapper.addEventListener('mouseleave', () => {
-                    isMouseOverUserMenu = false;
-                    // 增加延迟，让用户有时间移动到下拉菜单
-                    setTimeout(() => {
-                        if (!isMouseOverUserMenu) {
-                            hideUserDropdown();
-                        }
-                    }, 100); // 添加短暂延迟
-                });
-                
-                // 下拉菜单的鼠标事件
-                userDropdown.addEventListener('mouseenter', () => {
-                    isMouseOverUserMenu = true;
-                    clearTimeout(userHideTimeout);
-                });
-                
-                userDropdown.addEventListener('mouseleave', () => {
-                    isMouseOverUserMenu = false;
-                    // 添加短延迟，防止意外鼠标移动导致菜单消失
-                    setTimeout(() => {
-                        if (!isMouseOverUserMenu) {
-                            hideUserDropdown();
-                        }
-                    }, 100);
-                });
-                
-                // 移除原来的点击事件
-                userMenuBtn.removeEventListener('click', function() {
-                userDropdown.classList.toggle('hidden');
-            });
-            }
-            
-            // 退出登录
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async function(e) {
+        // 平滑滚动
+        function smoothScroll() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    // 使用userLogout函数进行登出
-                    if (typeof window.userLogout === 'function') {
-                        await window.userLogout();
-                    } else {
-                        // 兼容处理
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('user');
-                        window.location.href = '/';
-                    }
-                });
-            }
-            
-            // 功能中心下拉菜单 - 改为悬停显示
-            const featuresMenuBtn = document.getElementById('features-menu-btn');
-            const featuresDropdown = document.getElementById('features-dropdown');
-            const featuresMenuWrapper = document.querySelector('.features-menu-wrapper');
-            
-            let hideTimeout;
-            let isMouseOverMenu = false;
-            
-            // 显示下拉菜单
-            function showFeaturesDropdown() {
-                clearTimeout(hideTimeout);
-            
-                // 立即改变箭头方向为向上
-                const arrowIcon = featuresMenuBtn.querySelector('.arrow-icon');
-                arrowIcon.style.transform = 'rotate(180deg)';
-                
-                // 先移除 hidden 类并设置显示
-                featuresDropdown.classList.remove('hidden');
-                featuresDropdown.style.display = '';
-                
-                // 强制重排，确保过渡效果正常工作
-                featuresDropdown.offsetHeight;
-                
-                // 添加可见类
-                requestAnimationFrame(() => {
-                    featuresDropdown.classList.add('visible');
-                });
-                
-                // 关闭其他下拉菜单
-                creditsDropdown.classList.add('hidden');
-                if (userDropdown) userDropdown.classList.add('hidden');
-            }
-            
-            // 隐藏下拉菜单
-            function hideFeaturesDropdown() {
-                if (!isMouseOverMenu) {
-                    // 立即改变箭头方向为向下
-                    const arrowIcon = featuresMenuBtn.querySelector('.arrow-icon');
-                    arrowIcon.style.transform = 'rotate(0deg)';
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
                     
-                    // 移除可见类，触发淡出动画
-                    featuresDropdown.classList.remove('visible');
-                    
-                    // 延长隐藏延迟，给用户更多时间移动到下拉菜单
-                    hideTimeout = setTimeout(() => {
-                        if (!isMouseOverMenu) {
-                            featuresDropdown.classList.add('hidden');
-                            featuresDropdown.style.display = 'none';
-                        }
-                    }, 300); // 延长延迟时间，给用户更多反应时间
-                }
-            }
-            
-            // 优化鼠标事件处理
-            featuresMenuWrapper.addEventListener('mouseenter', () => {
-                isMouseOverMenu = true;
-                showFeaturesDropdown();
-            });
-            
-            featuresMenuWrapper.addEventListener('mouseleave', (e) => {
-                isMouseOverMenu = false;
-                // 增加延迟，让用户有时间移动到下拉菜单
-                setTimeout(() => {
-                    if (!isMouseOverMenu) {
-                        hideFeaturesDropdown();
-                }
-                }, 100); // 添加短暂延迟
-            });
-            
-            // 下拉菜单的鼠标事件
-            featuresDropdown.addEventListener('mouseenter', () => {
-                isMouseOverMenu = true;
-                clearTimeout(hideTimeout);
-                if (!featuresDropdown.classList.contains('visible')) {
-                    showFeaturesDropdown();
-                }
-            });
-            
-            featuresDropdown.addEventListener('mouseleave', () => {
-                isMouseOverMenu = false;
-                // 添加短延迟，防止意外鼠标移动导致菜单消失
-                setTimeout(() => {
-                    if (!isMouseOverMenu) {
-                        hideFeaturesDropdown();
-                }
-                }, 100);
-            });
-            
-            // 辅助函数：检查鼠标是否在指定元素上
-            function isMouseOverElement(event, element) {
-                const rect = element.getBoundingClientRect();
-                const x = event.clientX;
-                const y = event.clientY;
-                
-                return (
-                    x >= rect.left &&
-                    x <= rect.right &&
-                    y >= rect.top &&
-                    y <= rect.bottom
-                );
-            }
-            
-            // 存储用户选择的功能
-            let selectedFeatures = [];
-            
-            // 从本地存储加载用户选择的功能
-            function loadSelectedFeatures() {
-                const saved = localStorage.getItem('quickAccessFeatures');
-                if (saved) {
-                    try {
-                        selectedFeatures = JSON.parse(saved);
-                        // 同步最新的icon / bg / color（解决改图标后旧记录不更新的问题）
-                        selectedFeatures = selectedFeatures.map(sf => {
-                            const cb = document.querySelector(`.feature-checkbox-item input[data-feature="${sf.name}"]`);
-                            if (cb) {
-                                const { icon, bg, color } = cb.dataset;
-                                // 如果数据发生变化，则更新
-                                if (icon && sf.icon !== icon) sf.icon = icon;
-                                if (bg && sf.bg !== bg) sf.bg = bg;
-                                if (color && sf.color !== color) sf.color = color;
-                            }
-                            return sf;
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
                         });
-                        updateSelectedCount();
-                        renderSidebarFeatures();
-                        updateCheckboxes();
-                } catch (e) {
-                        console.error('加载快捷访问功能失败:', e);
-                        selectedFeatures = [];
-                    }
-                }
-                
-                // 显示或隐藏空状态提示
-                updateEmptyState();
-            }
-            
-            // 保存用户选择的功能到本地存储
-            function saveSelectedFeatures() {
-                localStorage.setItem('quickAccessFeatures', JSON.stringify(selectedFeatures));
-            }
-            
-            // 更新选中的功能数量显示
-            function updateSelectedCount() {
-                selectedCountEl.textContent = `(${selectedFeatures.length}/${MAX_FEATURES})`;
-                
-                // 根据选中数量更改样式
-                if (selectedFeatures.length >= MAX_FEATURES) {
-                    selectedCountEl.classList.add('text-red-500');
-                    selectedCountEl.classList.remove('text-gray-500');
-            } else {
-                    selectedCountEl.classList.add('text-gray-500');
-                    selectedCountEl.classList.remove('text-red-500');
-                }
-            }
-            
-            // 更新复选框状态
-            function updateCheckboxes() {
-                const checkboxes = document.querySelectorAll('.feature-checkbox-item input[type="checkbox"]');
-                checkboxes.forEach(checkbox => {
-                    const feature = checkbox.dataset.feature;
-                    checkbox.checked = selectedFeatures.some(item => item.name === feature);
-                });
-            }
-            
-            // 更新空状态显示
-            function updateEmptyState() {
-                const emptyState = document.querySelector('#sidebar-features-container .empty-state');
-                if (selectedFeatures.length === 0) {
-                    emptyState.classList.remove('hidden');
-                } else {
-                    emptyState.classList.add('hidden');
-                }
-            }
-            
-            // 渲染侧边栏功能列表
-            function renderSidebarFeatures() {
-                // 清空容器，但保留空状态提示
-                const emptyState = document.querySelector('#sidebar-features-container .empty-state');
-                sidebarFeaturesContainer.innerHTML = '';
-                sidebarFeaturesContainer.appendChild(emptyState);
-                
-                // 添加功能项
-                selectedFeatures.forEach((feature, index) => {
-                    const featureItem = document.createElement('div');
-                    featureItem.className = 'sidebar-feature-item';
-                    featureItem.setAttribute('data-index', index);
-                    
-                    featureItem.innerHTML = `
-                        <div class="feature-info">
-                            <div class="feature-icon ${feature.bg} ${feature.color}">
-                                <i class="${feature.icon}"></i>
-                            </div>
-                            <span>${feature.name}</span>
-                            ${feature.beta ? '<span class="beta-tag">Beta</span>' : ''}
-                        </div>
-                        <div class="remove-btn" data-feature="${feature.name}">
-                            <i class="ri-close-line"></i>
-                        </div>
-                    `;
-                    
-                    // 添加点击事件，点击功能项跳转到对应页面
-                    featureItem.querySelector('.feature-info').addEventListener('click', () => {
-                        checkAuthAndRedirect(feature.url);
-                    });
-                    
-                    // 添加删除按钮点击事件
-                    featureItem.querySelector('.remove-btn').addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        
-                        // 添加删除动画
-                        featureItem.classList.add('opacity-0', 'scale-95');
-                        featureItem.style.transition = 'all 0.2s ease';
-                        
-                        setTimeout(() => {
-                            removeFeature(feature.name);
-                        }, 200);
-                    });
-                    
-                    sidebarFeaturesContainer.appendChild(featureItem);
-                });
-                
-                // 更新空状态显示
-                updateEmptyState();
-            }
-            
-            // 添加功能到侧边栏
-            function addFeature(checkbox) {
-                const { feature, icon, bg, color, url } = checkbox.dataset;
-                const beta = checkbox.parentElement.querySelector('.beta-tag') !== null;
-                
-                // 检查是否已经添加
-                const existingIndex = selectedFeatures.findIndex(item => item.name === feature);
-                if (existingIndex !== -1) {
-                    return; // 已经添加过，不重复添加
-                }
-                
-                // 检查是否超过最大数量
-                if (selectedFeatures.length >= MAX_FEATURES) {
-                    // 显示优雅的提示
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in-down';
-                    toast.innerHTML = `<div class="flex items-center"><i class="ri-error-warning-line mr-2"></i> 最多只能添加${MAX_FEATURES}个快捷访问功能</div>`;
-                    document.body.appendChild(toast);
-                    
-                    setTimeout(() => {
-                        toast.classList.add('animate-fade-out');
-                        setTimeout(() => {
-                            document.body.removeChild(toast);
-                        }, 300);
-                    }, 3000);
-                    
-                    checkbox.checked = false;
-                    return;
-                }
-                
-                // 添加到选中列表
-                selectedFeatures.push({
-                    name: feature,
-                    icon,
-                    bg,
-                    color,
-                    url,
-                    beta
-                });
-                
-                // 更新UI
-                updateSelectedCount();
-                renderSidebarFeatures();
-                saveSelectedFeatures();
-            }
-            
-            // 从侧边栏移除功能
-            function removeFeature(featureName) {
-                const index = selectedFeatures.findIndex(item => item.name === featureName);
-                if (index !== -1) {
-                    selectedFeatures.splice(index, 1);
-                    
-                    // 更新UI
-                    updateSelectedCount();
-                    renderSidebarFeatures();
-                    updateCheckboxes();
-                    saveSelectedFeatures();
-                }
-            }
-            
-            // 快捷访问按钮点击事件
-            if (quickAccessBtn) {
-                quickAccessBtn.addEventListener('click', function() {
-                    quickAccessDropdown.classList.toggle('hidden');
-                    
-                    // 添加按钮点击效果
-                    this.classList.add('scale-95');
-                    setTimeout(() => {
-                        this.classList.remove('scale-95');
-                    }, 200);
-                });
-            }
-            
-            // 关闭下拉菜单按钮点击事件
-            if (closeDropdownBtn) {
-                closeDropdownBtn.addEventListener('click', function() {
-                    quickAccessDropdown.classList.add('hidden');
-                });
-            }
-            
-            // 复选框点击事件
-            document.querySelectorAll('.feature-checkbox-item input[type="checkbox"]').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        addFeature(this);
-            } else {
-                        removeFeature(this.dataset.feature);
                     }
                 });
             });
-            
-            // 点击页面其他区域关闭下拉菜单
-            document.addEventListener('click', function(e) {
-                if (!quickAccessBtn.contains(e.target) && 
-                    !quickAccessDropdown.contains(e.target) && 
-                    !quickAccessDropdown.classList.contains('hidden')) {
-                    quickAccessDropdown.classList.add('hidden');
-                }
-                
-                if (!creditsMenuBtn.contains(e.target)) {
-                    creditsDropdown.classList.add('hidden');
-                }
-                
-                if (userMenuBtn && !userMenuBtn.contains(e.target)) {
-                    userDropdown.classList.add('hidden');
-                }
-                
-                // 功能中心下拉菜单由悬停控制，不需要在这里处理
-            });
-            
-            // 添加淡入淡出动画样式
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fadeInDown {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                @keyframes fadeOut {
-                    from {
-                        opacity: 1;
-                    }
-                    to {
-                        opacity: 0;
-                    }
-                }
-                
-                .animate-fade-in-down {
-                    animation: fadeInDown 0.3s ease-out forwards;
-                }
-                
-                .animate-fade-out {
-                    animation: fadeOut 0.3s ease-out forwards;
-                }
-            `;
-            document.head.appendChild(style);
-            
-            // 页面加载时初始化快捷访问功能
-            loadSelectedFeatures();
-            
-            // === 侧边栏折叠/展开逻辑 ===
-            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-            const bodyEl = document.body;
-            sidebarToggleBtn.addEventListener('click', () => {
-                bodyEl.classList.toggle('sidebar-collapsed');
-                sidebarToggleBtn.classList.toggle('collapsed');
-            });
-        });
-        
-        // 检查用户权限并在新窗口中打开
-        async function checkAuthAndRedirect(url) {
-            console.log('checkAuthAndRedirect 被调用，目标URL:', url);
-            
-            // 防抖机制：避免快速重复点击导致的问题
-            if (checkAuthAndRedirect.isChecking) {
-                console.log('正在进行认证检查，忽略重复请求');
-                return;
-            }
-            checkAuthAndRedirect.isChecking = true;
-            
-            try {
-                // 首先进行本地检查，增加延迟确保localStorage完全写入
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                const token = localStorage.getItem('authToken');
-                const userInfo = localStorage.getItem('user');
-                
-                if (!token || !userInfo) {
-                    console.log('本地存储中没有认证信息，跳转到登录页');
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                // 解析用户信息，验证是否有效
-                try {
-                    const user = JSON.parse(userInfo);
-                    if (!user.id || !user.username) {
-                        console.log('用户信息格式无效，跳转到登录页');
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('user');
-                        window.location.href = '/login.html';
-                        return;
-                    }
-                } catch (e) {
-                    console.log('用户信息解析失败，跳转到登录页');
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login.html';
-                    return;
-                }
-                
-                // 如果有统一的auth-check.js提供的checkAuth函数，优先使用它
-                if (typeof window.checkAuth === 'function') {
-                    try {
-                        console.log('使用统一的checkAuth函数进行验证');
-                        const isAuthenticated = await window.checkAuth(false);
-                        if (isAuthenticated) {
-                            console.log('认证成功，在新窗口中打开:', url);
-                            window.open(url, '_blank');
-                        } else {
-                            console.log('认证失败，跳转到登录页');
-                            window.location.href = '/login.html';
-                        }
-                    } catch (error) {
-                        console.error('统一认证检查出错:', error);
-                        // 出错时优先信任本地存储，直接打开页面
-                        console.log('统一认证出错，但本地有token，直接打开页面');
-                        window.open(url, '_blank');
-                    }
-                    return;
-                }
-                
-                // 使用改进的服务器验证（带重试机制）
-                const maxRetries = 2;
-                let retryCount = 0;
-                
-                while (retryCount <= maxRetries) {
-                    try {
-                        console.log(`尝试服务器验证 (第${retryCount + 1}次)`);
-                        
-                        // 设置更长的超时时间
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
-                        
-                        const response = await fetch('/api/auth/verify', {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            signal: controller.signal
-                        });
-                        
-                        clearTimeout(timeoutId);
-                        
-                        if (response.status === 401 || response.status === 403) {
-                            console.log('服务器确认会话已失效，状态码:', response.status);
-                            // 明确的认证失败，清除登录信息
-                            if (typeof window.userLogout === 'function') {
-                                window.userLogout();
-                            } else {
-                                localStorage.removeItem('authToken');
-                                localStorage.removeItem('user');
-                                window.location.href = '/login.html';
-                            }
-                            return;
-                        }
-                        
-                        if (response.ok) {
-                            console.log('服务器验证成功，在新窗口中打开:', url);
-                            window.open(url, '_blank');
-                            return;
-                        } else {
-                            console.warn(`验证API返回状态 ${response.status}，准备重试`);
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        
-                    } catch (error) {
-                        retryCount++;
-                        console.warn(`验证尝试 ${retryCount} 失败:`, error.message);
-                        
-                        if (retryCount <= maxRetries) {
-                            // 等待后重试
-                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-                        }
-                    }
-                }
-                
-                // 所有重试都失败了，但本地有有效token，优先信任本地状态
-                console.log('服务器验证失败，但本地token存在，直接打开页面让目标页面处理');
-                window.open(url, '_blank');
-                
-            } finally {
-                // 确保清除检查标志
-                setTimeout(() => {
-                    checkAuthAndRedirect.isChecking = false;
-                }, 500);
-            }
-        }
-    </script>
-
-    <!-- 客服组件容器 -->
-    <div id="customer-service-component"></div>
-    
-    <script>
-        // 客服组件加载函数 - 直接在index.html中定义
-        function loadCustomerServiceForIndex() {
-            console.log('🔧 开始加载客服组件...');
-            
-            return fetch('/components/customer-service.html')
-                .then(response => {
-                    console.log(`📡 客服组件请求响应: ${response.status}`);
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    // 检查是否已经加载了客服组件
-                    if (document.getElementById('cs-float-button')) {
-                        console.log('⚠️ 客服组件已存在，跳过加载');
-                        return;
-                    }
-                    
-                    console.log('📝 插入客服组件HTML...');
-                    
-                    // 直接插入HTML到body
-                    document.body.insertAdjacentHTML('beforeend', html);
-                    
-                    // 验证组件是否成功插入
-                    const floatBtn = document.getElementById('cs-float-button');
-                    const chatWindow = document.getElementById('cs-chat-window');
-                    
-                    if (floatBtn && chatWindow) {
-                        console.log('✅ 客服组件HTML加载成功');
-                        
-                        // 等待脚本执行完成
-                        setTimeout(() => {
-                            console.log('🔍 检查客服组件函数...');
-                            console.log(`toggleChatWindow: ${typeof window.toggleChatWindow}`);
-                            console.log(`openChatWindow: ${typeof window.openChatWindow}`);
-                            console.log(`closeChatWindow: ${typeof window.closeChatWindow}`);
-                            console.log(`sendMessage: ${typeof window.sendMessage}`);
-                            
-                            if (typeof window.toggleChatWindow === 'function') {
-                                console.log('✅ 客服组件JavaScript函数已就绪');
-                                
-                                // 手动绑定点击事件作为备用方案
-                                floatBtn.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    console.log('🖱️ 客服按钮被点击');
-                                    if (typeof window.toggleChatWindow === 'function') {
-                                        window.toggleChatWindow();
-                                    } else {
-                                        console.error('❌ toggleChatWindow函数不可用');
-                                    }
-                                });
-                                
-                                console.log('✅ 客服按钮事件绑定完成');
-                            } else {
-                                console.error('❌ 客服组件JavaScript函数未定义');
-                            }
-                        }, 1000);
-                    } else {
-                        console.error('❌ 客服组件加载失败，未找到必要元素');
-                    }
-                })
-                .catch(error => {
-                    console.error(`❌ 客服组件加载失败: ${error.message}`);
-                });
         }
         
-        // 页面加载完成后加载客服组件
+        // 导航栏背景效果
+        function navbarEffect() {
+            const navbar = document.querySelector('nav');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 100) {
+                    navbar.classList.add('bg-white/98');
+                    navbar.classList.remove('bg-white/95');
+            } else {
+                    navbar.classList.add('bg-white/95');
+                    navbar.classList.remove('bg-white/98');
+                }
+            });
+        }
+        
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 页面DOM加载完成');
-            setTimeout(() => {
-                loadCustomerServiceForIndex();
-            }, 500);
+            // 添加滚动动画类
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                section.classList.add('scroll-animation');
+            });
+            
+            // 启动数字动画
+            setTimeout(animateNumbers, 1000);
+            
+            // 绑定事件
+            window.addEventListener('scroll', animateOnScroll);
+            smoothScroll();
+            navbarEffect();
+            
+            // 初始检查滚动位置
+            animateOnScroll();
         });
         
-        // 如果页面已经加载完成，立即加载
-        if (document.readyState !== 'loading') {
-            console.log('📄 页面已加载完成，立即加载客服组件');
-            setTimeout(() => {
-                loadCustomerServiceForIndex();
-            }, 500);
+        // 处理开始使用按钮点击
+        function handleStartUsing() {
+            // 检查用户是否已登录
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            if (token) {
+                // 已登录，跳转到home.html
+                window.location.href = '/home.html';
+            } else {
+                // 未登录，跳转到登录页面
+                window.location.href = '/public/login.html';
+            }
+        }
+        
+        // 将函数暴露到全局作用域
+        window.handleStartUsing = handleStartUsing;
+        
+        // 客服组件加载
+        if (typeof loadComponent === 'function') {
+            loadComponent('customer-service');
         }
     </script>
 </body>

@@ -73,12 +73,13 @@ async function userLogout() {
         
         console.log('已清除用户登录信息');
         
-        // 如果当前是用户页面，重定向到登录页面
-        if (!window.location.pathname.includes('admin')) {
+        // 如果当前是用户页面，但不在home.html，则重定向到登录页面
+        if (!window.location.pathname.includes('admin') && !window.location.pathname.includes('home.html')) {
             setTimeout(function() {
                 window.location.href = '/login.html';
             }, 100);
         }
+        // 如果在home.html页面，不进行任何跳转，由页面自己处理UI更新
         
         return true;
     } catch (e) {
