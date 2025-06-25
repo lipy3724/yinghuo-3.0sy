@@ -536,6 +536,12 @@
             display: block;
         }
         
+        /* 指令编辑案例的特殊样式 - 从上方裁剪图片 */
+        #prompt-edit-before-img,
+        #prompt-edit-after-img {
+            object-position: center bottom;
+        }
+        
         .arrow {
             margin: 0 20px;
             display: flex;
@@ -1450,6 +1456,44 @@
                         </li>
                     </ul>
                     <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                </div>
+            </div>
+            
+            <!-- 指令编辑案例 -->
+            <div class="case-row" data-category="image">
+                <div class="product-info">
+                    <div class="product-tag">精准创作</div>
+                    <h3 class="product-title">AI指令编辑</h3>
+                    <ul class="feature-list">
+                        <li class="flex items-start">
+                            <span class="text-indigo-500 mr-2 text-lg">•</span>
+                            <span>内容创作者通过精确提示词，实现创意作品的精准控制</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-indigo-500 mr-2 text-lg">•</span>
+                            <span>智能分析指令意图，自动优化生成效果</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-indigo-500 mr-2 text-lg">•</span>
+                            <span>降低创作门槛，满意度提升85%，创作效率提升400%</span>
+                        </li>
+                    </ul>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                </div>
+                <div class="product-showcase">
+                    <div class="comparison-container">
+                        <div class="before-image">
+                            <img src="/images/cases/case_prompt_edit_before.jpg" alt="指令编辑前" id="prompt-edit-before-img">
+                            <span class="image-label">原始图片</span>
+                        </div>
+                        <div class="arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                        <div class="after-image">
+                            <img src="/images/cases/case_prompt_edit_after.jpg" alt="指令编辑后" id="prompt-edit-after-img">
+                            <span class="image-label">生成结果</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
