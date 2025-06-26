@@ -1638,4 +1638,99 @@ router.post('/clear-customer-service-data', protect, checkAdmin, async (req, res
   }
 });
 
+/**
+ * @route   GET /api/admin/customer-message-cleanup
+ * @desc    获取客服消息保存时间设置
+ * @access  私有 (仅管理员)
+ */
+router.get('/customer-message-cleanup', protect, checkAdmin, async (req, res) => {
+  try {
+    const { action } = req.query;
+    
+    if (action === 'getRetention') {
+      // 获取当前设置的保存时间，默认12小时
+      const retentionHours = parseInt(process.env.CUSTOMER_MESSAGE_RETENTION_HOURS) || 12;
+      
+      return res.json({
+        success: true,
+        retentionHours: retentionHours
+      });
+    }
+    
+    return res.status(400).json({
+      success: false,
+      message: '无效的操作'
+    });
+    
+  } catch (error) {
+    console.error('获取客服消息设置失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取客服消息设置失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/admin/customer-message-cleanup
+ * @desc    手动清理过期客服消息或修改保存时间
+ * @access  私有 (仅管理员)
+ */
+router.post('/customer-message-cleanup', protect, checkAdmin, async (req, res) => {
+  try {
+    const { action, retentionHours } = req.body;
+    
+    // 引入清理函数
+    const { cleanupCustomerMessages } = require('../utils/cleanupTasks');
+    
+    // 如果是手动清理操作
+    if (action === 'cleanup') {
+      const deletedCount = await cleanupCustomerMessages();
+      
+      return res.json({
+        success: true,
+        message: `已清理 ${deletedCount} 条过期客服消息`,
+        deletedCount
+      });
+    }
+    
+    // 如果是修改保存时间
+    if (action === 'setRetention' && retentionHours) {
+      // 验证保存时间
+      const hours = parseInt(retentionHours);
+      if (isNaN(hours) || hours < 1 || hours > 720) { // 最长30天
+        return res.status(400).json({
+          success: false,
+          message: '保存时间必须在1-720小时之间'
+        });
+      }
+      
+      // 更新环境变量中的保存时间
+      process.env.CUSTOMER_MESSAGE_RETENTION_HOURS = hours;
+      
+      console.log(`客服消息保存时间已设置为 ${hours} 小时`);
+      
+      return res.json({
+        success: true,
+        message: `客服消息保存时间已设置为 ${hours} 小时`,
+        retentionHours: hours
+      });
+    }
+    
+    return res.status(400).json({
+      success: false,
+      message: '无效的操作'
+    });
+    
+  } catch (error) {
+    console.error('客服消息清理操作失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '客服消息清理操作失败',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router; 

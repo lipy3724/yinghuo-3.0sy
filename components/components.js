@@ -2,7 +2,7 @@
 
 // 检查用户权限并重定向 - 核心功能函数
 function checkAuthAndRedirect(url) {
-    const token = localStorage.getItem('authToken');
+    const token = getAuthToken();
     if (token) {
         // 在新标签页中打开功能页面
         window.open(url, '_blank');
@@ -419,7 +419,7 @@ function initializeAuth() {
 
 // 检查用户登录状态并更新导航栏UI
 function updateNavbarLoginStatus() {
-    const token = localStorage.getItem('authToken');
+    const token = getAuthToken();
     const userInfo = localStorage.getItem('user');
     
     const loginBtn = document.getElementById('login-btn');
@@ -773,10 +773,11 @@ function sendToServer(message) {
     
     csLog('📡 发送到服务器，用户ID: ' + userId);
     
-    fetch('/api/kefu/messages', {
+    fetch('/api/user-kefu/messages', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
             userId: parseInt(userId),
@@ -844,7 +845,11 @@ function loadMessages() {
     
     csLog('📥 加载历史消息');
     
-    fetch('/api/kefu/messages?userId=' + parseInt(userId))
+    fetch('/api/user-kefu/messages?userId=' + parseInt(userId), {
+        headers: {
+            'Authorization': `Bearer ${getAuthToken()}`
+        }
+    })
     .then(function(response) {
         if (!response.ok) {
             throw new Error('HTTP ' + response.status);
@@ -1005,12 +1010,16 @@ function checkForNewMessages() {
     }
     
     // 构建请求URL，包含最后消息时间参数
-    var url = '/api/kefu/messages?userId=' + parseInt(userId);
+    var url = '/api/user-kefu/messages?userId=' + parseInt(userId);
     if (lastMessageTime) {
         url += '&since=' + encodeURIComponent(lastMessageTime);
     }
     
-    fetch(url)
+    fetch(url, {
+        headers: {
+            'Authorization': `Bearer ${getAuthToken()}`
+        }
+    })
     .then(function(response) {
         if (!response.ok) {
             throw new Error('HTTP ' + response.status);
@@ -1197,4 +1206,17 @@ window.ComponentsJS = {
     initializeQuickAccess,
     initializeAuth,
     showToast
-}; 
+};
+
+// 获取认证token
+function getAuthToken() {
+    // 优先获取authToken，这是普通用户使用的key
+    let token = localStorage.getItem('authToken');
+    
+    // 如果没有，尝试获取admin_token，这是管理员使用的key
+    if (!token) {
+        token = localStorage.getItem('admin_token');
+    }
+    
+    return token;
+} 

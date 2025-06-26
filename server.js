@@ -87,6 +87,7 @@ const globalStyleRoutes = require('./routes/globalStyle');
 const amazonListingRoutes = require('./routes/amazon-listing-api');
 // 导入客服路由（数据库版本）
 const kefuRoutes = require('./kefu/kefu-db');
+const userKefuRoutes = require('./kefu/kefu-user-api');
 // 导入认证中间件
 const { protect } = require('./middleware/auth');
 // 导入功能访问中间件和功能配置
@@ -946,6 +947,8 @@ app.use('/api/global-style', globalStyleRoutes);
 app.use('/api/amazon-listing', amazonListingRoutes);
 // 客服路由
 app.use('/api/kefu', kefuRoutes);
+// 用户客服API路由
+app.use('/api/user-kefu', userKefuRoutes);
 
 // 视频风格重绘下载代理（必须在404处理之前注册）
 app.get('/api/video-style-repaint/download', async (req, res) => {

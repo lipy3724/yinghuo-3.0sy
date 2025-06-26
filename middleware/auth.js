@@ -186,8 +186,47 @@ const checkAdmin = async (req, res, next) => {
   }
 };
 
+// 添加客服权限验证中间件
+const checkCustomerService = async (req, res, next) => {
+  try {
+    // 先验证用户是否已登录
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+    
+    // 检查用户是否为客服或管理员
+    if (!user.isCustomerService && !user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: '没有客服权限'
+      });
+    }
+    
+    // 将用户角色信息添加到请求对象中，方便后续使用
+    req.userRole = {
+      isAdmin: user.isAdmin,
+      isCustomerService: user.isCustomerService
+    };
+    
+    next();
+  } catch (error) {
+    console.error('验证客服权限出错:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，无法验证客服权限',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   protect,
   checkAdmin,
+  checkCustomerService,
   invalidateAllSessions
 }; 

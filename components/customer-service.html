@@ -391,7 +391,7 @@
             }
             
             // 第三步：检查是否有token，如果有则尝试同步获取用户信息
-            var token = localStorage.getItem('token') || localStorage.getItem('authToken');
+            var token = getAuthToken() || getAuthToken();
             if (token) {
                 csLog('🔑 找到token，尝试同步获取用户信息');
                 
@@ -557,11 +557,15 @@
             
             csLog('发送消息到服务器，用户ID: ' + userId + ' (类型: ' + typeof userId + ')');
             
-            fetch('/api/kefu/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+            fetch('/api/user-kefu/messages', {
+        headers: {
+            'Authorization': `Bearer ${getAuthToken()}`
+        },
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+        },
                 body: JSON.stringify({
                     userId: parseInt(userId),
                     message: message,
@@ -619,7 +623,11 @@
             
             csLog('加载历史消息，用户ID: ' + userId);
             
-            fetch('/api/kefu/messages?userId=' + parseInt(userId))
+            fetch('/api/user-kefu/messages?userId=' + parseInt(userId), {
+        headers: {
+            'Authorization': `Bearer ${getAuthToken()}`
+        }
+    })
             .then(function(response) {
                 if (!response.ok) {
                     throw new Error('HTTP ' + response.status + ': ' + response.statusText);
@@ -689,7 +697,7 @@
 
         // 异步获取用户信息
         function fetchUserInfoAsync() {
-            var token = localStorage.getItem('token') || localStorage.getItem('authToken');
+            var token = getAuthToken() || getAuthToken();
             if (!token) {
                 csLog('❌ 没有找到认证token，无法异步获取用户信息');
                 return;
@@ -778,4 +786,17 @@
 
         csLog('客服组件脚本加载完成');
     })();
+
+// 获取认证token
+function getAuthToken() {
+    // 优先获取authToken，这是普通用户使用的key
+    let token = getAuthToken();
+    
+    // 如果没有，尝试获取admin_token，这是管理员使用的key
+    if (!token) {
+        token = localStorage.getItem('admin_token');
+    }
+    
+    return token;
+}
 </script> 
