@@ -1100,43 +1100,84 @@ router.get('/usage', protect, async (req, res) => {
           
           // 修复多图转视频功能积分统计问题
           if (featureName === 'MULTI_IMAGE_TO_VIDEO' && totalFeatureCreditCost === 0 && tasks.length > 0) {
-            // 根据任务数量和默认积分消耗计算
-            totalFeatureCreditCost = tasks.length * 30; // 每个任务默认30积分
-            console.log(`修复多图转视频功能积分统计: ${tasks.length}个任务 x 30积分 = ${totalFeatureCreditCost}积分`);
-            
-            // 确保每个任务都有正确的记录添加到usageRecords中
-            for (const task of tasks) {
-              // 为每个任务创建使用记录
-              if (!usageRecords.some(record => record.taskId === task.taskId)) {
-                // 添加到使用记录
-                const recordDate = formatDate(task.timestamp || new Date());
-                usageRecords.push({
-                  date: recordDate,
-                  feature: getLocalFeatureName(featureName),
-                  description: task.description || '多图转视频',
-                  credits: 30, // 每个任务30积分
-                  taskId: task.taskId,
-                  isFree: false
-                });
-                
-                // 更新时段积分消费统计
-                // 将30积分添加到对应日期的usageData中
-                const dateStr = recordDate.split(' ')[0]; // 只取日期部分
-                const dateIndex = dateLabels.indexOf(dateStr);
-                if (dateIndex !== -1) {
-                  usageData[dateIndex] += 30;
-                  console.log(`为日期 ${dateStr} 添加了30积分消费，累计: ${usageData[dateIndex]}`);
+            // 检查是否有非免费任务
+            const paidTasks = tasks.filter(task => !task.isFree);
+            if (paidTasks.length > 0) {
+              // 计算实际积分消耗
+              totalFeatureCreditCost = paidTasks.reduce((sum, task) => sum + (task.creditCost || 30), 0);
+              console.log(`修复多图转视频功能积分统计: ${paidTasks.length}个付费任务，总积分=${totalFeatureCreditCost}`);
+              
+              // 确保每个付费任务都有正确的记录添加到usageRecords中
+              for (const task of paidTasks) {
+                // 为每个任务创建使用记录
+                if (!usageRecords.some(record => record.taskId === task.taskId)) {
+                  // 添加到使用记录
+                  const recordDate = formatDate(task.timestamp || new Date());
+                  usageRecords.push({
+                    date: recordDate,
+                    feature: getLocalFeatureName(featureName),
+                    description: task.description || '多图转视频',
+                    credits: task.creditCost || 30, // 使用任务记录的积分消耗
+                    taskId: task.taskId,
+                    isFree: false
+                  });
+                  
+                  // 更新时段积分消费统计
+                  const dateStr = recordDate.split(' ')[0]; // 只取日期部分
+                  const dateIndex = dateLabels.indexOf(dateStr);
+                  if (dateIndex !== -1) {
+                    usageData[dateIndex] += (task.creditCost || 30);
+                    console.log(`为日期 ${dateStr} 添加了${task.creditCost || 30}积分消费，累计: ${usageData[dateIndex]}`);
+                  }
+                  
+                  console.log(`为多图转视频任务ID=${task.taskId}添加了使用记录`);
                 }
-                
-                console.log(`为多图转视频任务ID=${task.taskId}添加了使用记录`);
               }
             }
-            
-            // 确保总消费积分更新
-            totalCreditsUsed += totalFeatureCreditCost;
-            console.log(`更新总积分消费: ${totalCreditsUsed} (新增多图转视频积分: ${totalFeatureCreditCost})`);
           }
-        } 
+          
+          // 修复文生视频和图生视频功能积分统计问题
+          if ((featureName === 'text-to-video' || featureName === 'image-to-video') && totalFeatureCreditCost === 0 && tasks.length > 0) {
+            // 检查是否有非免费任务
+            const paidTasks = tasks.filter(task => !task.isFree);
+            if (paidTasks.length > 0) {
+              // 计算实际积分消耗
+              totalFeatureCreditCost = paidTasks.reduce((sum, task) => sum + (task.creditCost || 66), 0);
+              console.log(`修复${featureName}功能积分统计: ${paidTasks.length}个付费任务，总积分=${totalFeatureCreditCost}`);
+              
+              // 确保每个付费任务都有正确的记录添加到usageRecords中
+              for (const task of paidTasks) {
+                // 为每个任务创建使用记录
+                if (!usageRecords.some(record => record.taskId === task.taskId)) {
+                  // 添加到使用记录
+                  const recordDate = formatDate(task.timestamp || new Date());
+                  usageRecords.push({
+                    date: recordDate,
+                    feature: getLocalFeatureName(featureName),
+                    description: featureName === 'text-to-video' ? '文生视频' : '图生视频',
+                    credits: task.creditCost || 66, // 使用任务记录的积分消耗
+                    taskId: task.taskId,
+                    isFree: false
+                  });
+                  
+                  // 更新时段积分消费统计
+                  const dateStr = recordDate.split(' ')[0]; // 只取日期部分
+                  const dateIndex = dateLabels.indexOf(dateStr);
+                  if (dateIndex !== -1) {
+                    usageData[dateIndex] += (task.creditCost || 66);
+                    console.log(`为日期 ${dateStr} 添加了${task.creditCost || 66}积分消费，累计: ${usageData[dateIndex]}`);
+                  }
+                  
+                  console.log(`为${featureName}任务ID=${task.taskId}添加了使用记录`);
+                }
+              }
+            }
+          }
+          
+          // 确保总消费积分更新
+          totalCreditsUsed += totalFeatureCreditCost;
+          console.log(`更新总积分消费: ${totalCreditsUsed} (${featureName}功能积分: ${totalFeatureCreditCost})`);
+        }
         // 对于其他功能，仍然使用数据库记录的积分消费
         else if (usage && usage.credits > 0) {
           // 总积分使用最准确的来源是数据库记录

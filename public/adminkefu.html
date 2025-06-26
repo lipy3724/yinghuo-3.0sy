@@ -297,7 +297,12 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: white;
+            background: #ffffff;
+            position: relative;
+        }
+        
+        .chat-panel.active {
+            display: flex;
         }
         
         .chat-header {
@@ -1757,13 +1762,17 @@
                 // 获取当前登录的客服信息
                 const adminId = window.currentAdmin ? window.currentAdmin.id : null;
                 
+                // 获取管理员令牌
+                const token = localStorage.getItem('admin_token');
+                if (!token) {
+                    throw new Error('未登录或会话已过期，请重新登录');
+                }
+                
                 const response = await fetch('/api/kefu/messages', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         userId: currentUserId,
@@ -2110,6 +2119,125 @@
                 console.error('清理消息失败:', error);
                 showToast('清理消息失败', 'danger');
             });
+        }
+
+        // 格式化时间差显示
+        function formatTimeAgo(time) {
+            const now = new Date();
+            const diffMs = now - new Date(time);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return '刚刚';
+            if (diffMins < 60) return `${diffMins}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            
+            return new Date(time).toLocaleDateString('zh-CN');
+        }
+        
+        // 显示用户聊天
+        function showUserChat(userId) {
+            if (!userId) return;
+            
+            // 更新当前选中的用户ID
+            currentUserId = userId;
+            
+            // 获取用户统计信息
+            const user = userStats[userId];
+            if (!user) {
+                console.error(`未找到用户统计信息: ${userId}`);
+                return;
+            }
+            
+            // 更新用户信息区域
+            const chatHeader = document.getElementById('chat-header');
+            chatHeader.style.display = 'flex';
+            
+            const userNameEl = document.getElementById('current-user-name');
+            const userIdEl = document.getElementById('current-user-id');
+            const userAvatar = document.getElementById('chat-user-avatar');
+            
+            const userName = user.userName || '访客用户';
+            userNameEl.textContent = userName;
+            userIdEl.textContent = `ID: ${userId}`;
+            userAvatar.textContent = userName.charAt(0).toUpperCase();
+            
+            // 显示聊天区域和输入区域
+            document.querySelector('.chat-panel').classList.add('active');
+            
+            // 隐藏空状态提示
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            
+            document.getElementById('chat-input-area').style.display = 'block';
+            
+            // 显示用户消息
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            
+            // 获取用户的消息
+            const messages = user.messages || [];
+            
+            if (messages.length === 0) {
+                chatMessages.innerHTML = '<div class="text-center text-gray-500 my-8">暂无消息记录</div>';
+                return;
+            }
+            
+            // 按时间排序消息
+            const sortedMessages = [...messages].sort((a, b) => {
+                return new Date(a.timestamp) - new Date(b.timestamp);
+            });
+            
+            // 渲染消息
+            sortedMessages.forEach(msg => {
+                const isAdmin = msg.type === 'admin' || msg.isAdmin;
+                const messageClass = isAdmin ? 'admin-message' : 'user-message';
+                const alignClass = isAdmin ? 'justify-end' : 'justify-start';
+                const bubbleClass = isAdmin ? 'bg-blue-50 text-blue-800' : 'bg-white text-gray-800';
+                const borderClass = isAdmin ? 'border-blue-100' : 'border-gray-200';
+                
+                // 格式化时间
+                const msgTime = new Date(msg.timestamp);
+                const timeStr = msgTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = msgTime.toLocaleDateString('zh-CN');
+                
+                // 创建消息元素
+                const messageEl = document.createElement('div');
+                messageEl.className = `flex ${alignClass} mb-4`;
+                
+                // 获取发送者名称
+                let senderName = isAdmin ? (msg.adminName || '客服') : (user.userName || '访客');
+                
+                // 添加消息内容
+                messageEl.innerHTML = `
+                    <div class="max-w-[75%]">
+                        <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'} items-center mb-1">
+                            <span class="text-xs text-gray-500">${senderName}</span>
+                            <span class="text-xs text-gray-400 ml-2">${dateStr} ${timeStr}</span>
+                        </div>
+                        <div class="${bubbleClass} rounded-lg px-4 py-2 shadow-sm border ${borderClass} break-words">
+                            ${escapeHtml(msg.message).replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(messageEl);
+            });
+            
+            // 滚动到底部
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+            
+            // 显示分配信息
+            showAssignmentInfo(userId);
+            
+            // 自动标记为已读
+            markUserMessagesAsRead(userId);
         }
     </script>
 </body>
