@@ -460,6 +460,60 @@ app.get('/admin', (req, res) => {
   res.redirect('/admin-login.html');
 });
 
+// 添加无扩展名URL支持 - 让用户可以访问 /home 而不需要 .html
+const htmlPages = [
+  'home',
+  'login', 
+  'register',
+  'phone-login',
+  'phone-register',
+  'translate',
+  'text-to-image',
+  'cutout',
+  'marketing-images',
+  'scene-generator',
+  'image-removal',
+  'model-skin-changer',
+  'clothing-simulation',
+  'image-upscaler',
+  'image-edit',
+  'local-redraw',
+  'image-colorization',
+  'image-expansion',
+  'cloth-segmentation',
+  'global-style',
+  'diantu',
+  'text-to-video',
+  'image-to-video',
+  'multi-image-to-video',
+  'video-style-repaint',
+  'video-subtitle-remover',
+  'digital-human-video',
+  'download-center',
+  'credits',
+  'admin-login',
+  'admin-dashboard'
+];
+
+// 为每个页面添加无扩展名路由
+htmlPages.forEach(page => {
+  app.get(`/${page}`, (req, res) => {
+    const filePath = path.join(__dirname, `${page}.html`);
+    // 检查文件是否存在
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      // 如果根目录没有，检查public目录
+      const publicFilePath = path.join(__dirname, 'public', `${page}.html`);
+      if (fs.existsSync(publicFilePath)) {
+        res.sendFile(publicFilePath);
+      } else {
+        res.status(404).send('页面未找到');
+      }
+    }
+  });
+});
+
 // 多图转视频API - 使用统一中间件
 app.post('/api/multi-image-to-video', protect, createUnifiedFeatureMiddleware('MULTI_IMAGE_TO_VIDEO'), async (req, res) => {
     try {

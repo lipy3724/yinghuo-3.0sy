@@ -563,7 +563,12 @@
                     return;
                 }
                 
+                // 处理500错误或网络问题
+                if (error.message.includes('网络出现问题') || error.message.includes('500')) {
+                    alert('网络出现问题，请稍后重试');
+                } else {
                 alert('生成图片失败: ' + error.message);
+                }
             } finally {
                 // 隐藏加载状态
                 showLoading(false);
@@ -612,7 +617,12 @@
                     
                     // 如果任务失败
                     if (data.taskStatus === 'FAILED') {
-                        throw new Error(`任务失败: ${data.error || '未知错误'}`);
+                        // 如果服务器返回的是友好错误信息，直接使用
+                        if (data.message && data.message.includes('网络出现问题')) {
+                            throw new Error(data.message);
+                        } else {
+                            throw new Error('网络出现问题，请稍后重试');
+                        }
                     }
                     
                     // 如果任务仍在处理中，等待后再次查询

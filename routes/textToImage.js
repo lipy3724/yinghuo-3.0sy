@@ -118,7 +118,7 @@ router.post('/generate', protect, createUnifiedFeatureMiddleware('TEXT_TO_IMAGE'
     
     return res.status(500).json({
       success: false,
-      message: '服务器错误，无法创建图片生成任务',
+      message: '网络出现问题，请稍后重试',
       error: error.message
     });
   }
@@ -283,7 +283,7 @@ router.get('/task/:taskId', protect, async (req, res) => {
         
         return res.status(500).json({
           success: false,
-          message: '任务成功但未返回图片结果',
+          message: '网络出现问题，请稍后重试',
           taskStatus: taskStatus,
           rawResponse: response.data.output
         });
@@ -300,7 +300,7 @@ router.get('/task/:taskId', protect, async (req, res) => {
       
       return res.status(500).json({
         success: false,
-        message: '图片生成任务失败',
+        message: '网络出现问题，请稍后重试',
         taskStatus: taskStatus,
         error: response.data.output.message || '未知错误'
       });
@@ -328,7 +328,7 @@ router.get('/task/:taskId', protect, async (req, res) => {
     
     return res.status(500).json({
       success: false,
-      message: '服务器错误，无法查询图片生成任务',
+      message: '网络出现问题，请稍后重试',
       error: error.message
     });
   }
