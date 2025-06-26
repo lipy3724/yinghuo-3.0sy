@@ -395,6 +395,7 @@
             z-index: 40;
             box-shadow: 1px 0 5px rgba(0,0,0,0.05);
             transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            will-change: transform; /* 优化性能 */
         }
         
         /* 折叠状态下隐藏侧边栏并让主内容全宽 */
@@ -403,6 +404,7 @@
         }
         body.sidebar-collapsed .main-content {
             margin-left: 0 !important;
+            transition: margin-left 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
         }
         
         /* 主内容区域样式 - 为侧边栏留出空间 */
@@ -1056,7 +1058,8 @@
             box-shadow: 2px 0 6px rgba(0,0,0,0.04);
             cursor: pointer;
             transition: left 0.35s cubic-bezier(0.22,0.61,0.36,1), background 0.2s ease, box-shadow 0.2s ease;
-            z-index: 60;
+            z-index: 999; /* 提高层级，确保按钮总是可见可点击 */
+            pointer-events: auto; /* 确保可点击 */
         }
         #sidebar-toggle-btn:hover {
             background: #f3f4f6;
@@ -1403,7 +1406,7 @@
     </div>
 
     <!-- 折叠 / 展开侧边栏按钮（紧贴侧边栏右侧） -->
-    <button id="sidebar-toggle-btn">
+    <button id="sidebar-toggle-btn" onclick="this.classList.toggle('collapsed'); document.body.classList.toggle('sidebar-collapsed');">
         <i id="toggle-icon" class="ri-arrow-left-s-line text-xl text-gray-600"></i>
     </button>
 
@@ -2187,6 +2190,61 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // === 侧边栏折叠/展开逻辑 ===
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const bodyEl = document.body;
+            
+            // 添加调试日志
+            console.log('侧边栏折叠按钮初始化:', sidebarToggleBtn ? '成功找到按钮' : '未找到按钮');
+            
+            // 确保按钮存在
+            if (sidebarToggleBtn) {
+                // 移除可能存在的旧事件监听器
+                sidebarToggleBtn.replaceWith(sidebarToggleBtn.cloneNode(true));
+                
+                // 重新获取按钮元素
+                const refreshedBtn = document.getElementById('sidebar-toggle-btn');
+                
+                // 添加新的事件监听器
+                refreshedBtn.addEventListener('click', function(e) {
+                    console.log('侧边栏按钮被点击');
+                    e.preventDefault();
+                    bodyEl.classList.toggle('sidebar-collapsed');
+                    this.classList.toggle('collapsed');
+                    console.log('侧边栏状态:', bodyEl.classList.contains('sidebar-collapsed') ? '已折叠' : '已展开');
+                });
+                
+                // 添加视觉反馈
+                refreshedBtn.style.cursor = 'pointer';
+                refreshedBtn.title = '点击收起/展开侧边栏';
+                
+                console.log('侧边栏折叠按钮事件监听器已添加');
+                
+                // 添加双击恢复功能
+                document.addEventListener('dblclick', function(e) {
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                        console.log('双击页面，尝试恢复侧边栏');
+                        if (bodyEl.classList.contains('sidebar-collapsed')) {
+                            bodyEl.classList.remove('sidebar-collapsed');
+                            refreshedBtn.classList.remove('collapsed');
+                            console.log('侧边栏已通过双击恢复');
+                        }
+                    }
+                });
+            }
+            
+            // 在页面加载后检查侧边栏状态
+            setTimeout(function() {
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (sidebar && mainContent) {
+                    console.log('侧边栏可见性检查:', 
+                        window.getComputedStyle(sidebar).transform,
+                        '主内容区域左边距:', window.getComputedStyle(mainContent).marginLeft);
+                }
+            }, 1000);
+            
             // 获取用户信息
             const token = localStorage.getItem('authToken');
             const userInfo = localStorage.getItem('user');
@@ -2869,13 +2927,6 @@
             // 页面加载时初始化快捷访问功能
             loadSelectedFeatures();
             
-            // === 侧边栏折叠/展开逻辑 ===
-            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-            const bodyEl = document.body;
-            sidebarToggleBtn.addEventListener('click', () => {
-                bodyEl.classList.toggle('sidebar-collapsed');
-                sidebarToggleBtn.classList.toggle('collapsed');
-            });
         });
         
         // 检查用户权限并在新窗口中打开
