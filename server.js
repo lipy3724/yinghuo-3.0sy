@@ -694,7 +694,7 @@ app.post('/api/multi-image-to-video', protect, createUnifiedFeatureMiddleware('M
         global.multiImageToVideoTasks[taskId] = {
             userId: userId,
             creditCost: creditCostFinal,
-            hasChargedCredits: !isFree,
+            hasChargedCredits: false, // 修复：始终标记为未扣费，确保任务完成后会扣费
             timestamp: new Date(),
             imageCount: images.length,
             duration: duration || 10,
@@ -882,6 +882,9 @@ app.get('/api/task-status/:taskId', protect, async (req, res) => {
                                             // 默认时长
                                             videoDuration = 10;
                                         }
+                                        
+                                        // 强制更新hasChargedCredits为false，确保任务完成后会扣费
+                                        global.multiImageToVideoTasks[taskId].hasChargedCredits = false;
                                         
                                         console.log(`多图转视频任务完成: 任务ID=${taskId}, 用户ID=${userId}, 视频时长=${videoDuration}秒`);
                                         
