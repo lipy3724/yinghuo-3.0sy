@@ -297,7 +297,12 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: white;
+            background: #ffffff;
+            position: relative;
+        }
+        
+        .chat-panel.active {
+            display: flex;
         }
         
         .chat-header {
@@ -682,15 +687,23 @@
                         </div>
                     </div>
                     
-                    <button id="refresh-btn" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-sm">
+                    <div class="flex items-center gap-2">
+                        <button id="refresh-btn" class="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 text-sm">
                         <i class="ri-refresh-line"></i>
-                        <span>刷新</span>
+                            刷新
                     </button>
                     
-                    <button id="logout-btn" class="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors text-sm text-red-600">
-                        <i class="ri-logout-box-line"></i>
-                        <span>退出登录</span>
+                        <!-- 管理员视图切换按钮 -->
+                        <button id="view-mode-toggle" class="hidden flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 text-sm">
+                            <i class="ri-eye-line"></i>
+                            <span id="view-mode-text">查看所有用户</span>
                     </button>
+                        
+                        <button id="logout-btn" class="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 text-sm">
+                            <i class="ri-logout-box-r-line"></i>
+                            退出登录
+                        </button>
+                    </div>
                     
                     <div class="text-sm text-gray-500">
                         <span id="current-time"></span>
@@ -780,6 +793,32 @@
                             <button id="confirmClearBtn" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md">
                                 确认清除
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 添加在管理功能区域内 -->
+                <div class="card mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">消息保存设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="retentionHours">聊天记录保存时间（小时）</label>
+                                    <input type="number" class="form-control" id="retentionHours" min="1" max="720" value="12">
+                                    <small class="form-text text-muted">设置客服聊天记录保存时间，超过此时间的记录将被自动清理（1-720小时）</small>
+                                </div>
+                                <button class="btn btn-primary" onclick="setMessageRetention()">保存设置</button>
+                                <button class="btn btn-warning ml-2" onclick="manualCleanupMessages()">立即清理过期消息</button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <p><strong>当前设置：</strong> <span id="currentRetention">12小时</span></p>
+                                    <p>系统会每小时自动检查并清理超过保存时间的聊天记录。清理采用软删除方式，数据仍保留在数据库中但客服系统中不再显示。</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -884,6 +923,9 @@
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化视图模式切换按钮
+            initViewModeToggle();
+            
             // 显示当前登录的客服信息
             displayAdminInfo();
             
@@ -938,6 +980,9 @@
             
             // 页面卸载时停止轮询
             window.addEventListener('beforeunload', stopMessagePolling);
+
+            // 加载当前消息保存时间设置
+            getCurrentMessageRetention();
         });
         
         // 更新当前时间
@@ -959,19 +1004,35 @@
         // 加载消息
         async function loadMessages() {
             try {
-                // 构建请求URL，如果不是超级管理员，只获取分配给当前客服的消息
+                // 构建请求URL，默认只获取分配给当前客服的消息
                 let url = '/api/kefu/messages';
                 const currentAdminId = window.currentAdmin ? window.currentAdmin.id : null;
+                const viewMode = localStorage.getItem('admin_view_mode') || 'assigned';
                 
-                // 如果是普通内部用户（非超级管理员），只显示分配给自己的用户消息
-                if (currentAdminId && !window.currentAdmin.isAdmin) {
+                // 默认所有客服只看到分配给自己的消息
+                if (currentAdminId) {
+                    // 如果是管理员且选择了查看所有消息
+                    if (window.currentAdmin.isAdmin && viewMode === 'all') {
+                        console.log(`📋 [管理员${window.currentAdmin.username}] 查看所有用户消息`);
+                    } else {
                     url += `?adminId=${currentAdminId}`;
-                    console.log(`📋 [客服${window.currentAdmin.username}] 加载分配给自己的用户消息`);
+                        console.log(`📋 [客服${window.currentAdmin.username}] 只加载分配给自己的用户消息`);
+                    }
                 } else {
-                    console.log(`📋 [管理员] 加载所有用户消息`);
+                    console.log(`⚠️ 未获取到客服ID，无法过滤消息`);
                 }
                 
-                const response = await fetch(url);
+                const token = localStorage.getItem('admin_token');
+                if (!token) {
+                    showError('未登录或会话已过期，请重新登录');
+                    return;
+                }
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const result = await response.json();
                 
                 if (result.success) {
@@ -1029,12 +1090,34 @@
         // 检查新消息
         async function checkForNewMessages() {
             try {
+                // 添加当前登录的客服ID作为过滤条件
+                const currentAdminId = window.currentAdmin?.id;
+                const viewMode = localStorage.getItem('admin_view_mode') || 'assigned';
                 let url = '/api/kefu/messages?limit=100';
+                
+                // 添加客服ID过滤
+                if (currentAdminId) {
+                    // 如果是管理员且选择了查看所有消息模式，不添加adminId过滤
+                    if (!(window.currentAdmin.isAdmin && viewMode === 'all')) {
+                        url += '&adminId=' + currentAdminId;
+                    }
+                }
+                
                 if (lastMessageTime) {
                     url += '&since=' + encodeURIComponent(lastMessageTime);
                 }
                 
-                const response = await fetch(url);
+                const token = localStorage.getItem('admin_token');
+                if (!token) {
+                    console.log('未登录或会话已过期，无法检查新消息');
+                    return;
+                }
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const result = await response.json();
                 
                 if (result.success && result.messages && result.messages.length > 0) {
@@ -1262,16 +1345,53 @@
         
         // 渲染用户列表
         function renderUserList() {
-            const container = document.getElementById('user-list-container');
+            const userList = document.getElementById('user-list-container');
+            if (!userList) return;
             
+            userList.innerHTML = '';
+            
+            // 获取JWT令牌
+            const token = localStorage.getItem('admin_token');
+            if (!token) {
+                userList.innerHTML = '<div class="p-4 text-center text-gray-500">请重新登录</div>';
+                return;
+            }
+            
+            // 获取当前客服ID
+            const currentAdminId = window.currentAdmin?.id;
+            
+            // 获取分配信息
+            fetch('/api/kefu/assignments', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => {
+                    // 检查是否需要重新登录
+                    if (response.status === 401) {
+                        userList.innerHTML = '<div class="p-4 text-center text-gray-500">会话已过期，请重新登录</div>';
+                        return { success: false };
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 创建分配映射表
+                    const assignmentMap = {};
+                    if (data.success && data.assignments) {
+                        data.assignments.forEach(assignment => {
+                            assignmentMap[`user_${assignment.userId}`] = assignment.adminId;
+                        });
+                    }
+                    
+                    // 应用搜索过滤
             let filteredUsers = Object.values(userStats);
             
             // 应用搜索过滤
             if (searchQuery) {
                 filteredUsers = filteredUsers.filter(user => 
-                    user.userName.toLowerCase().includes(searchQuery) ||
-                    user.userId.toLowerCase().includes(searchQuery) ||
-                    (user.lastMessage && user.lastMessage.message.toLowerCase().includes(searchQuery))
+                            user.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            user.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (user.lastMessage && user.lastMessage.message.toLowerCase().includes(searchQuery.toLowerCase()))
                 );
             }
             
@@ -1283,50 +1403,141 @@
             }
             
             // 按最后活跃时间排序
-            filteredUsers.sort((a, b) => 
-                new Date(b.lastActiveTime) - new Date(a.lastActiveTime)
-            );
-            
-            if (filteredUsers.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="ri-user-line empty-icon"></i>
-                        <p class="text-lg font-medium mb-1">暂无用户</p>
-                        <p class="text-sm">没有找到符合条件的用户</p>
+                    const sortedUsers = filteredUsers.sort((a, b) => {
+                        return new Date(b.lastActiveTime) - new Date(a.lastActiveTime);
+                    });
+                    
+                    sortedUsers.forEach(user => {
+                        const isAssignedToMe = assignmentMap[user.userId] === currentAdminId;
+                        const assignedAdminId = assignmentMap[user.userId];
+                        
+                        const userItem = document.createElement('div');
+                        userItem.className = `user-item ${user.userId === currentUserId ? 'active' : ''} ${isAssignedToMe ? 'assigned-to-me' : ''}`;
+                        userItem.dataset.userId = user.userId;
+                        userItem.addEventListener('click', () => showUserChat(user.userId));
+                        
+                        // 获取用户名的第一个字符作为头像
+                        const firstChar = user.userName ? user.userName.charAt(0).toUpperCase() : '?';
+                        
+                        // 格式化时间
+                        const timeStr = formatTime(user.lastActiveTime);
+                        
+                        // 添加分配标记 - 只有客服角色才显示分配标记
+                        let assignmentBadge = '';
+                        if (window.currentAdmin && window.currentAdmin.isCustomerService) {
+                            if (isAssignedToMe) {
+                                assignmentBadge = `<span class="assignment-badge my-badge">我的用户</span>`;
+                            } else if (assignedAdminId) {
+                                assignmentBadge = `<span class="assignment-badge other-badge">已分配</span>`;
+                            }
+                        }
+                        
+                        userItem.innerHTML = `
+                            <div class="flex items-start">
+                                <div class="user-avatar ${user.unreadCount > 0 ? 'has-unread' : ''}">
+                                    ${firstChar}
+                                </div>
+                                <div class="user-info">
+                                    <div class="flex items-center justify-between">
+                                        <div class="user-name">
+                                            ${escapeHtml(user.userName)}
+                                            ${user.unreadCount > 0 ? `<span class="unread-badge">${user.unreadCount}</span>` : ''}
+                                        </div>
+                                        <div class="user-time">${timeStr}</div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="user-message">${user.lastMessage ? escapeHtml(truncateText(user.lastMessage.message, 30)) : ''}</div>
+                                        ${assignmentBadge}
+                                    </div>
+                                </div>
                     </div>
                 `;
-                return;
+                        
+                        userList.appendChild(userItem);
+                    });
+                    
+                    // 如果没有用户，显示提示
+                    if (sortedUsers.length === 0) {
+                        userList.innerHTML = '<div class="p-4 text-center text-gray-500">暂无消息</div>';
+            }
+                })
+                .catch(error => {
+                    console.error('获取分配信息失败:', error);
+                    // 如果获取分配信息失败，仍然显示用户列表，但没有分配标记
+                    renderUserListWithoutAssignments();
+                });
+        }
+        
+        // 在无法获取分配信息时渲染用户列表
+        function renderUserListWithoutAssignments() {
+            const userList = document.getElementById('user-list-container');
+            if (!userList) return;
+            
+            userList.innerHTML = '';
+            
+            // 应用搜索过滤
+            let filteredUsers = Object.values(userStats);
+            
+            // 应用搜索过滤
+            if (searchQuery) {
+                filteredUsers = filteredUsers.filter(user => 
+                    user.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    user.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (user.lastMessage && user.lastMessage.message.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
             }
             
-            const html = filteredUsers.map(user => {
-                // 使用真实用户名或回退到默认显示
-                const displayName = user.userName || `访客${user.userId.slice(-4)}`;
-                const initials = displayName.slice(0, 2).toUpperCase();
+            // 应用状态过滤器
+            if (currentFilter === 'unread') {
+                filteredUsers = filteredUsers.filter(user => user.unreadCount > 0);
+            } else if (currentFilter === 'read') {
+                filteredUsers = filteredUsers.filter(user => user.unreadCount === 0);
+            }
+            
+            // 按最后活跃时间排序
+            const sortedUsers = filteredUsers.sort((a, b) => {
+                return new Date(b.lastActiveTime) - new Date(a.lastActiveTime);
+            });
+            
+            sortedUsers.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.className = `user-item ${user.userId === currentUserId ? 'active' : ''}`;
+                userItem.dataset.userId = user.userId;
+                userItem.addEventListener('click', () => showUserChat(user.userId));
                 
-                return `
-                    <div class="user-item ${currentUserId === user.userId ? 'active' : ''}" 
-                         onclick="selectUser('${user.userId}')">
-                        <div class="flex items-start gap-3">
-                            <div class="user-avatar">${initials}</div>
+                // 获取用户名的第一个字符作为头像
+                const firstChar = user.userName ? user.userName.charAt(0).toUpperCase() : '?';
+                
+                // 格式化时间
+                const timeStr = formatTime(user.lastActiveTime);
+                
+                userItem.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="user-avatar ${user.unreadCount > 0 ? 'has-unread' : ''}">
+                            ${firstChar}
+                        </div>
                             <div class="user-info">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="user-name">${escapeHtml(displayName)}</div>
-                                    ${user.unreadCount > 0 ? `<div class="unread-badge">${user.unreadCount}</div>` : ''}
+                            <div class="flex items-center justify-between">
+                                <div class="user-name">
+                                    ${escapeHtml(user.userName)}
+                                    ${user.unreadCount > 0 ? `<span class="unread-badge">${user.unreadCount}</span>` : ''}
                                 </div>
-                                <div class="user-message">
-                                    ${user.lastMessage ? escapeHtml(user.lastMessage.message) : '暂无消息'}
+                                <div class="user-time">${timeStr}</div>
                                 </div>
-                                <div class="user-meta">
-                                    <span class="user-time">${formatTime(user.lastActiveTime)}</span>
-                                    <span class="user-count">${user.messages.length} 条消息</span>
-                                </div>
+                            <div class="flex items-center justify-between">
+                                <div class="user-message">${user.lastMessage ? escapeHtml(truncateText(user.lastMessage.message, 30)) : ''}</div>
                             </div>
                         </div>
                     </div>
                 `;
-            }).join('');
+                
+                userList.appendChild(userItem);
+            });
             
-            container.innerHTML = html;
+            // 如果没有用户，显示提示
+            if (sortedUsers.length === 0) {
+                userList.innerHTML = '<div class="p-4 text-center text-gray-500">暂无消息</div>';
+            }
         }
         
         // 选择用户
@@ -1345,6 +1556,13 @@
             try {
                 const user = userStats[userId];
                 if (!user || user.unreadCount === 0) return;
+                
+                // 获取JWT令牌
+                const token = localStorage.getItem('admin_token');
+                if (!token) {
+                    showError('未登录或会话已过期，请重新登录');
+                    return;
+                }
                 
                 // 立即更新UI状态（优先显示效果）
                 const originalUnreadCount = user.unreadCount;
@@ -1367,7 +1585,12 @@
                 
                 // 异步批量标记为已读（后台处理）
                 Promise.all(unreadUserMessages.map(msg => 
-                    fetch(`/api/kefu/read/${msg.id}`, { method: 'PUT' })
+                    fetch(`/api/kefu/read/${msg.id}`, { 
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
                         .catch(error => {
                             console.error(`标记消息 ${msg.id} 已读失败:`, error);
                             // 如果请求失败，恢复状态
@@ -1375,6 +1598,7 @@
                         })
                 )).then(() => {
                     console.log(`成功标记用户 ${userId} 的 ${unreadUserMessages.length} 条消息为已读`);
+                    renderUserList(); // 重新渲染用户列表以更新状态
                 }).catch(error => {
                     console.error('批量标记已读失败:', error);
                     // 如果批量操作失败，恢复未读计数
@@ -1388,67 +1612,13 @@
             }
         }
         
-        // 显示用户对话
-        function showUserChat(userId) {
-            const user = userStats[userId];
-            if (!user) return;
-            
-            // 显示对话头部和输入区域
-            document.getElementById('chat-header').style.display = 'flex';
-            document.getElementById('chat-input-area').style.display = 'block';
-            
-            // 更新头部信息
-            const displayName = user.userName || `访客${userId.slice(-4)}`;
-            const userPhone = user.userPhone ? ` | ${user.userPhone}` : '';
-            
-            document.getElementById('current-user-name').textContent = displayName;
-            document.getElementById('current-user-id').textContent = `ID: ${userId}${userPhone}`;
-            document.getElementById('chat-user-avatar').textContent = displayName.slice(0, 2).toUpperCase();
-            
-            // 🎯 获取并显示分配信息
-            showAssignmentInfo(userId);
-            
-            // 渲染消息
-            const messagesContainer = document.getElementById('chat-messages');
-            
-            if (user.messages.length === 0) {
-                messagesContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i class="ri-chat-3-line empty-icon"></i>
-                        <h3 class="text-xl font-semibold mb-2">暂无对话记录</h3>
-                        <p>还没有与该用户的对话记录</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            const messagesHtml = user.messages.map(msg => {
-                const isAdmin = msg.type === 'admin' || msg.isAdmin;
-                return `
-                    <div class="message-group">
-                        <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'}">
-                            <div class="message-bubble ${isAdmin ? 'message-admin' : 'message-user'}">
-                                <div>${escapeHtml(msg.message)}</div>
-                                <div class="message-time">
-                                    ${new Date(msg.timestamp).toLocaleString('zh-CN')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            messagesContainer.innerHTML = messagesHtml;
-            
-            // 滚动到底部
-            setTimeout(() => {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, 100);
-        }
-        
-        // 🎯 显示分配信息
+        // 显示分配信息
         async function showAssignmentInfo(userId) {
             try {
+                // 获取JWT令牌
+                const token = localStorage.getItem('admin_token');
+                if (!token) return;
+                
                 // 解析用户ID
                 let dbUserId = null;
                 if (userId.toString().startsWith('user_')) {
@@ -1460,7 +1630,18 @@
                 
                 if (!dbUserId) return;
                 
-                const response = await fetch(`/api/kefu/assignments?userId=${dbUserId}`);
+                const response = await fetch(`/api/kefu/assignments?userId=${dbUserId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                // 检查是否需要重新登录
+                if (response.status === 401) {
+                    console.log('会话已过期，需要重新登录');
+                    return;
+                }
+                
                 const result = await response.json();
                 
                 const assignmentInfo = document.getElementById('assignment-info');
@@ -1471,7 +1652,7 @@
                     const assignedAdmin = assignment.admin;
                     const currentAdmin = window.currentAdmin;
                     
-                    // 🕐 检查分配是否接近超时
+                    // 检查分配是否接近超时
                     const now = new Date();
                     const lastActiveTime = new Date(assignment.lastActiveAt || assignment.assignedAt);
                     const hoursSinceLastActive = (now - lastActiveTime) / (1000 * 60 * 60);
@@ -1522,7 +1703,6 @@
                     assignmentInfo.className = 'text-xs text-gray-500 mt-1';
                     assignmentInfo.style.display = 'block';
                 }
-                
             } catch (error) {
                 console.error('获取分配信息失败:', error);
                 // 静默处理错误，不影响主要功能
@@ -1582,10 +1762,17 @@
                 // 获取当前登录的客服信息
                 const adminId = window.currentAdmin ? window.currentAdmin.id : null;
                 
+                // 获取管理员令牌
+                const token = localStorage.getItem('admin_token');
+                if (!token) {
+                    throw new Error('未登录或会话已过期，请重新登录');
+                }
+                
                 const response = await fetch('/api/kefu/messages', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         userId: currentUserId,
@@ -1702,6 +1889,12 @@
             div.textContent = text;
             return div.innerHTML;
         }
+    // 文本截断函数
+    function truncateText(text, maxLength) {
+        if (!text) return '';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    }
+
         
         function showSuccess(message) {
             showToast(message, 'success');
@@ -1799,6 +1992,253 @@
                 }
             });
         });
+
+        // 初始化视图模式切换按钮
+        function initViewModeToggle() {
+            const viewModeToggle = document.getElementById('view-mode-toggle');
+            const viewModeText = document.getElementById('view-mode-text');
+            
+            // 只对管理员显示此按钮
+            if (window.currentAdmin && window.currentAdmin.isAdmin) {
+                viewModeToggle.classList.remove('hidden');
+                
+                // 获取当前视图模式
+                const currentViewMode = localStorage.getItem('admin_view_mode') || 'assigned';
+                updateViewModeButton(currentViewMode);
+                
+                // 添加点击事件
+                viewModeToggle.addEventListener('click', function() {
+                    const newMode = localStorage.getItem('admin_view_mode') === 'all' ? 'assigned' : 'all';
+                    localStorage.setItem('admin_view_mode', newMode);
+                    updateViewModeButton(newMode);
+                    
+                    // 重新加载消息
+                    loadMessages();
+                });
+            }
+        }
+        
+        // 更新视图模式按钮文本
+        function updateViewModeButton(mode) {
+            const viewModeText = document.getElementById('view-mode-text');
+            const viewModeToggle = document.getElementById('view-mode-toggle');
+            
+            if (mode === 'all') {
+                viewModeText.textContent = '仅看我的用户';
+                viewModeToggle.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-600');
+                viewModeToggle.classList.remove('bg-white', 'border-gray-200', 'text-gray-600');
+            } else {
+                viewModeText.textContent = '查看所有用户';
+                viewModeToggle.classList.remove('bg-blue-50', 'border-blue-200', 'text-blue-600');
+                viewModeToggle.classList.add('bg-white', 'border-gray-200', 'text-gray-600');
+            }
+        }
+
+        // 获取当前消息保存时间设置
+        function getCurrentMessageRetention() {
+            fetch('/api/admin/customer-message-cleanup?action=getRetention', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('currentRetention').textContent = `${data.retentionHours} 小时`;
+                    document.getElementById('retentionHours').value = data.retentionHours;
+                }
+            })
+            .catch(error => {
+                console.error('获取消息保存时间失败:', error);
+                showToast('获取消息保存时间失败', 'danger');
+            });
+        }
+
+        // 设置消息保存时间
+        function setMessageRetention() {
+            const hours = document.getElementById('retentionHours').value;
+            
+            if (!hours || isNaN(hours) || hours < 1 || hours > 720) {
+                showToast('请输入1-720之间的有效小时数', 'warning');
+                return;
+            }
+            
+            fetch('/api/admin/customer-message-cleanup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                },
+                body: JSON.stringify({
+                    action: 'setRetention',
+                    retentionHours: parseInt(hours)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    document.getElementById('currentRetention').textContent = `${data.retentionHours} 小时`;
+                } else {
+                    showToast(data.message || '设置失败', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('设置消息保存时间失败:', error);
+                showToast('设置消息保存时间失败', 'danger');
+            });
+        }
+
+        // 手动清理过期消息
+        function manualCleanupMessages() {
+            if (!confirm('确定要立即清理所有过期消息吗？')) {
+                return;
+            }
+            
+            fetch('/api/admin/customer-message-cleanup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                },
+                body: JSON.stringify({
+                    action: 'cleanup'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`清理完成，已删除 ${data.deletedCount} 条过期消息`, 'success');
+                } else {
+                    showToast(data.message || '清理失败', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('清理消息失败:', error);
+                showToast('清理消息失败', 'danger');
+            });
+        }
+
+        // 格式化时间差显示
+        function formatTimeAgo(time) {
+            const now = new Date();
+            const diffMs = now - new Date(time);
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return '刚刚';
+            if (diffMins < 60) return `${diffMins}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            
+            return new Date(time).toLocaleDateString('zh-CN');
+        }
+        
+        // 显示用户聊天
+        function showUserChat(userId) {
+            if (!userId) return;
+            
+            // 更新当前选中的用户ID
+            currentUserId = userId;
+            
+            // 获取用户统计信息
+            const user = userStats[userId];
+            if (!user) {
+                console.error(`未找到用户统计信息: ${userId}`);
+                return;
+            }
+            
+            // 更新用户信息区域
+            const chatHeader = document.getElementById('chat-header');
+            chatHeader.style.display = 'flex';
+            
+            const userNameEl = document.getElementById('current-user-name');
+            const userIdEl = document.getElementById('current-user-id');
+            const userAvatar = document.getElementById('chat-user-avatar');
+            
+            const userName = user.userName || '访客用户';
+            userNameEl.textContent = userName;
+            userIdEl.textContent = `ID: ${userId}`;
+            userAvatar.textContent = userName.charAt(0).toUpperCase();
+            
+            // 显示聊天区域和输入区域
+            document.querySelector('.chat-panel').classList.add('active');
+            
+            // 隐藏空状态提示
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            
+            document.getElementById('chat-input-area').style.display = 'block';
+            
+            // 显示用户消息
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            
+            // 获取用户的消息
+            const messages = user.messages || [];
+            
+            if (messages.length === 0) {
+                chatMessages.innerHTML = '<div class="text-center text-gray-500 my-8">暂无消息记录</div>';
+                return;
+            }
+            
+            // 按时间排序消息
+            const sortedMessages = [...messages].sort((a, b) => {
+                return new Date(a.timestamp) - new Date(b.timestamp);
+            });
+            
+            // 渲染消息
+            sortedMessages.forEach(msg => {
+                const isAdmin = msg.type === 'admin' || msg.isAdmin;
+                const messageClass = isAdmin ? 'admin-message' : 'user-message';
+                const alignClass = isAdmin ? 'justify-end' : 'justify-start';
+                const bubbleClass = isAdmin ? 'bg-blue-50 text-blue-800' : 'bg-white text-gray-800';
+                const borderClass = isAdmin ? 'border-blue-100' : 'border-gray-200';
+                
+                // 格式化时间
+                const msgTime = new Date(msg.timestamp);
+                const timeStr = msgTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = msgTime.toLocaleDateString('zh-CN');
+                
+                // 创建消息元素
+                const messageEl = document.createElement('div');
+                messageEl.className = `flex ${alignClass} mb-4`;
+                
+                // 获取发送者名称
+                let senderName = isAdmin ? (msg.adminName || '客服') : (user.userName || '访客');
+                
+                // 添加消息内容
+                messageEl.innerHTML = `
+                    <div class="max-w-[75%]">
+                        <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'} items-center mb-1">
+                            <span class="text-xs text-gray-500">${senderName}</span>
+                            <span class="text-xs text-gray-400 ml-2">${dateStr} ${timeStr}</span>
+                        </div>
+                        <div class="${bubbleClass} rounded-lg px-4 py-2 shadow-sm border ${borderClass} break-words">
+                            ${escapeHtml(msg.message).replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(messageEl);
+            });
+            
+            // 滚动到底部
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+            
+            // 显示分配信息
+            showAssignmentInfo(userId);
+            
+            // 自动标记为已读
+            markUserMessagesAsRead(userId);
+        }
     </script>
 </body>
 </html>

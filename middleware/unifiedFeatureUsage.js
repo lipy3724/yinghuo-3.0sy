@@ -164,37 +164,157 @@ const saveTaskDetails = async (usage, taskInfo) => {
       console.log(`任务ID ${taskInfo.taskId} 已存在，跳过保存`);
     }
 
-    // 如果是数字人视频功能，根据真实时长校正积分
-    if (usage.featureName === 'DIGITAL_HUMAN_VIDEO' && taskInfo.extraData && taskInfo.extraData.videoDuration) {
-      const realCost = taskInfo.isFree ? 0 : Math.ceil(taskInfo.extraData.videoDuration) * 9;
-      if (realCost !== taskInfo.creditCost) {
-        const delta = realCost - taskInfo.creditCost; // >0 需补扣；<0 需退款
-        const user = await User.findByPk(usage.userId);
-        if (delta > 0) {
-          // 补扣时如果余额不足，扣至 0
-          const deduct = Math.min(delta, user.credits);
-          user.credits -= deduct;
-          await user.save();
-          taskInfo.creditCost += deduct;
-          if (Array.isArray(tasks) && tasks.length > 0) {
-            tasks[tasks.length - 1].creditCost = taskInfo.creditCost;
+    // 标记任务完成并更新使用记录
+    if (taskInfo.status === 'completed') {
+      // 如果是数字人视频功能，根据真实时长校正积分
+      if (usage.featureName === 'DIGITAL_HUMAN_VIDEO' && taskInfo.extraData && taskInfo.extraData.videoDuration) {
+        const realCost = taskInfo.isFree ? 0 : Math.ceil(taskInfo.extraData.videoDuration) * 9;
+        if (realCost !== taskInfo.creditCost) {
+          const delta = realCost - taskInfo.creditCost; // >0 需补扣；<0 需退款
+          const user = await User.findByPk(usage.userId);
+          if (delta > 0) {
+            // 补扣时如果余额不足，扣至 0
+            const deduct = Math.min(delta, user.credits);
+            user.credits -= deduct;
+            await user.save();
+            taskInfo.creditCost += deduct;
+            if (Array.isArray(tasks) && tasks.length > 0) {
+              tasks[tasks.length - 1].creditCost = taskInfo.creditCost;
+            }
+            usage.credits = (usage.credits || 0) + deduct;
+            usage.details = JSON.stringify({ ...details, tasks });
+            await usage.save();
+            console.log(`[校正] 已补扣用户 ${usage.userId} 积分 ${deduct}`);
+          } else if (delta < 0) {
+            const refund = -delta;
+            user.credits += refund;
+            await user.save();
+            taskInfo.creditCost -= refund;
+            if (Array.isArray(tasks) && tasks.length > 0) {
+              tasks[tasks.length - 1].creditCost = taskInfo.creditCost;
+            }
+            usage.credits = (usage.credits || 0) - refund;
+            usage.details = JSON.stringify({ ...details, tasks });
+            await usage.save();
+            console.log(`[校正] 已向用户 ${usage.userId} 退款积分 ${refund}`);
           }
-          usage.credits = (usage.credits || 0) + deduct;
-          usage.details = JSON.stringify({ ...details, tasks });
-          await usage.save();
-          console.log(`[校正] 已补扣用户 ${usage.userId} 积分 ${deduct}`);
-        } else if (delta < 0) {
-          const refund = -delta;
-          user.credits += refund;
-          await user.save();
-          taskInfo.creditCost -= refund;
+        }
+      }
+      
+      // 处理文生视频、图生视频和多图转视频功能的积分扣除
+      if (taskInfo.status === 'completed' && (taskInfo.featureName === 'text-to-video' || taskInfo.featureName === 'image-to-video')) {
+        // 文生视频和图生视频功能固定扣除66积分
+        const fixedCost = 66;
+        
+        // 检查是否为免费使用
+        if (taskInfo.isFree) {
+          console.log(`[任务完成] 用户 ${usage.userId} 使用免费次数完成 ${taskInfo.featureName} 任务`);
+          
+          // 更新任务记录，确保标记为免费使用
           if (Array.isArray(tasks) && tasks.length > 0) {
-            tasks[tasks.length - 1].creditCost = taskInfo.creditCost;
+            const taskIndex = tasks.findIndex(t => t.taskId === taskInfo.taskId);
+            if (taskIndex !== -1) {
+              tasks[taskIndex].isFree = true;
+              tasks[taskIndex].creditCost = 0;
+              usage.details = JSON.stringify({ ...details, tasks });
+              await usage.save();
+              console.log(`[任务完成] 已更新任务记录，标记为免费使用: taskId=${taskInfo.taskId}`);
+            }
           }
-          usage.credits = (usage.credits || 0) - refund;
-          usage.details = JSON.stringify({ ...details, tasks });
-          await usage.save();
-          console.log(`[校正] 已向用户 ${usage.userId} 退款积分 ${refund}`);
+          
+          // 更新使用次数，确保计入免费使用次数
+          if (usage.usageCount === 0) {
+            usage.usageCount = 1;
+            await usage.save();
+            console.log(`[任务完成] 已更新使用次数: ${usage.usageCount}`);
+          }
+        } else {
+          // 查找用户
+          const user = await User.findByPk(usage.userId);
+          if (user) {
+            // 扣除积分
+            const deduct = Math.min(fixedCost, user.credits);
+            user.credits -= deduct;
+            await user.save();
+            
+            // 更新使用记录中的积分消耗
+            usage.credits = (usage.credits || 0) + deduct;
+            
+            // 更新任务记录，确保积分消耗正确
+            if (Array.isArray(tasks) && tasks.length > 0) {
+              const taskIndex = tasks.findIndex(t => t.taskId === taskInfo.taskId);
+              if (taskIndex !== -1) {
+                tasks[taskIndex].creditCost = deduct;
+                tasks[taskIndex].isFree = false;
+                usage.details = JSON.stringify({ ...details, tasks });
+              }
+            }
+            
+            await usage.save();
+            
+            console.log(`[任务完成] 已扣除用户 ${usage.userId} 积分 ${deduct} (功能: ${taskInfo.featureName})`);
+          } else {
+            console.error(`[任务完成] 未找到用户ID=${usage.userId}，无法扣除积分`);
+          }
+        }
+      }
+      else if (taskInfo.status === 'completed' && taskInfo.featureName === 'MULTI_IMAGE_TO_VIDEO' && taskInfo.metadata && taskInfo.metadata.duration) {
+        // 多图转视频功能根据时长扣除积分：每30秒30积分，不足30秒按30秒计
+        const durationSec = parseFloat(taskInfo.metadata.duration);
+        if (!isNaN(durationSec) && durationSec > 0) {
+          const calculatedCost = Math.ceil(durationSec / 30) * 30;
+          
+          // 检查是否为免费使用
+          if (taskInfo.isFree) {
+            console.log(`[任务完成] 用户 ${usage.userId} 使用免费次数完成多图转视频任务`);
+            
+            // 更新任务记录，确保标记为免费使用
+            if (Array.isArray(tasks) && tasks.length > 0) {
+              const taskIndex = tasks.findIndex(t => t.taskId === taskInfo.taskId);
+              if (taskIndex !== -1) {
+                tasks[taskIndex].isFree = true;
+                tasks[taskIndex].creditCost = 0;
+                usage.details = JSON.stringify({ ...details, tasks });
+                await usage.save();
+                console.log(`[任务完成] 已更新任务记录，标记为免费使用: taskId=${taskInfo.taskId}`);
+              }
+            }
+            
+            // 更新使用次数，确保计入免费使用次数
+            if (usage.usageCount === 0) {
+              usage.usageCount = 1;
+              await usage.save();
+              console.log(`[任务完成] 已更新使用次数: ${usage.usageCount}`);
+            }
+          } else {
+            // 查找用户
+            const user = await User.findByPk(usage.userId);
+            if (user) {
+              // 扣除积分
+              const deduct = Math.min(calculatedCost, user.credits);
+              user.credits -= deduct;
+              await user.save();
+              
+              // 更新使用记录中的积分消耗
+              usage.credits = (usage.credits || 0) + deduct;
+              
+              // 更新任务记录，确保积分消耗正确
+              if (Array.isArray(tasks) && tasks.length > 0) {
+                const taskIndex = tasks.findIndex(t => t.taskId === taskInfo.taskId);
+                if (taskIndex !== -1) {
+                  tasks[taskIndex].creditCost = deduct;
+                  tasks[taskIndex].isFree = false;
+                  usage.details = JSON.stringify({ ...details, tasks });
+                }
+              }
+              
+              await usage.save();
+              
+              console.log(`[任务完成] 已扣除用户 ${usage.userId} 积分 ${deduct} (功能: ${taskInfo.featureName}, 时长: ${durationSec}秒)`);
+            } else {
+              console.error(`[任务完成] 未找到用户ID=${usage.userId}，无法扣除积分`);
+            }
+          }
         }
       }
     }

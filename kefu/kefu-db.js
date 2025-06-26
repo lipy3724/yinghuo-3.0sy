@@ -7,8 +7,11 @@ const User = require('../models/User');
 const CustomerMessage = require('../models/CustomerMessage');
 const CustomerAssignment = require('../models/CustomerAssignment');
 
-// 获取所有消息（管理员用）
-router.get('/messages', async (req, res) => {
+// 引入认证中间件
+const { protect, checkAdmin, checkCustomerService } = require('../middleware/auth');
+
+// 获取所有消息（添加权限验证和消息隔离）
+router.get('/messages', protect, checkCustomerService, async (req, res) => {
     try {
         const { userId, limit = 100, offset = 0, adminId } = req.query;
         
@@ -16,9 +19,33 @@ router.get('/messages', async (req, res) => {
             isDeleted: false
         };
         
-        // 如果指定了客服ID，只返回该客服负责的用户消息
-        if (adminId) {
+        // 消息隔离：非管理员只能看到分配给自己的用户消息
+        if (!req.userRole.isAdmin) {
             // 获取该客服负责的所有用户
+            const assignments = await CustomerAssignment.findAll({
+                where: {
+                    adminId: req.user.id,
+                    status: 'active'
+                },
+                attributes: ['userId']
+            });
+            
+            const assignedUserIds = assignments.map(assignment => assignment.userId);
+            
+            if (assignedUserIds.length > 0) {
+                whereCondition.userId = {
+                    [Op.in]: assignedUserIds
+                };
+            } else {
+                // 如果该客服没有分配任何用户，返回空结果
+                return res.json({
+                    success: true,
+                    messages: [],
+                    total: 0
+                });
+            }
+        } else if (adminId) {
+            // 管理员可以查看特定客服的分配
             const assignments = await CustomerAssignment.findAll({
                 where: {
                     adminId: parseInt(adminId),
@@ -57,6 +84,24 @@ router.get('/messages', async (req, res) => {
             }
             
             if (dbUserId) {
+                // 如果是客服，确保只能查看分配给自己的用户
+                if (!req.userRole.isAdmin) {
+                    const assignment = await CustomerAssignment.findOne({
+                        where: {
+                            userId: dbUserId,
+                            adminId: req.user.id,
+                            status: 'active'
+                        }
+                    });
+                    
+                    if (!assignment) {
+                        return res.status(403).json({
+                            success: false,
+                            message: '您没有权限查看此用户的消息'
+                        });
+                    }
+                }
+                
                 whereCondition.userId = dbUserId;
             } else {
                 return res.json({
@@ -128,7 +173,7 @@ router.get('/messages', async (req, res) => {
 });
 
 // 发送消息
-router.post('/messages', async (req, res) => {
+router.post('/messages', protect, checkCustomerService, async (req, res) => {
     try {
         const { userId, message, type = 'user', adminId, priority = 'normal' } = req.body;
         
@@ -166,9 +211,34 @@ router.post('/messages', async (req, res) => {
             });
         }
         
-        // 🎯 如果是用户首次发送消息，自动分配客服
+        // 如果是客服发送消息，确保只能向分配给自己的用户发送
         let assignedAdminId = adminId;
-        if (type === 'user') {
+        
+        if (type === 'admin') {
+            // 如果是客服且不是管理员，验证是否有权限向该用户发送消息
+            if (!req.userRole.isAdmin) {
+                const assignment = await CustomerAssignment.findOne({
+                    where: {
+                        userId: dbUserId,
+                        adminId: req.user.id,
+                        status: 'active'
+                    }
+                });
+                
+                if (!assignment) {
+                    return res.status(403).json({
+                        success: false,
+                        error: '您没有权限向此用户发送消息'
+                    });
+                }
+                
+                // 使用当前登录的客服ID
+                assignedAdminId = req.user.id;
+            } else if (!assignedAdminId) {
+                // 管理员发送消息，如果没有指定客服ID，使用自己的ID
+                assignedAdminId = req.user.id;
+            }
+        } else if (type === 'user') {
             try {
                 // 检查用户是否已有分配的客服
                 let assignment = await CustomerAssignment.findByUserId(dbUserId);
@@ -280,16 +350,44 @@ router.post('/messages', async (req, res) => {
 });
 
 // 标记消息为已读
-router.put('/read/:messageId', async (req, res) => {
+router.put('/read/:messageId', protect, checkCustomerService, async (req, res) => {
     try {
         const messageId = parseInt(req.params.messageId);
         
-        const message = await CustomerMessage.findByPk(messageId);
+        const message = await CustomerMessage.findByPk(messageId, {
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'username']
+                }
+            ]
+        });
+        
         if (!message) {
             return res.status(404).json({
                 success: false,
                 message: '消息不存在'
             });
+        }
+        
+        // 如果是客服且不是管理员，验证是否有权限标记该消息为已读
+        if (!req.userRole.isAdmin) {
+            // 检查该用户是否分配给当前客服
+            const assignment = await CustomerAssignment.findOne({
+                where: {
+                    userId: message.userId,
+                    adminId: req.user.id,
+                    status: 'active'
+                }
+            });
+            
+            if (!assignment) {
+                return res.status(403).json({
+                    success: false,
+                    message: '您没有权限标记此消息为已读'
+                });
+            }
         }
         
         await message.markAsRead();
@@ -310,7 +408,7 @@ router.put('/read/:messageId', async (req, res) => {
 });
 
 // 批量标记用户消息为已读
-router.put('/read/user/:userId', async (req, res) => {
+router.put('/read/user/:userId', protect, checkCustomerService, async (req, res) => {
     try {
         const { userId } = req.params;
         
@@ -330,6 +428,25 @@ router.put('/read/user/:userId', async (req, res) => {
                 success: false,
                 error: '无效的用户ID格式'
             });
+        }
+        
+        // 如果是客服且不是管理员，验证是否有权限标记该用户的消息为已读
+        if (!req.userRole.isAdmin) {
+            // 检查该用户是否分配给当前客服
+            const assignment = await CustomerAssignment.findOne({
+                where: {
+                    userId: dbUserId,
+                    adminId: req.user.id,
+                    status: 'active'
+                }
+            });
+            
+            if (!assignment) {
+                return res.status(403).json({
+                    success: false,
+                    message: '您没有权限标记此用户的消息为已读'
+                });
+            }
         }
         
         // 批量更新该用户的未读消息
@@ -361,16 +478,44 @@ router.put('/read/user/:userId', async (req, res) => {
 });
 
 // 删除消息（软删除）
-router.delete('/messages/:messageId', async (req, res) => {
+router.delete('/messages/:messageId', protect, checkCustomerService, async (req, res) => {
     try {
         const messageId = parseInt(req.params.messageId);
         
-        const message = await CustomerMessage.findByPk(messageId);
+        const message = await CustomerMessage.findByPk(messageId, {
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'username']
+                }
+            ]
+        });
+        
         if (!message) {
             return res.status(404).json({
                 success: false,
                 message: '消息不存在'
             });
+        }
+        
+        // 如果是客服且不是管理员，验证是否有权限删除该消息
+        if (!req.userRole.isAdmin) {
+            // 检查该用户是否分配给当前客服
+            const assignment = await CustomerAssignment.findOne({
+                where: {
+                    userId: message.userId,
+                    adminId: req.user.id,
+                    status: 'active'
+                }
+            });
+            
+            if (!assignment) {
+                return res.status(403).json({
+                    success: false,
+                    message: '您没有权限删除此消息'
+                });
+            }
         }
         
         await message.softDelete();
@@ -391,7 +536,7 @@ router.delete('/messages/:messageId', async (req, res) => {
 });
 
 // 获取未读消息数量
-router.get('/unread/:userId', async (req, res) => {
+router.get('/unread/:userId', protect, checkCustomerService, async (req, res) => {
     try {
         const { userId } = req.params;
         
@@ -413,6 +558,25 @@ router.get('/unread/:userId', async (req, res) => {
             });
         }
         
+        // 如果是客服且不是管理员，验证是否有权限获取该用户的未读消息数量
+        if (!req.userRole.isAdmin) {
+            // 检查该用户是否分配给当前客服
+            const assignment = await CustomerAssignment.findOne({
+                where: {
+                    userId: dbUserId,
+                    adminId: req.user.id,
+                    status: 'active'
+                }
+            });
+            
+            if (!assignment) {
+                return res.status(403).json({
+                    success: false,
+                    message: '您没有权限获取此用户的未读消息数量'
+                });
+            }
+        }
+        
         const count = await CustomerMessage.getUnreadCount(dbUserId);
         
         res.json({
@@ -431,13 +595,20 @@ router.get('/unread/:userId', async (req, res) => {
 });
 
 // 获取最近对话列表
-router.get('/conversations', async (req, res) => {
+router.get('/conversations', protect, checkCustomerService, async (req, res) => {
     try {
         const { limit = 20 } = req.query;
         
-        const conversations = await CustomerMessage.getRecentConversations({
+        // 如果是客服且不是管理员，只能看到自己的对话
+        const options = {
             limit: parseInt(limit)
-        });
+        };
+        
+        if (!req.userRole.isAdmin) {
+            options.adminId = req.user.id;
+        }
+        
+        const conversations = await CustomerMessage.getRecentConversations(options);
         
         res.json({
             success: true,
@@ -455,20 +626,24 @@ router.get('/conversations', async (req, res) => {
 });
 
 // 兼容旧API - 发送消息
-router.post('/send', async (req, res) => {
+router.post('/send', protect, checkCustomerService, async (req, res) => {
     // 重定向到新的消息API
     req.body.type = req.body.isAdmin ? 'admin' : 'user';
     return router.handle(req, res);
 });
 
 // 获取客服分配信息
-router.get('/assignments', async (req, res) => {
+router.get('/assignments', protect, checkCustomerService, async (req, res) => {
     try {
         const { adminId, userId } = req.query;
         
         let whereCondition = { status: 'active' };
         
-        if (adminId) {
+        // 如果是客服且不是管理员，只能查看自己的分配
+        if (!req.userRole.isAdmin) {
+            whereCondition.adminId = req.user.id;
+        } else if (adminId) {
+            // 管理员可以查看特定客服的分配
             whereCondition.adminId = parseInt(adminId);
         }
         
@@ -485,6 +660,24 @@ router.get('/assignments', async (req, res) => {
             
             if (dbUserId) {
                 whereCondition.userId = dbUserId;
+                
+                // 如果是客服且不是管理员，确认该用户是否分配给自己
+                if (!req.userRole.isAdmin) {
+                    const assignment = await CustomerAssignment.findOne({
+                        where: {
+                            userId: dbUserId,
+                            adminId: req.user.id,
+                            status: 'active'
+                        }
+                    });
+                    
+                    if (!assignment) {
+                        return res.status(403).json({
+                            success: false,
+                            message: '您没有权限查看此用户的分配信息'
+                        });
+                    }
+                }
             }
         }
         
@@ -499,7 +692,7 @@ router.get('/assignments', async (req, res) => {
                 {
                     model: User,
                     as: 'admin',
-                    attributes: ['id', 'username', 'isAdmin', 'isInternal']
+                    attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
                 }
             ],
             order: [['assignedAt', 'DESC']]
@@ -514,13 +707,14 @@ router.get('/assignments', async (req, res) => {
         console.error('获取分配信息失败:', error);
         res.status(500).json({
             success: false,
-            error: '获取分配信息失败'
+            error: '获取分配信息失败',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
 
 // 手动分配客服
-router.post('/assignments', async (req, res) => {
+router.post('/assignments', protect, checkAdmin, async (req, res) => {
     try {
         const { userId, adminId, notes } = req.body;
         
@@ -549,12 +743,44 @@ router.post('/assignments', async (req, res) => {
             });
         }
         
+        // 检查被分配的用户是否为客服角色
+        const admin = await User.findByPk(parseInt(adminId));
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                error: '指定的客服不存在'
+            });
+        }
+        
+        if (!admin.isCustomerService) {
+            return res.status(400).json({
+                success: false,
+                error: '只能分配给客服角色的用户，该用户不是客服'
+            });
+        }
+        
         // 检查是否已有分配
         const existingAssignment = await CustomerAssignment.findByUserId(dbUserId);
         
         if (existingAssignment) {
             // 转移分配
-            await existingAssignment.transfer(parseInt(adminId), notes);
+            await existingAssignment.transfer(parseInt(adminId), notes || `管理员 ${req.user.username} 手动转移`);
+            
+            // 重新加载分配信息，包含关联数据
+            await existingAssignment.reload({
+                include: [
+                    {
+                        model: User,
+                        as: 'customer',
+                        attributes: ['id', 'username', 'phone']
+                    },
+                    {
+                        model: User,
+                        as: 'admin',
+                        attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
+                    }
+                ]
+            });
             
             res.json({
                 success: true,
@@ -568,7 +794,7 @@ router.post('/assignments', async (req, res) => {
                 adminId: parseInt(adminId),
                 status: 'active',
                 assignmentMethod: 'manual',
-                notes: notes || '手动分配'
+                notes: notes || `管理员 ${req.user.username} 手动分配`
             });
             
             await assignment.reload({
@@ -581,7 +807,7 @@ router.post('/assignments', async (req, res) => {
                     {
                         model: User,
                         as: 'admin',
-                        attributes: ['id', 'username', 'isAdmin', 'isInternal']
+                        attributes: ['id', 'username', 'isAdmin', 'isInternal', 'isCustomerService']
                     }
                 ]
             });
@@ -597,7 +823,8 @@ router.post('/assignments', async (req, res) => {
         console.error('分配客服失败:', error);
         res.status(500).json({
             success: false,
-            error: '分配客服失败'
+            error: '分配客服失败',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });

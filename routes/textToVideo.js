@@ -188,7 +188,7 @@ router.post('/create', protect, createUnifiedFeatureMiddleware('text-to-video'),
         status: normalizedStatus,
         creditCost: estimatedCost,
         timestamp: new Date(),
-        hasChargedCredits: true, // 积分已在统一中间件中扣除
+        hasChargedCredits: false, // 修改为false，确保任务完成后扣除积分
         isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
       };
       
@@ -493,8 +493,35 @@ router.get('/status/:taskId', protect, async (req, res) => {
                 global.textToVideoTasks[taskId].creditCost = 0; // 免费使用不消耗积分
               }
             } else {
-              // 积分已在中间件中扣除，这里只需要标记状态
-              console.log(`任务完成，积分已在创建时通过中间件扣除: 任务ID=${taskId}`);
+              // 调用saveTaskDetails函数，传入status='completed'参数，触发后续扣费逻辑
+              try {
+                // 查找用户的功能使用记录
+                const featureUsage = await FeatureUsage.findOne({
+                  where: {
+                    userId: userId,
+                    featureName: 'text-to-video'
+                  }
+                });
+                
+                if (featureUsage) {
+                  const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                  await saveTaskDetails(featureUsage, {
+                    taskId: taskId,
+                    featureName: 'text-to-video',
+                    status: 'completed', // 添加status参数，触发任务完成后扣费逻辑
+                    creditCost: taskCost,
+                    isFree: isFree
+                  });
+                  console.log(`已触发文生视频任务完成扣费逻辑: 任务ID=${taskId}, 积分=${taskCost}`);
+                } else {
+                  console.error(`未找到用户ID=${userId}的text-to-video功能使用记录`);
+                }
+              } catch (err) {
+                console.error('触发任务完成扣费逻辑失败:', err);
+              }
+              
+              // 标记状态
+              console.log(`任务完成，积分已在任务完成时扣除: 任务ID=${taskId}`);
               if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
                 global.textToVideoTasks[taskId].hasChargedCredits = true;
               }
@@ -1000,7 +1027,7 @@ router.post('/image-to-video', protect, createUnifiedFeatureMiddleware('image-to
                 img_url: input.img_url,
                 timestamp: new Date(),
                 creditCost: creditCost,
-                hasChargedCredits: true,  // 积分已在统一中间件中扣除
+                hasChargedCredits: false,  // 修改为false，确保任务完成后扣除积分
                 isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
             };
             
@@ -1186,70 +1213,46 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
                 
                     // 更新数据库中的使用记录，仅在未扣除积分时执行
                     if (!hasChargedCredits) {
-                try {
-                    const userId = global.imageToVideoTasks[taskId].userId;
-                    
-                    // 检查是否为免费使用
-                    const isFree = global.imageToVideoTasks[taskId].isFree;
-                    // 确定实际积分消耗，免费使用为0
-                    const creditCost = isFree ? 0 : (global.imageToVideoTasks[taskId].creditCost || 0);
-                    
-                            console.log(`图生视频任务完成(首次计费): 任务ID=${taskId}, 用户ID=${userId}, 免费使用=${isFree}, 实际积分消耗=${creditCost}`);
-                    
-                    let usage = await FeatureUsage.findOne({
-                        where: { userId, featureName: 'image-to-video' }
-                    });
-                    
-                    if (usage) {
-                        // 解析现有详情
-                        let details = {};
                         try {
-                            details = usage.details ? JSON.parse(usage.details) : {};
-                        } catch (e) {
-                            details = {};
-                        }
-                        
-                        // 准备任务列表
-                        const tasks = details.tasks || [];
-                        
-                        // 检查任务是否已记录
-                        const taskExists = tasks.some(task => task.taskId === taskId);
-                        
-                        if (!taskExists) {
-                            // 添加新的任务记录
-                            tasks.push({
-                                taskId: taskId,
-                                creditCost: creditCost,
-                                isFree: isFree,  // 保存免费使用标记
-                                timestamp: new Date(),
-                                prompt: global.imageToVideoTasks[taskId].prompt || '图生视频任务'
+                            const userId = global.imageToVideoTasks[taskId].userId;
+                            
+                            // 检查是否为免费使用
+                            const isFree = global.imageToVideoTasks[taskId].isFree || false;
+                            // 确定实际积分消耗，免费使用为0，付费使用为66积分
+                            const creditCost = isFree ? 0 : 66;
+                            
+                            console.log(`图生视频任务完成(首次计费): 任务ID=${taskId}, 用户ID=${userId}, 免费使用=${isFree}, 实际积分消耗=${creditCost}`);
+                            
+                            let usage = await FeatureUsage.findOne({
+                                where: { userId, featureName: 'image-to-video' }
                             });
                             
-                            // 更新使用记录
-                            usage.usageCount += 1;
-                            usage.credits += creditCost;
-                            usage.details = JSON.stringify({
-                                ...details,
-                                tasks: tasks
-                            });
-                            usage.lastUsedAt = new Date();
-                            await usage.save();
-                                    
-                                    // 标记为已扣除积分，避免重复计算
-                                    global.imageToVideoTasks[taskId].hasChargedCredits = true;
-                            
-                            console.log(`已更新用户 ${userId} 的图生视频使用记录，添加任务 ${taskId}`);
-                                } else {
-                                    console.log(`任务 ${taskId} 已在使用记录中存在，跳过积分计算`);
-                        }
-                    }
-                } catch (dbError) {
-                    console.error('保存图生视频使用记录失败:', dbError);
-                    // 继续处理，不影响用户使用
+                            if (usage) {
+                                // 调用saveTaskDetails函数，传入status='completed'参数，触发后续扣费逻辑
+                                const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                                await saveTaskDetails(usage, {
+                                    taskId: taskId,
+                                    featureName: 'image-to-video',
+                                    status: 'completed', // 添加status参数，触发任务完成后扣费逻辑
+                                    creditCost: creditCost,
+                                    isFree: isFree
+                                });
+                                console.log(`已触发图生视频任务完成扣费逻辑: 任务ID=${taskId}, 积分=${creditCost}, 免费=${isFree}`);
+                                
+                                // 标记为已扣除积分，避免重复计算
+                                global.imageToVideoTasks[taskId].hasChargedCredits = true;
+                                
+                                console.log(`已更新用户 ${userId} 的图生视频使用记录，添加任务 ${taskId}`);
+                            } else {
+                                console.log(`未找到用户ID=${userId}的image-to-video功能使用记录`);
+                            }
+                        } catch (dbError) {
+                            console.error('保存图生视频使用记录失败:', dbError);
+                            // 继续处理，不影响用户使用
                         }
                     } else {
                         console.log(`任务 ${taskId} 已扣除积分，跳过重复计算`);
-                }
+                    }
                 
                 console.log(`更新图生视频任务状态: taskId=${taskId}, status=SUCCEEDED`);
             }
@@ -1604,7 +1607,7 @@ router.post('/image-to-video-sync', protect, createUnifiedFeatureMiddleware('ima
             img_url: img_url,
             timestamp: new Date(),
             creditCost: creditCost,
-            hasChargedCredits: true,  // 积分已在统一中间件中扣除
+            hasChargedCredits: false,  // 修改为false，确保任务完成后扣除积分
             isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
         };
         

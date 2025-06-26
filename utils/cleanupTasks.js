@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const ImageHistory = require('../models/ImageHistory');
+const CustomerMessage = require('../models/CustomerMessage');
 const { Op } = require('sequelize');
 
 /**
@@ -48,12 +49,62 @@ function startCleanupTasks() {
       } else {
         console.log('✅ 下载中心清理任务完成：无过期记录需要清除');
       }
+
+      // 清理客服聊天记录
+      await cleanupCustomerMessages();
     } catch (error) {
       console.error('❌ 下载中心清理任务失败:', error);
     }
   });
   
   console.log('📅 下载中心定时清理任务已启动 (每小时执行一次)');
+  console.log('📅 客服聊天记录清理任务已启动 (每小时执行一次，保留最近12小时记录)');
+}
+
+/**
+ * 清理过期的客服聊天记录
+ * 使用软删除方式，将超过配置时间的记录标记为已删除
+ * @param {number} customHours - 可选的自定义保存小时数
+ */
+async function cleanupCustomerMessages(customHours) {
+  try {
+    console.log('开始执行客服聊天记录清理任务...');
+    
+    // 获取配置的保存时间，默认12小时
+    const retentionHours = customHours || 
+      parseInt(process.env.CUSTOMER_MESSAGE_RETENTION_HOURS) || 12;
+    
+    console.log(`客服聊天记录保存时间设置为 ${retentionHours} 小时`);
+    
+    const cutoffTime = new Date(Date.now() - retentionHours * 60 * 60 * 1000);
+    
+    // 使用软删除方式清理过期消息
+    const [updatedCount] = await CustomerMessage.update(
+      {
+        isDeleted: true,
+        deletedAt: new Date()
+      },
+      {
+        where: {
+          createdAt: {
+            [Op.lt]: cutoffTime
+          },
+          isDeleted: false
+        }
+      }
+    );
+    
+    if (updatedCount > 0) {
+      console.log(`✅ 客服聊天记录清理任务完成：已标记 ${updatedCount} 条过期记录为已删除`);
+    } else {
+      console.log('✅ 客服聊天记录清理任务完成：无过期记录需要清除');
+    }
+    
+    return updatedCount;
+  } catch (error) {
+    console.error('❌ 客服聊天记录清理任务失败:', error);
+    return 0;
+  }
 }
 
 /**
@@ -94,7 +145,15 @@ async function manualCleanup() {
     });
     
     console.log(`✅ 手动清理完成：已清除 ${deletedCount} 条过期记录`);
-    return deletedCount;
+    
+    // 同时清理客服聊天记录
+    const messageCount = await cleanupCustomerMessages();
+    console.log(`✅ 手动清理客服聊天记录完成：已标记 ${messageCount} 条过期记录为已删除`);
+    
+    return { 
+      deletedImageCount: deletedCount,
+      deletedMessageCount: messageCount 
+    };
   } catch (error) {
     console.error('❌ 手动清理失败:', error);
     throw error;
@@ -103,5 +162,6 @@ async function manualCleanup() {
 
 module.exports = {
   startCleanupTasks,
-  manualCleanup
+  manualCleanup,
+  cleanupCustomerMessages
 }; 

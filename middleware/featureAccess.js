@@ -14,8 +14,20 @@ const FEATURES = {
   'image-removal': { creditCost: 7, freeUsage: 1 }, // 图像物体移除 
   'model-skin-changer': { creditCost: 10, freeUsage: 1 }, // 模特肤色替换
   'clothing-simulation': { creditCost: 10, freeUsage: 1 }, // 模拟试衣
-  'text-to-video': { creditCost: 66, freeUsage: 1 }, // 文生视频功能，较高积分消耗
-  'image-to-video': { creditCost: 66, freeUsage: 1 }, // 图生视频功能
+  'text-to-video': { 
+    creditCost: (payload) => {
+      // 返回0，创建阶段不预扣积分，任务完成后再扣费
+      return 0;
+    }, 
+    freeUsage: 1 
+  }, // 文生视频功能，任务完成后扣除66积分 // 文生视频功能，较高积分消耗
+  'image-to-video': { 
+    creditCost: (payload) => {
+      // 返回0，创建阶段不预扣积分，任务完成后再扣费
+      return 0;
+    }, 
+    freeUsage: 1 
+  }, // 图生视频功能，任务完成后扣除66积分 // 图生视频功能
   'IMAGE_EDIT': { creditCost: 7, freeUsage: 1 }, // 图像指令编辑功能
   'LOCAL_REDRAW': { creditCost: 7, freeUsage: 1 }, // 图像局部重绘功能
   'IMAGE_COLORIZATION': { creditCost: 7, freeUsage: 1 }, // 图像上色功能
@@ -61,21 +73,12 @@ const FEATURES = {
         计算多图转视频积分：
         - 规则：每 30 秒 30 积分，不足 30 秒按 30 秒计。
         - 兼容调用方传入数字 duration，或整个 req.body 对象。
+        - 创建阶段返回0，任务完成后再根据实际时长扣费
       */
-      let durationSec;
-      if (typeof payload === 'number') {
-        durationSec = payload;
-      } else if (payload && typeof payload === 'object') {
-        // 前端传递的 duration 字段（秒）
-        durationSec = parseInt(payload.duration, 10);
-      }
-      if (!durationSec || Number.isNaN(durationSec) || durationSec <= 0) {
-        durationSec = 10; // 默认 10 秒
-      }
-      return Math.ceil(durationSec / 30) * 30;
+      return 0; // 创建阶段不扣费
     }, 
     freeUsage: 1 
-  }, // 多图转视频 30积分/30秒
+  }, // 多图转视频 30积分/30秒，任务完成后扣费
   'DIGITAL_HUMAN_VIDEO': { 
     creditCost: (duration) => {
       // 计算视频时长应消耗的积分
@@ -170,7 +173,22 @@ const checkFeatureAccess = (featureName) => {
           console.log(`视频风格重绘功能权限检查 - 跳过积分扣除`);
           creditCost = 10; // 仅检查用户是否有至少10积分，实际不会扣除
         }
-        else if (featureName === 'VIDEO_SUBTITLE_REMOVER') {
+        
+        else if (featureName === 'text-to-video') {
+          // 文生视频功能，在任务完成后扣除积分
+          console.log(`文生视频功能权限检查 - 跳过积分扣除`);
+          creditCost = 20; // 仅检查用户是否有至少20积分，实际不会扣除
+        }
+        else if (featureName === 'image-to-video') {
+          // 图生视频功能，在任务完成后扣除积分
+          console.log(`图生视频功能权限检查 - 跳过积分扣除`);
+          creditCost = 20; // 仅检查用户是否有至少20积分，实际不会扣除
+        }
+        else if (featureName === 'MULTI_IMAGE_TO_VIDEO') {
+          // 多图转视频功能，在任务完成后根据实际时长扣除积分
+          console.log(`多图转视频功能权限检查 - 跳过积分扣除`);
+          creditCost = 30; // 仅检查用户是否有至少30积分，实际不会扣除
+        }else if (featureName === 'VIDEO_SUBTITLE_REMOVER') {
           // 视频去除字幕功能，不预先扣除积分，而是在任务完成后扣除
           console.log(`视频去除字幕功能权限检查 - 跳过积分扣除`);
           creditCost = 30; // 仅检查用户是否有至少30积分，实际不会扣除
