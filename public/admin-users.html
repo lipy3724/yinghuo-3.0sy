@@ -948,10 +948,20 @@
                 }
             } catch (error) {
                 console.error('加载用户列表出错:', error);
+                
+                // 提供更友好的错误提示
+                let errorMessage = '加载失败';
+                
+                if (error.message.includes('服务器错误') || error.name === 'TypeError') {
+                    errorMessage = '网络出现问题，请稍后重试。可能需要运行数据库迁移脚本。';
+                } else {
+                    errorMessage = error.message;
+                }
+                
                 document.getElementById('user-list').innerHTML = `
                     <tr>
                         <td colspan="10" class="px-6 py-4 text-center text-red-500">
-                            加载失败: ${error.message}
+                            ${errorMessage}
                         </td>
                     </tr>
                 `;
@@ -1900,7 +1910,17 @@
                 }
             } catch (error) {
                 console.error('创建用户错误:', error);
-                alert('创建用户失败: ' + error.message);
+                
+                // 提供更友好的错误提示
+                let errorMessage = '创建用户失败';
+                
+                if (error.message.includes('服务器错误')) {
+                    errorMessage = '网络出现问题，请稍后重试。可能需要运行数据库迁移脚本。';
+                } else {
+                    errorMessage = error.message;
+                }
+                
+                alert(errorMessage);
             }
         }
         
@@ -1982,7 +2002,17 @@
                 }
             } catch (error) {
                 console.error('创建用户错误:', error);
-                alert('创建用户失败: ' + error.message);
+                
+                // 提供更友好的错误提示
+                let errorMessage = '创建用户失败';
+                
+                if (error.message.includes('服务器错误')) {
+                    errorMessage = '网络出现问题，请稍后重试。可能需要运行数据库迁移脚本。';
+                } else {
+                    errorMessage = error.message;
+                }
+                
+                alert(errorMessage);
             }
         }
         
@@ -2185,7 +2215,6 @@
             remarkTextarea.style.padding = '8px';
             remarkTextarea.style.border = '1px solid #d1d5db';
             remarkTextarea.style.borderRadius = '4px';
-            remarkTextarea.rows = 3;
             remarkGroup.appendChild(remarkTextarea);
             
             form.appendChild(remarkGroup);
