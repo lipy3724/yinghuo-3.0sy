@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场景图生成退款机制测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #444;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .log {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+            border-bottom: 1px solid #eee;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .info {
+            color: blue;
+        }
+    </style>
+    <script src="/feature-tracker.js"></script>
+</head>
+<body>
+    <h1>场景图生成退款机制测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 模拟功能使用</h2>
+        <p>点击下面的按钮模拟使用场景图生成功能，记录使用情况并获取任务ID</p>
+        <button id="simulateUsage">模拟功能使用</button>
+        <div class="log" id="usageLog"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 模拟任务失败</h2>
+        <p>使用上一步获取的任务ID，模拟任务失败并触发退款</p>
+        <input type="text" id="taskId" placeholder="输入任务ID" style="width: 300px; padding: 8px;">
+        <button id="simulateFailure">模拟任务失败</button>
+        <div class="log" id="failureLog"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 验证退款结果</h2>
+        <p>检查用户积分和使用记录，验证退款是否成功</p>
+        <button id="verifyRefund">验证退款结果</button>
+        <div class="log" id="verifyLog"></div>
+    </div>
+    
+    <script>
+        // 日志函数
+        function log(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // 1. 模拟功能使用
+        document.getElementById('simulateUsage').addEventListener('click', async () => {
+            try {
+                log('usageLog', '开始模拟使用场景图生成功能...', 'info');
+                
+                // 调用功能使用跟踪API
+                const result = await trackFeatureUsage('use', 'scene-generator');
+                
+                if (result && typeof result === 'object') {
+                    log('usageLog', `功能使用记录成功! 任务ID: ${result.taskId}`, 'success');
+                    log('usageLog', `使用类型: ${result.usageType}, 积分消费: ${result.creditCost}`, 'info');
+                    
+                    // 保存任务ID到输入框
+                    document.getElementById('taskId').value = result.taskId;
+                    
+                    // 保存到localStorage
+                    localStorage.setItem('currentSceneTaskId', result.taskId);
+                } else {
+                    log('usageLog', '功能使用记录失败或返回格式不正确', 'error');
+                }
+            } catch (error) {
+                log('usageLog', `出错: ${error.message}`, 'error');
+            }
+        });
+        
+        // 2. 模拟任务失败
+        document.getElementById('simulateFailure').addEventListener('click', async () => {
+            try {
+                const taskId = document.getElementById('taskId').value.trim();
+                
+                if (!taskId) {
+                    log('failureLog', '请先输入任务ID', 'error');
+                    return;
+                }
+                
+                log('failureLog', `开始模拟任务失败: ${taskId}`, 'info');
+                
+                // 调用退款API
+                const response = await fetch('/api/refund/scene-generator', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({
+                        taskId: taskId,
+                        reason: '测试页面模拟任务失败'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log('failureLog', '退款请求成功!', 'success');
+                    log('failureLog', `服务器响应: ${result.message}`, 'info');
+                } else {
+                    log('failureLog', `退款请求失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                log('failureLog', `出错: ${error.message}`, 'error');
+            }
+        });
+        
+        // 3. 验证退款结果
+        document.getElementById('verifyRefund').addEventListener('click', async () => {
+            try {
+                log('verifyLog', '开始验证退款结果...', 'info');
+                
+                // 获取用户积分和使用情况
+                const response = await fetch('/api/credits/usage', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log('verifyLog', '获取使用情况成功', 'success');
+                    
+                    // 查找场景图生成功能的使用记录
+                    const sceneGenUsage = result.data.find(item => item.featureName === 'scene-generator');
+                    
+                    if (sceneGenUsage) {
+                        log('verifyLog', `场景图生成功能使用次数: ${sceneGenUsage.usageCount}`, 'info');
+                        log('verifyLog', `场景图生成功能积分消费: ${sceneGenUsage.totalCredits}`, 'info');
+                        
+                        // 检查是否有退款记录
+                        if (sceneGenUsage.refunds && sceneGenUsage.refunds.length > 0) {
+                            log('verifyLog', `找到 ${sceneGenUsage.refunds.length} 条退款记录:`, 'success');
+                            
+                            sceneGenUsage.refunds.forEach((refund, index) => {
+                                log('verifyLog', `退款记录 ${index + 1}: 任务ID=${refund.taskId}, 积分=${refund.creditCost}, 原因=${refund.reason}`, 'info');
+                            });
+                        } else {
+                            log('verifyLog', '未找到退款记录', 'error');
+                        }
+                    } else {
+                        log('verifyLog', '未找到场景图生成功能的使用记录', 'error');
+                    }
+                } else {
+                    log('verifyLog', `获取使用情况失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                log('verifyLog', `出错: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html> 

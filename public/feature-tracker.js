@@ -32,6 +32,8 @@ async function trackFeatureUsage(action, featureName) {
         
         if (result.success) {
             console.log('功能使用已记录:', result.data);
+            // 返回完整的结果数据，包括taskId
+            return result.data;
         } else {
             console.error('记录功能使用失败:', result.message);
             // 如果是积分不足，可以提示用户
