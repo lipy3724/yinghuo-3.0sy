@@ -121,170 +121,8 @@ const OSS = require('ali-oss');
  * @param {string} taskId - 任务ID
  * @returns {Promise<boolean>} - 退款是否成功
  */
-// 导出供测试使用
-async function refundImageUpscalerCredits(userId, taskId) {
-  try {
-    console.log(`开始处理图片高清放大任务失败退款: 用户ID=${userId}, 任务ID=${taskId}`);
-    
-    // 检查全局任务记录中是否有该任务的积分信息
-    let creditCost = 0;
-    let wasRefunded = false;
-    
-    if (global.imageUpscalerTasks && global.imageUpscalerTasks[taskId]) {
-      const taskInfo = global.imageUpscalerTasks[taskId];
-      creditCost = taskInfo.creditCost || 0;
-      wasRefunded = taskInfo.refunded || false;
-      
-      // 如果已经退款过了，不重复退款
-      if (wasRefunded) {
-        console.log(`任务 ${taskId} 已经退款过，跳过退款处理`);
-        return false;
-      }
-      
-      // 标记为已退款，防止重复退款
-      global.imageUpscalerTasks[taskId].refunded = true;
-    }
-    
-    // 如果没有积分消耗信息，从功能配置中获取
-    if (creditCost === 0) {
-      const { FEATURES } = require('./middleware/featureAccess');
-      const featureConfig = FEATURES['image-upscaler'];
-      creditCost = featureConfig ? featureConfig.creditCost : 10;
-      console.log(`从功能配置获取积分消耗: ${creditCost}`);
-    }
-    
-    // 查找最近的该功能使用记录
-    const recentUsage = await FeatureUsage.findOne({
-      where: {
-        userId: userId,
-        featureName: 'image-upscaler'
-      },
-      order: [['createdAt', 'DESC']]
-    });
-    
-    if (!recentUsage) {
-      console.log(`未找到用户 ${userId} 的图片高清放大使用记录，无法执行退款`);
-      return false;
-    }
-    
-    // 检查该使用记录是否为免费使用
-    const { FEATURES } = require('./middleware/featureAccess');
-    const featureConfig = FEATURES['image-upscaler'];
-    
-    if (recentUsage.usageCount <= featureConfig.freeUsage) {
-      console.log(`用户 ${userId} 使用的是免费次数 (${recentUsage.usageCount}/${featureConfig.freeUsage})，仅回退使用次数，无需退还积分`);
-      
-      // 即使是免费使用，任务失败时也要回退使用次数，保留免费机会
-      if (recentUsage.usageCount > 0) {
-        recentUsage.usageCount -= 1;
-        await recentUsage.save();
-        console.log(`✅ 已回退免费使用次数: 用户ID=${userId}, 当前使用次数=${recentUsage.usageCount}/${featureConfig.freeUsage}`);
-      }
-      
-      // 记录退款信息到任务详情中
-      try {
-        const details = JSON.parse(recentUsage.details || '{}');
-        const tasks = details.tasks || [];
-        const refunds = details.refunds || [];
-        
-        // 检查任务是否存在
-        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
-        if (taskIndex !== -1) {
-          // 记录退款信息
-          refunds.push({
-            taskId: taskId,
-            creditCost: 0,
-            isFree: true,
-            reason: '任务失败',
-            refundTime: new Date().toISOString()
-          });
-          
-          // 更新任务详情
-          recentUsage.details = JSON.stringify({
-            ...details,
-            refunds: refunds
-          });
-          
-          await recentUsage.save();
-          console.log(`✅ 已记录免费任务退款信息: 任务ID=${taskId}`);
-        }
-      } catch (error) {
-        console.error('记录免费任务退款信息失败:', error);
-      }
-      
-      return true;
-    }
-    
-    // 如果有积分消耗，执行退款
-    if (creditCost > 0) {
-      // 获取用户信息
-      const user = await User.findByPk(userId);
-      if (!user) {
-        console.error(`未找到用户 ${userId}，无法执行退款`);
-        return false;
-      }
-      
-      // 退还积分
-      const originalCredits = user.credits;
-      user.credits += creditCost;
-      await user.save();
-      
-      // 完全撤销这次使用记录，而不是仅仅减少使用次数
-      if (recentUsage.usageCount > 0) {
-        recentUsage.usageCount -= 1;
-        
-        // 清除这次使用产生的积分消费记录
-        recentUsage.credits = Math.max(0, (recentUsage.credits || 0) - creditCost);
-        
-        // 如果使用次数回到免费范围内，清除相关的付费记录
-        if (recentUsage.usageCount < featureConfig.freeUsage) {
-          // 回到免费使用范围，清除所有付费相关的记录
-          recentUsage.credits = 0;
-        }
-      }
-      
-      // 记录退款信息到任务详情中
-      try {
-        const details = JSON.parse(recentUsage.details || '{}');
-        const tasks = details.tasks || [];
-        const refunds = details.refunds || [];
-        
-        // 检查任务是否存在
-        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
-        if (taskIndex !== -1) {
-          // 记录退款信息
-          refunds.push({
-            taskId: taskId,
-            creditCost: creditCost,
-            isFree: false,
-            reason: '任务失败',
-            refundTime: new Date().toISOString()
-          });
-          
-          // 更新任务详情
-          recentUsage.details = JSON.stringify({
-            ...details,
-            refunds: refunds
-          });
-        }
-      } catch (error) {
-        console.error('记录任务退款信息失败:', error);
-      }
-      
-      await recentUsage.save();
-      
-      console.log(`✅ 图片高清放大任务失败退款成功: 用户ID=${userId}, 任务ID=${taskId}, 退款积分=${creditCost}, 原积分=${originalCredits}, 现积分=${user.credits}`);
-      console.log(`📊 使用记录已更新: 使用次数=${recentUsage.usageCount}, 积分消费=${recentUsage.credits}`);
-      
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('图片高清放大退款失败:', error);
-    return false;
-  }
-}
+// 导入退款管理模块
+const refundManager = require('./utils/refundManager');
 
 /**
  * 鞋靴虚拟试穿任务失败时的退款函数
@@ -2685,7 +2523,7 @@ app.post('/api/upscale', protect, createUnifiedFeatureMiddleware('image-upscaler
       
       // 调用退款函数
       try {
-        await refundImageUpscalerCredits(userId, taskId);
+        await refundManager.refundImageUpscalerCredits(userId, taskId, '任务失败');
         console.log(`已为任务ID=${taskId}执行退款处理`);
       } catch (refundError) {
         console.error('执行退款失败:', refundError);
@@ -4769,9 +4607,9 @@ app.post([
       const taskId = Date.now().toString();
       const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
       await saveTaskDetails(req.featureUsage.usage, {
-        taskId,
-        creditCost,
-        isFree,
+        taskId: taskId,
+        creditCost: creditCost,
+        isFree: isFree,
         extraData: {}
       });
       console.log(`虚拟模特试穿功能使用记录已保存: 用户ID=${userId}, 积分=${creditCost}, 是否免费=${isFree}`);
@@ -4861,6 +4699,12 @@ const startServer = async () => {
     console.log('设置模型关联关系...');
     setupAssociations();
     console.log('模型关联关系设置完成');
+    
+    // 检查全局变量状态
+    console.log('检查全局任务变量状态:');
+    console.log('- 场景图生成任务变量:', global.sceneGeneratorTasks ? '已初始化' : '未初始化');
+    console.log('- 图片高清放大任务变量:', global.imageUpscalerTasks ? '已初始化' : '未初始化');
+    console.log('- 视频数字人任务变量:', global.digitalHumanTasks ? '已初始化' : '未初始化');
     
     // 从数据库加载任务信息到全局变量
     await loadTasksFromDatabase();
@@ -4982,6 +4826,52 @@ const loadTasksFromDatabase = async () => {
     }
     
     console.log(`成功从数据库加载了 ${loadedTasks} 条视频数字人任务信息到全局变量`);
+    
+    // 加载场景图生成任务
+    try {
+      const sceneGeneratorUsages = await FeatureUsage.findAll({
+        where: { featureName: 'scene-generator' }
+      });
+      
+      let sceneTasksLoaded = 0;
+      
+      // 初始化全局变量（确保它存在）
+      if (!global.sceneGeneratorTasks) {
+        global.sceneGeneratorTasks = {};
+      }
+      
+      // 处理每个用户的使用记录
+      for (const usage of sceneGeneratorUsages) {
+        if (usage.details) {
+          try {
+            const details = JSON.parse(usage.details);
+            if (details.tasks && Array.isArray(details.tasks)) {
+              // 遍历任务并添加到全局变量
+              for (const task of details.tasks) {
+                if (task.taskId) {
+                  // 无论全局变量中是否已存在，都更新任务信息，确保数据完整性
+                  global.sceneGeneratorTasks[task.taskId] = {
+                    userId: usage.userId,
+                    hasChargedCredits: !task.isFree,
+                    isFree: task.isFree || false,
+                    creditCost: task.creditCost || 0,
+                    refunded: false,
+                    timestamp: new Date(task.timestamp) || new Date()
+                  };
+                  sceneTasksLoaded++;
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`解析用户ID ${usage.userId} 的场景图生成功能使用记录详情失败:`, error);
+          }
+        }
+      }
+      
+      console.log(`成功从数据库加载了 ${sceneTasksLoaded} 条场景图生成任务信息到全局变量`);
+    } catch (error) {
+      console.error('加载场景图生成任务信息失败:', error);
+    }
     
     // 可以在这里添加其他功能的任务加载逻辑
     
@@ -5792,6 +5682,27 @@ async function syncAllFeatureUsagesWithDatabase() {
                 }
               }
             }
+            
+            // 从数据库中同步任务到全局变量
+            if (tasksFromDB.length > 0) {
+              console.log(`用户ID ${userId} 的 ${featureType} 功能: 数据库中有 ${tasksFromDB.length} 条任务记录，全局变量中有 ${taskCount} 条任务记录`);
+              
+              // 将数据库中的任务同步到全局变量
+              for (const task of tasksFromDB) {
+                if (task && task.taskId && !global.sceneGeneratorTasks[task.taskId]) {
+                  global.sceneGeneratorTasks[task.taskId] = {
+                    userId: userId,
+                    creditCost: task.creditCost || 0,
+                    hasChargedCredits: !task.isFree,
+                    isFree: task.isFree || false,
+                    timestamp: new Date(task.timestamp || Date.now()),
+                    refunded: false
+                  };
+                }
+              }
+            } else {
+              console.log(`用户ID ${userId} 的 ${featureType} 功能: 数据库中有 ${tasksFromDB.length} 条任务记录，全局变量中有 ${taskCount} 条任务记录`);
+            }
             break;
             
           case 'IMAGE_COLORIZATION':
@@ -6300,180 +6211,7 @@ app.get('/api/image-to-video/download', async (req, res) => {
   }
 });
 
-/**
- * 场景图生成任务失败时的退款函数
- * @param {number} userId - 用户ID
- * @param {string} taskId - 任务ID
- * @param {string} reason - 退款原因，默认为'任务失败'
- * @returns {Promise<boolean>} - 退款是否成功
- */
-async function refundSceneGeneratorCredits(userId, taskId, reason = '任务失败') {
-  try {
-    console.log(`开始处理场景图生成任务失败退款: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason}`);
-    
-    // 检查全局任务记录中是否有该任务的积分信息
-    let creditCost = 0;
-    let wasRefunded = false;
-    
-    if (global.sceneGeneratorTasks && global.sceneGeneratorTasks[taskId]) {
-      const taskInfo = global.sceneGeneratorTasks[taskId];
-      creditCost = taskInfo.creditCost || 0;
-      wasRefunded = taskInfo.refunded || false;
-      
-      // 如果已经退款过了，不重复退款
-      if (wasRefunded) {
-        console.log(`任务 ${taskId} 已经退款过，跳过退款处理`);
-        return false;
-      }
-      
-      // 标记为已退款，防止重复退款
-      global.sceneGeneratorTasks[taskId].refunded = true;
-    }
-    
-    // 如果没有积分消耗信息，从功能配置中获取
-    if (creditCost === 0) {
-      const { FEATURES } = require('./middleware/featureAccess');
-      const featureConfig = FEATURES['scene-generator'];
-      creditCost = featureConfig ? featureConfig.creditCost : 7;
-      console.log(`从功能配置获取积分消耗: ${creditCost}`);
-    }
-    
-    // 查找最近的该功能使用记录
-    const { FeatureUsage } = require('./models/FeatureUsage');
-    const User = require('./models/User');
-    
-    const recentUsage = await FeatureUsage.findOne({
-      where: {
-        userId: userId,
-        featureName: 'scene-generator'
-      },
-      order: [['createdAt', 'DESC']]
-    });
-    
-    if (!recentUsage) {
-      console.log(`未找到用户 ${userId} 的场景图生成使用记录，无法执行退款`);
-      return false;
-    }
-    
-    // 检查该使用记录是否为免费使用
-    const { FEATURES } = require('./middleware/featureAccess');
-    const featureConfig = FEATURES['scene-generator'];
-    
-    if (recentUsage.usageCount <= featureConfig.freeUsage) {
-      console.log(`用户 ${userId} 使用的是免费次数 (${recentUsage.usageCount}/${featureConfig.freeUsage})，仅回退使用次数，无需退还积分`);
-      
-      // 即使是免费使用，任务失败时也要回退使用次数，保留免费机会
-      if (recentUsage.usageCount > 0) {
-        recentUsage.usageCount -= 1;
-        await recentUsage.save();
-        console.log(`✅ 已回退免费使用次数: 用户ID=${userId}, 当前使用次数=${recentUsage.usageCount}/${featureConfig.freeUsage}`);
-      }
-      
-      // 记录退款信息到任务详情中
-      try {
-        const details = JSON.parse(recentUsage.details || '{}');
-        const tasks = details.tasks || [];
-        const refunds = details.refunds || [];
-        
-        // 检查任务是否存在
-        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
-        if (taskIndex !== -1) {
-          // 记录退款信息
-          refunds.push({
-            taskId: taskId,
-            creditCost: 0,
-            isFree: true,
-            reason: reason,
-            refundTime: new Date().toISOString()
-          });
-          
-          // 更新任务详情
-          recentUsage.details = JSON.stringify({
-            ...details,
-            refunds: refunds
-          });
-          
-          await recentUsage.save();
-          console.log(`✅ 已记录免费任务退款信息: 任务ID=${taskId}`);
-        }
-      } catch (error) {
-        console.error('记录免费任务退款信息失败:', error);
-      }
-      
-      return true;
-    }
-    
-    // 如果有积分消耗，执行退款
-    if (creditCost > 0) {
-      // 获取用户信息
-      const user = await User.findByPk(userId);
-      if (!user) {
-        console.error(`未找到用户 ${userId}，无法执行退款`);
-        return false;
-      }
-      
-      // 退还积分
-      const originalCredits = user.credits;
-      user.credits += creditCost;
-      await user.save();
-      
-      // 完全撤销这次使用记录，而不是仅仅减少使用次数
-      if (recentUsage.usageCount > 0) {
-        recentUsage.usageCount -= 1;
-        
-        // 清除这次使用产生的积分消费记录
-        recentUsage.credits = Math.max(0, (recentUsage.credits || 0) - creditCost);
-        
-        // 如果使用次数回到免费范围内，清除相关的付费记录
-        if (recentUsage.usageCount < featureConfig.freeUsage) {
-          // 回到免费使用范围，清除所有付费相关的记录
-          recentUsage.credits = 0;
-        }
-      }
-      
-      // 记录退款信息到任务详情中
-      try {
-        const details = JSON.parse(recentUsage.details || '{}');
-        const tasks = details.tasks || [];
-        const refunds = details.refunds || [];
-        
-        // 检查任务是否存在
-        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
-        if (taskIndex !== -1) {
-          // 记录退款信息
-          refunds.push({
-            taskId: taskId,
-            creditCost: creditCost,
-            isFree: false,
-            reason: reason,
-            refundTime: new Date().toISOString()
-          });
-          
-          // 更新任务详情
-          recentUsage.details = JSON.stringify({
-            ...details,
-            refunds: refunds
-          });
-        }
-      } catch (error) {
-        console.error('记录任务退款信息失败:', error);
-      }
-      
-      await recentUsage.save();
-      
-      console.log(`✅ 场景图生成任务失败退款成功: 用户ID=${userId}, 任务ID=${taskId}, 退款积分=${creditCost}, 原积分=${originalCredits}, 现积分=${user.credits}`);
-      console.log(`📊 使用记录已更新: 使用次数=${recentUsage.usageCount}, 积分消费=${recentUsage.credits}`);
-      return true;
-    }
-    
-    console.log(`任务 ${taskId} 无需退款: 积分=${creditCost}`);
-    return false;
-    
-  } catch (error) {
-    console.error('场景图生成退款处理错误:', error);
-    return false;
-  }
-}
+// 场景图生成退款函数已移至退款管理模块
 
 // 添加场景图生成功能的退款API路由
 app.post('/api/refund/scene-generator', protect, async (req, res) => {
@@ -6489,8 +6227,8 @@ app.post('/api/refund/scene-generator', protect, async (req, res) => {
     
     console.log(`收到场景图生成退款请求: 用户ID=${req.user.id}, 任务ID=${taskId}, 原因=${reason || '未指定'}`);
     
-    // 调用退款函数
-    const refundSuccess = await refundSceneGeneratorCredits(req.user.id, taskId, reason || '用户请求退款');
+    // 调用退款管理模块的退款函数
+    const refundSuccess = await refundManager.refundSceneGeneratorCredits(req.user.id, taskId, reason || '用户请求退款');
     
     if (refundSuccess) {
       res.json({
@@ -6515,8 +6253,6 @@ app.post('/api/refund/scene-generator', protect, async (req, res) => {
 // 导出函数供其他模块使用
 module.exports = {
   app,
-  refundImageUpscalerCredits,
-  refundSceneGeneratorCredits,
   refundVirtualShoeModelCredits
 };
 

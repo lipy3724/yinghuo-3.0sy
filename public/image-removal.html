@@ -345,6 +345,9 @@
                         iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: canProceed }, '*');
                         if (!canProceed) {
                             alert('免费次数已用完或积分不足');
+                        } else if (data && data.taskId) {
+                            // 保存任务ID用于可能的退款
+                            saveTaskId(data.taskId);
                         }
                     }).catch(e => {
                         console.error('扣费失败', e);
@@ -426,6 +429,23 @@
                     if (data && data.errCode) {
                         console.error("错误代码:", data.errCode);
                     }
+                    
+                    // 添加退款逻辑
+                    (async () => {
+                        try {
+                            // 获取当前任务ID
+                            const taskId = localStorage.getItem('currentImageRemovalTaskId');
+                            if (taskId) {
+                                await requestRefund(taskId, '任务处理失败: ' + (data?.errMessage || '未知错误'));
+                                console.log('已请求退款，任务ID:', taskId);
+                                alert('处理失败，系统已自动申请退款');
+                            } else {
+                                console.error("无法获取当前任务ID，无法执行退款");
+                            }
+                        } catch (refundError) {
+                            console.error("退款处理失败:", refundError);
+                        }
+                    })();
                 } else if (ev.data && ev.data.imagerl) {
                     // 直接处理特殊的imagerl消息
                     console.log("检测到特殊的imagerl字段:", ev.data.imagerl);
@@ -450,6 +470,55 @@
                 showError("初始化失败，请刷新重试");
             }
         });
+
+        // 添加退款请求函数
+        async function requestRefund(taskId, reason) {
+            try {
+                console.log(`请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.error('用户未登录，无法请求退款');
+                    return false;
+                }
+                
+                const response = await fetch('/api/refund/image-removal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ taskId, reason })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`退款请求失败: ${response.status}, ${errorText}`);
+                    return false;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('退款请求成功:', result);
+                    return true;
+                } else {
+                    console.error('退款请求被拒绝:', result.message);
+                    return false;
+                }
+            } catch (error) {
+                console.error('退款请求出错:', error);
+                return false;
+            }
+        }
+        
+        // 保存任务ID的函数
+        function saveTaskId(taskId) {
+            if (taskId) {
+                localStorage.setItem('currentImageRemovalTaskId', taskId);
+                console.log("已保存当前任务ID:", taskId);
+            }
+        }
     </script>
 </body>
 </html> 

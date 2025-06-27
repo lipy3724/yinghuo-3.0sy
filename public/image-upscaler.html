@@ -332,14 +332,38 @@
                     
                     if (!response.ok) {
                         const errorData = await response.json();
+                        // 保存任务ID，如果存在的话，用于后续退款
+                        if (errorData.taskId) {
+                            saveTaskId(errorData.taskId);
+                        }
                         throw new Error(errorData.message || '图片处理失败');
                     }
                     
                     const result = await response.json();
+                    
+                    // 保存任务ID，如果存在的话，用于后续退款
+                    if (result.taskId) {
+                        saveTaskId(result.taskId);
+                    }
+                    
                     showResults(result);
                 } catch (error) {
                     hideLoadingOverlay();
-                    alert(`错误: ${error.message}`);
+                    
+                    // 如果有任务ID，尝试请求退款
+                    const taskId = localStorage.getItem('currentUpscalerTaskId');
+                    if (taskId) {
+                        try {
+                            await requestRefund(taskId, error.message || '任务处理失败');
+                            console.log('已请求退款，任务ID:', taskId);
+                            alert(`错误: ${error.message}，系统已自动申请退款`);
+                        } catch (refundError) {
+                            console.error('退款请求失败:', refundError);
+                            alert(`错误: ${error.message}，退款请求失败，请联系客服`);
+                        }
+                    } else {
+                        alert(`错误: ${error.message}`);
+                    }
                 }
             });
             
@@ -587,6 +611,42 @@
                 if (bytes < 1024) return bytes + ' B';
                 else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
                 else return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+            
+            // 添加保存任务ID的函数
+            function saveTaskId(taskId) {
+                if (taskId) {
+                    localStorage.setItem('currentUpscalerTaskId', taskId);
+                    console.log("已保存当前任务ID:", taskId);
+                }
+            }
+            
+            // 添加退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    const response = await fetch('/api/refund/image-upscaler', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            reason: reason
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || '退款请求失败');
+                    }
+                    
+                    return data.success;
+                } catch (error) {
+                    console.error('退款请求错误:', error);
+                    throw new Error('退款请求失败: ' + error.message);
+                }
             }
         });
 

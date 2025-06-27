@@ -268,6 +268,9 @@
                     
                     console.log('创建任务成功，任务ID:', taskId);
                     
+                    // 保存当前任务ID，用于可能的退款请求
+                    window.currentSharpenTaskId = taskId;
+                    
                     // 3. 轮询任务状态
                     loadingMessage.textContent = '处理中，请耐心等待...';
                     console.log('开始轮询任务状态...');
@@ -305,7 +308,20 @@
                     saveToDownloadsBtn.classList.remove('hidden');
                 } catch (error) {
                     console.error('处理失败:', error);
-                    alert('处理失败: ' + error.message);
+                    
+                    // 如果有任务ID，请求退款
+                    if (window.currentSharpenTaskId) {
+                        try {
+                            await requestRefund(window.currentSharpenTaskId, error.message || '任务处理失败');
+                            console.log('已请求退款，任务ID:', window.currentSharpenTaskId);
+                            alert('处理失败: ' + error.message + '，系统已自动申请退款');
+                        } catch (refundError) {
+                            console.error('退款请求失败:', refundError);
+                            alert('处理失败: ' + error.message + '，退款请求失败，请联系客服');
+                        }
+                    } else {
+                        alert('处理失败: ' + error.message);
+                    }
                 } finally {
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
@@ -495,7 +511,7 @@
                                     } else {
                                         // 所有结果都失败了
                                         clearTimeout(timeoutId);
-                                        reject(new Error(`生成失败: ${failedResults[0]?.message || '图像处理失败，请重试'}`));
+                                        reject(new Error('任务成功但未找到结果，请重试'));
                                         return;
                                     }
                                 } else {
@@ -505,22 +521,49 @@
                                 }
                             } 
                             else if (taskStatus === 'FAILED') {
-                                // 任务失败
+                                // 任务失败，获取错误详情
                                 clearTimeout(timeoutId);
                                 const errorCode = data.output?.code || '';
                                 const errorMsg = data.output?.message || '未知错误';
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, `任务执行失败: ${errorMsg}`);
+                                    console.log('已请求退款，原因：任务执行失败');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error(`任务执行失败: ${errorMsg}`));
                                 return;
                             } 
                             else if (taskStatus === 'CANCELED') {
                                 // 任务被取消
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务已被取消');
+                                    console.log('已请求退款，原因：任务已被取消');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务已被取消，请重试'));
                                 return;
                             }
                             else if (taskStatus === 'UNKNOWN') {
                                 // 任务状态未知
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务状态未知');
+                                    console.log('已请求退款，原因：任务状态未知');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务状态未知，请重试'));
                                 return;
                             }
@@ -534,6 +577,15 @@
                             // 如果连续错误超过3次，则放弃
                             if (errorCount >= 3) {
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '网络连接不稳定');
+                                    console.log('已请求退款，原因：网络连接不稳定');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('网络连接不稳定，请检查网络后重试'));
                                 return;
                             }
@@ -669,6 +721,34 @@
             
             function unhighlight() {
                 uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
+            }
+
+            // 添加退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    const response = await fetch('/api/refund/image-sharpening', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            reason: reason
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || '退款请求失败');
+                    }
+                    
+                    return data.success;
+                } catch (error) {
+                    console.error('退款请求错误:', error);
+                    throw new Error('退款请求失败: ' + error.message);
+                }
             }
         });
 

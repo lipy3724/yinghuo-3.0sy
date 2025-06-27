@@ -874,6 +874,14 @@
                                     errorMsg = data.output.message;
                                 }
                                 
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, `任务执行失败: ${errorCode ? `${errorCode}: ` : ''}${errorMsg}`);
+                                    console.log('已请求退款，原因：任务执行失败');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 console.log(`任务失败，错误码: ${errorCode}, 错误信息: ${errorMsg}`);
                                 reject(new Error(`任务执行失败: ${errorCode ? `${errorCode}: ` : ''}${errorMsg}`));
                                 return;
@@ -881,12 +889,30 @@
                             else if (taskStatus === 'CANCELED') {
                                 // 任务被取消
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务已被取消');
+                                    console.log('已请求退款，原因：任务已被取消');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务已被取消，请重试'));
                                 return;
                             }
                             else if (taskStatus === 'UNKNOWN') {
                                 // 任务状态未知
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务状态未知');
+                                    console.log('已请求退款，原因：任务状态未知');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务状态未知，请重试'));
                                 return;
                             }
@@ -900,6 +926,15 @@
                             // 如果连续错误超过3次，则放弃
                             if (errorCount >= 3) {
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '网络连接不稳定');
+                                    console.log('已请求退款，原因：网络连接不稳定');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('网络连接不稳定，请检查网络后重试'));
                                 return;
                             }
@@ -1093,6 +1128,34 @@
             
             // 初始化滚动防护
             preventScrollPropagation();
+
+            // 退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    const response = await fetch('/api/refund/image-expansion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            reason: reason
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || '退款请求失败');
+                    }
+                    
+                    return data.success;
+                } catch (error) {
+                    console.error('退款请求错误:', error);
+                    throw new Error('退款请求失败: ' + error.message);
+                }
+            }
         });
     </script>
 </body>

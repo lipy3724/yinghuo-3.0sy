@@ -11,8 +11,8 @@ const User = require('./models/User');
 const { FEATURES } = require('./middleware/featureAccess');
 const { sequelize } = require('./config/db');
 
-// 导入退款函数 (确保server.js中的函数已导出)
-const { refundSceneGeneratorCredits } = require('./server');
+// 导入退款管理模块
+const refundManager = require('./utils/refundManager');
 
 // 测试用户ID (替换为实际存在的用户ID)
 const TEST_USER_ID = 1;
@@ -101,7 +101,7 @@ async function testSceneGeneratorRefund() {
     
     // 6. 测试退款功能
     console.log('开始测试退款功能...');
-    const refundResult = await refundSceneGeneratorCredits(user.id, taskId, '测试退款');
+    const refundResult = await refundManager.refundSceneGeneratorCredits(user.id, taskId, '测试退款');
     
     if (refundResult) {
       console.log('退款成功!');

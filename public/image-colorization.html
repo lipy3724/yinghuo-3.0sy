@@ -84,17 +84,17 @@
                         <p class="mb-2">此功能可以为黑白照片或素描添加自然色彩，让历史照片焕发新生。</p>
                         <p class="mb-2">上传黑白或灰度图像后，可以在提示框中描述您期望的颜色风格，例如："使用鲜艳的色彩"、"复古暖色调"或"自然色彩"。</p>
                         <p class="mb-2">可以指定具体元素的颜色，如："蓝色背景，黄色的叶子"、"人物穿红色衣服，背景为绿色"。</p>
-                        <p class="mb-2">图片尺寸要求：最小512×512像素，最大不超过4000×4000像素。</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        <p class="text-red-500 font-medium">请上传合法合规的内容，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
                     </div>
                 </div>
 
                 <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
                     <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
-                    <input type="file" id="image-upload" class="hidden" accept="image/*">
+                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动任意文件到这区域来上传</p>
+                    <!-- 添加回文件类型限制 -->
+                    <input type="file" id="image-upload" class="hidden" accept="image/jpeg, image/png, image/webp, image/gif, image/bmp">
                 </div>
-                <p class="text-xs text-gray-500 mb-4">上传图像</p>
+                <p class="text-xs text-gray-500 mb-4">上传文件</p>
 
                 <div class="flex-grow mb-4">
                     <div class="mb-2">
@@ -210,10 +210,15 @@
                 const dt = e.dataTransfer;
                 const file = dt.files[0];
                 
-                if (file && file.type.startsWith('image/')) {
+                // 恢复文件类型检查
+                if (file) {
+                    if (!file.type.match('image.*')) {
+                        alert('请上传图片文件！');
+                        return;
+                    }
                     handleImageFile(file);
                 } else {
-                    alert('请上传图片文件！');
+                    alert('请上传文件！');
                 }
             });
             
@@ -267,6 +272,9 @@
                     
                     console.log('创建任务成功，任务ID:', taskId);
                     
+                    // 保存当前任务ID到全局变量，用于可能的退款请求
+                    window.currentTaskId = taskId;
+                    
                     // 3. 轮询任务状态
                     loadingMessage.textContent = '处理中，请耐心等待...';
                     console.log('开始轮询任务状态...');
@@ -304,7 +312,20 @@
                     saveToDownloadsBtn.classList.remove('hidden');
                 } catch (error) {
                     console.error('处理失败:', error);
+                    
+                    // 如果有任务ID，请求退款
+                    if (taskId) {
+                        try {
+                            await requestRefund(taskId, error.message || '任务处理失败');
+                            console.log('已请求退款，任务ID:', taskId);
+                            alert('处理失败: ' + error.message + '，系统已自动申请退款');
+                        } catch (refundError) {
+                            console.error('退款请求失败:', refundError);
+                            alert('处理失败: ' + error.message + '，退款请求失败，请联系客服');
+                        }
+                    } else {
                     alert('处理失败: ' + error.message);
+                    }
                 } finally {
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
@@ -493,7 +514,7 @@
                                     } else {
                                         // 所有结果都失败了
                                         clearTimeout(timeoutId);
-                                        reject(new Error(`生成失败: ${failedResults[0]?.message || '图像处理失败，请重试'}`));
+                                        reject(new Error('任务成功但未找到结果，请重试'));
                                         return;
                                     }
                                 } else {
@@ -507,18 +528,45 @@
                                 clearTimeout(timeoutId);
                                 const errorCode = data.output?.code || '';
                                 const errorMsg = data.output?.message || '未知错误';
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, `任务执行失败: ${errorMsg}`);
+                                    console.log('已请求退款，原因：任务执行失败');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error(`任务执行失败: ${errorMsg}`));
                                 return;
                             } 
                             else if (taskStatus === 'CANCELED') {
                                 // 任务被取消
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务已被取消');
+                                    console.log('已请求退款，原因：任务已被取消');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务已被取消，请重试'));
                                 return;
                             }
                             else if (taskStatus === 'UNKNOWN') {
                                 // 任务状态未知
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务状态未知');
+                                    console.log('已请求退款，原因：任务状态未知');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务状态未知，请重试'));
                                 return;
                             }
@@ -532,6 +580,15 @@
                             // 如果连续错误超过3次，则放弃
                             if (errorCount >= 3) {
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '网络连接不稳定');
+                                    console.log('已请求退款，原因：网络连接不稳定');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('网络连接不稳定，请检查网络后重试'));
                                 return;
                             }
@@ -612,31 +669,28 @@
             
             // 辅助函数
             function handleImageFile(file) {
-                // 检查文件类型
-                if (!file.type.startsWith('image/')) {
-                    alert('请上传图片文件！支持的格式包括JPG、PNG和WEBP');
+                // 恢复文件类型检查
+                if (!file.type.match('image.*')) {
+                    alert('请上传图片文件！支持jpg、png、webp、gif、bmp格式');
                     return;
                 }
                 
-                // 检查文件大小
-                if (file.size > 10 * 1024 * 1024) { // 10MB 限制
-                    alert('图片大小不能超过10MB！');
+                // 恢复文件大小限制
+                const maxFileSizeMB = 10; // 限制大小为10MB
+                if (file.size > maxFileSizeMB * 1024 * 1024) {
+                    alert(`图片大小不能超过${maxFileSizeMB}MB！`);
                     return;
                 }
                 
-                // 创建预览并检查图片尺寸
+                // 创建预览并显示文件
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = function() {
-                        // 检查图片尺寸
-                        if (img.width < 512 || img.height < 512) {
-                            alert('图片尺寸太小，请上传最小512×512像素的图片');
-                            return;
-                        }
-                        
-                        if (img.width > 4000 || img.height > 4000) {
-                            alert('图片尺寸过大，请上传不超过4000×4000像素的图片');
+                        // 恢复图片尺寸限制检查
+                        const maxDimension = 5000; // 最大尺寸限制
+                        if (img.width > maxDimension || img.height > maxDimension) {
+                            alert(`图片尺寸过大，最大支持${maxDimension}x${maxDimension}像素！`);
                             return;
                         }
                         
@@ -712,6 +766,34 @@
                 } else {
                     // 用户未登录，不进行跳转，让auth-check.js处理
                     console.log('图片上色页面：用户未登录，由auth-check.js处理');
+                }
+            }
+            
+            // 请求退款函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    const response = await fetch('/api/refund/image-colorization', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            reason: reason
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || '退款请求失败');
+                    }
+                    
+                    return data.success;
+                } catch (error) {
+                    console.error('退款请求错误:', error);
+                    throw new Error('退款请求失败: ' + error.message);
                 }
             }
         });
