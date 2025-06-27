@@ -724,6 +724,10 @@ function addMessage(content, type) {
     }
     
     messagesContainer.appendChild(messageDiv);
+    
+    // 为新消息添加点击事件
+    addClickEventToMessage(messageDiv);
+    
     smartScrollToBottom(messagesContainer);
 }
 
@@ -911,6 +915,21 @@ function displayMessages(messages) {
         displayedMessageIds.add(messageKey);
     }
     
+    // 为欢迎消息添加点击事件
+    var welcomeMsgElement = messagesContainer.querySelector('.cs-message.admin');
+    if (welcomeMsgElement) {
+        welcomeMsgElement.addEventListener('click', function(e) {
+            // 移除所有消息的选中状态
+            var allMessages = messagesContainer.querySelectorAll('.cs-message');
+            allMessages.forEach(function(msg) {
+                msg.classList.remove('selected');
+            });
+            
+            // 为当前消息添加选中状态
+            welcomeMsgElement.classList.add('selected');
+        });
+    }
+    
     // 初始加载历史消息后，强制滚动到底部
     if (messages.length > 0) {
         smartScrollToBottom(messagesContainer, true);
@@ -945,6 +964,18 @@ function setupInputEvents() {
 function initCustomerServiceFunctions() {
     csLog('🚀 客服系统函数初始化');
     setupInputEvents();
+    
+    // 为初始欢迎消息添加点击事件
+    setTimeout(function() {
+        var messagesContainer = document.getElementById('cs-chat-messages');
+        if (messagesContainer) {
+            var welcomeMsg = messagesContainer.querySelector('.cs-message.admin');
+            if (welcomeMsg) {
+                addClickEventToMessage(welcomeMsg);
+            }
+        }
+    }, 500); // 延迟500ms确保DOM已完全加载
+    
     csLog('✅ 客服系统函数初始化完成');
 }
 
@@ -975,6 +1006,23 @@ function stopMessagePolling() {
         messagePollingInterval = null;
         csLog('⏹️ 停止消息轮询');
     }
+}
+
+// 为消息元素添加点击事件
+function addClickEventToMessage(messageElement) {
+    if (!messageElement) return;
+    
+    messageElement.addEventListener('click', function(e) {
+        // 移除所有消息的选中状态
+        var messagesContainer = document.getElementById('cs-chat-messages');
+        var allMessages = messagesContainer.querySelectorAll('.cs-message');
+        allMessages.forEach(function(msg) {
+            msg.classList.remove('selected');
+        });
+        
+        // 为当前消息添加选中状态
+        messageElement.classList.add('selected');
+    });
 }
 
 // 检查新消息
@@ -1048,7 +1096,25 @@ function checkForNewMessages() {
                     
                     // 检查是否已经显示过这条消息
                     if (!displayedMessageIds.has(messageKey)) {
-                        addMessage(msg.message, msg.type);
+                        // 创建消息元素
+                        var messagesContainer = document.getElementById('cs-chat-messages');
+                        var messageDiv = document.createElement('div');
+                        messageDiv.className = 'cs-message ' + msg.type;
+                        
+                        var timeStr = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        messageDiv.innerHTML = 
+                            '<div class="cs-message-content">' + escapeHtml(msg.message) + '</div>' +
+                            '<div class="cs-message-footer" style="display: flex !important; align-items: center !important; gap: 6px !important; margin-top: 4px !important; flex-direction: row !important;">' +
+                                '<img src="/public/images/favicon.png" class="cs-message-avatar" alt="客服头像" style="width: 16px; height: 16px; max-width: 16px; max-height: 16px; margin-left: -10px;">' +
+                                '<div class="cs-message-time" style="font-size: 11px !important; color: #999 !important; margin-top: 0px !important; white-space: nowrap !important;">' + timeStr + '</div>' +
+                            '</div>';
+                        
+                        messagesContainer.appendChild(messageDiv);
+                        
+                        // 为新消息添加点击事件
+                        addClickEventToMessage(messageDiv);
+                        
                         displayedMessageIds.add(messageKey);
                         adminMessagesCount++;
                     }

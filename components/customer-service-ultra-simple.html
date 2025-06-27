@@ -159,6 +159,8 @@
         display: flex !important;
         flex-direction: column !important;
         width: auto !important;
+        cursor: pointer !important;
+        transition: transform 0.2s ease !important;
     }
     
     .cs-message.user {
@@ -169,6 +171,16 @@
     .cs-message.admin {
         align-self: flex-start !important;
         align-items: flex-start !important;
+    }
+    
+    /* 添加点击高亮样式 */
+    .cs-message.selected .cs-message-content {
+        border: 2px solid #667eea !important;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    .cs-message:hover {
+        transform: translateY(-2px) !important;
     }
     
     .cs-message-content {

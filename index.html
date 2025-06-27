@@ -678,31 +678,44 @@
         
         /* 图生视频案例的视频样式 */
         [data-category="video"] .comparison-container {
-            align-items: center; /* 确保所有元素垂直居中 */
+            align-items: stretch; /* 改为stretch以填充整个空间 */
             display: flex;
             justify-content: center;
+            height: 240px; /* 固定整个容器高度 */
         }
         
         [data-category="video"] .before-image,
         [data-category="video"] .after-image {
-            height: 240px; /* 固定高度，与图片高度一致 */
-            width: 45%; /* 与左侧图片宽度一致 */
-            display: flex;
-            align-items: center;
-        }
-        
-        [data-category="video"] .video-thumbnail {
-            height: 100%;
-            width: 100%;
+            height: 100%; /* 使用100%填满父容器 */
+            width: 45%; 
             position: relative;
+            overflow: hidden;
+            border-radius: 8px; /* 添加圆角 */
+            background-color: #f0f0f0; /* 背景色，防止空白 */
         }
         
+        /* 确保视频覆盖整个容器 */
         [data-category="video"] .preview-video {
-            cursor: default; /* 移除指针样式，因为不需要点击 */
-            height: 100%;
             width: 100%;
+            height: 100%;
             object-fit: cover;
-            object-position: center center; /* 确保视频内容居中 */
+            object-position: center;
+            border-radius: 8px;
+            display: block;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0; /* 背景色，防止空白 */
+        }
+        
+        /* 确保图片和视频都能在各自容器内正确居中 */
+        [data-category="video"] .before-image img,
+        [data-category="video"] .after-image img,
+        [data-category="video"] .preview-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
         }
         
         .video-preview-placeholder .video-play-icon {
@@ -1126,18 +1139,60 @@
         }
         
         @media (max-width: 768px) {
-            [data-category="video"] .preview-video {
-                height: 100%;
-            }
-            
-            [data-category="video"] .after-image,
-            [data-category="video"] .before-image {
-                width: 45%;
-                height: 200px;
-            }
-            
+            /* 通用的comparison-container移动端样式 */
             .comparison-container {
                 justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                gap: 15px;
+                width: 100%;
+            }
+            
+            /* 所有案例的before/after图片样式 */
+            .before-image, .after-image {
+                width: 100% !important; /* 覆盖所有其他规则 */
+                height: auto !important;
+                max-width: 300px;
+                margin-bottom: 10px;
+            }
+            
+            /* 所有案例的图片样式 */
+            .before-image img, .after-image img {
+                width: 100%;
+                height: auto;
+                object-fit: cover;
+                max-height: 300px;
+            }
+            
+            /* 视频案例的箭头样式 */
+            .arrow {
+                transform: rotate(90deg);
+                margin: 5px 0;
+            }
+            
+            /* 图生视频案例特有的样式 */
+            [data-category="video"] .preview-video {
+                width: 100%;
+                height: auto;
+                min-height: 150px;
+                max-height: 300px;
+                object-fit: cover;
+            }
+            
+            /* 图生视频案例的容器和图片特别处理 */
+            [data-category="video"] .comparison-container {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                height: auto;
+            }
+            
+            [data-category="video"] .before-image,
+            [data-category="video"] .after-image {
+                width: 100% !important;
+                height: auto !important;
+                display: block;
+                margin-bottom: 10px;
             }
         }
         
@@ -1158,17 +1213,19 @@
             padding: 0.25rem 0.5rem;
         }
         
+        /* 调整视频标签位置，确保它位于视频上方而不是下方 */
         [data-category="video"] .image-label {
             position: absolute;
             top: 10px;
             left: 10px;
+            z-index: 5;
             background: rgba(0, 0, 0, 0.6);
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
             font-size: 0.8rem;
-            z-index: 10;
-            pointer-events: none;
+            margin: 0;
+            pointer-events: none; /* 防止标签接收鼠标事件 */
         }
     </style>
 </head>
@@ -1370,7 +1427,7 @@
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="/home.html" class="inline-block px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
                         </div>
                     </div>
                 </div>
@@ -1403,7 +1460,7 @@
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="/home.html" class="inline-block px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
                         </div>
                     </div>
                 </div>
@@ -1436,7 +1493,7 @@
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="/home.html" class="inline-block px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
                         </div>
                     </div>
                 </div>
@@ -1469,7 +1526,7 @@
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="/home.html" class="inline-block px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
                         </div>
                     </div>
                             </div>
@@ -1568,14 +1625,11 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
-                            <div class="video-thumbnail" data-video-src="/images/cases/case_img2video_after.mp4">
-                                <!-- 使用视频元素作为预览，设置自动播放，移除播放按钮 -->
-                                <video poster="/images/cases/case_img2video_before.jpg" muted loop autoplay playsinline class="preview-video">
-                                    <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
-                                    您的浏览器不支持视频标签
-                                </video>
-                                <span class="image-label">生成视频</span>
-                            </div>
+                            <video poster="/images/cases/case_img2video_before.jpg" muted loop autoplay playsinline class="preview-video">
+                                <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
+                                您的浏览器不支持视频标签
+                            </video>
+                            <span class="image-label">生成视频</span>
                         </div>
                     </div>
                 </div>
@@ -2450,10 +2504,21 @@
             videoContainers.forEach(container => {
                 const video = container.querySelector('video');
                 if (video) {
-                    // 确保视频元素样式正确
+                    // 确保视频元素样式正确 - 根据设备设置不同样式
                     video.style.width = '100%';
-                    video.style.height = '240px';
-                    video.style.objectFit = 'cover';
+                    
+                    // 为移动设备设置不同的样式
+                    if (window.innerWidth <= 768) {
+                        video.style.width = '100%';
+                        video.style.height = 'auto';
+                        video.style.minHeight = '150px';
+                        video.style.maxHeight = '300px';
+                        video.style.objectFit = 'cover';
+                    } else {
+                        video.style.height = '240px';
+                        video.style.objectFit = 'cover';
+                    }
+                    
                     video.style.objectPosition = 'center center'; // 确保视频内容居中
                     
                     // 设置视频加载和可见性检测
@@ -2486,6 +2551,20 @@
                     
                     // 添加滚动监听，当视频进入视口时播放
                     window.addEventListener('scroll', playVideo);
+                    
+                    // 窗口大小变化时重新调整视频样式
+                    window.addEventListener('resize', function() {
+                        if (window.innerWidth <= 768) {
+                            video.style.width = '100%';
+                            video.style.height = 'auto';
+                            video.style.minHeight = '150px';
+                            video.style.maxHeight = '300px';
+                            video.style.objectFit = 'cover';
+                        } else {
+                            video.style.height = '240px';
+                            video.style.objectFit = 'cover';
+                        }
+                    });
                     
                     // IntersectionObserver API的现代方法（如果浏览器支持）
                     if ('IntersectionObserver' in window) {

@@ -198,22 +198,22 @@
             cursor: pointer;
             transition: all 0.15s ease;
             border: 1px solid transparent;
-            background: #ffffff;
         }
         
         .user-item:hover {
-            background: #f8fafc;
-            border-color: #e2e8f0;
+            background: rgba(243, 244, 246, 0.5);
+            border-color: #e5e7eb;
         }
         
         .user-item.active {
             background: #4f46e5;
-            color: #ffffff;
+            color: white;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
             border-color: #4f46e5;
         }
         
         .user-item.active .user-message {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
         }
         
         .user-item.active .user-time {
@@ -404,56 +404,31 @@
         
         .chat-messages {
             flex: 1;
-            padding: 1.25rem;
             overflow-y: auto;
+            padding: 1.25rem;
             background: #f8fafc;
         }
         
-        .message-group {
-            margin-bottom: 1.25rem;
+        /* 添加消息点击高亮样式 */
+        .admin-message, .user-message {
+            cursor: pointer;
+            transition: transform 0.2s ease;
         }
         
-        .message-bubble {
-            max-width: 75%;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            word-wrap: break-word;
-            position: relative;
-            margin-bottom: 0.5rem;
+        .admin-message:hover, .user-message:hover {
+            transform: translateY(-2px);
         }
         
-        .message-user {
-            background: #ffffff;
-            color: #1a202c;
-            margin-right: auto;
-            border-bottom-left-radius: 6px;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .message-admin {
-            background: #4f46e5;
-            color: #ffffff;
-            margin-left: auto;
-            border-bottom-right-radius: 6px;
-        }
-        
-        .message-time {
-            font-size: 0.75rem;
-            opacity: 0.7;
-            margin-top: 0.5rem;
-            text-align: right;
-        }
-        
-        .message-user .message-time {
-            text-align: left;
+        .message-selected .bg-blue-50, .message-selected .bg-white {
+            border: 2px solid #4f46e5 !important;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4) !important;
         }
         
         .chat-input-area {
-            padding: 1rem 1.25rem;
-            background: #ffffff;
+            padding: 1rem;
             border-top: 1px solid #e2e8f0;
+            background: #ffffff;
+            display: none;
         }
         
         .input-container {
@@ -2144,6 +2119,18 @@
             // 更新当前选中的用户ID
             currentUserId = userId;
             
+            // 更新用户列表项的激活状态
+            const userItems = document.querySelectorAll('.user-item');
+            userItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 查找并激活当前用户的列表项
+            const currentUserItem = document.querySelector(`.user-item[data-user-id="${userId}"]`);
+            if (currentUserItem) {
+                currentUserItem.classList.add('active');
+            }
+            
             // 获取用户统计信息
             const user = userStats[userId];
             if (!user) {
@@ -2226,6 +2213,18 @@
                 `;
                 
                 chatMessages.appendChild(messageEl);
+                
+                // 添加点击事件处理
+                messageEl.addEventListener('click', function() {
+                    // 移除所有消息的选中状态
+                    const allMessages = chatMessages.querySelectorAll('.flex');
+                    allMessages.forEach(msg => {
+                        msg.classList.remove('message-selected');
+                    });
+                    
+                    // 为当前消息添加选中状态
+                    messageEl.classList.add('message-selected');
+                });
             });
             
             // 滚动到底部

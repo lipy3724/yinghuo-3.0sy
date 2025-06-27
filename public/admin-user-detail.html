@@ -522,9 +522,9 @@
                     noPaymentsMessage.classList.add('hidden');
                     tableBody.innerHTML = payments.map(payment => `
                         <tr>
-                            <td class="px-4 py-3 text-sm text-gray-900">${payment.order_id}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${payment.order_number || payment.id || '未知'}</td>
                             <td class="px-4 py-3 text-sm text-gray-900">¥${parseFloat(payment.price).toFixed(2)}</td>
-                            <td class="px-4 py-3 text-sm text-gray-900">${payment.credits}</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">${payment.amount || 0}</td>
                             <td class="px-4 py-3 text-sm">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${payment.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
                                     ${payment.status === 'completed' ? '已完成' : '处理中'}
