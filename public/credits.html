@@ -101,6 +101,18 @@
         .animate-fade-out {
             animation: fadeOut 0.3s ease-out forwards;
         }
+        
+        /* 确保充值表单的显示自然且不会抖动页面 */
+        #recharge-form-container.hidden {
+            display: none;
+        }
+        #recharge-form-container {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        #recharge-form-container.animate-fade-in {
+            opacity: 1;
+        }
         /* 充值金额选项选中状态样式 */
         .amount-option.active {
             border-color: #6366f1 !important;
@@ -155,7 +167,7 @@
             </div>
 
             <!-- 充值表单 (默认隐藏) -->
-            <div id="recharge-form-container" class="hidden bg-white rounded-xl shadow-lg p-6 mb-8 transform transition-all duration-300 ease-in-out">
+            <div id="recharge-form-container" class="hidden bg-white rounded-lg p-6 mb-8 border border-gray-200">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-medium text-gray-800">积分充值</h2>
                     <button type="button" id="cancel-recharge" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -520,6 +532,9 @@
             pricingList.appendChild(repaintCard);
         }
         
+        // 检查URL参数，预先设置充值表单状态
+        const shouldShowRechargeForm = new URLSearchParams(window.location.search).get('openRecharge') === 'true';
+        
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             // 检查用户是否已登录
@@ -533,6 +548,32 @@
             
             // 初始化充值表单
             initRechargeForm();
+            
+            // 如果URL中有openRecharge=true，则显示充值表单
+            if (shouldShowRechargeForm) {
+                // 等待DOM完全加载后显示充值表单
+                window.requestAnimationFrame(() => {
+                    const rechargeFormContainer = document.getElementById('recharge-form-container');
+                    if (rechargeFormContainer) {
+                        // 确保表单元素完全可见
+                        rechargeFormContainer.classList.remove('hidden');
+                        
+                        // 使用requestAnimationFrame确保下一帧添加动画类，以获得平滑过渡
+                        window.requestAnimationFrame(() => {
+                            rechargeFormContainer.classList.add('animate-fade-in');
+                        });
+                        
+                        // 确保页面保持在顶部
+                        window.scrollTo(0, 0);
+                        
+                        // 自动选择第一个充值选项
+                        const firstAmountOption = document.querySelector('.amount-option');
+                        if (firstAmountOption) {
+                            firstAmountOption.click();
+                        }
+                    }
+                });
+            }
         });
         
         // 初始化充值表单
@@ -551,6 +592,12 @@
                 rechargeBtn.addEventListener('click', function() {
                     rechargeFormContainer.classList.remove('hidden');
                     rechargeFormContainer.classList.add('animate-fade-in');
+                    
+                    // 确保页面保持在顶部，这样用户可以同时看到积分余额和充值表单
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
                 });
             }
             

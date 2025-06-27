@@ -87,7 +87,6 @@ const globalStyleRoutes = require('./routes/globalStyle');
 const amazonListingRoutes = require('./routes/amazon-listing-api');
 // 导入客服路由（数据库版本）
 const kefuRoutes = require('./kefu/kefu-db');
-const userKefuRoutes = require('./kefu/kefu-user-api');
 // 导入认证中间件
 const { protect } = require('./middleware/auth');
 // 导入功能访问中间件和功能配置
@@ -1110,51 +1109,6 @@ app.get('/api/task-status/:taskId', protect, async (req, res) => {
                                 // 可以选择下载视频到本地服务器（可选步骤）
                                 // 这里仅记录，不实际下载
                                 console.log('视频生成完成，URL:', result.VideoUrl);
-                                
-                                // 任务完成时扣除积分
-                                if (global.multiImageToVideoTasks && global.multiImageToVideoTasks[taskId]) {
-                                    const taskInfo = global.multiImageToVideoTasks[taskId];
-                                    const userId = taskInfo.userId;
-                                    
-                                    // 检查是否已扣除积分
-                                    if (!taskInfo.hasChargedCredits) {
-                                        try {
-                                            // 查找用户的功能使用记录
-                                            const { FeatureUsage } = require('./models/FeatureUsage');
-                                            const usage = await FeatureUsage.findOne({
-                                                where: {
-                                                    userId: userId,
-                                                    featureName: 'MULTI_IMAGE_TO_VIDEO'
-                                                }
-                                            });
-                                            
-                                            if (usage) {
-                                                // 调用saveTaskDetails函数，传入status='completed'参数，触发后续扣费逻辑
-                                                const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
-                                                await saveTaskDetails(usage, {
-                                                    taskId: taskId,
-                                                    featureName: 'MULTI_IMAGE_TO_VIDEO',
-                                                    status: 'completed', // 添加status参数，触发任务完成后扣费逻辑
-                                                    creditCost: taskInfo.creditCost || 0,
-                                                    isFree: taskInfo.isFree || false,
-                                                    metadata: {
-                                                        duration: taskInfo.duration || 10
-                                                    }
-                                                });
-                                                console.log(`已触发多图转视频任务完成扣费逻辑: 任务ID=${taskId}, 积分=${taskInfo.creditCost || 0}`);
-                                                
-                                                // 标记为已扣除积分
-                                                global.multiImageToVideoTasks[taskId].hasChargedCredits = true;
-                                            } else {
-                                                console.error(`未找到用户ID=${userId}的MULTI_IMAGE_TO_VIDEO功能使用记录`);
-                                            }
-                                        } catch (err) {
-                                            console.error('触发多图转视频任务完成扣费逻辑失败:', err);
-                                        }
-                                    } else {
-                                        console.log(`多图转视频任务 ${taskId} 已扣除积分，跳过重复计算`);
-                                    }
-                                }
                             } catch (saveError) {
                                 console.error('保存视频错误:', saveError);
                             }
@@ -1225,8 +1179,6 @@ app.use('/api/global-style', globalStyleRoutes);
 app.use('/api/amazon-listing', amazonListingRoutes);
 // 客服路由
 app.use('/api/kefu', kefuRoutes);
-// 用户客服API路由
-app.use('/api/user-kefu', userKefuRoutes);
 
 // 视频风格重绘下载代理（必须在404处理之前注册）
 app.get('/api/video-style-repaint/download', async (req, res) => {

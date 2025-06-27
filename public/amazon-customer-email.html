@@ -174,23 +174,29 @@
     <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
-    <!-- 简化版导航栏 - 用于功能页面 -->
-    <nav class="navbar flex items-center justify-between px-4">
-        <div class="flex items-center">
-            <a href="/" class="flex items-center logo-link">
-                <div class="logo-container">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="logo-image">
-                </div>
-            </a>
-        </div>
-        <div class="flex items-center space-x-6">
-            <!-- 返回首页按钮 -->
-            <a href="/" class="text-gray-600 hover:text-gray-900 flex items-center transition-colors duration-200">
-                <i class="ri-home-line mr-1"></i>
-                <span>返回首页</span>
-            </a>
-        </div>
-    </nav>
+    <!-- 导航栏容器 -->
+    <div id="navbar-container"></div>
+    
+    <script>
+        // 异步加载导航栏
+        async function loadNavbar() {
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const html = await response.text();
+                document.getElementById('navbar-container').innerHTML = html;
+                
+                // 加载导航栏的JavaScript功能
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('加载导航栏失败:', error);
+            }
+        }
+        
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', loadNavbar);
+    </script>
 
     <!-- 主内容区域 -->
     <div class="page-container">
