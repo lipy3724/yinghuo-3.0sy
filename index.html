@@ -1125,71 +1125,53 @@
     </div>
     
     <!-- 导航栏 -->
-    <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur border-b border-gray-100">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-                <div class="flex items-center">
-                    <a href="/" class="flex items-center space-x-2">
-                        <img src="/images/favicon.png" alt="萤火AI" class="h-8 w-8">
-                        <span class="text-xl logo-text">萤火AI</span>
-                    </a>
+                <div class="flex items-center -ml-36">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-32 w-32 mr-1 mt-4 object-contain">
                 </div>
                 
                 <!-- 桌面导航菜单 -->
-                <nav class="hidden md:flex items-center space-x-1">
-                    <a href="/" class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium">首页</a>
-                    
-                    <!-- 功能下拉菜单 -->
+                <div class="hidden md:flex items-center space-x-8 -ml-40">
+                    <!-- 功能特色下拉菜单 -->
                     <div class="relative group">
-                        <button class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium flex items-center">
-                            功能
-                            <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <div class="absolute left-0 mt-2 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out z-50 dropdown-menu bg-white/90">
-                            <div class="p-3 grid grid-cols-1 gap-2">
-                                <a href="/text-to-image.html" class="dropdown-item flex items-center">
-                                    <i class="ri-image-fill"></i>
-                                    <div>
-                                        <div class="font-medium">文生图</div>
-                                        <div class="text-xs text-gray-500">AI生成高质量图像</div>
-                                    </div>
+                        <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors flex items-center group-hover:text-indigo-600 font-medium">
+                            功能特色
+                            <i class="ri-arrow-down-s-line ml-1 transition-transform duration-300 group-hover:rotate-180"></i>
+                        </a>
+                        <!-- 下拉菜单 -->
+                        <div class="absolute left-0 mt-2 w-64 bg-white/95 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 dropdown-menu">
+                            <div class="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                            <div class="py-3">
+                                <a href="#image-processing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-image-line"></i>
+                                    <span>AI图像处理</span>
                                 </a>
-                                <a href="/text-to-video.html" class="dropdown-item flex items-center">
-                                    <i class="ri-movie-fill"></i>
-                                    <div>
-                                        <div class="font-medium">文生视频</div>
-                                        <div class="text-xs text-gray-500">AI生成短视频内容</div>
-                                    </div>
+                                <a href="#video-creation" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-video-line"></i>
+                                    <span>AI视频创作</span>
                                 </a>
-                                <a href="/image-to-video.html" class="dropdown-item flex items-center">
-                                    <i class="ri-film-fill"></i>
-                                    <div>
-                                        <div class="font-medium">图生视频</div>
-                                        <div class="text-xs text-gray-500">静态图片转视频动画</div>
-                                    </div>
+                                <a href="#model-dressing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-user-3-line"></i>
+                                    <span>AI模特换装</span>
                                 </a>
-                                <a href="/image-upscaler.html" class="dropdown-item flex items-center">
-                                    <i class="ri-zoom-in-fill"></i>
-                                    <div>
-                                        <div class="font-medium">图片超分</div>
-                                        <div class="text-xs text-gray-500">提升图片清晰度和质量</div>
-                                    </div>
+                                <a href="#amazon-assistant" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
+                                    <i class="ri-store-line"></i>
+                                    <span>亚马逊助手</span>
                                 </a>
                             </div>
                         </div>
                     </div>
-                    
-                    <a href="/pricing.html" class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium">价格</a>
-                    <a href="/about.html" class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium">关于我们</a>
-                </nav>
+                    <a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors">使用教程</a>
+                    <a href="https://blog.yinghuo.ai" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors">公告</a>
+                    <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">关于我们</a>
+                </div>
                 
                 <!-- 用户操作按钮 -->
                 <div class="flex items-center space-x-4">
-                    <a href="/login.html" class="hidden sm:inline-flex px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">登录</a>
-                    <a href="/register.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">注册</a>
+                    <button onclick="handleStartUsing()" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:scale-105">立即使用</button>
                     
                     <!-- 移动端菜单按钮 -->
                     <button class="mobile-menu-button md:hidden text-gray-500 hover:text-gray-600 focus:outline-none" aria-label="打开菜单">
@@ -1200,7 +1182,7 @@
                 </div>
             </div>
         </div>
-    </header>
+    </nav>
 
     <!-- 移动端菜单 -->
     <div class="mobile-menu">
@@ -1215,7 +1197,7 @@
             
             <div class="mobile-nav-item">
                 <div class="flex justify-between items-center">
-                    <span class="text-lg font-medium">功能</span>
+                    <span class="text-lg font-medium">功能特色</span>
                     <button class="mobile-submenu-toggle">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -1224,19 +1206,19 @@
                 </div>
                 
                 <div class="mobile-submenu mt-2 ml-4 hidden">
-                    <a href="/text-to-image.html" class="block py-2 text-gray-700">文生图</a>
-                    <a href="/text-to-video.html" class="block py-2 text-gray-700">文生视频</a>
-                    <a href="/image-to-video.html" class="block py-2 text-gray-700">图生视频</a>
-                    <a href="/image-upscaler.html" class="block py-2 text-gray-700">图片超分</a>
+                    <a href="#image-processing" class="block py-2 text-gray-700">AI图像处理</a>
+                    <a href="#video-creation" class="block py-2 text-gray-700">AI视频创作</a>
+                    <a href="#model-dressing" class="block py-2 text-gray-700">AI模特换装</a>
+                    <a href="#amazon-assistant" class="block py-2 text-gray-700">亚马逊助手</a>
                 </div>
             </div>
             
-            <a href="/pricing.html" class="mobile-nav-item block text-lg font-medium">价格</a>
-            <a href="/about.html" class="mobile-nav-item block text-lg font-medium">关于我们</a>
+            <a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" class="mobile-nav-item block text-lg font-medium">使用教程</a>
+            <a href="https://blog.yinghuo.ai" target="_blank" class="mobile-nav-item block text-lg font-medium">公告</a>
+            <a href="#about" class="mobile-nav-item block text-lg font-medium">关于我们</a>
             
-            <div class="mt-6 space-y-4">
-                <a href="/login.html" class="block w-full px-4 py-2 text-center text-sm font-medium rounded-md text-indigo-600 bg-gray-50 hover:bg-gray-100">登录</a>
-                <a href="/register.html" class="block w-full px-4 py-2 text-center text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">注册</a>
+            <div class="mt-6">
+                <button onclick="handleStartUsing()" class="block w-full px-6 py-3 text-center text-sm font-medium rounded-full text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105">立即使用</button>
             </div>
         </div>
     </div>
@@ -1503,26 +1485,6 @@
                 
             <!-- 图生视频案例 -->
             <div class="case-row" data-category="video">
-                <div class="product-showcase">
-                    <div class="comparison-container">
-                        <div class="before-image">
-                            <img src="/images/cases/case_img2video_before.jpg" alt="图生视频前">
-                            <span class="image-label">原始图片</span>
-                    </div>
-                        <div class="arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </div>
-                        <div class="after-image">
-                            <div class="video-thumbnail-disabled" data-video-src="/images/cases/case_img2video_after.mp4">
-                                <!-- 使用视频元素作为预览，设置自动播放，移除播放按钮 -->
-                                <video poster="/images/cases/case_img2video_before.jpg" muted loop autoplay playsinline class="preview-video">
-                                    <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
-                                </video>
-                                <span class="image-label">生成视频</span>
-                    </div>
-                            </div>
-                        </div>
-                    </div>
                 <div class="product-info">
                     <div class="product-tag">视频创作</div>
                     <h3 class="product-title">图生视频</h3>
@@ -1542,7 +1504,27 @@
                     </ul>
                     <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
                 </div>
+                <div class="product-showcase">
+                    <div class="comparison-container">
+                        <div class="before-image">
+                            <img src="/images/cases/case_img2video_before.jpg" alt="图生视频前">
+                            <span class="image-label">原始图片</span>
+                        </div>
+                        <div class="arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                        <div class="after-image">
+                            <div class="video-thumbnail" data-video-src="/images/cases/case_img2video_after.mp4">
+                                <!-- 使用视频元素作为预览，设置自动播放，移除播放按钮 -->
+                                <video poster="/images/cases/case_img2video_before.jpg" muted loop autoplay playsinline class="preview-video">
+                                    <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
+                                </video>
+                                <span class="image-label">生成视频</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
                 
             <!-- 图片上色案例 -->
             <!-- AI模特换装案例 -->
