@@ -558,16 +558,12 @@
             csLog('发送消息到服务器，用户ID: ' + userId + ' (类型: ' + typeof userId + ')');
             
             fetch('/api/user-kefu/messages', {
-        headers: {
-            'Authorization': `Bearer ${getAuthToken()}`
-        },
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${getAuthToken()}`
         },
                 body: JSON.stringify({
-                    userId: parseInt(userId),
                     message: message,
                     type: 'user'
                 })
@@ -623,7 +619,7 @@
             
             csLog('加载历史消息，用户ID: ' + userId);
             
-            fetch('/api/user-kefu/messages?userId=' + parseInt(userId), {
+            fetch('/api/user-kefu/messages', {
         headers: {
             'Authorization': `Bearer ${getAuthToken()}`
         }

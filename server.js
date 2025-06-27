@@ -116,6 +116,177 @@ const https = require('https');
 const OSS = require('ali-oss');
 
 /**
+ * 图片高清放大任务失败时的退款函数
+ * @param {number} userId - 用户ID
+ * @param {string} taskId - 任务ID
+ * @returns {Promise<boolean>} - 退款是否成功
+ */
+// 导出供测试使用
+async function refundImageUpscalerCredits(userId, taskId) {
+  try {
+    console.log(`开始处理图片高清放大任务失败退款: 用户ID=${userId}, 任务ID=${taskId}`);
+    
+    // 检查全局任务记录中是否有该任务的积分信息
+    let creditCost = 0;
+    let wasRefunded = false;
+    
+    if (global.imageUpscalerTasks && global.imageUpscalerTasks[taskId]) {
+      const taskInfo = global.imageUpscalerTasks[taskId];
+      creditCost = taskInfo.creditCost || 0;
+      wasRefunded = taskInfo.refunded || false;
+      
+      // 如果已经退款过了，不重复退款
+      if (wasRefunded) {
+        console.log(`任务 ${taskId} 已经退款过，跳过退款处理`);
+        return false;
+      }
+      
+      // 标记为已退款，防止重复退款
+      global.imageUpscalerTasks[taskId].refunded = true;
+    }
+    
+    // 如果没有积分消耗信息，从功能配置中获取
+    if (creditCost === 0) {
+      const { FEATURES } = require('./middleware/featureAccess');
+      const featureConfig = FEATURES['image-upscaler'];
+      creditCost = featureConfig ? featureConfig.creditCost : 10;
+      console.log(`从功能配置获取积分消耗: ${creditCost}`);
+    }
+    
+    // 查找最近的该功能使用记录
+    const recentUsage = await FeatureUsage.findOne({
+      where: {
+        userId: userId,
+        featureName: 'image-upscaler'
+      },
+      order: [['createdAt', 'DESC']]
+    });
+    
+    if (!recentUsage) {
+      console.log(`未找到用户 ${userId} 的图片高清放大使用记录，无法执行退款`);
+      return false;
+    }
+    
+    // 检查该使用记录是否为免费使用
+    const { FEATURES } = require('./middleware/featureAccess');
+    const featureConfig = FEATURES['image-upscaler'];
+    
+    if (recentUsage.usageCount <= featureConfig.freeUsage) {
+      console.log(`用户 ${userId} 使用的是免费次数 (${recentUsage.usageCount}/${featureConfig.freeUsage})，仅回退使用次数，无需退还积分`);
+      
+      // 即使是免费使用，任务失败时也要回退使用次数，保留免费机会
+      if (recentUsage.usageCount > 0) {
+        recentUsage.usageCount -= 1;
+        await recentUsage.save();
+        console.log(`✅ 已回退免费使用次数: 用户ID=${userId}, 当前使用次数=${recentUsage.usageCount}/${featureConfig.freeUsage}`);
+      }
+      
+      // 记录退款信息到任务详情中
+      try {
+        const details = JSON.parse(recentUsage.details || '{}');
+        const tasks = details.tasks || [];
+        const refunds = details.refunds || [];
+        
+        // 检查任务是否存在
+        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
+        if (taskIndex !== -1) {
+          // 记录退款信息
+          refunds.push({
+            taskId: taskId,
+            creditCost: 0,
+            isFree: true,
+            reason: '任务失败',
+            refundTime: new Date().toISOString()
+          });
+          
+          // 更新任务详情
+          recentUsage.details = JSON.stringify({
+            ...details,
+            refunds: refunds
+          });
+          
+          await recentUsage.save();
+          console.log(`✅ 已记录免费任务退款信息: 任务ID=${taskId}`);
+        }
+      } catch (error) {
+        console.error('记录免费任务退款信息失败:', error);
+      }
+      
+      return true;
+    }
+    
+    // 如果有积分消耗，执行退款
+    if (creditCost > 0) {
+      // 获取用户信息
+      const user = await User.findByPk(userId);
+      if (!user) {
+        console.error(`未找到用户 ${userId}，无法执行退款`);
+        return false;
+      }
+      
+      // 退还积分
+      const originalCredits = user.credits;
+      user.credits += creditCost;
+      await user.save();
+      
+      // 完全撤销这次使用记录，而不是仅仅减少使用次数
+      if (recentUsage.usageCount > 0) {
+        recentUsage.usageCount -= 1;
+        
+        // 清除这次使用产生的积分消费记录
+        recentUsage.credits = Math.max(0, (recentUsage.credits || 0) - creditCost);
+        
+        // 如果使用次数回到免费范围内，清除相关的付费记录
+        if (recentUsage.usageCount < featureConfig.freeUsage) {
+          // 回到免费使用范围，清除所有付费相关的记录
+          recentUsage.credits = 0;
+        }
+      }
+      
+      // 记录退款信息到任务详情中
+      try {
+        const details = JSON.parse(recentUsage.details || '{}');
+        const tasks = details.tasks || [];
+        const refunds = details.refunds || [];
+        
+        // 检查任务是否存在
+        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
+        if (taskIndex !== -1) {
+          // 记录退款信息
+          refunds.push({
+            taskId: taskId,
+            creditCost: creditCost,
+            isFree: false,
+            reason: '任务失败',
+            refundTime: new Date().toISOString()
+          });
+          
+          // 更新任务详情
+          recentUsage.details = JSON.stringify({
+            ...details,
+            refunds: refunds
+          });
+        }
+      } catch (error) {
+        console.error('记录任务退款信息失败:', error);
+      }
+      
+      await recentUsage.save();
+      
+      console.log(`✅ 图片高清放大任务失败退款成功: 用户ID=${userId}, 任务ID=${taskId}, 退款积分=${creditCost}, 原积分=${originalCredits}, 现积分=${user.credits}`);
+      console.log(`📊 使用记录已更新: 使用次数=${recentUsage.usageCount}, 积分消费=${recentUsage.credits}`);
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('图片高清放大退款失败:', error);
+    return false;
+  }
+}
+
+/**
  * 鞋靴虚拟试穿任务失败时的退款函数
  * @param {number} userId - 用户ID
  * @param {string} taskId - 任务ID
@@ -1008,6 +1179,8 @@ app.use('/api/global-style', globalStyleRoutes);
 app.use('/api/amazon-listing', amazonListingRoutes);
 // 客服路由
 app.use('/api/kefu', kefuRoutes);
+// 用户客服API路由
+app.use('/api/user-kefu', require('./kefu/kefu-user-api'));
 
 // 视频风格重绘下载代理（必须在404处理之前注册）
 app.get('/api/video-style-repaint/download', async (req, res) => {
@@ -2455,6 +2628,9 @@ app.post('/api/upscale', protect, createUnifiedFeatureMiddleware('image-upscaler
     
     console.log(`处理图片: ${originalName}, 放大倍数: ${upscaleFactor}`);
     
+    // 生成唯一任务ID - 提前生成以便在失败时使用
+    const taskId = `upscale-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
     try {
       // 1. 上传图片到OSS获取可公开访问的URL
       console.log('上传图片到OSS...');
@@ -2464,10 +2640,8 @@ app.post('/api/upscale', protect, createUnifiedFeatureMiddleware('image-upscaler
       console.log('调用图像高清放大API...');
       const apiResult = await callUpscaleApi(imageUrl, upscaleFactor);
       
-      // 生成唯一任务ID
-      const taskId = `upscale-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-      
       // 保存任务信息到全局变量
+      global.imageUpscalerTasks = global.imageUpscalerTasks || {};
       global.imageUpscalerTasks[taskId] = {
         userId: userId,
         creditCost: isFree ? 0 : creditCost,
@@ -2508,6 +2682,15 @@ app.post('/api/upscale', protect, createUnifiedFeatureMiddleware('image-upscaler
       });
     } catch (error) {
       console.error('图像处理失败:', error);
+      
+      // 调用退款函数
+      try {
+        await refundImageUpscalerCredits(userId, taskId);
+        console.log(`已为任务ID=${taskId}执行退款处理`);
+      } catch (refundError) {
+        console.error('执行退款失败:', refundError);
+      }
+      
       return res.status(500).json({ 
         success: false, 
         message: `图像处理失败: ${error.message}` 

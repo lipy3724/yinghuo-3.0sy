@@ -58,3 +58,8 @@ server.js.backup
 
 # 临时备份文件夹
 temp_backup/
+
+# 测试文件
+test-image-upscaler-refund-direct.js
+test-image-upscaler-refund.js
+test-image.jpg
