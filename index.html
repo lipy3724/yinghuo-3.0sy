@@ -911,6 +911,196 @@
                 margin: 0 auto;
             }
         }
+        
+        /* 移动端响应式样式 */
+        @media (max-width: 768px) {
+            .hero-left, .hero-right {
+                animation: none;
+                opacity: 1;
+            }
+            
+            .hero-container {
+                flex-direction: column;
+                padding: 2rem 1rem;
+            }
+            
+            .hero-image-container {
+                margin-top: 2rem;
+                width: 100%;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+            
+            .case-row {
+                flex-direction: column !important; /* 强制所有行都是垂直排列 */
+                margin-bottom: 3rem;
+                padding: 0;
+            }
+            
+            .product-info, .product-showcase {
+                width: 100%;
+                padding: 1.5rem;
+            }
+            
+            .product-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .product-tag {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+                margin-bottom: 0.75rem;
+            }
+            
+            .feature-list li {
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+            }
+            
+            .comparison-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .before-image, .after-image {
+                width: 100%;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+                margin: 0.5rem 0;
+            }
+            
+            .case-row:hover .arrow {
+                transform: rotate(90deg) translateX(5px);
+            }
+            
+            .before-image img, .after-image img, .video-thumbnail img {
+                height: 180px;
+            }
+            
+            .action-btn {
+                width: 100%;
+                text-align: center;
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 2rem 1rem;
+            }
+            
+            .mobile-hidden {
+                display: none;
+            }
+            
+            .mobile-menu-button {
+                display: block;
+            }
+            
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: white;
+                z-index: 50;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                padding: 2rem;
+                overflow-y: auto;
+            }
+            
+            .mobile-menu.active {
+                transform: translateX(0);
+            }
+            
+            .mobile-menu-close {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                font-size: 1.5rem;
+                background: none;
+                border: none;
+                color: #333;
+            }
+            
+            .mobile-nav-item {
+                padding: 1rem 0;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .pricing-carousel {
+                padding: 0 1rem;
+            }
+            
+            /* 案例过滤按钮优化 */
+            .cases-filter {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+                margin-bottom: 2rem;
+            }
+            
+            .filter-btn {
+                padding: 8px 12px;
+                margin: 0;
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* 桌面端菜单 */
+        @media (min-width: 769px) {
+            .mobile-menu-button {
+                display: none;
+            }
+            
+            .mobile-menu {
+                display: none;
+            }
+        }
+        
+        /* 视频案例的移动端优化 */
+        .video-thumbnail {
+            width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .video-thumbnail .preview-video {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .video-modal {
+            padding: 1rem;
+        }
+        
+        .video-modal video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+        }
+        
+        .modal-close-btn {
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 1.5rem;
+            padding: 0.25rem 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -920,57 +1110,121 @@
     </div>
     
     <!-- 导航栏 -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+    <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur border-b border-gray-100">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
                 <!-- Logo -->
-                        <div class="flex items-center -ml-36">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-32 w-32 mr-1 mt-4 object-contain">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <img src="/images/favicon.png" alt="萤火AI" class="h-8 w-8">
+                        <span class="text-xl logo-text">萤火AI</span>
+                    </a>
                 </div>
                 
                 <!-- 桌面导航菜单 -->
-                <div class="hidden md:flex items-center space-x-8 -ml-40">
-                    <!-- 功能特色下拉菜单 -->
+                <nav class="hidden md:flex items-center space-x-1">
+                    <a href="/" class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium">首页</a>
+                    
+                    <!-- 功能下拉菜单 -->
                     <div class="relative group">
-                        <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors flex items-center group-hover:text-indigo-600 font-medium">
-                            功能特色
-                            <i class="ri-arrow-down-s-line ml-1 transition-transform duration-300 group-hover:rotate-180"></i>
-                        </a>
-                        <!-- 下拉菜单 -->
-                        <div class="absolute left-0 mt-2 w-64 bg-white/95 backdrop-blur-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 dropdown-menu">
-                            <div class="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-                            <div class="py-3">
-                                <a href="#image-processing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
-                                    <i class="ri-image-line"></i>
-                                    <span>AI图像处理</span>
+                        <button class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium flex items-center">
+                            功能
+                            <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-2 w-72 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out z-50 dropdown-menu bg-white/90">
+                            <div class="p-3 grid grid-cols-1 gap-2">
+                                <a href="/text-to-image.html" class="dropdown-item flex items-center">
+                                    <i class="ri-image-fill"></i>
+                                    <div>
+                                        <div class="font-medium">文生图</div>
+                                        <div class="text-xs text-gray-500">AI生成高质量图像</div>
+                                    </div>
                                 </a>
-                                <a href="#video-creation" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
-                                    <i class="ri-video-line"></i>
-                                    <span>AI视频创作</span>
+                                <a href="/text-to-video.html" class="dropdown-item flex items-center">
+                                    <i class="ri-movie-fill"></i>
+                                    <div>
+                                        <div class="font-medium">文生视频</div>
+                                        <div class="text-xs text-gray-500">AI生成短视频内容</div>
+                                    </div>
                                 </a>
-                                <a href="#model-dressing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
-                                    <i class="ri-user-3-line"></i>
-                                    <span>AI模特换装</span>
+                                <a href="/image-to-video.html" class="dropdown-item flex items-center">
+                                    <i class="ri-film-fill"></i>
+                                    <div>
+                                        <div class="font-medium">图生视频</div>
+                                        <div class="text-xs text-gray-500">静态图片转视频动画</div>
+                                    </div>
                                 </a>
-                                <a href="#amazon-assistant" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
-                                    <i class="ri-store-line"></i>
-                                    <span>亚马逊助手</span>
+                                <a href="/image-upscaler.html" class="dropdown-item flex items-center">
+                                    <i class="ri-zoom-in-fill"></i>
+                                    <div>
+                                        <div class="font-medium">图片超分</div>
+                                        <div class="text-xs text-gray-500">提升图片清晰度和质量</div>
+                                    </div>
                                 </a>
                             </div>
                         </div>
                     </div>
-                    <a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors">使用教程</a>
-                    <a href="https://blog.yinghuo.ai" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors">公告</a>
-                    <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">关于我们</a>
-                            </div>
+                    
+                    <a href="/pricing.html" class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium">价格</a>
+                    <a href="/about.html" class="px-3 py-2 text-gray-700 hover:text-indigo-600 rounded-md text-sm font-medium">关于我们</a>
+                </nav>
                 
-                <!-- 操作按钮 -->
+                <!-- 用户操作按钮 -->
                 <div class="flex items-center space-x-4">
-                    <button onclick="handleStartUsing()" class="btn-primary text-white px-6 py-2 rounded-full font-medium">开始使用</button>
-                            </div>
-                            </div>
-                            </div>
-    </nav>
+                    <a href="/login.html" class="hidden sm:inline-flex px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">登录</a>
+                    <a href="/register.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">注册</a>
+                    
+                    <!-- 移动端菜单按钮 -->
+                    <button class="mobile-menu-button md:hidden text-gray-500 hover:text-gray-600 focus:outline-none" aria-label="打开菜单">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 移动端菜单 -->
+    <div class="mobile-menu">
+        <button class="mobile-menu-close" aria-label="关闭菜单">
+            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <div class="py-6">
+            <a href="/" class="mobile-nav-item block text-lg font-medium">首页</a>
+            
+            <div class="mobile-nav-item">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-medium">功能</span>
+                    <button class="mobile-submenu-toggle">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="mobile-submenu mt-2 ml-4 hidden">
+                    <a href="/text-to-image.html" class="block py-2 text-gray-700">文生图</a>
+                    <a href="/text-to-video.html" class="block py-2 text-gray-700">文生视频</a>
+                    <a href="/image-to-video.html" class="block py-2 text-gray-700">图生视频</a>
+                    <a href="/image-upscaler.html" class="block py-2 text-gray-700">图片超分</a>
+                </div>
+            </div>
+            
+            <a href="/pricing.html" class="mobile-nav-item block text-lg font-medium">价格</a>
+            <a href="/about.html" class="mobile-nav-item block text-lg font-medium">关于我们</a>
+            
+            <div class="mt-6 space-y-4">
+                <a href="/login.html" class="block w-full px-4 py-2 text-center text-sm font-medium rounded-md text-indigo-600 bg-gray-50 hover:bg-gray-100">登录</a>
+                <a href="/register.html" class="block w-full px-4 py-2 text-center text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">注册</a>
+            </div>
+        </div>
+    </div>
 
     <!-- 英雄区域 -->
     <section class="hero-gradient pt-20 pb-16 min-h-screen flex items-center relative overflow-hidden">
@@ -2302,6 +2556,48 @@
             updateCarousel(false);
         }
 
+        // 初始化套餐轮播
+        function initPricingCarousel() {
+            // 实现套餐轮播逻辑
+        }
+        
+        // 移动端菜单交互
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.querySelector('.mobile-menu-button');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const mobileMenuClose = document.querySelector('.mobile-menu-close');
+            const mobileSubmenuToggles = document.querySelectorAll('.mobile-submenu-toggle');
+            
+            // 打开移动菜单
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // 防止背景滚动
+                });
+            }
+            
+            // 关闭移动菜单
+            if (mobileMenuClose) {
+                mobileMenuClose.addEventListener('click', function() {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = ''; // 恢复背景滚动
+                });
+            }
+            
+            // 子菜单切换
+            mobileSubmenuToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const submenu = this.closest('.mobile-nav-item').querySelector('.mobile-submenu');
+                    submenu.classList.toggle('hidden');
+                    
+                    // 旋转箭头图标
+                    const icon = this.querySelector('svg');
+                    if (icon) {
+                        icon.style.transform = submenu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+                    }
+                });
+            });
+        });
     </script>
 
     <!-- 客服组件容器 -->

@@ -1179,6 +1179,8 @@ app.use('/api/global-style', globalStyleRoutes);
 app.use('/api/amazon-listing', amazonListingRoutes);
 // 客服路由
 app.use('/api/kefu', kefuRoutes);
+// 用户客服API路由
+app.use('/api/user-kefu', require('./kefu/kefu-user-api'));
 
 // 视频风格重绘下载代理（必须在404处理之前注册）
 app.get('/api/video-style-repaint/download', async (req, res) => {
