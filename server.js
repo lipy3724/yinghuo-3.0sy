@@ -693,7 +693,7 @@ app.post('/api/multi-image-to-video', protect, createUnifiedFeatureMiddleware('M
         global.multiImageToVideoTasks[taskId] = {
             userId: userId,
             creditCost: creditCostFinal,
-            hasChargedCredits: !isFree,
+            hasChargedCredits: false, // 修复：始终标记为未扣费，确保任务完成后会扣费
             timestamp: new Date(),
             imageCount: images.length,
             duration: duration || 10,
@@ -858,6 +858,68 @@ app.get('/api/task-status/:taskId', protect, async (req, res) => {
                                 result = JSON.parse(jobData.Result);
                             } else {
                                 result = jobData.Result;
+                            }
+                            
+                            // 如果任务成功完成，触发积分扣除
+                            const taskId = req.params.taskId;
+                            if (global.multiImageToVideoTasks && global.multiImageToVideoTasks[taskId]) {
+                                // 检查是否已扣除积分
+                                const hasChargedCredits = global.multiImageToVideoTasks[taskId].hasChargedCredits || false;
+                                if (!hasChargedCredits) {
+                                    try {
+                                        const userId = global.multiImageToVideoTasks[taskId].userId;
+                                        // 检查是否为免费使用
+                                        const isFree = global.multiImageToVideoTasks[taskId].isFree || false;
+                                        
+                                        // 计算视频时长和积分消耗
+                                        let videoDuration = 0;
+                                        if (result.Duration) {
+                                            videoDuration = parseFloat(result.Duration);
+                                        } else if (result.duration) {
+                                            videoDuration = parseFloat(result.duration);
+                                        } else {
+                                            // 默认时长
+                                            videoDuration = 10;
+                                        }
+                                        
+                                        // 强制更新hasChargedCredits为false，确保任务完成后会扣费
+                                        global.multiImageToVideoTasks[taskId].hasChargedCredits = false;
+                                        
+                                        console.log(`多图转视频任务完成: 任务ID=${taskId}, 用户ID=${userId}, 视频时长=${videoDuration}秒`);
+                                        
+                                        // 查找用户的功能使用记录
+                                        const { FeatureUsage } = require('./models/FeatureUsage');
+                                        const { saveTaskDetails } = require('./middleware/unifiedFeatureUsage');
+                                        
+                                        let usage = await FeatureUsage.findOne({
+                                            where: { userId, featureName: 'MULTI_IMAGE_TO_VIDEO' }
+                                        });
+                                        
+                                        if (usage) {
+                                            // 调用saveTaskDetails函数，传入status='completed'参数和视频时长，触发后续扣费逻辑
+                                            await saveTaskDetails(usage, {
+                                                taskId: taskId,
+                                                featureName: 'MULTI_IMAGE_TO_VIDEO',
+                                                status: 'completed', // 添加status参数，触发任务完成后扣费逻辑
+                                                isFree: isFree,
+                                                metadata: {
+                                                    duration: videoDuration
+                                                }
+                                            });
+                                            
+                                            console.log(`已触发多图转视频任务完成扣费逻辑: 任务ID=${taskId}, 视频时长=${videoDuration}秒, 免费=${isFree}`);
+                                            
+                                            // 标记为已扣除积分，避免重复计算
+                                            global.multiImageToVideoTasks[taskId].hasChargedCredits = true;
+                                        } else {
+                                            console.log(`未找到用户ID=${userId}的MULTI_IMAGE_TO_VIDEO功能使用记录`);
+                                        }
+                                    } catch (error) {
+                                        console.error('处理多图转视频任务完成扣费逻辑失败:', error);
+                                    }
+                                } else {
+                                    console.log(`多图转视频任务 ${taskId} 已扣除积分，跳过重复计算`);
+                                }
                             }
                         } catch (e) {
                             console.error('解析任务结果错误:', e);

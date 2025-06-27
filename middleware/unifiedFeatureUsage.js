@@ -262,7 +262,8 @@ const saveTaskDetails = async (usage, taskInfo) => {
         // 多图转视频功能根据时长扣除积分：每30秒30积分，不足30秒按30秒计
         const durationSec = parseFloat(taskInfo.metadata.duration);
         if (!isNaN(durationSec) && durationSec > 0) {
-          const calculatedCost = Math.ceil(durationSec / 30) * 30;
+          // 确保即使短视频也至少收取30积分
+          const calculatedCost = Math.max(30, Math.ceil(durationSec / 30) * 30);
           
           // 检查是否为免费使用
           if (taskInfo.isFree) {
