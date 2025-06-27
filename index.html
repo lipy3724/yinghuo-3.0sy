@@ -230,6 +230,21 @@
             width: 100%;
         }
         
+        /* 禁用的功能按钮样式 */
+        .disabled-feature {
+            opacity: 0.7;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .video-thumbnail-disabled {
+            position: relative;
+            cursor: default;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
         /* 案例展示区域样式 */
         .cases-filter {
             display: flex;
@@ -1244,7 +1259,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </div>
                         <div class="after-image">
-                            <div class="video-thumbnail" data-video-src="/images/cases/case_img2video_after.mp4">
+                            <div class="video-thumbnail-disabled" data-video-src="/images/cases/case_img2video_after.mp4">
                                 <!-- 使用视频元素作为预览，设置自动播放，移除播放按钮 -->
                                 <video poster="/images/cases/case_img2video_before.jpg" muted loop autoplay playsinline class="preview-video">
                                     <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
@@ -1276,60 +1291,8 @@
                 </div>
                 
             <!-- 图片上色案例 -->
-            <div class="case-row" data-category="image">
-                <div class="product-info">
-                    <div class="product-tag">图像修复</div>
-                    <h3 class="product-title">老照片修复上色</h3>
-                    <ul class="feature-list">
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>摄影工作室批量处理老照片，客户满意度达99%</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>AI智能识别图像内容，精准上色还原真实场景</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>一键操作，无需复杂后期处理流程</span>
-                        </li>
-                    </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
-                    </div>
-                <div class="product-showcase">
-                    <div class="comparison-container">
-                        <div class="before-image">
-                            <img src="/images/cases/case_colorize_before.jpg" alt="图片上色前">
-                            <span class="image-label">原始图片</span>
-                        </div>
-                        <div class="arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </div>
-                        <div class="after-image">
-                            <img src="/images/cases/case_colorize_after.jpg" alt="图片上色后">
-                            <span class="image-label">生成结果</span>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                
             <!-- AI模特换装案例 -->
             <div class="case-row" data-category="image">
-                <div class="product-showcase">
-                    <div class="comparison-container">
-                        <div class="before-image">
-                            <img src="/images/cases/case_model_before.jpg" alt="模特换装前">
-                            <span class="image-label">原始图片</span>
-                    </div>
-                        <div class="arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </div>
-                        <div class="after-image">
-                            <img src="/images/cases/case_model_after.jpg" alt="模特换装后">
-                            <span class="image-label">生成结果</span>
-                        </div>
-                    </div>
-                </div>
                 <div class="product-info">
                     <div class="product-tag">服饰展示</div>
                     <h3 class="product-title">AI模特试换装</h3>
@@ -1348,6 +1311,21 @@
                         </li>
                     </ul>
                     <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                </div>
+                <div class="product-showcase">
+                    <div class="comparison-container">
+                        <div class="before-image">
+                            <img src="/images/cases/case_model_before.jpg" alt="模特换装前">
+                            <span class="image-label">原始图片</span>
+                        </div>
+                        <div class="arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                        <div class="after-image">
+                            <img src="/images/cases/case_model_after.jpg" alt="模特换装后">
+                            <span class="image-label">生成结果</span>
+                        </div>
+                    </div>
                 </div>
                 </div>
                 
@@ -1391,21 +1369,6 @@
                 
             <!-- 局部重绘案例 -->
             <div class="case-row" data-category="image">
-                <div class="product-showcase">
-                    <div class="comparison-container">
-                        <div class="before-image">
-                            <img src="/images/cases/case_redraw_before.jpg" alt="局部重绘前">
-                            <span class="image-label">原始图片</span>
-                        </div>
-                        <div class="arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </div>
-                        <div class="after-image">
-                            <img src="/images/cases/case_redraw_after.jpg" alt="局部重绘后">
-                            <span class="image-label">生成结果</span>
-                        </div>
-                    </div>
-                </div>
                 <div class="product-info">
                     <div class="product-tag">图像编辑</div>
                     <h3 class="product-title">局部精准重绘</h3>
@@ -1424,6 +1387,21 @@
                         </li>
                     </ul>
                     <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                </div>
+                <div class="product-showcase">
+                    <div class="comparison-container">
+                        <div class="before-image">
+                            <img src="/images/cases/case_redraw_before.jpg" alt="局部重绘前">
+                            <span class="image-label">原始图片</span>
+                        </div>
+                        <div class="arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                        <div class="after-image">
+                            <img src="/images/cases/case_redraw_after.jpg" alt="局部重绘后">
+                            <span class="image-label">生成结果</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1467,21 +1445,6 @@
                 
             <!-- 全局风格化案例 -->
             <div class="case-row" data-category="image">
-                <div class="product-showcase">
-                    <div class="comparison-container">
-                        <div class="before-image">
-                            <img src="/images/cases/case_style_before.jpg" alt="全局风格化前">
-                            <span class="image-label">原始图片</span>
-                        </div>
-                        <div class="arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                        </div>
-                        <div class="after-image">
-                            <img src="/images/cases/case_style_after.jpg" alt="全局风格化后">
-                            <span class="image-label">生成结果</span>
-                        </div>
-                    </div>
-                </div>
                 <div class="product-info">
                     <div class="product-tag">艺术创作</div>
                     <h3 class="product-title">全局风格化转换</h3>
@@ -1500,6 +1463,21 @@
                         </li>
                     </ul>
                     <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                </div>
+                <div class="product-showcase">
+                    <div class="comparison-container">
+                        <div class="before-image">
+                            <img src="/images/cases/case_style_before.jpg" alt="全局风格化前">
+                            <span class="image-label">原始图片</span>
+                        </div>
+                        <div class="arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                        <div class="after-image">
+                            <img src="/images/cases/case_style_after.jpg" alt="全局风格化后">
+                            <span class="image-label">生成结果</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -2077,7 +2055,7 @@
             });
             
             // 视频缩略图点击事件
-            const videoThumbnails = document.querySelectorAll('.video-thumbnail');
+            const videoThumbnails = document.querySelectorAll('.video-thumbnail:not(.video-thumbnail-disabled)');
             
             videoThumbnails.forEach(thumbnail => {
                 // 查找预览视频元素
@@ -2176,7 +2154,7 @@
         // 初始化图生视频自动播放
         function initAutoplayVideos() {
             // 查找所有图生视频案例中的视频元素
-            const videoContainers = document.querySelectorAll('[data-category="video"] .video-thumbnail');
+            const videoContainers = document.querySelectorAll('[data-category="video"] .video-thumbnail, [data-category="video"] .video-thumbnail-disabled');
             
             videoContainers.forEach(container => {
                 const video = container.querySelector('video');
