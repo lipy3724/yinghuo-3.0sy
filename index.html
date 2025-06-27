@@ -626,6 +626,7 @@
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             width: 100%;
+            height: auto;
         }
         
         .video-thumbnail .preview-video {
@@ -676,8 +677,32 @@
         }
         
         /* 图生视频案例的视频样式 */
+        [data-category="video"] .comparison-container {
+            align-items: center; /* 确保所有元素垂直居中 */
+            display: flex;
+            justify-content: center;
+        }
+        
+        [data-category="video"] .before-image,
+        [data-category="video"] .after-image {
+            height: 240px; /* 固定高度，与图片高度一致 */
+            width: 45%; /* 与左侧图片宽度一致 */
+            display: flex;
+            align-items: center;
+        }
+        
+        [data-category="video"] .video-thumbnail {
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+        
         [data-category="video"] .preview-video {
             cursor: default; /* 移除指针样式，因为不需要点击 */
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+            object-position: center center; /* 确保视频内容居中 */
         }
         
         .video-preview-placeholder .video-play-icon {
@@ -1100,6 +1125,22 @@
             object-fit: cover;
         }
         
+        @media (max-width: 768px) {
+            [data-category="video"] .preview-video {
+                height: 100%;
+            }
+            
+            [data-category="video"] .after-image,
+            [data-category="video"] .before-image {
+                width: 45%;
+                height: 200px;
+            }
+            
+            .comparison-container {
+                justify-content: center;
+            }
+        }
+        
         .video-modal {
             padding: 1rem;
         }
@@ -1115,6 +1156,19 @@
             right: 0.5rem;
             font-size: 1.5rem;
             padding: 0.25rem 0.5rem;
+        }
+        
+        [data-category="video"] .image-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 10;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -1518,6 +1572,7 @@
                                 <!-- 使用视频元素作为预览，设置自动播放，移除播放按钮 -->
                                 <video poster="/images/cases/case_img2video_before.jpg" muted loop autoplay playsinline class="preview-video">
                                     <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
+                                    您的浏览器不支持视频标签
                                 </video>
                                 <span class="image-label">生成视频</span>
                             </div>
@@ -2395,14 +2450,20 @@
             videoContainers.forEach(container => {
                 const video = container.querySelector('video');
                 if (video) {
+                    // 确保视频元素样式正确
+                    video.style.width = '100%';
+                    video.style.height = '240px';
+                    video.style.objectFit = 'cover';
+                    video.style.objectPosition = 'center center'; // 确保视频内容居中
+                    
                     // 设置视频加载和可见性检测
                     const playVideo = () => {
                         // 检查视频是否在视口中
                         const rect = video.getBoundingClientRect();
                         const isInViewport = (
-                            rect.top >= 0 &&
+                            rect.top >= -100 &&
                             rect.left >= 0 &&
-                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                            rect.bottom <= (window.innerHeight + 100 || document.documentElement.clientHeight + 100) &&
                             rect.right <= (window.innerWidth || document.documentElement.clientWidth)
                         );
                         
@@ -2411,6 +2472,8 @@
                             video.play().catch(err => {
                                 console.log('自动播放可能被浏览器阻止，需要用户交互', err);
                             });
+                        } else {
+                            video.pause();
                         }
                     };
                     
@@ -2430,9 +2493,11 @@
                             entries.forEach(entry => {
                                 if (entry.isIntersecting) {
                                     video.play().catch(err => console.log('播放失败', err));
+                                } else {
+                                    video.pause();
                                 }
                             });
-                        }, { threshold: 0.1 });
+                        }, { threshold: 0.1, rootMargin: '100px' });
                         
                         observer.observe(video);
                     }
