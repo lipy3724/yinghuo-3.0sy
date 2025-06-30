@@ -315,6 +315,37 @@
             const emptyResultState = document.getElementById('emptyResultState');
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
+            const copyButton = document.getElementById('copyButton');
+            const newBrandButton = document.getElementById('newBrandButton');
+            
+            // 语言切换处理
+            function updateUILanguage() {
+                const isEnglish = document.querySelector('input[name="outputLanguage"]:checked').value === 'en';
+                
+                // 更新按钮文本
+                generateBrandButton.innerHTML = `<i class="ri-price-tag-3-line mr-2"></i>${isEnglish ? 'Generate Brand Name' : '生成品牌名称'}`;
+                copyButton.innerHTML = `<i class="ri-file-copy-line mr-1"></i>${isEnglish ? 'Copy Brand Name' : '复制品牌名称'}`;
+                newBrandButton.innerHTML = `<i class="ri-refresh-line mr-1"></i>${isEnglish ? 'Generate New Brand' : '生成新品牌名'}`;
+                
+                // 更新加载提示文本
+                processingText.textContent = isEnglish ? 'Generating brand name, please wait...' : '正在生成品牌名称，请稍候...';
+                
+                // 更新结果标题
+                document.querySelector('#resultContainer h2').textContent = isEnglish ? 'Recommended Brand Name' : '推荐的品牌名称';
+                
+                // 如果有保存的结果，重新加载以应用新语言
+                if (!resultContainer.classList.contains('hidden')) {
+                    loadSavedResults();
+                }
+            }
+            
+            // 监听语言选择变化
+            document.querySelectorAll('input[name="outputLanguage"]').forEach(radio => {
+                radio.addEventListener('change', updateUILanguage);
+            });
+            
+            // 初始化语言
+            updateUILanguage();
             
             // 结果保持功能：检查是否有保存的结果
             function loadSavedResults() {
@@ -322,6 +353,9 @@
                 if (savedResults) {
                     try {
                         const results = JSON.parse(savedResults);
+                        
+                        // 获取当前选择的语言
+                        const isEnglish = document.querySelector('input[name="outputLanguage"]:checked').value === 'en';
                         
                         // 清空品牌容器
                         brandContainer.innerHTML = '';
@@ -343,7 +377,7 @@
                             // 添加解释/理由
                             const reasonTitle = document.createElement('h4');
                             reasonTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                            reasonTitle.textContent = '命名理由';
+                            reasonTitle.textContent = isEnglish ? 'Naming Rationale' : '命名理由';
                             
                             const reasonElement = document.createElement('p');
                             reasonElement.className = 'text-gray-600 mb-4';
@@ -352,7 +386,7 @@
                             // 添加完美日子场景
                             const perfectDayTitle = document.createElement('h4');
                             perfectDayTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                            perfectDayTitle.textContent = '完美场景';
+                            perfectDayTitle.textContent = isEnglish ? 'Perfect Scenario' : '完美场景';
                             
                             const perfectDayElement = document.createElement('p');
                             perfectDayElement.className = 'text-gray-600 mb-4';
@@ -361,7 +395,7 @@
                             // 添加价值观
                             const valuesTitle = document.createElement('h4');
                             valuesTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                            valuesTitle.textContent = '代表价值观';
+                            valuesTitle.textContent = isEnglish ? 'Brand Values' : '代表价值观';
                             
                             const valuesElement = document.createElement('p');
                             valuesElement.className = 'text-gray-600 mb-4';
@@ -413,16 +447,26 @@
             if (!loadSavedResults()) {
                 resultContainer.classList.add('hidden');
                 emptyResultState.classList.remove('hidden');
-            }// 监听浏览器标签页关闭或导航离开
+            }
             
+            // 监听浏览器标签页关闭或导航离开
+            window.addEventListener('beforeunload', () => {
+                saveResults(result.data);
+            });
+            
+            // 监听表单提交事件
             brandNamingForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
+                // 获取当前选择的语言
+                const isEnglish = document.querySelector('input[name="outputLanguage"]:checked').value === 'en';
+                
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在生成品牌名称，请稍候...';
+                processingText.textContent = isEnglish ? 'Generating brand name, please wait...' : '正在生成品牌名称，请稍候...';
                 
-                try {// 获取表单数据
+                try {
+                    // 获取表单数据
                     const formData = {
                         productDescription: document.getElementById('productDescription').value,
                         outputLanguage: document.querySelector('input[name="outputLanguage"]:checked').value
@@ -465,7 +509,7 @@
                         // 添加解释/理由
                         const reasonTitle = document.createElement('h4');
                         reasonTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                        reasonTitle.textContent = '命名理由';
+                        reasonTitle.textContent = isEnglish ? 'Naming Rationale' : '命名理由';
                         
                         const reasonElement = document.createElement('p');
                         reasonElement.className = 'text-gray-600 mb-4';
@@ -474,7 +518,7 @@
                         // 添加完美日子场景
                         const perfectDayTitle = document.createElement('h4');
                         perfectDayTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                        perfectDayTitle.textContent = '完美场景';
+                        perfectDayTitle.textContent = isEnglish ? 'Perfect Scenario' : '完美场景';
                         
                         const perfectDayElement = document.createElement('p');
                         perfectDayElement.className = 'text-gray-600 mb-4';
@@ -483,7 +527,7 @@
                         // 添加价值观
                         const valuesTitle = document.createElement('h4');
                         valuesTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                        valuesTitle.textContent = '代表价值观';
+                        valuesTitle.textContent = isEnglish ? 'Brand Values' : '代表价值观';
                         
                         const valuesElement = document.createElement('p');
                         valuesElement.className = 'text-gray-600 mb-4';
@@ -530,8 +574,10 @@
             });
             
             // 复制按钮功能
-            const copyButton = document.getElementById('copyButton');
             copyButton.addEventListener('click', () => {
+                // 获取当前选择的语言
+                const isEnglish = document.querySelector('input[name="outputLanguage"]:checked').value === 'en';
+                
                 // 创建一个临时容器来保存品牌名内容
                 const tempContainer = document.createElement('div');
                 tempContainer.style.position = 'absolute';
@@ -543,14 +589,20 @@
                 
                 if (brandCard) {
                     const name = brandCard.querySelector('h3').textContent;
-                    const headings = brandCard.querySelectorAll('h4');
                     const paragraphs = brandCard.querySelectorAll('p');
                     
-                    let brandText = `品牌名称: ${name}\n\n`;
+                    let brandText = isEnglish ? `Brand Name: ${name}\n\n` : `品牌名称: ${name}\n\n`;
                     
                     // 添加各个部分的内容
-                    for (let i = 0; i < headings.length; i++) {
-                        brandText += `${headings[i].textContent}: ${paragraphs[i].textContent}\n\n`;
+                    const titles = [
+                        isEnglish ? 'Naming Rationale' : '命名理由',
+                        isEnglish ? 'Perfect Scenario' : '完美场景',
+                        isEnglish ? 'Brand Values' : '代表价值观'
+                    ];
+                    
+                    // 添加各个部分的内容
+                    for (let i = 0; i < titles.length; i++) {
+                        brandText += `${titles[i]}: ${paragraphs[i].textContent}\n\n`;
                     }
                     
                     // 设置临时容器内容
@@ -592,7 +644,6 @@
             });
             
             // 生成新品牌名按钮功能
-            const newBrandButton = document.getElementById('newBrandButton');
             newBrandButton.addEventListener('click', () => {
                 // 清除保存的结果
                 clearSavedResults();

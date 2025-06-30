@@ -54,6 +54,10 @@ const generateMiddleware = async (req, res, next) => {
     if (generateType === 'video-script') {
         featureName = 'amazon_video_script';
     }
+    // 如果是产品改款分析，则使用产品改款分析功能
+    else if (generateType === 'product-improvement') {
+        featureName = 'product_improvement_analysis';
+    }
     
     // 调用统一中间件
     const middleware = createUnifiedFeatureMiddleware(featureName);
@@ -1133,8 +1137,10 @@ router.post('/customer-email', protect, createUnifiedFeatureMiddleware('amazon_c
             });
         }
         
-        // 设置系统提示词
-        const systemMessage = "你是一个资深的客服人员，要求根据我提供客户邮件内容以及我要答复的大概内容编写一篇回复邮件。对于正面和中性情绪的邮件，感谢用户的邮件；对于负面情绪的邮件（如投诉），进行道歉并且引导至客服。可以提供回复的主要内容，如进行交叉销售，以及提出赔偿方案。注意：如果我有提供客户名字和客服名字，你必须使用我提供的客户名字以及客服名字作为收信人和落款人。";
+        // 设置系统提示词 - 根据输出语言选择
+        const systemMessage = outputLanguage === 'en' 
+            ? "You are an experienced customer service representative. Your task is to create a professional response to a customer email based on the content I provide. For positive and neutral emails, thank the customer for their message. For negative emails (such as complaints), apologize and guide them to customer service. You can provide cross-selling opportunities or compensation solutions in your response. Note: If I provide a customer name and a customer service representative name, you MUST use them as the recipient and signature in the email."
+            : "你是一个资深的客服人员，要求根据我提供客户邮件内容以及我要答复的大概内容编写一篇回复邮件。对于正面和中性情绪的邮件，感谢用户的邮件；对于负面情绪的邮件（如投诉），进行道歉并且引导至客服。可以提供回复的主要内容，如进行交叉销售，以及提出赔偿方案。注意：如果我有提供客户名字和客服名字，你必须使用我提供的客户名字以及客服名字作为收信人和落款人。";
         
         // 构建用户提示词
         let prompt;
@@ -1151,7 +1157,9 @@ Please provide your response in the following format:
 
 customerEmotion: Brief analysis of the customer's emotional state (positive, neutral, or negative) and main concerns
 emailReply: The complete email response to the customer (use the customer name as recipient and service representative name as signature if provided)
-suggestion: Suggestions for further handling of this case, including potential cross-selling opportunities or compensation options if applicable`;
+suggestion: Suggestions for further handling of this case, including potential cross-selling opportunities or compensation options if applicable
+
+IMPORTANT: Your entire response MUST be in English.`;
         } else {
             prompt = `请分析以下客户邮件并根据系统指示生成专业回复：
 
@@ -1165,7 +1173,9 @@ ${serviceName ? `客服名字: ${serviceName}` : ''}
 
 customerEmotion: 简要分析客户的情绪状态（正面、中性或负面）和主要关注点
 emailReply: 给客户的完整邮件回复（如果提供了客户名字和客服名字，请分别用作收信人和落款人）
-suggestion: 对此案例的进一步处理建议，包括可能的交叉销售机会或赔偿方案（如适用）`;
+suggestion: 对此案例的进一步处理建议，包括可能的交叉销售机会或赔偿方案（如适用）
+
+重要：您的回复必须完全使用中文。`;
         }
 
         // 调用GLM-4 API
@@ -3027,7 +3037,7 @@ ${accountInfo ? `账户信息: ${accountInfo}` : ''}
 });
 
 // 选品的改款分析和建议
-router.post('/product-improvement', protect, createUnifiedFeatureMiddleware('product_improvement_analysis'), async (req, res) => {
+router.post('/product-improvement', protect, async (req, res) => {
     try {
         const {
             title,
@@ -3035,6 +3045,9 @@ router.post('/product-improvement', protect, createUnifiedFeatureMiddleware('pro
             description,
             outputLanguage
         } = req.body;
+
+        const userId = req.user.id;
+        const featureName = 'product_improvement_analysis';
 
         logger.info(`选品的改款分析和建议请求，输出语言: ${outputLanguage || 'zh'}`);
 
@@ -3207,6 +3220,107 @@ Description: ${descriptionText}
                 }
             }
             
+            // 在这里处理积分扣除 - 只有在成功生成结果后才扣除积分
+            // 获取功能配置
+            const { FEATURES } = require('../middleware/featureAccess');
+            const featureConfig = FEATURES[featureName];
+            
+            if (!featureConfig) {
+                logger.error(`找不到功能配置: ${featureName}`);
+                return res.status(500).json({
+                    success: false,
+                    message: '服务器配置错误'
+                });
+            }
+            
+            // 获取或创建使用记录
+            const { FeatureUsage } = require('../models/FeatureUsage');
+            const today = new Date().toISOString().split('T')[0];
+            
+            let [usage, created] = await FeatureUsage.findOrCreate({
+                where: {
+                    userId,
+                    featureName
+                },
+                defaults: {
+                    usageCount: 0,
+                    lastUsedAt: new Date(),
+                    resetDate: today
+                }
+            });
+            
+            // 检查是否在免费使用次数内
+            let usageType = 'free';
+            let finalCreditCost = 0;
+            
+            if (usage.usageCount >= featureConfig.freeUsage) {
+                // 超过免费次数，检查用户积分
+                const User = require('../models/User');
+                const user = await User.findByPk(userId);
+                
+                // 固定积分消耗
+                const creditCost = featureConfig.creditCost;
+                
+                if (user.credits < creditCost) {
+                    return res.status(402).json({
+                        success: false,
+                        message: '您的免费试用次数已用完，积分不足',
+                        data: {
+                            requiredCredits: creditCost,
+                            currentCredits: user.credits,
+                            freeUsageLimit: featureConfig.freeUsage,
+                            freeUsageUsed: usage.usageCount
+                        }
+                    });
+                }
+                
+                // 扣除积分
+                user.credits -= creditCost;
+                await user.save();
+                
+                usageType = 'paid';
+                finalCreditCost = creditCost;
+                
+                logger.info(`用户ID ${userId} 使用 ${featureName} 功能，扣除 ${creditCost} 积分，剩余 ${user.credits} 积分`);
+            } else {
+                logger.info(`用户ID ${userId} 使用 ${featureName} 功能的免费次数 ${usage.usageCount + 1}/${featureConfig.freeUsage}`);
+            }
+            
+            // 更新使用次数
+            usage.usageCount += 1;
+            usage.lastUsedAt = new Date();
+            
+            // 生成任务ID并保存任务详情
+            const taskId = `${featureName}-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+            
+            // 保存任务详情
+            try {
+                const details = JSON.parse(usage.details || '{}');
+                const tasks = details.tasks || [];
+                
+                tasks.push({
+                    taskId: taskId,
+                    creditCost: finalCreditCost,
+                    isFree: usageType === 'free',
+                    timestamp: new Date()
+                });
+                
+                // 更新使用记录
+                if (usageType === 'paid') {
+                    usage.credits = (usage.credits || 0) + finalCreditCost;
+                }
+                
+                usage.details = JSON.stringify({
+                    ...details,
+                    tasks: tasks
+                });
+                
+                await usage.save();
+                logger.info(`任务详情已保存: 功能=${featureName}, 任务ID=${taskId}, 积分=${finalCreditCost}, 是否免费=${usageType === 'free'}`);
+            } catch (e) {
+                logger.error('保存任务详情失败:', e);
+            }
+            
         } catch (parseError) {
             logger.error(`解析选品改款分析响应失败: ${parseError.message}`, { error: parseError });
             
@@ -3215,7 +3329,7 @@ Description: ${descriptionText}
                 logger.error(`API响应内容: ${JSON.stringify(response.data.choices[0].message)}`);
             }
             
-            // 提供默认响应
+            // 提供默认响应，但不扣除积分
             result = {
                 productAnalysis: language === 'en' 
                     ? `Analysis of the current status of [${title}]. Please try again with more detailed information.` 
@@ -3237,7 +3351,7 @@ Description: ${descriptionText}
             return res.status(200).json({
                 success: true,
                 data: result,
-                message: "解析AI响应失败，提供默认内容"
+                message: "解析AI响应失败，提供默认内容但不扣除积分"
             });
         }
 
@@ -3248,33 +3362,14 @@ Description: ${descriptionText}
         });
 
     } catch (error) {
-        logger.error(`生成选品的改款分析和建议失败: ${error.message}`);
+        logger.error(`生成选品改款分析失败: ${error.message}`);
         console.error("API错误详情:", error.response?.data || error.message);
         
-        // 提供默认响应
-        const language = req.body.outputLanguage === 'en' ? 'en' : 'zh';
-        const defaultResult = {
-            productAnalysis: language === 'en' 
-                ? "We couldn't generate a product analysis at this time. Please try again later." 
-                : "我们暂时无法生成产品分析。请稍后再试。",
-            userNeeds: language === 'en'
-                ? "We couldn't identify user needs at this time. Please try again later."
-                : "我们暂时无法识别用户需求。请稍后再试。",
-            competitiveAnalysis: language === 'en'
-                ? "We couldn't generate a competitive analysis at this time. Please try again later."
-                : "我们暂时无法生成竞品分析。请稍后再试。",
-            improvementDirections: language === 'en'
-                ? "We couldn't suggest improvement directions at this time. Please try again later."
-                : "我们暂时无法提供改进方向。请稍后再试。",
-            specificSuggestions: language === 'en'
-                ? "We couldn't provide specific suggestions at this time. Please try again later."
-                : "我们暂时无法提供具体建议。请稍后再试。"
-        };
-        
-        res.status(200).json({
-            success: true,
-            data: defaultResult,
-            error: "生成过程中出现错误，返回默认内容"
+        // 出现错误时不扣除积分，直接返回错误信息
+        res.status(500).json({
+            success: false,
+            error: "生成选品改款分析失败，未扣除积分",
+            details: error.message
         });
     }
 });
