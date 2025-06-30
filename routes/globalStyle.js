@@ -6,6 +6,7 @@ const { FEATURES } = require('../middleware/featureAccess');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
 const User = require('../models/User');
 const { FeatureUsage } = require('../models/FeatureUsage');
+const { refundGlobalStyleCredits } = require('../utils/refundManager');
 
 // 通义万相API密钥
 const API_KEY = process.env.DASHSCOPE_API_KEY;
@@ -196,6 +197,20 @@ router.get('/task-status', protect, async (req, res) => {
       
       // 如果任务失败，返回错误信息
       if (taskStatus === 'FAILED') {
+        // 获取任务信息并执行退款
+        const taskInfo = global.globalStyleTasks[taskId];
+        if (taskInfo && taskInfo.userId) {
+          try {
+            console.log(`全局风格化任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+            await refundGlobalStyleCredits(taskInfo.userId, taskId, `风格化任务失败: ${response.data.output?.message || '未知错误'}`);
+            console.log(`全局风格化任务退款完成: 任务ID=${taskId}`);
+          } catch (refundError) {
+            console.error(`全局风格化任务退款失败: ${refundError.message}`);
+          }
+        } else {
+          console.error(`无法找到任务信息进行退款: 任务ID=${taskId}`);
+        }
+        
         return res.status(200).json({
           status: taskStatus,
           message: response.data.output?.message || '风格化任务失败',

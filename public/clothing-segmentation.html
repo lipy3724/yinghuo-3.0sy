@@ -431,7 +431,20 @@
                     }
                 } catch (error) {
                     console.error('处理失败:', error);
+                    
+                    // 如果有任务ID，尝试请求退款
+                    if (window.currentTaskId) {
+                        try {
+                            await requestRefund(window.currentTaskId, `处理失败: ${error.message}`);
+                            console.log(`已为任务 ${window.currentTaskId} 请求退款`);
+                            alert('处理失败: ' + error.message + '\n系统已自动申请退款，积分或免费次数将很快退还到您的账户。');
+                        } catch (refundError) {
+                            console.error('退款请求失败:', refundError);
                     alert('处理失败: ' + error.message);
+                        }
+                    } else {
+                        alert('处理失败: ' + error.message);
+                    }
                 } finally {
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
@@ -827,6 +840,8 @@
                     
                     // 检查是否需要轮询任务状态
                     if (data.taskId) {
+                        // 保存任务ID用于可能的退款
+                        window.currentTaskId = data.taskId;
                         loadingMessage.textContent = '任务已创建，正在处理...';
                         // 轮询任务状态
                         const result = await pollTaskStatus(data.taskId);
@@ -904,6 +919,13 @@
                         // 检查任务是否失败
                         if (data.Data && data.Data.TaskStatus === 'FAILED' || data.taskStatus === 'FAILED') {
                             console.error('任务失败');
+                            // 任务失败时请求退款
+                            try {
+                                await requestRefund(taskId, data.Message || '服饰分割任务失败');
+                                console.log(`已为任务 ${taskId} 请求退款`);
+                            } catch (refundError) {
+                                console.error('退款请求失败:', refundError);
+                            }
                             throw new Error(data.Message || '服饰分割任务失败');
                         }
                         
@@ -929,6 +951,47 @@
                 }
                 
                 throw new Error('轮询任务状态超时，请稍后查看结果');
+            }
+            
+            // 添加退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                    
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.error('用户未登录，无法请求退款');
+                        return false;
+                    }
+                    
+                    const response = await fetch('/api/refund/cloth-segmentation', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ taskId, reason })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`退款请求失败: ${response.status}, ${errorText}`);
+                        return false;
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('退款请求成功:', result);
+                        return true;
+                    } else {
+                        console.error('退款请求被拒绝:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('退款请求出错:', error);
+                    return false;
+                }
             }
         });
     </script>

@@ -140,6 +140,12 @@
         // 必要的变量设置
         let iframeEle = document.getElementById("myiframe");
         let receiveBiz = ""; // 保存业务标识，用于postMessage回应
+        // 添加全局变量保存当前任务ID
+        let currentTaskId = null;
+        // 添加退款状态标记，防止重复退款
+        let hasRequestedRefund = false;
+        // 添加错误提示状态标记，防止重复提示
+        let hasShownErrorAlert = false;
         
         // 构建编辑器URL并加载
         async function initializeEditor() {
@@ -341,17 +347,29 @@
                 // 处理生产拦截
                 if (action === 'generate') {
                     console.log('收到 generate，准备扣费');
-                    trackFeatureUsage('use', 'image-removal').then(canProceed => {
-                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: canProceed }, '*');
-                        if (!canProceed) {
-                            alert('免费次数已用完或积分不足');
-                        } else if (data && data.taskId) {
-                            // 保存任务ID用于可能的退款
-                            saveTaskId(data.taskId);
+                    trackFeatureUsage('use', 'image-removal').then(result => {
+                        // 检查是否成功并且有返回的任务ID
+                        if (result && typeof result === 'object' && result.taskId) {
+                            // 保存当前任务ID到全局变量，用于后续退款
+                            currentTaskId = result.taskId;
+                            console.log(`保存当前任务ID: ${currentTaskId}`);
                         }
-                    }).catch(e => {
-                        console.error('扣费失败', e);
-                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: false }, '*');
+                        
+                        // 回复编辑器，确保正确处理返回值
+                        const canProceed = result !== false;
+                        console.log(`扣费结果: ${canProceed ? '成功' : '失败'}, 发送响应到编辑器`);
+                        iframeEle.contentWindow.postMessage({ 
+                            biz: receiveBiz, 
+                            action: 'respond', 
+                            success: canProceed 
+                        }, '*');
+                    }).catch(error => {
+                        console.error('扣费过程出错:', error);
+                        iframeEle.contentWindow.postMessage({ 
+                            biz: receiveBiz, 
+                            action: 'respond', 
+                            success: false 
+                        }, '*');
                     });
                     return;
                 }
@@ -360,7 +378,21 @@
                 const handleSaveImage = async (imageData) => {
                     if (!imageData) {
                         console.error("没有收到有效的图片数据");
+                        
+                        // 避免重复显示错误提示
+                        if (!hasShownErrorAlert) {
                         alert("保存失败：未获取到图片数据");
+                            hasShownErrorAlert = true;
+                        }
+                        
+                        // 调用退款API
+                        if (currentTaskId && !hasRequestedRefund) {
+                            try {
+                                await requestRefund(currentTaskId, '图片数据无效');
+                            } catch (refundError) {
+                                console.error("退款处理失败:", refundError);
+                            }
+                        }
                         return;
                     }
                     
@@ -390,11 +422,39 @@
                             alert('图片已保存到下载中心!');
                         } else {
                             console.error("图像消除结果保存失败");
+                            
+                            // 避免重复显示错误提示
+                            if (!hasShownErrorAlert) {
                             alert('保存失败，请重试');
+                                hasShownErrorAlert = true;
+                            }
+                            
+                            // 调用退款API
+                            if (currentTaskId && !hasRequestedRefund) {
+                                try {
+                                    await requestRefund(currentTaskId, '保存到下载中心失败');
+                                } catch (refundError) {
+                                    console.error("退款处理失败:", refundError);
+                                }
+                            }
                         }
                     } catch (error) {
                         console.error("保存过程出错:", error);
+                        
+                        // 避免重复显示错误提示
+                        if (!hasShownErrorAlert) {
                         alert('保存出错: ' + error.message);
+                            hasShownErrorAlert = true;
+                        }
+                        
+                        // 调用退款API
+                        if (currentTaskId && !hasRequestedRefund) {
+                            try {
+                                await requestRefund(currentTaskId, '保存过程异常: ' + error.message);
+                            } catch (refundError) {
+                                console.error("退款处理失败:", refundError);
+                            }
+                        }
                     }
                 };
                 
@@ -426,26 +486,30 @@
                     }
                 } else if (action === "error") {
                     console.error("编辑器错误:", data);
-                    if (data && data.errCode) {
-                        console.error("错误代码:", data.errCode);
-                    }
                     
-                    // 添加退款逻辑
-                    (async () => {
-                        try {
-                            // 获取当前任务ID
-                            const taskId = localStorage.getItem('currentImageRemovalTaskId');
-                            if (taskId) {
-                                await requestRefund(taskId, '任务处理失败: ' + (data?.errMessage || '未知错误'));
-                                console.log('已请求退款，任务ID:', taskId);
-                                alert('处理失败，系统已自动申请退款');
-                            } else {
-                                console.error("无法获取当前任务ID，无法执行退款");
-                            }
+                    // 避免重复显示错误提示和重复请求退款
+                    if (!hasShownErrorAlert && !hasRequestedRefund) {
+                        // 显示错误提示
+                    if (data && data.errCode) {
+                            alert(`处理失败: ${data.errCode}`);
+                        } else if (errMessage) {
+                            alert(`处理失败: ${errMessage}`);
+                        } else {
+                            alert('处理失败，请重试');
+                        }
+                        hasShownErrorAlert = true;
+                        
+                        // 调用退款API
+                        if (currentTaskId) {
+                            try {
+                                requestRefund(currentTaskId, '任务处理失败: ' + (data?.errMessage || data?.errCode || '未知错误'));
                         } catch (refundError) {
                             console.error("退款处理失败:", refundError);
+                            }
+                        } else {
+                            console.error("无法获取当前任务ID，无法执行退款");
                         }
-                    })();
+                    }
                 } else if (ev.data && ev.data.imagerl) {
                     // 直接处理特殊的imagerl消息
                     console.log("检测到特殊的imagerl字段:", ev.data.imagerl);
@@ -461,6 +525,11 @@
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', async function() {
+            // 重置状态标记
+            currentTaskId = null;
+            hasRequestedRefund = false;
+            hasShownErrorAlert = false;
+            
             // 先获取API配置，再初始化编辑器
             try {
                 await fetchApiConfig();
@@ -474,6 +543,12 @@
         // 添加退款请求函数
         async function requestRefund(taskId, reason) {
             try {
+                // 检查是否已经请求过退款
+                if (hasRequestedRefund) {
+                    console.log(`已经为任务 ${taskId} 请求过退款，避免重复退款`);
+                    return true;
+                }
+                
                 console.log(`请求退款: 任务ID=${taskId}, 原因=${reason}`);
                 
                 const authToken = localStorage.getItem('authToken');
@@ -501,6 +576,14 @@
                 
                 if (result.success) {
                     console.log('退款请求成功:', result);
+                    // 标记已请求退款，防止重复退款
+                    hasRequestedRefund = true;
+                    
+                    // 只有在用户尚未看到错误提示时才显示退款成功提示
+                    if (!hasShownErrorAlert) {
+                        alert('任务处理失败，系统已自动申请退款，积分将很快退还到您的账户。');
+                        hasShownErrorAlert = true;
+                    }
                     return true;
                 } else {
                     console.error('退款请求被拒绝:', result.message);
@@ -509,14 +592,6 @@
             } catch (error) {
                 console.error('退款请求出错:', error);
                 return false;
-            }
-        }
-        
-        // 保存任务ID的函数
-        function saveTaskId(taskId) {
-            if (taskId) {
-                localStorage.setItem('currentImageRemovalTaskId', taskId);
-                console.log("已保存当前任务ID:", taskId);
             }
         }
     </script>

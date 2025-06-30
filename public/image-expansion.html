@@ -609,10 +609,14 @@
                     saveToDownloadsBtn.classList.remove('hidden');
                 } catch (error) {
                     console.error('处理失败:', error);
-                    alert('处理失败: ' + error.message);
-                } finally {
-                    // 隐藏加载遮罩
+                    alert('处理失败: ' + error.message + '\n\n系统将自动退还您的积分或免费次数。');
+                    
+                    // 隐藏加载中状态
                     loadingOverlay.classList.add('hidden');
+                    
+                    // 重置生成按钮状态
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = '立即生成';
                 }
             });
             
@@ -802,6 +806,20 @@
                                 // 成功完成，优先检查images字段(新版API)
                                 if (data.output?.images && data.output.images.length > 0) {
                                     const resultImageUrl = data.output.images[0].url;
+                                    if (!resultImageUrl || resultImageUrl.trim() === '') {
+                                        clearTimeout(timeoutId);
+                                        
+                                        // 请求退款 - 虽然状态是成功，但没有有效URL
+                                        try {
+                                            await requestRefund(taskId, '任务返回空结果，无有效图像URL');
+                                            console.log('已请求退款，原因：任务返回空结果');
+                                        } catch (refundError) {
+                                            console.error('退款请求失败:', refundError);
+                                        }
+                                        
+                                        reject(new Error('任务完成但返回空结果，系统已自动申请退款'));
+                                        return;
+                                    }
                                     clearTimeout(timeoutId);
                                     resolve(resultImageUrl);
                                     return;
@@ -811,8 +829,8 @@
                                 const resultsList = data.output?.results || [];
                                 if (resultsList.length > 0) {
                                     // 检查是否有部分失败的情况
-                                    const successResults = resultsList.filter(result => result.url);
-                                    const failedResults = resultsList.filter(result => result.code);
+                                    const successResults = resultsList.filter(result => result.url && result.url.trim() !== '');
+                                    const failedResults = resultsList.filter(result => result.code || !result.url || result.url.trim() === '');
                                     
                                     if (successResults.length > 0) {
                                         // 至少有一个成功的结果
@@ -844,12 +862,30 @@
                                         // 所有结果都失败
                                         const error = failedResults[0] || {};
                                         clearTimeout(timeoutId);
+                                        
+                                        // 请求退款
+                                        try {
+                                            await requestRefund(taskId, `生成失败: ${error.code ? `${error.code}: ` : ''}${error.message || '图像处理失败'}`);
+                                            console.log('已请求退款，原因：所有结果都失败');
+                                        } catch (refundError) {
+                                            console.error('退款请求失败:', refundError);
+                                        }
+                                        
                                         reject(new Error(`生成失败: ${error.code ? `${error.code}: ` : ''}${error.message || '图像处理失败'}`));
                                         return;
                                     }
                                 } else {
                                     clearTimeout(timeoutId);
-                                    reject(new Error('任务成功但未找到结果图像'));
+                                    
+                                    // 请求退款 - 状态是成功但结果列表为空
+                                    try {
+                                        await requestRefund(taskId, '任务成功但未找到结果图像');
+                                        console.log('已请求退款，原因：任务成功但结果列表为空');
+                                    } catch (refundError) {
+                                        console.error('退款请求失败:', refundError);
+                                    }
+                                    
+                                    reject(new Error('任务成功但未找到结果图像，系统已自动申请退款'));
                                     return;
                                 }
                             } 

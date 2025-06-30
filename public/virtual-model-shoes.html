@@ -701,6 +701,14 @@
                                 clearInterval(taskCheckInterval);
                                 loadingContainer.classList.add('hidden');
                                 
+                                // 任务失败时请求退款
+                                try {
+                                    await requestRefund(taskId, errorMessage || '虚拟试鞋任务失败');
+                                    console.log(`已为任务 ${taskId} 请求退款`);
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 // 针对特定错误代码提供用户友好的错误提示
                                 let friendlyMessage = '试穿任务失败';
                                 if (errorCode === 'InvalidFile.Content' || (errorMessage && (errorMessage.includes('no suitable human-body') || errorMessage.includes('InvalidFile.Content')))) {
@@ -736,7 +744,20 @@
                             console.error('查询任务状态出错:', error);
                             clearInterval(taskCheckInterval);
                             loadingContainer.classList.add('hidden');
+                            
+                            // 查询状态出错时也尝试退款
+                            if (taskId) {
+                                try {
+                                    await requestRefund(taskId, `查询任务状态出错: ${error.message}`);
+                                    console.log(`已为任务 ${taskId} 请求退款`);
+                                    alert('查询任务状态出错: ' + error.message + '\n系统已自动申请退款，积分或免费次数将很快退还到您的账户。');
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                    alert('查询任务状态出错: ' + error.message);
+                                }
+                            } else {
                             alert('查询任务状态出错: ' + error.message);
+                            }
                         }
                     }, 3000); // 每3秒检查一次任务状态
                 } catch (error) {
@@ -775,6 +796,47 @@
                     taskCheckInterval = null;
                 }
             });
+            
+            // 添加退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                    
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.error('用户未登录，无法请求退款');
+                        return false;
+                    }
+                    
+                    const response = await fetch('/api/refund/virtual-shoe-model', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ taskId, reason })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`退款请求失败: ${response.status}, ${errorText}`);
+                        return false;
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('退款请求成功:', result);
+                        return true;
+                    } else {
+                        console.error('退款请求被拒绝:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('退款请求出错:', error);
+                    return false;
+                }
+            }
             
             // 验证登录状态
             initializeUserUI();

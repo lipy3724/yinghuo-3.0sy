@@ -7,6 +7,14 @@ const { FEATURES } = require('../middleware/featureAccess');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
 const User = require('../models/User');
 const { FeatureUsage } = require('../models/FeatureUsage');
+const { 
+  refundImageExpansionCredits, 
+  refundImageSharpeningCredits, 
+  refundImageUpscalerCredits, 
+  refundImageColorizationCredits,
+  refundLocalRedrawCredits,
+  refundDiantuCredits
+} = require('../utils/refundManager');
 
 // 配置API密钥和基础URL
 const API_KEY = process.env.DASHSCOPE_API_KEY;
@@ -664,21 +672,102 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
             if (responseData.output?.task_status === 'SUCCEEDED') {
                 // 尝试获取图片URL
                 let resultUrl = '';
+                let hasValidResult = false;
+                
                 if (responseData.output.results && responseData.output.results.length > 0) {
-                    resultUrl = responseData.output.results[0].url;
+                    // 检查是否有有效URL
+                    const successResults = responseData.output.results.filter(result => result.url && result.url.trim() !== '');
+                    if (successResults.length > 0) {
+                        resultUrl = successResults[0].url;
+                        hasValidResult = true;
+                    }
+                } else if (responseData.output.images && responseData.output.images.length > 0) {
+                    // 新版API格式
+                    const validImages = responseData.output.images.filter(img => img.url && img.url.trim() !== '');
+                    if (validImages.length > 0) {
+                        resultUrl = validImages[0].url;
+                        hasValidResult = true;
+                    }
                 } else if (responseData.output.result_url) {
                     resultUrl = responseData.output.result_url;
+                    hasValidResult = resultUrl && resultUrl.trim() !== '';
                 }
                 
                 // 更新全局变量中的任务状态
                 const taskId = responseData.output.task_id;
                 
+                // 检查是否是图像扩展任务，更新状态
+                if (global.imageExpansionTasks && global.imageExpansionTasks[taskId]) {
+                    if (hasValidResult) {
+                        // 任务成功，有有效结果
+                        global.imageExpansionTasks[taskId].status = 'SUCCEEDED';
+                        global.imageExpansionTasks[taskId].resultUrl = resultUrl;
+                        global.imageExpansionTasks[taskId].completedAt = new Date();
+                        console.log(`更新智能扩图任务状态: taskId=${taskId}, status=SUCCEEDED, 有有效结果URL`);
+                    } else {
+                        // 任务虽然返回成功，但没有有效结果，视为失败，触发退款
+                        global.imageExpansionTasks[taskId].status = 'FAILED';
+                        global.imageExpansionTasks[taskId].errorMessage = '任务成功但没有有效结果';
+                        global.imageExpansionTasks[taskId].completedAt = new Date();
+                        console.log(`更新智能扩图任务状态: taskId=${taskId}, status=FAILED, 原因=任务成功但没有有效结果`);
+                        
+                        // 自动触发退款
+                        try {
+                            const taskInfo = global.imageExpansionTasks[taskId];
+                            console.log(`智能扩图任务没有有效结果，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                            await refundImageExpansionCredits(taskInfo.userId, taskId, '任务成功但没有有效结果');
+                            console.log(`智能扩图任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}, 原因=任务成功但没有有效结果`);
+                        } catch (refundError) {
+                            console.error(`智能扩图任务退款失败: ${refundError.message}`);
+                        }
+                        
+                        // 修改responseData的状态以通知前端
+                        responseData.output.task_status = 'FAILED';
+                        responseData.output.message = '任务成功但没有有效结果';
+                    }
+                }
+                
+                // 检查是否是图像锐化任务，更新状态
+                if (global.imageSharpeningTasks && global.imageSharpeningTasks[taskId]) {
+                    if (hasValidResult) {
+                        // 任务成功，有有效结果
+                        global.imageSharpeningTasks[taskId].status = 'SUCCEEDED';
+                        global.imageSharpeningTasks[taskId].resultUrl = resultUrl;
+                        global.imageSharpeningTasks[taskId].completedAt = new Date();
+                        console.log(`更新模糊图片变清晰任务状态: taskId=${taskId}, status=SUCCEEDED, 有有效结果URL`);
+                    } else {
+                        // 任务虽然返回成功，但没有有效结果，视为失败，触发退款
+                        global.imageSharpeningTasks[taskId].status = 'FAILED';
+                        global.imageSharpeningTasks[taskId].errorMessage = '任务成功但没有有效结果';
+                        global.imageSharpeningTasks[taskId].completedAt = new Date();
+                        console.log(`更新模糊图片变清晰任务状态: taskId=${taskId}, status=FAILED, 原因=任务成功但没有有效结果`);
+                        
+                        // 自动触发退款
+                        try {
+                            const taskInfo = global.imageSharpeningTasks[taskId];
+                            console.log(`模糊图片变清晰任务没有有效结果，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                            await refundImageSharpeningCredits(taskInfo.userId, taskId, '任务成功但没有有效结果');
+                            console.log(`模糊图片变清晰任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}, 原因=任务成功但没有有效结果`);
+                        } catch (refundError) {
+                            console.error(`模糊图片变清晰任务退款失败: ${refundError.message}`);
+                        }
+                        
+                        // 修改responseData的状态以通知前端
+                        responseData.output.task_status = 'FAILED';
+                        responseData.output.message = '任务成功但没有有效结果';
+                    }
+                }
+                
                 // 检查是否是指令编辑任务
                 if (global.imageEditTasks && global.imageEditTasks[taskId]) {
-                    global.imageEditTasks[taskId].status = 'SUCCEEDED';
+                    global.imageEditTasks[taskId].status = hasValidResult ? 'SUCCEEDED' : 'FAILED';
+                    if (hasValidResult) {
                     global.imageEditTasks[taskId].resultUrl = resultUrl;
+                    } else {
+                        global.imageEditTasks[taskId].errorMessage = '任务成功但没有有效结果';
+                    }
                     global.imageEditTasks[taskId].completedAt = new Date();
-                    console.log(`更新指令编辑任务状态: taskId=${taskId}, status=SUCCEEDED`);
+                    console.log(`更新指令编辑任务状态: taskId=${taskId}, status=${hasValidResult ? 'SUCCEEDED' : 'FAILED'}`);
                 }
             }
             // 如果任务失败，更新全局变量中的状态
@@ -692,6 +781,78 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
                     global.imageEditTasks[taskId].errorMessage = errorMessage;
                     global.imageEditTasks[taskId].completedAt = new Date();
                     console.log(`更新指令编辑任务状态: taskId=${taskId}, status=FAILED, error=${errorMessage}`);
+                }
+                
+                // 处理智能扩图任务失败的退款
+                if (global.imageExpansionTasks && global.imageExpansionTasks[taskId]) {
+                    try {
+                        const taskInfo = global.imageExpansionTasks[taskId];
+                        console.log(`智能扩图任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                        await refundImageExpansionCredits(taskInfo.userId, taskId, `智能扩图任务失败: ${errorMessage}`);
+                        console.log(`智能扩图任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                    } catch (refundError) {
+                        console.error(`智能扩图任务退款失败: ${refundError.message}`);
+                    }
+                }
+                
+                // 处理图像高清放大任务失败的退款
+                if (global.imageUpscalerTasks && global.imageUpscalerTasks[taskId]) {
+                    try {
+                        const taskInfo = global.imageUpscalerTasks[taskId];
+                        console.log(`图像高清放大任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                        await refundImageUpscalerCredits(taskInfo.userId, taskId, `图像高清放大任务失败: ${errorMessage}`);
+                        console.log(`图像高清放大任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                    } catch (refundError) {
+                        console.error(`图像高清放大任务退款失败: ${refundError.message}`);
+                    }
+                }
+                
+                // 处理图像上色任务失败的退款
+                if (global.imageColorizationTasks && global.imageColorizationTasks[taskId]) {
+                    try {
+                        const taskInfo = global.imageColorizationTasks[taskId];
+                        console.log(`图像上色任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                        await refundImageColorizationCredits(taskInfo.userId, taskId, `图像上色任务失败: ${errorMessage}`);
+                        console.log(`图像上色任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                    } catch (refundError) {
+                        console.error(`图像上色任务退款失败: ${refundError.message}`);
+                    }
+                }
+                
+                // 处理局部重绘任务失败的退款
+                if (global.localRedrawTasks && global.localRedrawTasks[taskId]) {
+                    try {
+                        const taskInfo = global.localRedrawTasks[taskId];
+                        console.log(`局部重绘任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                        await refundLocalRedrawCredits(taskInfo.userId, taskId, `局部重绘任务失败: ${errorMessage}`);
+                        console.log(`局部重绘任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                    } catch (refundError) {
+                        console.error(`局部重绘任务退款失败: ${refundError.message}`);
+                    }
+                }
+                
+                // 处理模糊图片变清晰任务失败的退款
+                if (global.imageSharpeningTasks && global.imageSharpeningTasks[taskId]) {
+                    try {
+                        const taskInfo = global.imageSharpeningTasks[taskId];
+                        console.log(`模糊图片变清晰任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                        await refundImageSharpeningCredits(taskInfo.userId, taskId, `模糊图片变清晰任务失败: ${errorMessage}`);
+                        console.log(`模糊图片变清晰任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                    } catch (refundError) {
+                        console.error(`模糊图片变清晰任务退款失败: ${refundError.message}`);
+                    }
+                }
+                
+                // 处理垫图任务失败的退款
+                if (global.diantuTasks && global.diantuTasks[taskId]) {
+                    try {
+                        const taskInfo = global.diantuTasks[taskId];
+                        console.log(`垫图任务失败，开始执行退款: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                        await refundDiantuCredits(taskInfo.userId, taskId, `垫图任务失败: ${errorMessage}`);
+                        console.log(`垫图任务退款成功: 用户ID=${taskInfo.userId}, 任务ID=${taskId}`);
+                    } catch (refundError) {
+                        console.error(`垫图任务退款失败: ${refundError.message}`);
+                    }
                 }
             }
             
@@ -763,6 +924,270 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
 });
 
 /**
+ * @route   POST /api/refund/image-upscaler
+ * @desc    处理图像高清放大功能的退款请求
+ * @access  Private
+ */
+router.post('/refund/image-upscaler', protect, async (req, res) => {
+  try {
+    const { taskId, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少任务ID参数' 
+      });
+    }
+    
+    console.log(`收到图像高清放大退款请求: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+    
+    // 调用退款函数
+    const success = await refundImageUpscalerCredits(userId, taskId, reason || '前端请求退款');
+    
+    if (success) {
+      console.log(`图像高清放大退款成功: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(200).json({ 
+        success: true, 
+        message: '退款处理成功' 
+      });
+    } else {
+      console.log(`图像高清放大退款失败: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(400).json({ 
+        success: false, 
+        message: '退款处理失败，可能是任务不存在或已经退款' 
+      });
+    }
+  } catch (error) {
+    console.error('处理退款请求时出错:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: '服务器处理退款请求时出错: ' + error.message 
+    });
+  }
+});
+
+/**
+ * @route   POST /api/refund/image-expansion
+ * @desc    处理智能扩图功能的退款请求
+ * @access  Private
+ */
+router.post('/refund/image-expansion', protect, async (req, res) => {
+  try {
+    const { taskId, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少任务ID参数' 
+      });
+    }
+    
+    console.log(`收到智能扩图退款请求: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+    
+    // 调用退款函数
+    const success = await refundImageExpansionCredits(userId, taskId, reason || '前端请求退款');
+    
+    if (success) {
+      console.log(`智能扩图退款成功: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(200).json({ 
+        success: true, 
+        message: '退款处理成功' 
+      });
+    } else {
+      console.log(`智能扩图退款失败: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(400).json({ 
+        success: false, 
+        message: '退款处理失败，可能是任务不存在或已经退款' 
+      });
+    }
+  } catch (error) {
+    console.error('处理退款请求时出错:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: '服务器处理退款请求时出错: ' + error.message 
+    });
+  }
+});
+
+/**
+ * @route   POST /api/refund/image-colorization
+ * @desc    处理图像上色功能的退款请求
+ * @access  Private
+ */
+router.post('/refund/image-colorization', protect, async (req, res) => {
+  try {
+    const { taskId, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少任务ID参数' 
+      });
+    }
+    
+    console.log(`收到图像上色退款请求: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+    
+    // 调用退款函数
+    const success = await refundImageColorizationCredits(userId, taskId, reason || '前端请求退款');
+    
+    if (success) {
+      console.log(`图像上色退款成功: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(200).json({ 
+        success: true, 
+        message: '退款处理成功' 
+      });
+    } else {
+      console.log(`图像上色退款失败: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(400).json({ 
+        success: false, 
+        message: '退款处理失败，可能是任务不存在或已经退款' 
+      });
+    }
+  } catch (error) {
+    console.error('处理退款请求时出错:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: '服务器处理退款请求时出错: ' + error.message 
+    });
+  }
+});
+
+/**
+ * @route   POST /api/refund/local-redraw
+ * @desc    处理局部重绘功能的退款请求
+ * @access  Private
+ */
+router.post('/refund/local-redraw', protect, async (req, res) => {
+  try {
+    const { taskId, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少任务ID参数' 
+      });
+    }
+    
+    console.log(`收到局部重绘退款请求: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+    
+    // 调用退款函数
+    const success = await refundLocalRedrawCredits(userId, taskId, reason || '前端请求退款');
+    
+    if (success) {
+      console.log(`局部重绘退款成功: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(200).json({ 
+        success: true, 
+        message: '退款处理成功' 
+      });
+    } else {
+      console.log(`局部重绘退款失败: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(400).json({ 
+        success: false, 
+        message: '退款处理失败，可能是任务不存在或已经退款' 
+      });
+    }
+  } catch (error) {
+    console.error('处理退款请求时出错:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: '服务器处理退款请求时出错: ' + error.message 
+    });
+  }
+});
+
+/**
+ * @route   POST /api/refund/image-sharpening
+ * @desc    处理模糊图片变清晰功能的退款请求
+ * @access  Private
+ */
+router.post('/refund/image-sharpening', protect, async (req, res) => {
+  try {
+    const { taskId, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少任务ID参数' 
+      });
+    }
+    
+    console.log(`收到模糊图片变清晰退款请求: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+    
+    // 调用退款函数
+    const success = await refundImageSharpeningCredits(userId, taskId, reason || '前端请求退款');
+    
+    if (success) {
+      console.log(`模糊图片变清晰退款成功: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(200).json({ 
+        success: true, 
+        message: '退款处理成功' 
+      });
+    } else {
+      console.log(`模糊图片变清晰退款失败: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(400).json({ 
+        success: false, 
+        message: '退款处理失败，可能是任务不存在或已经退款' 
+      });
+    }
+  } catch (error) {
+    console.error('处理退款请求时出错:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: '服务器处理退款请求时出错: ' + error.message 
+    });
+  }
+});
+
+/**
+ * @route   POST /api/refund/diantu
+ * @desc    处理垫图功能的退款请求
+ * @access  Private
+ */
+router.post('/refund/diantu', protect, async (req, res) => {
+  try {
+    const { taskId, reason } = req.body;
+    const userId = req.user.id;
+    
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '缺少任务ID参数' 
+      });
+    }
+    
+    console.log(`收到垫图退款请求: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+    
+    // 调用退款函数
+    const success = await refundDiantuCredits(userId, taskId, reason || '前端请求退款');
+    
+    if (success) {
+      console.log(`垫图退款成功: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(200).json({ 
+        success: true, 
+        message: '退款处理成功' 
+      });
+    } else {
+      console.log(`垫图退款失败: 用户ID=${userId}, 任务ID=${taskId}`);
+      return res.status(400).json({ 
+        success: false, 
+        message: '退款处理失败，可能是任务不存在或已经退款' 
+      });
+    }
+  } catch (error) {
+    console.error('处理退款请求时出错:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: '服务器处理退款请求时出错: ' + error.message 
+    });
+  }
+});
+
+/**
  * 创建图像编辑任务
  * @param {Object} requestData 请求数据
  * @returns {Promise<Object>} API响应结果
@@ -797,6 +1222,50 @@ async function createTask(requestData) {
  */
 function handleApiError(error, res) {
   console.error('API调用失败:', error);
+  
+  // 获取当前用户ID和任务ID（如果存在）
+  const userId = res.req?.user?.id;
+  const taskId = res.req?.body?.taskId || `error-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+  const functionType = res.req?.body?.input?.function;
+  
+  // 如果有用户ID，尝试进行退款处理
+  if (userId) {
+    try {
+      // 根据功能类型选择合适的退款函数
+      if (functionType === 'expand') {
+        console.log(`智能扩图API调用失败，尝试退款: 用户ID=${userId}, 任务ID=${taskId}`);
+        refundImageExpansionCredits(userId, taskId, 'API调用失败').catch(e => 
+          console.error(`智能扩图退款失败: ${e.message}`));
+      } 
+      else if (functionType === 'upscaler') {
+        console.log(`图像高清放大API调用失败，尝试退款: 用户ID=${userId}, 任务ID=${taskId}`);
+        refundImageUpscalerCredits(userId, taskId, 'API调用失败').catch(e => 
+          console.error(`图像高清放大退款失败: ${e.message}`));
+      }
+      else if (functionType === 'colorization') {
+        console.log(`图像上色API调用失败，尝试退款: 用户ID=${userId}, 任务ID=${taskId}`);
+        refundImageColorizationCredits(userId, taskId, 'API调用失败').catch(e => 
+          console.error(`图像上色退款失败: ${e.message}`));
+      }
+      else if (functionType === 'inpainting' || functionType === 'description_edit_with_mask') {
+        console.log(`局部重绘API调用失败，尝试退款: 用户ID=${userId}, 任务ID=${taskId}`);
+        refundLocalRedrawCredits(userId, taskId, 'API调用失败').catch(e => 
+          console.error(`局部重绘退款失败: ${e.message}`));
+      }
+      else if (functionType === 'super_resolution' || functionType === 'sharpening') {
+        console.log(`模糊图片变清晰API调用失败，尝试退款: 用户ID=${userId}, 任务ID=${taskId}`);
+        refundImageSharpeningCredits(userId, taskId, 'API调用失败').catch(e => 
+          console.error(`模糊图片变清晰退款失败: ${e.message}`));
+      }
+      else if (functionType === 'diantu') {
+        console.log(`垫图API调用失败，尝试退款: 用户ID=${userId}, 任务ID=${taskId}`);
+        refundDiantuCredits(userId, taskId, 'API调用失败').catch(e => 
+          console.error(`垫图退款失败: ${e.message}`));
+      }
+    } catch (refundError) {
+      console.error(`退款处理失败: ${refundError.message}`);
+    }
+  }
   
   if (error.response) {
     console.error('API错误响应:', error.response.status, JSON.stringify(error.response.data, null, 2));

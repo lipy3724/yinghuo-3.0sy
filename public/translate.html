@@ -42,6 +42,8 @@
         // 必要的变量设置
         let iframeEle = document.getElementById("myiframe");
         let receiveBiz = ""; // 保存业务标识，用于postMessage回应
+        // 添加全局变量保存当前任务ID
+        let currentTaskId = null;
         
         // 从API获取配置信息
         async function fetchConfig() {
@@ -300,7 +302,16 @@
             // 生产拦截逻辑
             if (action === 'generate') {
                 console.log('收到 generate 消息，准备扣费');
-                trackFeatureUsage('use', 'translate').then(canProceed => {
+                trackFeatureUsage('use', 'translate').then(result => {
+                    // 保存任务ID以便后续使用
+                    if (result && result.taskId) {
+                        currentTaskId = result.taskId;
+                        console.log(`已保存当前任务ID: ${currentTaskId}`);
+                    }
+                    
+                    // 检查是否可以继续
+                    const canProceed = result !== false;
+                    
                     iframeEle.contentWindow.postMessage({ biz: receiveBiz, action: 'respond', success: canProceed }, '*');
                     if (!canProceed) {
                         alert('免费次数已用完或积分不足，请充值后再使用');
@@ -345,11 +356,66 @@
                 // 处理错误消息
                 console.error(`编辑器错误 [${code}]: ${errMessage}`);
                 alert(`操作出错: ${errMessage || '未知错误'}`);
+                
+                // 使用保存的任务ID请求退款
+                if (currentTaskId) {
+                    try {
+                        requestRefund(currentTaskId, `编辑器错误: ${errMessage || code || '未知错误'}`);
+                        console.log(`已为任务 ${currentTaskId} 请求退款`);
+                    } catch (refundError) {
+                        console.error('退款请求失败:', refundError);
+                    }
+                } else {
+                    console.error('无法请求退款: 未找到有效的任务ID');
+                    alert('生成失败，但无法自动退款，请联系客服处理');
+                }
             } else {
                 // 记录未知的消息类型
                 console.log("收到未知类型的消息:", action);
             }
         });
+        
+        // 添加退款请求函数
+        async function requestRefund(taskId, reason) {
+            try {
+                console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.error('用户未登录，无法请求退款');
+                    return false;
+                }
+                
+                const response = await fetch('/api/refund/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ taskId, reason })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`退款请求失败: ${response.status}, ${errorText}`);
+                    return false;
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('退款请求成功:', result);
+                    alert('任务处理失败，系统已自动申请退款，积分或免费次数将很快退还到您的账户。');
+                    return true;
+                } else {
+                    console.error('退款请求被拒绝:', result.message);
+                    return false;
+                }
+            } catch (error) {
+                console.error('退款请求出错:', error);
+                return false;
+            }
+        }
         
         // 页面加载仅初始化，不扣费
         document.addEventListener('DOMContentLoaded', function() {

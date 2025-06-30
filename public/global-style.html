@@ -416,6 +416,9 @@
                     return;
                 }
                 
+                // 声明taskId变量在try块外部，以便在catch块中也能访问
+                let taskId = null;
+                
                 try {
                     // 显示加载中
                     loadingOverlay.classList.remove('hidden');
@@ -466,7 +469,7 @@
                         throw new Error('服务器返回了无效的数据格式');
                     }
                     
-                    const taskId = createTaskResult.output?.task_id;
+                    taskId = createTaskResult.output?.task_id;
                     
                     if (!taskId) {
                         throw new Error('未能获取任务ID');
@@ -539,7 +542,22 @@
                     resultImage.src = resultImageUrl;
                 } catch (error) {
                     console.error('处理失败:', error);
-                    alert('处理失败: ' + error.message);
+                    
+                    // 尝试请求退款
+                    if (taskId) {
+                        try {
+                            console.log(`任务失败，请求退款: ${taskId}`);
+                            // 直接调用退款API
+                            requestRefund(taskId, error.message || '风格化任务失败');
+                            alert('处理失败: ' + error.message + '\n系统将自动退还您的积分或免费次数。');
+                        } catch (refundError) {
+                            console.error('退款请求失败:', refundError);
+                            alert('处理失败: ' + error.message + '\n退款请求失败，请联系客服处理。');
+                        }
+                    } else {
+                        alert('处理失败: ' + error.message);
+                    }
+                    
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -630,7 +648,7 @@
                 
                 // 验证图片大小
                 if (file.size > 10 * 1024 * 1024) {
-                    alert('图片大小不能超过10MB！');
+                    alert('图片大小不能超过10MB！请选择更小的图片或压缩后再上传。');
                     return;
                 }
                 
@@ -669,26 +687,78 @@
                 reader.readAsDataURL(file);
             }
             
-            // 获取图像DataURL
+            // 获取图像DataURL，添加压缩功能
             function getImageDataUrl(imgElement) {
                 return new Promise((resolve) => {
-                    // 如果图像已加载完成，直接创建canvas并返回dataURL
+                    // 如果图像已加载完成，创建canvas并返回dataURL
                     if (imgElement.complete) {
                         const canvas = document.createElement('canvas');
-                        canvas.width = imgElement.naturalWidth;
-                        canvas.height = imgElement.naturalHeight;
+                        
+                        // 获取原始尺寸
+                        const originalWidth = imgElement.naturalWidth;
+                        const originalHeight = imgElement.naturalHeight;
+                        
+                        // 如果图像太大，进行适当缩小以减小文件大小
+                        let targetWidth = originalWidth;
+                        let targetHeight = originalHeight;
+                        
+                        // 如果图像尺寸超过2000像素，则缩小到2000像素以内
+                        const maxDimension = 2000;
+                        if (originalWidth > maxDimension || originalHeight > maxDimension) {
+                            if (originalWidth > originalHeight) {
+                                targetWidth = maxDimension;
+                                targetHeight = Math.round(originalHeight * (maxDimension / originalWidth));
+                            } else {
+                                targetHeight = maxDimension;
+                                targetWidth = Math.round(originalWidth * (maxDimension / originalHeight));
+                            }
+                            console.log(`图像已缩小: ${originalWidth}x${originalHeight} -> ${targetWidth}x${targetHeight}`);
+                        }
+                        
+                        canvas.width = targetWidth;
+                        canvas.height = targetHeight;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(imgElement, 0, 0);
-                        resolve(canvas.toDataURL('image/png'));
+                        ctx.drawImage(imgElement, 0, 0, targetWidth, targetHeight);
+                        
+                        // 使用较低的质量来减小文件大小
+                        const quality = 0.85; // 0.85通常是一个很好的平衡点
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(dataUrl);
                     } else {
                         // 图像尚未加载完成，添加onload处理
                         imgElement.onload = function() {
                             const canvas = document.createElement('canvas');
-                            canvas.width = imgElement.naturalWidth;
-                            canvas.height = imgElement.naturalHeight;
+                            
+                            // 获取原始尺寸
+                            const originalWidth = imgElement.naturalWidth;
+                            const originalHeight = imgElement.naturalHeight;
+                            
+                            // 如果图像太大，进行适当缩小以减小文件大小
+                            let targetWidth = originalWidth;
+                            let targetHeight = originalHeight;
+                            
+                            // 如果图像尺寸超过2000像素，则缩小到2000像素以内
+                            const maxDimension = 2000;
+                            if (originalWidth > maxDimension || originalHeight > maxDimension) {
+                                if (originalWidth > originalHeight) {
+                                    targetWidth = maxDimension;
+                                    targetHeight = Math.round(originalHeight * (maxDimension / originalWidth));
+                                } else {
+                                    targetHeight = maxDimension;
+                                    targetWidth = Math.round(originalWidth * (maxDimension / originalHeight));
+                                }
+                                console.log(`图像已缩小: ${originalWidth}x${originalHeight} -> ${targetWidth}x${targetHeight}`);
+                            }
+                            
+                            canvas.width = targetWidth;
+                            canvas.height = targetHeight;
                             const ctx = canvas.getContext('2d');
-                            ctx.drawImage(imgElement, 0, 0);
-                            resolve(canvas.toDataURL('image/png'));
+                            ctx.drawImage(imgElement, 0, 0, targetWidth, targetHeight);
+                            
+                            // 使用较低的质量来减小文件大小
+                            const quality = 0.85; // 0.85通常是一个很好的平衡点
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            resolve(dataUrl);
                         };
                     }
                 });
@@ -697,12 +767,29 @@
             // 上传图片到服务器
             async function uploadImageToServer(imageData) {
                 try {
+                    // 检查图片数据大小
+                    const approximateSize = Math.round((imageData.length - 22) * 3 / 4);
+                    console.log(`上传图片估计大小: ${(approximateSize / (1024 * 1024)).toFixed(2)}MB`);
+                    
+                    if (approximateSize > 10 * 1024 * 1024) {
+                        throw new Error('图片大小超过10MB，请使用更小的图片');
+                    }
+                    
                     // 将base64转换为Blob
                     const blob = dataURLtoBlob(imageData);
                     
+                    // 检查实际Blob大小
+                    if (blob.size > 10 * 1024 * 1024) {
+                        throw new Error('图片大小超过10MB，请使用更小的图片');
+                    }
+                    
+                    // 获取正确的文件扩展名
+                    const isJpeg = imageData.startsWith('data:image/jpeg');
+                    const fileName = isJpeg ? 'image.jpg' : 'image.png';
+                    
                     // 创建FormData
                     const formData = new FormData();
-                    formData.append('image', blob, 'image.png');
+                    formData.append('image', blob, fileName);
                     
                     // 发送请求
                     const response = await fetch('/api/upload-image', {
@@ -718,6 +805,11 @@
                     }
                     
                     const data = await response.json();
+                    
+                    if (!data.success || !data.imageUrl) {
+                        throw new Error(data.message || '图片上传失败');
+                    }
+                    
                     return data.imageUrl;
                 } catch (error) {
                     console.error('图片上传错误:', error);
@@ -752,6 +844,38 @@
                 document.head.appendChild(script);
             } catch (error) {
                 console.error('Failed to load navbar component:', error);
+            }
+
+            // 添加退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                    
+                    const response = await fetch('/api/refund/global-style', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : ''
+                        },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            reason: reason || '任务失败'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('退款请求成功:', result);
+                        return true;
+                    } else {
+                        console.error('退款请求失败:', result.message);
+                        return false;
+                    }
+                } catch (refundError) {
+                    console.error('退款请求出错:', refundError);
+                    return false;
+                }
             }
         });
     </script>

@@ -58,9 +58,8 @@
                         <p class="mb-2"><strong>图像限制：</strong></p>
                         <ul class="list-disc pl-5 text-sm">
                             <li>图像格式：JPG、JPEG、PNG、BMP、TIFF、WEBP。</li>
-                            <li>图像分辨率：图像的宽度和高度范围为[512, 4096]像素。</li>
                             <li>图像大小：不超过10MB。</li>
-                            <li>URL地址中不能包含中文字符。</li>
+                            <li>图像尺寸：最小512×512像素，最大4000×4000像素。</li>
                         </ul>
                         <p class="text-red-500 font-medium mt-2">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
                     </div>
@@ -186,6 +185,42 @@
             // 检查用户登录状态
             initializeUserUI();
             
+            // 退款请求函数
+            async function requestRefund(taskId, reason) {
+                console.log(`准备请求退款，任务ID: ${taskId}, 原因: ${reason}`);
+                try {
+                    const response = await fetch('/api/refund/diantu', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify({
+                            taskId: taskId,
+                            reason: reason
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('退款请求响应:', data);
+                    
+                    if (data.success) {
+                        console.log('退款请求成功');
+                        return true;
+                    } else if (data.message && data.message.includes('已经退款')) {
+                        // 已经退款过的情况也算成功
+                        console.log('该任务已经退款过');
+                        return true;
+                    } else {
+                        console.warn('退款请求失败:', data.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('发送退款请求时出错:', error);
+                    throw error;
+                }
+            }
+            
             // 图片上传处理
             uploadArea.addEventListener('click', () => {
                 imageUpload.click();
@@ -270,6 +305,8 @@
                         throw new Error('创建垫图任务失败，未获取到任务ID');
                     }
                     
+                    // 保存任务ID到全局变量，以便在错误处理中使用
+                    window.currentTaskId = taskId;
                     console.log('创建任务成功，任务ID:', taskId);
                     
                     // 3. 轮询任务状态
@@ -309,8 +346,21 @@
                     saveToDownloadsBtn.classList.remove('hidden');
                 } catch (error) {
                     console.error('处理失败:', error);
-                    alert('处理失败: ' + error.message);
-                } finally {
+                    
+                    // 尝试自动退款
+                    if (window.currentTaskId) {
+                        try {
+                            await requestRefund(window.currentTaskId, error.message || '处理失败');
+                            console.log('错误处理中请求退款成功');
+                            alert('处理失败: ' + error.message + '\n系统已自动退还您的积分。');
+                        } catch (refundError) {
+                            console.error('退款请求失败:', refundError);
+                            alert('处理失败: ' + error.message + '\n退款请求失败，请联系客服处理。');
+                        }
+                    } else {
+                        alert('处理失败: ' + error.message);
+                    }
+                    
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
                 }
@@ -428,6 +478,27 @@
                     async function checkStatus() {
                         if (attempts >= maxAttempts) {
                             clearTimeout(timeoutId);
+                            
+                            // 请求退款
+                            try {
+                                await requestRefund(taskId, '任务处理超时');
+                                console.log('已请求退款，原因：任务处理超时');
+                                
+                                // 显示超时提示
+                                resultImagePlaceholder.innerHTML = `
+                                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                        <svg class="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <h3 class="text-lg font-medium text-yellow-600 mb-2">任务处理超时</h3>
+                                        <p class="text-yellow-600 mb-2">服务器处理时间过长，请稍后重试</p>
+                                        <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                    </div>
+                                `;
+                            } catch (refundError) {
+                                console.error('退款请求失败:', refundError);
+                            }
+                            
                             reject(new Error('任务处理超时，请稍后重试'));
                             return;
                         }
@@ -443,30 +514,190 @@
                                 throw new Error('获取任务状态失败，服务器错误');
                             }
                             const data = await response.json();
+                            
+                            // 详细记录API响应结构，便于调试
+                            console.log(`轮询结果 (${attempts}/${maxAttempts}):`, data);
+                            console.log('API响应详情 - request_id:', data.request_id);
+                            console.log('API响应详情 - output:', data.output);
+                            if (data.output) {
+                                console.log('API响应详情 - task_status:', data.output.task_status);
+                                console.log('API响应详情 - task_id:', data.output.task_id);
+                                if (data.output.results) {
+                                    console.log('API响应详情 - results:', JSON.stringify(data.output.results));
+                                }
+                            }
+                            
                             const taskStatus = data.output?.task_status;
+                            
+                            // 检查各种任务状态
                             if (taskStatus === 'SUCCEEDED') {
                                 const resultsList = data.output?.results || [];
                                 if (resultsList.length > 0) {
                                     const successResults = resultsList.filter(result => result.url);
+                                    const failedResults = resultsList.filter(result => result.code);
+                                    
                                     if (successResults.length > 0) {
                                         clearTimeout(timeoutId);
                                         resolve(successResults[0].url);
                                         return;
+                                    } else {
+                                        // 所有结果都失败了
+                                        clearTimeout(timeoutId);
+                                        
+                                        // 请求退款
+                                        try {
+                                            await requestRefund(taskId, `生成失败: ${failedResults[0]?.message || '未知错误'}`);
+                                            console.log('已请求退款，原因：所有生成结果都失败');
+                                            
+                                            // 显示失败提示
+                                            resultImagePlaceholder.innerHTML = `
+                                                <div class="text-center p-4 bg-red-50 rounded-lg">
+                                                    <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    <h3 class="text-lg font-medium text-red-600 mb-2">生成失败</h3>
+                                                    <p class="text-red-600 mb-2">错误原因: ${failedResults[0]?.message || '未知错误'}</p>
+                                                    <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                                </div>
+                                            `;
+                                        } catch (refundError) {
+                                            console.error('退款请求失败:', refundError);
+                                        }
+                                        
+                                        reject(new Error(`生成失败: ${failedResults[0]?.message || '未知错误'}`));
+                                        return;
                                     }
                                 }
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务成功但未找到结果');
+                                    console.log('已请求退款，原因：任务成功但未找到结果');
+                                    
+                                    // 显示失败提示
+                                    resultImagePlaceholder.innerHTML = `
+                                        <div class="text-center p-4 bg-red-50 rounded-lg">
+                                            <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <h3 class="text-lg font-medium text-red-600 mb-2">生成失败</h3>
+                                            <p class="text-red-600 mb-2">任务成功但未找到结果，请重试</p>
+                                            <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                        </div>
+                                    `;
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('任务成功但未找到结果，请重试'));
                                 return;
                             } else if (taskStatus === 'FAILED') {
                                 clearTimeout(timeoutId);
-                                reject(new Error(data.output?.message || '任务执行失败'));
+                                const errorMsg = data.output?.message || '未知错误';
+                                const errorCode = data.output?.code || '';
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, `任务执行失败: ${errorCode} - ${errorMsg}`);
+                                    console.log('已请求退款，原因：任务执行失败');
+                                    
+                                    // 显示失败提示
+                                    resultImagePlaceholder.innerHTML = `
+                                        <div class="text-center p-4 bg-red-50 rounded-lg">
+                                            <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <h3 class="text-lg font-medium text-red-600 mb-2">生成失败</h3>
+                                            <p class="text-red-600 mb-2">错误原因: ${errorMsg}</p>
+                                            <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                        </div>
+                                    `;
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
+                                reject(new Error(`任务执行失败: ${errorMsg}`));
+                                return;
+                            } else if (taskStatus === 'CANCELED') {
+                                clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务已被取消');
+                                    console.log('已请求退款，原因：任务已被取消');
+                                    
+                                    // 显示取消提示
+                                    resultImagePlaceholder.innerHTML = `
+                                        <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                            <svg class="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                            </svg>
+                                            <h3 class="text-lg font-medium text-yellow-600 mb-2">任务已被取消</h3>
+                                            <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                        </div>
+                                    `;
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
+                                reject(new Error('任务已被取消'));
+                                return;
+                            } else if (taskStatus === 'UNKNOWN') {
+                                clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '任务状态未知');
+                                    console.log('已请求退款，原因：任务状态未知');
+                                    
+                                    // 显示未知状态提示
+                                    resultImagePlaceholder.innerHTML = `
+                                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                            <svg class="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <h3 class="text-lg font-medium text-gray-600 mb-2">任务状态未知</h3>
+                                            <p class="text-gray-600 mb-2">无法确定任务处理状态</p>
+                                            <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                        </div>
+                                    `;
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
+                                reject(new Error('任务状态未知，请重试'));
                                 return;
                             }
+                            
+                            // 状态为PENDING或RUNNING，继续轮询
+                            console.log(`任务状态: ${taskStatus}, 继续轮询...`);
                             timeoutId = setTimeout(checkStatus, pollInterval);
                         } catch (error) {
                             errorCount++;
                             if (errorCount >= 3) {
                                 clearTimeout(timeoutId);
+                                
+                                // 请求退款
+                                try {
+                                    await requestRefund(taskId, '轮询任务状态连续失败');
+                                    console.log('已请求退款，原因：轮询任务状态连续失败');
+                                    
+                                    // 显示网络错误提示
+                                    resultImagePlaceholder.innerHTML = `
+                                        <div class="text-center p-4 bg-orange-50 rounded-lg">
+                                            <svg class="w-12 h-12 mx-auto text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                            </svg>
+                                            <h3 class="text-lg font-medium text-orange-600 mb-2">网络连接不稳定</h3>
+                                            <p class="text-orange-600 mb-2">无法获取任务状态，请检查网络后重试</p>
+                                            <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                        </div>
+                                    `;
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error('网络连接不稳定，请检查网络后重试'));
                                 return;
                             }
@@ -536,11 +767,13 @@
                     alert('请上传图片文件！支持的格式包括JPG、PNG和WEBP');
                     return;
                 }
+                
                 // 检查文件大小
                 if (file.size > 10 * 1024 * 1024) { // 10MB 限制
                     alert('图片大小不能超过10MB！');
                     return;
                 }
+                
                 // 创建预览并检查图片尺寸
                 const reader = new FileReader();
                 reader.onload = (event) => {
@@ -555,6 +788,7 @@
                             alert('图片尺寸过大，请上传不超过4000×4000像素的图片');
                             return;
                         }
+                        
                         // 显示原始图片
                         originalImage.src = event.target.result;
                         originalImage.classList.remove('hidden');

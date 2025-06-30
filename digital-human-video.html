@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; media-src 'self' blob: data:; img-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;">
     <title>视频数字人 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="/components/styles.css" rel="stylesheet">
-    <script src="public/js/mobile-guard.js"></script>
+    <script src="/js/mobile-guard.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -126,7 +127,6 @@
             transform: scale(1.02);
         }
     </style>
-  <script src="/js/mobile-guard.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏组件容器 -->
@@ -608,6 +608,9 @@
                     
                     // 获取认证Token
                     const token = localStorage.getItem('authToken');
+                    if (!token) {
+                        throw new Error('身份验证失败，请重新登录');
+                    }
                     
                     // 发送请求
                     const response = await fetch('/api/digital-human/upload', {
@@ -615,7 +618,8 @@
                         headers: {
                             'Authorization': `Bearer ${token}`
                         },
-                        body: formData
+                        body: formData,
+                        credentials: 'same-origin'  // 确保发送cookies
                     });
                     
                     // 检查响应状态
@@ -701,8 +705,30 @@
                             document.getElementById('loading-overlay').classList.add('hidden');
                             
                             // 显示结果视频
-                            resultVideo.src = data.videoUrl;
-                            resultPreview.classList.remove('hidden');
+                            try {
+                                console.log('设置结果视频URL:', data.videoUrl);
+                                resultVideo.src = data.videoUrl;
+                                resultVideo.crossOrigin = "anonymous"; // 添加跨域支持
+                                resultVideo.onloadeddata = function() {
+                                    console.log('视频已加载成功');
+                                };
+                                resultVideo.onerror = function(e) {
+                                    console.error('视频加载错误:', e);
+                                    alert('视频预览加载失败，但您仍可以下载视频。');
+                                };
+                                resultPreview.classList.remove('hidden');
+                                resultPlaceholder.classList.add('hidden');
+                            } catch (videoErr) {
+                                console.error('设置视频源时出错:', videoErr);
+                                resultPlaceholder.innerHTML = `
+                                    <div class="flex flex-col items-center justify-center text-center p-4">
+                                        <i class="ri-error-warning-line text-5xl text-red-500 mb-2"></i>
+                                        <p class="text-red-500">视频预览加载失败</p>
+                                        <p class="text-sm text-gray-500 mt-2">但您仍可以通过下方按钮下载视频</p>
+                                    </div>
+                                `;
+                                resultPlaceholder.classList.remove('hidden');
+                            }
                             
                             // 显示操作按钮
                             resultActions.classList.remove('hidden');
@@ -804,15 +830,29 @@
             // 下载按钮
             downloadBtn.addEventListener('click', function() {
                 if (resultVideo.src) {
-                    // 通过服务器代理下载，解决跨域与权限问题
-                    const downloadUrl = `/api/video-subtitle-removal/download?url=${encodeURIComponent(resultVideo.src)}`;
-
-                    const a = document.createElement('a');
-                    a.href = downloadUrl;
-                    a.download = '声动人像视频.mp4';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    try {
+                        // 创建一个安全的下载URL
+                        const videoURL = resultVideo.src;
+                        
+                        // 通过服务器代理下载，解决跨域与权限问题
+                        const downloadUrl = `/api/download?url=${encodeURIComponent(videoURL)}&filename=声动人像视频.mp4`;
+                        
+                        console.log('准备下载视频:', downloadUrl);
+                        
+                        // 创建一个临时链接并触发下载
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = '声动人像视频.mp4';
+                        a.target = '_blank'; // 在新标签页打开
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    } catch (error) {
+                        console.error('下载视频失败:', error);
+                        alert('下载视频失败: ' + error.message);
+                    }
+                } else {
+                    alert('没有可下载的视频');
                 }
             });
             

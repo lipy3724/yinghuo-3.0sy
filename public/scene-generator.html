@@ -41,6 +41,12 @@
         // 必要的变量设置
         let iframeEle = document.getElementById("myiframe");
         let receiveBiz = ""; // 保存业务标识，用于postMessage回应
+        // 添加全局变量保存当前任务ID
+        let currentTaskId = null;
+        // 添加退款状态标记，防止重复退款
+        let hasRequestedRefund = false;
+        // 添加错误提示状态标记，防止重复提示
+        let hasShownErrorAlert = false;
         
         // 从API获取配置信息
         async function fetchConfig() {
@@ -298,19 +304,30 @@
                 
                 // 处理生产拦截
                 if (action === 'generate' || action === 'generateScene') {
+                    console.log('收到生成请求，准备扣费');
                     trackFeatureUsage('use', 'scene-generator').then(result => {
                         // 检查是否成功并且有返回的任务ID
                         if (result && typeof result === 'object' && result.taskId) {
-                            // 保存当前任务ID到localStorage，用于后续退款
-                            localStorage.setItem('currentSceneTaskId', result.taskId);
-                            console.log(`保存当前任务ID: ${result.taskId}`);
+                            // 保存当前任务ID到全局变量，用于后续退款
+                            currentTaskId = result.taskId;
+                            console.log(`保存当前任务ID: ${currentTaskId}`);
                         }
                         
-                        // 回复编辑器
-                        const canProceed = result === true || (result && result.success);
-                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action:'respond', success: canProceed }, '*');
-                    }).catch(() => {
-                        iframeEle.contentWindow.postMessage({ biz: receiveBiz, action:'respond', success:false }, '*');
+                        // 回复编辑器，确保正确处理返回值
+                        const canProceed = result !== false;
+                        console.log(`扣费结果: ${canProceed ? '成功' : '失败'}, 发送响应到编辑器`);
+                        iframeEle.contentWindow.postMessage({ 
+                            biz: receiveBiz, 
+                            action: 'respond', 
+                            success: canProceed 
+                        }, '*');
+                    }).catch(error => {
+                        console.error('扣费过程出错:', error);
+                        iframeEle.contentWindow.postMessage({ 
+                            biz: receiveBiz, 
+                            action: 'respond', 
+                            success: false 
+                        }, '*');
                     });
                     return;
                 }
@@ -322,21 +339,23 @@
                 const handleSaveImage = async (imageData) => {
                     if (!imageData) {
                         console.error("没有收到有效的图片数据");
-                        alert("保存失败：未收到有效的图片数据");
                         
-                        // 调用退款API - 使用异步立即执行函数
-                        (async () => {
+                        // 避免重复显示错误提示
+                        if (!hasShownErrorAlert) {
+                        alert("保存失败：未收到有效的图片数据");
+                            hasShownErrorAlert = true;
+                        }
+                        
+                        // 调用退款API
+                        if (currentTaskId && !hasRequestedRefund) {
                             try {
-                                const taskId = localStorage.getItem('currentSceneTaskId');
-                                if (taskId) {
-                                    await requestRefund(taskId, '图片数据无效');
-                                } else {
-                                    console.error("无法获取当前任务ID，无法执行退款");
-                                }
+                                await requestRefund(currentTaskId, '图片数据无效');
                             } catch (refundError) {
                                 console.error("退款处理失败:", refundError);
                             }
-                        })();
+                        } else {
+                            console.error("无法获取当前任务ID或已请求退款，无法执行退款");
+                        }
                         
                         return;
                     }
@@ -350,39 +369,43 @@
                             alert('图片已保存到下载中心!');
                         } else {
                             console.error("场景图保存失败");
-                            alert('保存失败，请重试');
                             
-                            // 调用退款API - 使用异步立即执行函数
-                            (async () => {
+                            // 避免重复显示错误提示
+                            if (!hasShownErrorAlert) {
+                            alert('保存失败，请重试');
+                                hasShownErrorAlert = true;
+                            }
+                            
+                            // 调用退款API
+                            if (currentTaskId && !hasRequestedRefund) {
                                 try {
-                                    const taskId = localStorage.getItem('currentSceneTaskId');
-                                    if (taskId) {
-                                        await requestRefund(taskId, '保存到下载中心失败');
-                                    } else {
-                                        console.error("无法获取当前任务ID，无法执行退款");
-                                    }
+                                    await requestRefund(currentTaskId, '保存到下载中心失败');
                                 } catch (refundError) {
                                     console.error("退款处理失败:", refundError);
                                 }
-                            })();
+                            } else {
+                                console.error("无法获取当前任务ID或已请求退款，无法执行退款");
+                            }
                         }
                     } catch (error) {
                         console.error("保存过程出错:", error);
-                        alert('保存出错: ' + error.message);
                         
-                        // 调用退款API - 使用异步立即执行函数
-                        (async () => {
+                        // 避免重复显示错误提示
+                        if (!hasShownErrorAlert) {
+                        alert('保存出错: ' + error.message);
+                            hasShownErrorAlert = true;
+                        }
+                        
+                        // 调用退款API
+                        if (currentTaskId && !hasRequestedRefund) {
                             try {
-                                const taskId = localStorage.getItem('currentSceneTaskId');
-                                if (taskId) {
-                                    await requestRefund(taskId, '保存过程异常: ' + error.message);
-                                } else {
-                                    console.error("无法获取当前任务ID，无法执行退款");
-                                }
+                                await requestRefund(currentTaskId, '保存过程异常: ' + error.message);
                             } catch (refundError) {
                                 console.error("退款处理失败:", refundError);
                             }
-                        })();
+                        } else {
+                            console.error("无法获取当前任务ID或已请求退款，无法执行退款");
+                        }
                     }
                 };
                 
@@ -415,50 +438,58 @@
                 } else if (action === "taskError" || action === "error") {
                     console.error(`业务[${biz}]处理任务出错:`, data);
                     
-                    // 调用退款API - 使用箭头函数处理异步
-                    (async () => {
-                        try {
-                            const taskId = localStorage.getItem('currentSceneTaskId');
-                            if (taskId) {
-                                await requestRefund(taskId, '任务处理失败: ' + (data?.errMessage || '未知错误'));
-                            } else {
-                                console.error("无法获取当前任务ID，无法执行退款");
+                    // 避免重复显示错误提示
+                    if (!hasShownErrorAlert) {
+                        // 显示错误提示
+                    if (data && data.errCode) {
+                        // 根据API文档中的错误码进行处理
+                            let errorMessage = "未知错误";
+                        switch(data.errCode) {
+                            case 'scene-noTitle':
+                                    errorMessage = "请填写商品标题";
+                                break;
+                            case 'scene-noDesc':
+                                    errorMessage = "请填写画面描述";
+                                break;
+                            case 'scene-noScene':
+                                    errorMessage = "请选择场景";
+                                break;
+                            case 'scene-noMain':
+                                    errorMessage = "缺少商品图";
+                                break;
+                            case 'scene-noBg':
+                                    errorMessage = "请上传参考图";
+                                break;
+                            case 'scene-noPrompt':
+                                    errorMessage = "请填写描述背景";
+                                break;
+                            case 'scene-imageDownloadFail':
+                                    errorMessage = "图片下载失败或格式不正确，请重新上传图片";
+                                break;
+                            case 'scene-imageLoadFail':
+                                    errorMessage = "图片加载失败，请点击重新生成";
+                                break;
+                            default:
+                                    errorMessage = "生成失败: " + data.errCode;
                             }
+                            alert(errorMessage);
+                        } else if (errMessage) {
+                            alert(`操作出错: ${errMessage}`);
+                        } else {
+                            alert("生成失败，请重试");
+                        }
+                        hasShownErrorAlert = true;
+                    }
+                    
+                    // 调用退款API
+                    if (currentTaskId && !hasRequestedRefund) {
+                        try {
+                            requestRefund(currentTaskId, '任务处理失败: ' + (data?.errMessage || data?.errCode || '未知错误'));
                         } catch (refundError) {
                             console.error("退款处理失败:", refundError);
                         }
-                    })();
-                    
-                    if (data && data.errCode) {
-                        // 根据API文档中的错误码进行处理
-                        switch(data.errCode) {
-                            case 'scene-noTitle':
-                                console.error("请填写商品标题");
-                                break;
-                            case 'scene-noDesc':
-                                console.error("请填写画面描述");
-                                break;
-                            case 'scene-noScene':
-                                console.error("请选择场景");
-                                break;
-                            case 'scene-noMain':
-                                console.error("缺少商品图");
-                                break;
-                            case 'scene-noBg':
-                                console.error("请上传参考图");
-                                break;
-                            case 'scene-noPrompt':
-                                console.error("请填写描述背景");
-                                break;
-                            case 'scene-imageDownloadFail':
-                                console.error("图片下载失败或格式不正确，请重新上传图片");
-                                break;
-                            case 'scene-imageLoadFail':
-                                console.error("图片加载失败，请点击重新生成");
-                                break;
-                            default:
-                                console.error("未知错误:", data.errCode);
-                        }
+                    } else {
+                        console.error("无法获取当前任务ID或已请求退款，无法执行退款");
                     }
                 } else {
                     // 只记录未知消息类型，不再尝试保存，减少重复保存的可能性
@@ -472,6 +503,12 @@
         // 添加退款请求函数
         async function requestRefund(taskId, reason) {
             try {
+                // 检查是否已经请求过退款
+                if (hasRequestedRefund) {
+                    console.log(`已经为任务 ${taskId} 请求过退款，避免重复退款`);
+                    return true;
+                }
+                
                 console.log(`请求退款: 任务ID=${taskId}, 原因=${reason}`);
                 
                 const authToken = localStorage.getItem('authToken');
@@ -499,6 +536,14 @@
                 
                 if (result.success) {
                     console.log('退款请求成功:', result);
+                    // 标记已请求退款，防止重复退款
+                    hasRequestedRefund = true;
+                    
+                    // 只有在用户尚未看到错误提示时才显示退款成功提示
+                    if (!hasShownErrorAlert) {
+                        alert('任务处理失败，系统已自动申请退款，积分将很快退还到您的账户。');
+                        hasShownErrorAlert = true;
+                    }
                     return true;
                 } else {
                     console.error('退款请求被拒绝:', result.message);
@@ -512,6 +557,10 @@
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 重置状态标记
+            currentTaskId = null;
+            hasRequestedRefund = false;
+            hasShownErrorAlert = false;
             initializeEditor();
         });
     </script>

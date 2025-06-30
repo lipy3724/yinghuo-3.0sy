@@ -374,38 +374,18 @@ app.use(cors({
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '500mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '500mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// 添加安全头中间件
+// 设置服务器的CSP头
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('X-Frame-Options', 'ALLOWALL');
-  res.header('Content-Security-Policy', "frame-ancestors * 'self'");
-  // 允许网页及其 iframe 使用陀螺仪和加速度计传感器，避免浏览器权限策略报错
-  res.header('Permissions-Policy', 'accelerometer=(self \"https://manekenai-editor.aidc-ai.com\"), gyroscope=(self \"https://manekenai-editor.aidc-ai.com\")');
-  
-  // 处理OPTIONS请求
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
+  res.setHeader(
+    'Content-Security-Policy', 
+    "default-src 'self'; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.googletagmanager.com; connect-src 'self' https://api.openai.com https://exlzvpf9e2.execute-api.ap-southeast-1.amazonaws.com https://*.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'self'"
+  );
   next();
 });
-
-// 确保上传目录存在
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// 确保public目录存在
-const publicDir = path.join(__dirname, 'public');
-if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir, { recursive: true });
-}
 
 // 创建代理中间件
 const editorProxy = createProxyMiddleware({
@@ -427,29 +407,6 @@ const editorProxy = createProxyMiddleware({
   proxyTimeout: 30000
 });
 
-// 添加请求日志中间件
-app.use((req, res, next) => {
-  console.log(`请求: ${req.method} ${req.url}`);
-  next();
-});
-
-// 静态文件服务 - 这应该在代理之前，确保静态文件优先
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// 添加根目录的HTML文件访问支持
-app.use(express.static(path.join(__dirname)));
-
-// 添加日志中间件，记录所有请求路径
-app.use((req, res, next) => {
-  console.log(`接收请求: ${req.method} ${req.url}`);
-  const originalSend = res.send;
-  res.send = function(data) {
-    console.log(`响应请求: ${req.method} ${req.url} - 状态: ${res.statusCode}`);
-    return originalSend.call(this, data);
-  };
-  next();
-});
-
 // 添加用户认证路由
 app.use('/api/auth', authRoutes);
 app.use('/api/credits', creditsRoutes);
@@ -463,6 +420,8 @@ app.use('/api/text-to-video', textToVideoRoutes);
 app.use('/api/image-edit', imageEditRoutes);
 // 添加文生图片路由
 app.use('/api/text-to-image', textToImageRoutes);
+// 添加退款路由
+app.use('/api/refund', require('./routes/refund'));
 
 // 添加管理员系统路由 - 访问管理员页面
 app.get('/admin', (req, res) => {

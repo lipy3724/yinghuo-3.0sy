@@ -41,6 +41,12 @@
         // 必要的变量设置
         let iframeEle = document.getElementById("myiframe");
         let receiveBiz = ""; // 保存业务标识，用于postMessage回应
+        // 添加全局变量保存当前任务ID
+        let currentTaskId = null;
+        // 添加退款状态标记，防止重复退款
+        let hasRequestedRefund = false;
+        // 添加错误提示状态标记，防止重复提示
+        let hasShownErrorAlert = false;
         
         // 从API获取配置信息
         async function fetchConfig() {
@@ -199,16 +205,16 @@
                             processedImageUrl = item;
                             console.log("从数组中获取URL字符串:", processedImageUrl);
                             break;
-                        } else if (item && typeof item === 'object') {
+                        } else if (typeof item === 'object') {
                             if (item.url) {
                                 processedImageUrl = item.url;
-                                originalImageUrl = item.originalUrl || null;
-                                console.log("从数组对象的url字段获取URL:", processedImageUrl);
+                                originalImageUrl = item.originalUrl || item.sourceUrl || null;
+                                console.log("从数组对象中获取url:", processedImageUrl);
                                 break;
                             } else if (item.imageUrl) {
                                 processedImageUrl = item.imageUrl;
                                 originalImageUrl = item.originalImageUrl || null;
-                                console.log("从数组对象的imageUrl字段获取URL:", processedImageUrl);
+                                console.log("从数组对象中获取imageUrl:", processedImageUrl);
                                 break;
                             }
                         }
@@ -219,15 +225,6 @@
                 if (!processedImageUrl && typeof data === 'string' && data.startsWith('http')) {
                     processedImageUrl = data;
                     console.log("从字符串直接获取结果URL:", processedImageUrl);
-                }
-                
-                // 检查从HTML中提取的特定URL信息
-                if (!processedImageUrl) {
-                    const imageUrl = getURLFromConsole();
-                    if (imageUrl) {
-                        console.log("从控制台日志中获取到URL:", imageUrl);
-                        processedImageUrl = imageUrl;
-                    }
                 }
                 
                 if (!processedImageUrl) {
@@ -244,11 +241,11 @@
                     originalImageUrl: originalImageUrl,
                     processedImageUrl: processedImageUrl,
                     processTime: new Date().toISOString(),
-                    processType: '商品换背景', // 功能类型
+                    processType: '智能抠图', // 功能类型
                     description: '商品换背景处理结果'
                 };
                 
-                console.log("准备发送到服务器的数据:", JSON.stringify(resultData));
+                console.log("发送到服务器的数据:", JSON.stringify(resultData));
                 
                 // 发送到服务器API
                 const response = await fetch('/api/save-result', {
@@ -286,19 +283,17 @@
             }
         }
         
-        // 尝试从控制台日志中捕获URL
-        function getURLFromConsole() {
+        // 尝试从控制台输出中提取URL
+        function extractUrlFromConsole(consoleOutput) {
             try {
-                // 此函数作为后备方案，通过检查控制台输出尝试提取URL
-                // 在实际环境中，这不是可靠的方法，但可以帮助排查问题
-                const consoleElements = document.querySelectorAll('console-message');
-                for (const consoleElem of consoleElements) {
-                    const text = consoleElem.textContent;
-                    if (text && text.includes('http') && (text.includes('编辑器消息') || text.includes('imagerl'))) {
-                        const urlMatch = text.match(/(https?:\/\/[^\s"']+)/g);
+                if (typeof consoleOutput === 'string') {
+                    // 使用正则表达式匹配URL
+                    const urlPattern = /(https?:\/\/[^\s"']+)/g;
+                    const urlMatch = consoleOutput.match(urlPattern);
+                    
                         if (urlMatch && urlMatch.length > 0) {
+                        console.log("从控制台输出中提取到URL:", urlMatch[0]);
                             return urlMatch[0];
-                        }
                     }
                 }
                 return null;
@@ -338,7 +333,16 @@
                 // 生产拦截逻辑
                 if (action === 'generate') {
                     console.log('收到 generate，准备扣费');
-                    trackFeatureUsage('use', 'cutout').then(canProceed => {
+                    trackFeatureUsage('use', 'cutout').then(result => {
+                        // 保存任务ID以便后续使用
+                        if (result && result.taskId) {
+                            currentTaskId = result.taskId;
+                            console.log(`已保存当前任务ID: ${currentTaskId}`);
+                        }
+                        
+                        // 检查是否可以继续
+                        const canProceed = result !== false;
+                        
                         iframeEle.contentWindow.postMessage({ biz, action:'respond', success: canProceed }, '*');
                         if (!canProceed) {
                             alert('免费次数已用完或积分不足');
@@ -441,12 +445,64 @@
                 } else if (action === "error") {
                     // 错误处理
                     console.error("编辑器错误:", data);
+                    
+                    // 如果已经请求过退款，不再重复处理错误
+                    if (hasRequestedRefund) {
+                        console.log("已经请求过退款，不再重复处理错误");
+                        return;
+                    }
+                    
+                    // 避免重复显示错误提示
+                    if (!hasShownErrorAlert) {
                     if (errMessage) {
                         console.error(`编辑器错误 [${code}]: ${errMessage}`);
+                            // 显示错误提示
                         alert(`操作出错: ${errMessage || '未知错误'}`);
-                    }
-                    if (data && data.errCode) {
+                            hasShownErrorAlert = true;
+                            
+                            // 使用保存的任务ID请求退款
+                            if (currentTaskId) {
+                                try {
+                                    requestRefund(currentTaskId, `编辑器错误: ${errMessage || code || '未知错误'}`);
+                                    console.log(`已为任务 ${currentTaskId} 请求退款`);
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                            } else if (data && data.taskId) {
+                                // 如果没有保存的任务ID但错误消息中有，也尝试使用它
+                                requestRefund(data.taskId, `编辑器错误: ${errMessage || code || '未知错误'}`);
+                            } else {
+                                console.error('无法请求退款: 未找到有效的任务ID');
+                                alert('生成失败，但无法自动退款，请联系客服处理');
+                            }
+                        } else if (data && data.errCode) {
                         console.error("错误代码:", data.errCode);
+                            // 显示错误提示
+                            alert(`操作出错: ${data.errCode || '未知错误'}`);
+                            hasShownErrorAlert = true;
+                            
+                            // 使用保存的任务ID请求退款
+                            if (currentTaskId) {
+                                requestRefund(currentTaskId, `任务失败: ${data.errCode || '未知错误'}`);
+                            } else if (data.taskId) {
+                                requestRefund(data.taskId, `任务失败: ${data.errCode || '未知错误'}`);
+                            } else {
+                                console.error('无法请求退款: 未找到有效的任务ID');
+                                alert('生成失败，但无法自动退款，请联系客服处理');
+                            }
+                        } else {
+                            // 如果没有明确的错误信息，但有保存的任务ID，也尝试退款
+                            if (currentTaskId) {
+                                // 显示通用错误提示
+                                alert('操作出错: 未知错误');
+                                hasShownErrorAlert = true;
+                                
+                                requestRefund(currentTaskId, '任务失败: 未知错误');
+                                console.log(`已为任务 ${currentTaskId} 请求退款（未知错误）`);
+                            }
+                        }
+                    } else {
+                        console.log("已显示错误提示，不再重复提示");
                     }
                 } else {
                     // 处理未知的消息类型 - 不自动保存，避免意外的多次保存
@@ -457,8 +513,57 @@
             }
         });
         
+        // 添加退款请求函数
+        async function requestRefund(taskId, reason) {
+            try {
+                // 检查是否已经请求过退款
+                if (hasRequestedRefund) {
+                    console.log(`已经为任务 ${taskId} 请求过退款，避免重复退款`);
+                    return true;
+                }
+                
+                console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                
+                const response = await fetch('/api/refund/cutout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : ''
+                    },
+                    body: JSON.stringify({
+                        taskId: taskId,
+                        reason: reason || '任务失败'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('退款请求成功:', result);
+                    // 只有在用户尚未看到错误提示时才显示退款成功提示
+                    if (!hasShownErrorAlert) {
+                        alert('任务处理失败，系统已自动申请退款，积分或免费次数将很快退还到您的账户。');
+                        hasShownErrorAlert = true;
+                    }
+                    // 标记已请求退款，防止重复退款
+                    hasRequestedRefund = true;
+                    return true;
+                } else {
+                    console.error('退款请求失败:', result.message);
+                    return false;
+                }
+            } catch (refundError) {
+                console.error('退款请求出错:', refundError);
+                return false;
+            }
+        }
+        
         // 页面加载仅初始化，不扣费
         document.addEventListener('DOMContentLoaded', function() {
+            // 重置退款状态标记
+            hasRequestedRefund = false;
+            // 重置错误提示状态标记
+            hasShownErrorAlert = false;
             initializeEditor();
         });
     </script>

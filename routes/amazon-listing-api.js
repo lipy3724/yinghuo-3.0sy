@@ -34,7 +34,7 @@ router.use((req, res, next) => {
 
 // GLM-4 API配置
 const GLM4_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const API_KEY = '0b30e2872b064eb7b6987da45fa91495.qyuFERurhHV7eRfn';
+const API_KEY = '3b44830460204a70971923fe409f1e5c.KcLtiQMc0M4oXnOV';
 
 // 构建请求头中的认证信息
 const getAuthHeaders = () => {

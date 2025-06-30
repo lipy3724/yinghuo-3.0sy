@@ -84,6 +84,7 @@
                         <p class="mb-2">此功能可以为黑白照片或素描添加自然色彩，让历史照片焕发新生。</p>
                         <p class="mb-2">上传黑白或灰度图像后，可以在提示框中描述您期望的颜色风格，例如："使用鲜艳的色彩"、"复古暖色调"或"自然色彩"。</p>
                         <p class="mb-2">可以指定具体元素的颜色，如："蓝色背景，黄色的叶子"、"人物穿红色衣服，背景为绿色"。</p>
+                        <p class="mb-2">图片尺寸要求：宽度和高度都必须在512到4096像素之间，文件大小不超过10MB。</p>
                         <p class="text-red-500 font-medium">请上传合法合规的内容，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
                     </div>
                 </div>
@@ -313,18 +314,32 @@
                 } catch (error) {
                     console.error('处理失败:', error);
                     
+                    // 显示错误提示在结果区域
+                    resultImage.classList.add('hidden');
+                    resultImagePlaceholder.classList.remove('hidden');
+                    downloadBtn.classList.add('hidden');
+                    saveToDownloadsBtn.classList.add('hidden');
+                    
+                    resultImagePlaceholder.innerHTML = `
+                        <div class="text-center p-4 bg-red-50 rounded-lg">
+                            <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <h3 class="text-lg font-medium text-red-600 mb-2">图像处理失败</h3>
+                            <p class="text-red-600 mb-2">错误原因: ${error.message}</p>
+                            ${taskId ? '<p class="text-green-600">系统已自动退还您使用的积分</p>' : ''}
+                        </div>
+                    `;
+                    
                     // 如果有任务ID，请求退款
                     if (taskId) {
                         try {
                             await requestRefund(taskId, error.message || '任务处理失败');
                             console.log('已请求退款，任务ID:', taskId);
-                            alert('处理失败: ' + error.message + '，系统已自动申请退款');
                         } catch (refundError) {
                             console.error('退款请求失败:', refundError);
-                            alert('处理失败: ' + error.message + '，退款请求失败，请联系客服');
+                            // 不显示额外提示，因为UI已经有了错误提示和退款信息
                         }
-                    } else {
-                    alert('处理失败: ' + error.message);
                     }
                 } finally {
                     // 隐藏加载遮罩
@@ -529,12 +544,26 @@
                                 const errorCode = data.output?.code || '';
                                 const errorMsg = data.output?.message || '未知错误';
                                 
+                                // 显示失败提示
+                                resultImagePlaceholder.classList.remove('hidden');
+                                resultImagePlaceholder.innerHTML = `
+                                    <div class="text-center p-4 bg-red-50 rounded-lg">
+                                        <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <h3 class="text-lg font-medium text-red-600 mb-2">图像处理失败</h3>
+                                        <p class="text-red-600 mb-2">错误原因: ${errorMsg}</p>
+                                        <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                    </div>
+                                `;
+                                
                                 // 请求退款
                                 try {
                                     await requestRefund(taskId, `任务执行失败: ${errorMsg}`);
                                     console.log('已请求退款，原因：任务执行失败');
                                 } catch (refundError) {
                                     console.error('退款请求失败:', refundError);
+                                    // 即使退款请求失败，也不再显示额外提示，因为后端可能已自动退款
                                 }
                                 
                                 reject(new Error(`任务执行失败: ${errorMsg}`));
@@ -543,6 +572,18 @@
                             else if (taskStatus === 'CANCELED') {
                                 // 任务被取消
                                 clearTimeout(timeoutId);
+                                
+                                // 显示取消提示
+                                resultImagePlaceholder.classList.remove('hidden');
+                                resultImagePlaceholder.innerHTML = `
+                                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                                        <svg class="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                        <h3 class="text-lg font-medium text-yellow-600 mb-2">任务已被取消</h3>
+                                        <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                    </div>
+                                `;
                                 
                                 // 请求退款
                                 try {
@@ -558,6 +599,19 @@
                             else if (taskStatus === 'UNKNOWN') {
                                 // 任务状态未知
                                 clearTimeout(timeoutId);
+                                
+                                // 显示未知状态提示
+                                resultImagePlaceholder.classList.remove('hidden');
+                                resultImagePlaceholder.innerHTML = `
+                                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                        <svg class="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <h3 class="text-lg font-medium text-gray-600 mb-2">任务状态未知</h3>
+                                        <p class="text-gray-600 mb-2">无法确定任务处理状态</p>
+                                        <p class="text-green-600">系统已自动退还您使用的积分</p>
+                                    </div>
+                                `;
                                 
                                 // 请求退款
                                 try {
@@ -687,10 +741,17 @@
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = function() {
-                        // 恢复图片尺寸限制检查
-                        const maxDimension = 5000; // 最大尺寸限制
+                        // 修改图片尺寸限制检查，与API要求一致
+                        const minDimension = 512; // 最小尺寸限制
+                        const maxDimension = 4096; // 最大尺寸限制
+                        
+                        if (img.width < minDimension || img.height < minDimension) {
+                            alert(`图片尺寸太小，宽度和高度都需要大于${minDimension}像素！`);
+                            return;
+                        }
+                        
                         if (img.width > maxDimension || img.height > maxDimension) {
-                            alert(`图片尺寸过大，最大支持${maxDimension}x${maxDimension}像素！`);
+                            alert(`图片尺寸过大，宽度和高度都不能超过${maxDimension}像素！`);
                             return;
                         }
                         
@@ -786,7 +847,17 @@
                     
                     const data = await response.json();
                     
+                    // 修改：如果是已经退款过的情况，也视为成功
                     if (!response.ok) {
+                        // 检查是否是"已经退款过"的情况
+                        if (response.status === 400 && data.message && (
+                            data.message.includes('已经退款过') || 
+                            data.message.includes('已退款') ||
+                            data.message.includes('可能是任务不存在或已经退款')
+                        )) {
+                            console.log('任务已经退款过，视为退款成功');
+                            return true; // 视为退款成功
+                        }
                         throw new Error(data.message || '退款请求失败');
                     }
                     

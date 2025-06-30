@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
                 return;
             }
-            console.log('多图转视频：用户登录状态验证通过');
             
             // 获取参数
             const scene = sceneType ? sceneType.value : 'costume'; // 默认为服饰场景
@@ -282,22 +281,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const imageData = {
-                    id: Date.now() + Math.random().toString(36).substr(2, 9),
+                    id: Date.now() + Math.random().toString(36).substring(2, 15),
+                    src: event.target.result,
                     file: file,
-                    dataUrl: event.target.result,
-                    name: file.name
+                    order: uploadedImages.length + 1
                 };
-                
                 uploadedImages.push(imageData);
+                renderThumbnails();
                 
-                // 更新缩略图显示
-                updateThumbnails();
+                // 显示缩略图容器
+                document.getElementById('thumbnail-container').classList.remove('hidden');
             };
             reader.readAsDataURL(file);
         });
     }
     
-    function updateThumbnails() {
+    function renderThumbnails() {
         if (!thumbnailContainer) return;
         
         thumbnailContainer.innerHTML = '';
@@ -310,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             thumbnail.innerHTML = `
                 <div class="thumbnail">
-                    <img src="${image.dataUrl}" alt="${image.name}">
+                    <img src="${image.src}" alt="图片 ${index + 1}">
                     <span class="order-badge">${index + 1}</span>
                 </div>
                 <button class="delete-btn" data-id="${image.id}">×</button>
@@ -321,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const deleteBtn = thumbnail.querySelector('.delete-btn');
             deleteBtn.addEventListener('click', () => {
                 uploadedImages = uploadedImages.filter(img => img.id !== image.id);
-                updateThumbnails();
+                renderThumbnails();
             });
         });
         
@@ -390,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     uploadedImages.splice(targetIndex, 0, temp);
                     
                     // 更新UI
-                    updateThumbnails();
+                    renderThumbnails();
                 }
             }
             
@@ -431,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const file = imageData.file;
                 
                 // 删除data:image/jpeg;base64,前缀获取纯base64数据
-                const base64Data = imageData.dataUrl.replace(/^data:image\/\w+;base64,/, '');
+                const base64Data = imageData.src.replace(/^data:image\/\w+;base64,/, '');
                 
                 // 创建FormData对象
                 const formData = new FormData();

@@ -707,9 +707,24 @@
                                 // 任务失败，获取更详细的错误信息
                                 const errorMessage = data.output?.message || '图像编辑任务失败';
                                 const errorCode = data.output?.code || '';
+                                
+                                // 任务失败时请求退款
+                                try {
+                                    await requestRefund(taskId, errorCode ? `${errorCode}: ${errorMessage}` : errorMessage);
+                                    console.log(`已为任务 ${taskId} 请求退款`);
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
+                                
                                 reject(new Error(errorCode ? `${errorCode}: ${errorMessage}` : errorMessage));
                             } else if (status === 'CANCELED') {
                                 // 任务被取消
+                                try {
+                                    await requestRefund(taskId, '图像编辑任务已被取消');
+                                    console.log(`已为任务 ${taskId} 请求退款`);
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
                                 reject(new Error('图像编辑任务已被取消'));
                             } else if (status === 'UNKNOWN') {
                                 // 任务状态未知
@@ -727,6 +742,13 @@
                             errorCount += 1;
                             
                             if (errorCount > 3) {
+                                // 连续失败多次，请求退款
+                                try {
+                                    await requestRefund(taskId, '查询任务状态连续失败多次');
+                                    console.log(`已为任务 ${taskId} 请求退款`);
+                                } catch (refundError) {
+                                    console.error('退款请求失败:', refundError);
+                                }
                                 reject(new Error('查询任务状态连续失败多次，请稍后再试'));
                                 return;
                             }
@@ -738,6 +760,47 @@
                     // 开始首次查询
                     let timeoutId = setTimeout(checkStatus, 3000);
                 });
+            }
+            
+            // 添加退款请求函数
+            async function requestRefund(taskId, reason) {
+                try {
+                    console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
+                    
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.error('用户未登录，无法请求退款');
+                        return false;
+                    }
+                    
+                    const response = await fetch('/api/refund/image-edit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ taskId, reason })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`退款请求失败: ${response.status}, ${errorText}`);
+                        return false;
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('退款请求成功:', result);
+                        return true;
+                    } else {
+                        console.error('退款请求被拒绝:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('退款请求出错:', error);
+                    return false;
+                }
             }
             
             // 下载按钮
