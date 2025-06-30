@@ -235,7 +235,7 @@
             border-radius: 0.5rem;
             padding: 1rem;
             margin: 1rem 0;
-            font-family: 'Courier New', monospace;
+            font-family: inherit;
             white-space: pre-wrap;
             line-height: 1.6;
         }
@@ -275,6 +275,7 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4">亚马逊客户评论分析</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="review-analysis" class="tab-content">
                     <p class="text-gray-600 mb-4">输入客户评论，AI将为您分析产品优缺点、客户情绪、需求及提供销售策略建议和回复模板。</p>
@@ -472,6 +473,8 @@
             function formatAnalysisResult(content) {
                 if (!content) return '';
                 
+                const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                
                 // 先处理回复模板的特殊格式
                 if (content.includes('```')) {
                     const templateMatch = content.match(/```([\s\S]+?)```/);
@@ -485,17 +488,36 @@
                     }
                 }
                 
-                // 处理分类标题（如"优点:"、"缺点:"）
-                content = content.replace(/^-\s*\*\*([^:：]+)[：:]\*\*/gm, 
-                    '<div class="analysis-section-title">$1：</div>');
-                
-                // 处理带编号的列表项
-                content = content.replace(/^\s*(\d+\.)\s*\*\*([^*]+)\*\*[：:](.*?)$/gm, 
-                    '<div class="analysis-item"><span class="analysis-label">$1</span> <span class="highlight">$2：</span><span class="analysis-content">$3</span></div>');
-                
-                // 处理没有编号但有标题的项目
-                content = content.replace(/^\s*\*\*([^*]+)\*\*[：:](.*?)$/gm, 
-                    '<div class="analysis-item"><span class="highlight">$1：</span><span class="analysis-content">$2</span></div>');
+                if (outputLanguage === 'en') {
+                    // 英文格式处理
+                    
+                    // 处理分类标题（如"Pros:"、"Cons:"）
+                    content = content.replace(/^-\s*\*\*([^:]+):\*\*/gm, 
+                        '<div class="analysis-section-title">$1:</div>');
+                    
+                    // 处理带编号的列表项
+                    content = content.replace(/^\s*(\d+\.)\s*\*\*([^*]+)\*\*:(.*?)$/gm, 
+                        '<div class="analysis-item"><span class="analysis-label">$1</span> <span class="highlight">$2:</span><span class="analysis-content">$3</span></div>');
+                    
+                    // 处理没有编号但有标题的项目
+                    content = content.replace(/^\s*\*\*([^*]+)\*\*:(.*?)$/gm, 
+                        '<div class="analysis-item"><span class="highlight">$1:</span><span class="analysis-content">$2</span></div>');
+                    
+                } else {
+                    // 中文格式处理
+                    
+                    // 处理分类标题（如"优点:"、"缺点:"）
+                    content = content.replace(/^-\s*\*\*([^:：]+)[：:]\*\*/gm, 
+                        '<div class="analysis-section-title">$1：</div>');
+                    
+                    // 处理带编号的列表项
+                    content = content.replace(/^\s*(\d+\.)\s*\*\*([^*]+)\*\*[：:](.*?)$/gm, 
+                        '<div class="analysis-item"><span class="analysis-label">$1</span> <span class="highlight">$2：</span><span class="analysis-content">$3</span></div>');
+                    
+                    // 处理没有编号但有标题的项目
+                    content = content.replace(/^\s*\*\*([^*]+)\*\*[：:](.*?)$/gm, 
+                        '<div class="analysis-item"><span class="highlight">$1：</span><span class="analysis-content">$2</span></div>');
+                }
                 
                 // 移除剩余的星号
                 content = content.replace(/\*\*/g, '');
@@ -519,7 +541,7 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在分析客户评论，请稍候...';
+                processingText.textContent = updateLoadingText();
                 
                 try {// 获取表单数据
                     const formData = {
@@ -627,7 +649,13 @@
                 }
             }
             
-            // 初始化时调用一次
+            // 只更新加载提示文本，界面保持中文
+            function updateLoadingText() {
+                // 无论选择什么语言，始终显示中文提示
+                return '正在分析客户评论，请稍候...';
+            }
+            
+            // 初始化时调用
             handleResponsiveLayout();
             
             // 窗口大小改变时调整布局

@@ -575,8 +575,14 @@ function initCustomerService() {
         return;
     }
     
-    console.log('当前页面:', window.location.pathname, '准备加载客服组件');
+    // 只在首页和home.html页面显示客服图标
+    const currentPath = window.location.pathname;
+    if (currentPath === '/' || currentPath === '/index.html' || currentPath === '/home.html') {
+        console.log('首页或home页面，加载客服组件');
     window.loadCustomerService();
+    } else {
+        console.log('非首页或home页面，跳过客服组件加载');
+    }
 }
 
 // 页面加载完成后初始化客服组件

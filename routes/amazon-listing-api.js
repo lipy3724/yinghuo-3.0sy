@@ -34,7 +34,7 @@ router.use((req, res, next) => {
 
 // GLM-4 API配置
 const GLM4_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const API_KEY = '0b30e2872b064eb7b6987da45fa91495.qyuFERurhHV7eRfn';
+const API_KEY = '3b44830460204a70971923fe409f1e5c.KcLtiQMc0M4oXnOV';
 
 // 构建请求头中的认证信息
 const getAuthHeaders = () => {
@@ -693,8 +693,13 @@ router.post('/analyze-review', protect, createUnifiedFeatureMiddleware('amazon_r
             });
         }
         
-        // 设置系统提示词
-        const systemMessage = "现在你是一名资深的亚马逊卖家，现在需要你进行评论分析。你要给我返回如下几点内容：产品优缺点、客户情绪、客户需求、销售策略调整、答复客户模板。注意：你可以从客户的评价中精准的定位客户提出的优缺点，并细化优缺点；进行客观的情绪分析以及客户需求解析；答复客户模板要亲切的、就事论事的、口语化的进行答复；做出相应的销售策略整改计划，可以针对优缺点展开叙述，取长补短。";
+        // 设置系统提示词 - 根据语言选择
+        let systemMessage;
+        if (outputLanguage === 'en') {
+            systemMessage = "You are an experienced Amazon seller tasked with analyzing customer reviews. Please provide the following analysis: product pros and cons, customer emotions, customer needs, sales strategy adjustments, and a reply template. Note: Extract and detail the pros and cons from the customer's review; provide an objective analysis of the customer's emotions and needs; create a friendly, conversational reply template that addresses the specific points; and develop a sales strategy improvement plan that builds on strengths and addresses weaknesses. IMPORTANT: You must respond in English only.";
+        } else {
+            systemMessage = "现在你是一名资深的亚马逊卖家，现在需要你进行评论分析。你要给我返回如下几点内容：产品优缺点、客户情绪、客户需求、销售策略调整、答复客户模板。注意：你可以从客户的评价中精准的定位客户提出的优缺点，并细化优缺点；进行客观的情绪分析以及客户需求解析；答复客户模板要亲切的、就事论事的、口语化的进行答复；做出相应的销售策略整改计划，可以针对优缺点展开叙述，取长补短。重要：你必须只用中文回复。";
+        }
         
         // 构建用户提示词
         let prompt;
@@ -3247,7 +3252,7 @@ Description: ${descriptionText}
         console.error("API错误详情:", error.response?.data || error.message);
         
         // 提供默认响应
-        const language = outputLanguage === 'en' ? 'en' : 'zh';
+        const language = req.body.outputLanguage === 'en' ? 'en' : 'zh';
         const defaultResult = {
             productAnalysis: language === 'en' 
                 ? "We couldn't generate a product analysis at this time. Please try again later." 
@@ -3292,8 +3297,13 @@ router.post('/brand-info', protect, createUnifiedFeatureMiddleware('amazon_brand
             });
         }
         
-        // 设置系统提示词
-        const systemMessage = "你是一名专业的品牌分析师和市场研究专家，擅长从多个渠道收集和分析品牌信息。";
+        // 设置系统提示词 - 根据语言选择
+        let systemMessage;
+        if (outputLanguage === 'en') {
+            systemMessage = "You are a professional brand analyst and market research expert specializing in collecting and analyzing brand information from multiple channels. Please respond in English only.";
+        } else {
+            systemMessage = "你是一名专业的品牌分析师和市场研究专家，擅长从多个渠道收集和分析品牌信息。请只使用中文回答。";
+        }
         
         // 构建用户提示词 - 使用更新后的收集模板
         let prompt;

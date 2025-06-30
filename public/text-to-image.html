@@ -8,31 +8,98 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
     <style>
+        /* 直接重置所有元素的边框和边距 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        /* 修复红框问题 */
+        *[style*="border: 1px solid red"],
+        *[style*="border:1px solid red"],
+        *[style*="border-color: red"],
+        *[style*="border-color:red"] {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f9fafb;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
         .page-container {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            position: relative;
         }
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            margin-left: 0 !important; /* 覆盖组件样式中的margin-left */
         }
         .content-grid {
-            flex: 1;
             display: grid;
             grid-template-columns: 1fr;
+            width: 100%;
+            margin: 0;
+            padding: 0;
         }
         @media (min-width: 1024px) {
             .content-grid {
                 grid-template-columns: 1fr 2fr;
+                gap: 1rem;
             }
         }
+        
+        /* 修复红框问题 - 移除所有可能的空白边框 */
+        body:before, body:after,
+        .page-container:before, .page-container:after,
+        .main-content:before, .main-content:after,
+        .content-grid:before, .content-grid:after {
+            display: none !important;
+            content: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+        }
+        
+        /* 确保内容直接从页面边缘开始 */
+        .main-content {
+            padding: 1rem;
+        }
+        
+        /* 特别修复左侧红框问题 */
+        .red-box-fix {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            height: 100%;
+            border: none !important;
+            background: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        /* 其余样式保持不变 */
         .logo-dot {
             display: inline-block;
             width: 8px;
@@ -183,12 +250,24 @@
     <script src="/js/mobile-guard.js"></script>
 </head>
 <body>
+    <!-- 直接在body开始处添加修复元素 -->
+    <style>
+        /* 内联样式修复红框问题 */
+        [style*="border: 1px solid red"] { border: none !important; }
+        [style*="border:1px solid red"] { border: none !important; }
+        [style*="border-color: red"] { border-color: transparent !important; }
+        [style*="border-color:red"] { border-color: transparent !important; }
+    </style>
+    
     <div class="page-container bg-gray-100">
         <!-- 简化版导航栏 -->
         <div id="navbar-simple"></div>
+        
+        <!-- 特别添加的元素，用于修复左侧红框问题 -->
+        <div class="red-box-fix"></div>
 
         <!-- 主要内容 -->
-        <main class="main-content p-4 md:p-6" style="margin-top: 60px;">
+        <main class="main-content" style="margin-top: 60px;">
             <h1 class="text-2xl font-bold mb-6">AI文生图片</h1>
             <div class="content-grid gap-6">
                 <!-- 左侧控制面板 -->
@@ -366,6 +445,82 @@
             } catch (error) {
                 console.error('加载导航栏组件失败:', error);
             }
+            
+            // 移除可能导致红框的元素
+            const removeRedBoxes = function() {
+                // 查找所有可能的红框元素
+                const allElements = document.querySelectorAll('*');
+                allElements.forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    // 检查是否有红色边框
+                    if (style.borderColor && (
+                        style.borderColor.includes('rgb(255, 0, 0)') || 
+                        style.borderColor.includes('red')
+                    )) {
+                        // 移除边框
+                        el.style.border = 'none';
+                        el.style.padding = '0';
+                        el.style.margin = '0';
+                        el.style.background = 'none';
+                        el.style.width = '0';
+                        el.style.height = '0';
+                        el.style.overflow = 'hidden';
+                        el.style.display = 'none';
+                    }
+                });
+                
+                // 特别处理可能的空白区域
+                const body = document.body;
+                body.style.margin = '0';
+                body.style.padding = '0';
+                
+                const pageContainer = document.querySelector('.page-container');
+                if (pageContainer) {
+                    pageContainer.style.margin = '0';
+                    pageContainer.style.padding = '0';
+                }
+                
+                // 特别处理左侧红框
+                const redBoxFix = document.querySelector('.red-box-fix');
+                if (!redBoxFix) {
+                    const newRedBoxFix = document.createElement('div');
+                    newRedBoxFix.className = 'red-box-fix';
+                    document.body.appendChild(newRedBoxFix);
+                }
+                
+                // 修复所有iframe和框架
+                const frames = document.querySelectorAll('iframe, frame');
+                frames.forEach(frame => {
+                    try {
+                        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+                        const frameElements = frameDoc.querySelectorAll('*');
+                        frameElements.forEach(el => {
+                            const style = window.getComputedStyle(el);
+                            if (style.borderColor && (
+                                style.borderColor.includes('rgb(255, 0, 0)') || 
+                                style.borderColor.includes('red')
+                            )) {
+                                el.style.border = 'none';
+                                el.style.padding = '0';
+                                el.style.margin = '0';
+                                el.style.background = 'none';
+                                el.style.width = '0';
+                                el.style.height = '0';
+                                el.style.overflow = 'hidden';
+                                el.style.display = 'none';
+                            }
+                        });
+                    } catch (e) {
+                        // 跨域问题，忽略
+                    }
+                });
+            };
+            
+            // 页面加载后执行一次
+            removeRedBoxes();
+            
+            // 然后每秒检查一次，确保红框不再出现
+            setInterval(removeRedBoxes, 500);
         });
     </script>
     
@@ -415,6 +570,16 @@
             checkToken();
             // 设置事件监听器
             setupEventListeners();
+            
+            // 额外的修复 - 移除所有红框
+            setTimeout(function() {
+                const allElements = document.querySelectorAll('*');
+                allElements.forEach(el => {
+                    if (window.getComputedStyle(el).border.includes('red')) {
+                        el.style.border = 'none';
+                    }
+                });
+            }, 100);
         });
 
         // 检查令牌是否存在
