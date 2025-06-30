@@ -31,21 +31,6 @@
         .spinner {
             animation: spin 1s linear infinite;
         }
-        .prompt-input {
-            resize: none;
-            min-height: 120px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        .prompt-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
         .instructions {
             font-size: 0.875rem;
             color: #4b5563;
@@ -156,13 +141,6 @@
                             <span class="text-sm">白底图</span>
                         </label>
                     </div>
-                </div>
-                
-                <div class="flex-grow mb-4">
-                    <div class="mb-2">
-                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入指令 (可选):</label>
-                    </div>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="可以输入额外的提示或要求，如：精确分割上衣区域，保持服装细节等"></textarea>
                 </div>
                 
                 <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
@@ -286,7 +264,6 @@
             const resultImage = document.getElementById('result-image');
             const resultImagePlaceholder = document.getElementById('result-image-placeholder');
             const generateBtn = document.getElementById('generate-btn');
-            const promptInput = document.getElementById('prompt-input');
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
@@ -789,12 +766,6 @@
                     // 如果选择了返回类型，添加到请求中
                     if (returnForm) {
                         requestData.returnForm = returnForm;
-                    }
-                    
-                    // 如果有提示词，添加到请求中
-                    const prompt = promptInput.value.trim();
-                    if (prompt) {
-                        requestData.prompt = prompt;
                     }
                     
                     console.log('发送创建服饰分割任务请求:', JSON.stringify(requestData));

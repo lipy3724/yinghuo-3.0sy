@@ -6,12 +6,14 @@
     <title>选品的改款分析和建议 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
     <script src="/feature-tracker.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
         }
         .card {
             transition: all 0.3s ease;
@@ -20,31 +22,6 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        /* 页面布局样式 */
-        .page-container {
-            display: flex;
-            height: calc(100vh - 60px);
-            margin-top: 60px;
-        }
-        
-        .left-panel {
-            width: 30%;
-            height: 100%;
-            overflow-y: auto;
-            padding: 1.5rem;
-            border-right: 1px solid #e5e7eb;
-            background-color: #f9fafb;
-        }
-        
-        .right-panel {
-            width: 70%;
-            height: 100%;
-            overflow-y: auto;
-            padding: 1.5rem;
-            background-color: #ffffff;
-        }
-        
-        /* 导航栏样式 */
         .navbar {
             position: fixed;
             top: 0;
@@ -59,49 +36,34 @@
             z-index: 50;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
-        /* 动画效果 */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        .main-content {
+            display: flex;
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .sidebar {
+            width: 30%;
+            height: 100%;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+            background-color: #f9fafb;
+            padding: 1.5rem;
+            flex-shrink: 0;
         }
-        
-        .slide-in {
-            animation: slideIn 0.5s ease-in-out;
+        .content {
+            width: 70%;
+            height: 100%;
+            overflow-y: hidden;
+            padding: 1.5rem;
+            background-color: white;
+            box-sizing: border-box;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
-        
-        @keyframes slideIn {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* 美化表单元素 */
-        .form-input {
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .form-input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-        
-        .btn-primary {
-            background-color: #6366f1;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            background-color: #4f46e5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
-        }
-        
         .textarea-container {
             position: relative;
         }
@@ -156,6 +118,7 @@
             align-items: center;
             justify-content: center;
             height: 100%;
+            width: 100%;
         }
         .logo-text {
             animation: firefly-glow 3s infinite;
@@ -178,6 +141,8 @@
         }
         /* 格式化内容样式 */
         .formatted-content {
+            width: 100%;
+            box-sizing: border-box;
             font-size: 14px;
             line-height: 1.6;
         }
@@ -289,6 +254,8 @@
         }
         /* 美化结果容器 */
         .bg-gray-50 {
+            width: 100%;
+            box-sizing: border-box;
             border-radius: 0.5rem;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
@@ -356,177 +323,247 @@
             background-color: #fef3c7;
             border-left: 3px solid #f59e0b;
         }
-    </style>
-
-    <link rel="icon" href="/images/favicon.png" type="image/png">
-    <link rel="stylesheet" href="/components/styles.css">
-    <script src="/js/auth-check.js"></script>
-    <script src="/js/mobile-guard.js"></script>
-</head>
-<body class="bg-gray-50">
-    <!-- 导航栏容器 -->
-    <div id="navbar-container"></div>
-    
-    <script>
-        // 异步加载导航栏
-        async function loadNavbar() {
-            try {
-                const response = await fetch('/components/navbar-simple.html');
-                const html = await response.text();
-                document.getElementById('navbar-container').innerHTML = html;
-                
-                // 加载导航栏的JavaScript功能
-                const script = document.createElement('script');
-                script.src = '/components/components.js';
-                document.head.appendChild(script);
-            } catch (error) {
-                console.error('加载导航栏失败:', error);
-            }
+        
+        /* 初始内容区域样式 - 确保内容居中 */
+        #initial-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
-        // 页面加载时执行
-        document.addEventListener('DOMContentLoaded', loadNavbar);
-    </script>
+        #initial-content > div {
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        /* 加载内容区域样式 */
+        #loading-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 错误内容区域样式 */
+        #error-content {
+            width: 100%;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* 结果内容区域样式 */
+        #result-content {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* 响应式布局 */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .sidebar, .content {
+                width: 100%;
+                height: auto;
+                max-height: 50vh;
+            }
+        }
+    </style>
 
-    <!-- 主内容区域 -->
-    <div class="page-container">
-        <!-- 左侧表单面板 -->
-        <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">选品的改款分析和建议</h1>
-            <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
-                <!-- 表单区域 -->
-                <form id="analysis-form" class="space-y-4">
-                    <p class="text-gray-600 mb-6">请输入产品的标题内容、五点描述和Description，系统将为您提供专业的改款分析和建议。</p>
-                    
-                    <div class="mb-4">
-                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">标题内容 <span class="text-red-500">*</span></label>
-                        <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品标题">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="bulletPoints" class="block text-sm font-medium text-gray-700 mb-1">五点描述 <span class="text-red-500">*</span></label>
-                        <textarea id="bulletPoints" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品的五点描述，每点一行"></textarea>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea id="description" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品的详细描述（选填）"></textarea>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">语言</label>
-                        <div class="flex space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="language" value="zh" class="form-radio text-indigo-600" checked>
-                                <span class="ml-2">中文</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="language" value="en" class="form-radio text-indigo-600">
-                                <span class="ml-2">英文</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <button type="button" id="generate-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        生成改款分析和建议
-                    </button>
-                </form>
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
+</head>
+<body>
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 左侧边栏 - 占30% -->
+        <div class="sidebar">
+            <h1 class="text-2xl font-bold mb-4">选品改进分析</h1>
+            <p class="text-gray-600 mb-6">请输入产品的标题内容、五点描述和Description，系统将为您提供专业的改款分析和建议。</p>
+            
+            <div class="mb-4">
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">标题内容 <span class="text-red-500">*</span></label>
+                <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品标题">
             </div>
+            
+            <div class="mb-4">
+                <label for="bulletPoints" class="block text-sm font-medium text-gray-700 mb-1">五点描述 <span class="text-red-500">*</span></label>
+                <textarea id="bulletPoints" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品的五点描述，每点一行"></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="description" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品的详细描述（选填）"></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">语言</label>
+                <div class="flex space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="language" value="zh" class="form-radio text-indigo-600" checked>
+                        <span class="ml-2">中文</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="language" value="en" class="form-radio text-indigo-600">
+                        <span class="ml-2">英文</span>
+                    </label>
+                </div>
+            </div>
+            
+            <button id="generate-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                生成改款分析和建议
+            </button>
         </div>
         
         <!-- 右侧内容区 - 占70% -->
-        <div class="right-panel">
-            <div id="initial-content" class="h-full flex flex-col items-center justify-center text-center p-8">
-                <i class="ri-line-chart-line text-6xl text-indigo-200 mb-4"></i>
-                <h2 class="text-2xl font-semibold text-gray-700 mb-2">选品的改款分析和建议</h2>
-                <p class="text-gray-500 max-w-lg">请在左侧输入产品的标题内容、五点描述和Description，点击"生成改款分析和建议"按钮开始分析。</p>
-            </div>
-            
-            <div id="loading-content" class="loading hidden">
-                <div class="spinner text-indigo-600 mb-4"></div>
-                <p class="text-gray-600">正在生成改款分析和建议，请稍候...</p>
-            </div>
-            
-            <div id="result-content" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">产品现状分析</h3>
-                        <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="productAnalysis">
-                            <i class="ri-file-copy-line"></i> 复制
-                        </button>
+        <div class="content">
+            <!-- 红框区域 - 同时用于显示初始内容、加载状态和结果 -->
+            <div class="border border-red-500 rounded-lg p-6 h-full flex flex-col">
+                <!-- 初始内容 -->
+                <div id="initial-content" class="flex flex-col items-center justify-center h-full">
+                    <i class="ri-line-chart-line text-6xl text-indigo-200 mb-4"></i>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-2">选品的改款分析和建议</h2>
+                    <p class="text-gray-500">请在左侧输入产品的标题内容、五点描述和Description，点击"生成改款分析和建议"按钮开始分析。</p>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div id="loading-content" class="loading hidden flex-col items-center justify-center h-full" style="display:none !important;">
+                    <div class="spinner text-indigo-600 mb-4"></div>
+                    <p class="text-gray-600">正在生成改款分析和建议，请稍候...</p>
+                </div>
+                
+                <!-- 结果内容 -->
+                <div id="result-content" class="hidden overflow-y-auto h-full">
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">产品现状分析</h3>
+                            <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="productAnalysis">
+                                <i class="ri-file-copy-line"></i> 复制
+                            </button>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div id="productAnalysis" class="text-gray-700 whitespace-pre-line formatted-content"></div>
+                        </div>
                     </div>
-                    <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
-                        <div id="productAnalysis" class="text-gray-700 whitespace-pre-line formatted-content"></div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">用户需求识别</h3>
+                            <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="userNeeds">
+                                <i class="ri-file-copy-line"></i> 复制
+                            </button>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div id="userNeeds" class="text-gray-700 whitespace-pre-line formatted-content"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">竞品对比分析</h3>
+                            <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="competitiveAnalysis">
+                                <i class="ri-file-copy-line"></i> 复制
+                            </button>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div id="competitiveAnalysis" class="text-gray-700 whitespace-pre-line formatted-content"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">潜在改进方向</h3>
+                            <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="improvementDirections">
+                                <i class="ri-file-copy-line"></i> 复制
+                            </button>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div id="improvementDirections" class="text-gray-700 whitespace-pre-line formatted-content"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">具体改款建议</h3>
+                            <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="specificSuggestions">
+                                <i class="ri-file-copy-line"></i> 复制
+                            </button>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div id="specificSuggestions" class="text-gray-700 whitespace-pre-line formatted-content"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center mt-6">
+                        <button id="copy-all-btn" class="flex items-center bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            <i class="ri-file-copy-line mr-2"></i> 复制全部内容
+                        </button>
                     </div>
                 </div>
                 
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">改款建议</h3>
-                        <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="improvementSuggestions">
-                            <i class="ri-file-copy-line"></i> 复制
-                        </button>
+                <!-- 错误内容 -->
+                <div id="error-content" class="hidden flex-col items-center justify-center h-full" style="display:none !important;">
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                        <p><i class="ri-error-warning-line mr-2"></i> <span id="error-message"></span></p>
                     </div>
-                    <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
-                        <div id="improvementSuggestions" class="text-gray-700 whitespace-pre-line formatted-content"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">市场竞争分析</h3>
-                        <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="competitionAnalysis">
-                            <i class="ri-file-copy-line"></i> 复制
-                        </button>
-                    </div>
-                    <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
-                        <div id="competitionAnalysis" class="text-gray-700 whitespace-pre-line formatted-content"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">改款后预期效果</h3>
-                        <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="expectedResults">
-                            <i class="ri-file-copy-line"></i> 复制
-                        </button>
-                    </div>
-                    <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
-                        <div id="expectedResults" class="text-gray-700 whitespace-pre-line formatted-content"></div>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end gap-3">
-                    <button type="button" id="copyAllButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
-                        <i class="ri-file-copy-line mr-1"></i>
-                        复制全部
+                    <button id="try-again-btn" class="mt-4 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        重新尝试
                     </button>
-
-                    <button type="button" id="newAnalysisButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
-                        <i class="ri-refresh-line mr-1"></i>
-                        重新分析
-                    </button>
                 </div>
-            </div>
-            
-            <div id="error-content" class="hidden">
-                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    <p><i class="ri-error-warning-line mr-2"></i> <span id="error-message">生成失败，请稍后再试。</span></p>
-                </div>
-                <button id="try-again-btn" class="mt-4 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    重新尝试
-                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // 初始化页面
-        document.addEventListener('DOMContentLoaded', function() {
-            // 特性追踪 - 使用已加载的feature-tracker.js
-            if (typeof trackFeatureUsage === 'function') {
-                trackFeatureUsage('page_view', 'product_improvement_analysis');
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载导航栏组件
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
             }
+            
+            // 特性追踪 - 使用已加载的feature-tracker.js
+            
+            // 确保错误内容区域初始状态为隐藏
+            const errorContent = document.getElementById('error-content');
+            errorContent.classList.add('hidden');
+            errorContent.style.display = 'none';
+            
+            // 确保加载内容区域初始状态为隐藏
+            const loadingContent = document.getElementById('loading-content');
+            loadingContent.classList.add('hidden');
+            loadingContent.style.display = 'none';
+            
+            // 确保结果内容区域初始状态为隐藏
+            const resultContent = document.getElementById('result-content');
+            resultContent.classList.add('hidden');
+            resultContent.style.display = 'none';
+            
+            // 确保初始内容区域显示在红框内
+            const initialContent = document.getElementById('initial-content');
+            initialContent.classList.remove('hidden');
+            initialContent.style.display = 'flex';
+            
+            // 尝试恢复会话结果
+            restoreSessionResults();
         });
         
         // 复制文本到剪贴板
@@ -553,21 +590,26 @@
 
         // 显示加载状态
         function showLoading() {
+            // 隐藏其他内容
             document.getElementById('initial-content').classList.add('hidden');
             document.getElementById('result-content').classList.add('hidden');
-            document.getElementById('error-content').classList.add('hidden');
-            document.getElementById('loading-content').classList.remove('hidden');
+            
+            const errorContent = document.getElementById('error-content');
+            errorContent.classList.add('hidden');
+            errorContent.style.display = 'none';
+            
+            // 显示加载状态在红框区域内
+            const loadingContent = document.getElementById('loading-content');
+            loadingContent.classList.remove('hidden');
+            loadingContent.style.display = 'flex';
         }
 
         // 添加新函数: 格式化Markdown
         function formatMarkdown(text) {
             if (!text) return '';
             
-            // 获取当前语言设置
-            const isChinese = document.querySelector('input[name="language"]:checked').value !== 'en';
-            
             // 检查并格式化建议部分
-            if (text.includes('建议:') || text.includes('Suggestion:')) {
+            if (text.includes('建议:') || text.includes('suggestion:')) {
                 return formatSuggestions(text);
             }
             
@@ -651,32 +693,23 @@
         
         // 专门处理建议格式
         function formatSuggestions(text) {
-            // 获取当前语言设置
-            const isChinese = document.querySelector('input[name="language"]:checked').value !== 'en';
-            
-            // 处理输入文本中的标签，根据语言设置
-            let processedText = text;
-            if (isChinese) {
-                processedText = text
+            // 处理输入文本中的英文标签
+            let processedText = text
                 .replace(/suggestion/gi, '建议')
                 .replace(/steps/gi, '步骤')
                 .replace(/timeline/gi, '时间线')
                 .replace(/expectedOutcome/gi, '预期结果')
                 .replace(/months/gi, '个月');
-            } else {
-                processedText = text
-                    .replace(/建议/g, 'Suggestion')
-                    .replace(/步骤/g, 'Steps')
-                    .replace(/时间线/g, 'Timeline')
-                    .replace(/预期结果/g, 'Expected Outcome')
-                    .replace(/个月/g, 'months');
+            
+            // 检查是否有直接格式的建议项，例如 "1. suggestion: 增加颜色"
+            const directFormat = /(\d+)\.\s+suggestion:/gi.test(processedText);
+            if (directFormat) {
+                // 将 "1. suggestion: 内容" 格式转换为 "1. 建议: 内容"
+                processedText = processedText.replace(/(\d+)\.\s+suggestion:/gi, '$1. 建议:');
             }
             
-            // 根据语言检查格式模式
-            const suggestionPattern = isChinese
-                ? /(\d+)\.\s+(建议|suggestion)[:：]?\s*([\s\S]*?)(?=\d+\.\s+(建议|suggestion)[:：]?|$)/gi
-                : /(\d+)\.\s+(suggestion|建议)[:：]?\s*([\s\S]*?)(?=\d+\.\s+(suggestion|建议)[:：]?|$)/gi;
-            
+            // 分割为单独的建议项
+            const suggestionPattern = /(\d+)\.\s+(建议|suggestion)[:：]?\s*([\s\S]*?)(?=\d+\.\s+(建议|suggestion)[:：]?|$)/gi;
             const matches = [...processedText.matchAll(suggestionPattern)];
             
             if (!matches || matches.length === 0) {
@@ -697,40 +730,23 @@
                 const number = match[1];
                 let suggestionContent = match[3].trim();
                 
-                // 根据语言替换内容中的标签
-                if (isChinese) {
+                // 替换内容中可能存在的英文标签
                 suggestionContent = suggestionContent
                     .replace(/steps[:：]?\s*/gi, '步骤: ')
                     .replace(/timeline[:：]?\s*/gi, '时间线: ')
                     .replace(/expectedOutcome[:：]?\s*/gi, '预期结果: ');
-                } else {
-                    suggestionContent = suggestionContent
-                        .replace(/步骤[:：]?\s*/g, 'Steps: ')
-                        .replace(/时间线[:：]?\s*/g, 'Timeline: ')
-                        .replace(/预期结果[:：]?\s*/g, 'Expected Outcome: ');
-                }
                 
                 // 分解建议内容
-                const stepsMatch = isChinese 
-                    ? suggestionContent.match(/步骤[:：]?\s*(.+?)(?=\n|时间线|预期结果|$)/s)
-                    : suggestionContent.match(/Steps[:：]?\s*(.+?)(?=\n|Timeline|Expected Outcome|$)/si);
-                    
-                const timelineMatch = isChinese
-                    ? suggestionContent.match(/时间线[:：]?\s*(.+?)(?=\n|步骤|预期结果|$)/s)
-                    : suggestionContent.match(/Timeline[:：]?\s*(.+?)(?=\n|Steps|Expected Outcome|$)/si);
-                    
-                const outcomeMatch = isChinese
-                    ? suggestionContent.match(/预期结果[:：]?\s*(.+?)(?=\n|步骤|时间线|$)/s)
-                    : suggestionContent.match(/Expected Outcome[:：]?\s*(.+?)(?=\n|Steps|Timeline|$)/si);
+                const stepsMatch = suggestionContent.match(/步骤[:：]?\s*(.+?)(?=\n|时间线|预期结果|$)/s);
+                const timelineMatch = suggestionContent.match(/时间线[:：]?\s*(.+?)(?=\n|步骤|预期结果|$)/s);
+                const outcomeMatch = suggestionContent.match(/预期结果[:：]?\s*(.+?)(?=\n|步骤|时间线|$)/s);
                 
                 // 提取主要建议内容（第一行）
                 let mainContent = '';
                 if (suggestionContent.includes('\n')) {
                     mainContent = suggestionContent.split('\n')[0].trim();
                 } else if (stepsMatch) {
-                    mainContent = isChinese
-                        ? suggestionContent.substring(0, suggestionContent.indexOf('步骤')).trim()
-                        : suggestionContent.substring(0, suggestionContent.toLowerCase().indexOf('steps')).trim();
+                    mainContent = suggestionContent.substring(0, suggestionContent.indexOf('步骤')).trim();
                 } else {
                     mainContent = suggestionContent;
                 }
@@ -749,19 +765,19 @@
                 
                 if (stepsMatch) {
                     html += `<div class="suggestion-steps">
-                        <strong>${isChinese ? '步骤' : 'Steps'}:</strong> ${stepsMatch[1].trim()}
+                        <strong>步骤:</strong> ${stepsMatch[1].trim()}
                     </div>`;
                 }
                 
                 if (timelineMatch) {
                     html += `<div class="suggestion-timeline">
-                        <strong>${isChinese ? '时间线' : 'Timeline'}:</strong> ${timelineMatch[1].trim()}
+                        <strong>时间线:</strong> ${timelineMatch[1].trim()}
                     </div>`;
                 }
                 
                 if (outcomeMatch) {
                     html += `<div class="suggestion-outcome">
-                        <strong>${isChinese ? '预期结果' : 'Expected Outcome'}:</strong> ${outcomeMatch[1].trim()}
+                        <strong>预期结果:</strong> ${outcomeMatch[1].trim()}
                     </div>`;
                 }
                 
@@ -774,9 +790,6 @@
         
         // 处理替代格式的建议
         function formatSuggestionsAlt(text, matches) {
-            // 获取当前语言设置
-            const isChinese = document.querySelector('input[name="language"]:checked').value !== 'en';
-            
             let html = '<div class="suggestions-container">';
             
             matches.forEach(match => {
@@ -801,9 +814,7 @@
                 });
                 
                 // 构建标题
-                const suggestionTitle = isChinese 
-                    ? (title.includes('建议') ? title : `建议: ${title}`)
-                    : (title.toLowerCase().includes('suggestion') ? title : `Suggestion: ${title}`);
+                const suggestionTitle = title.includes('建议') ? title : `建议: ${title}`;
                 
                 html += `<div class="suggestion-item">
                     <div class="suggestion-header">
@@ -814,19 +825,19 @@
                 
                 if (steps) {
                     html += `<div class="suggestion-steps">
-                        <strong>${isChinese ? '步骤' : 'Steps'}:</strong> ${steps}
+                        <strong>步骤:</strong> ${steps}
                     </div>`;
                 }
                 
                 if (timeline) {
                     html += `<div class="suggestion-timeline">
-                        <strong>${isChinese ? '时间线' : 'Timeline'}:</strong> ${timeline}
+                        <strong>时间线:</strong> ${timeline}
                     </div>`;
                 }
                 
                 if (outcome) {
                     html += `<div class="suggestion-outcome">
-                        <strong>${isChinese ? '预期结果' : 'Expected Outcome'}:</strong> ${outcome}
+                        <strong>预期结果:</strong> ${outcome}
                     </div>`;
                 }
                 
@@ -896,12 +907,100 @@
             return String(value);
         }
 
+        // 智能结果管理：页面加载时尝试恢复之前的结果
+        function restoreSessionResults() {
+            try {
+                const savedResults = sessionStorage.getItem('productImprovement_results');
+                if (savedResults) {
+                    const results = JSON.parse(savedResults);
+                    
+                    // 恢复结果内容
+                    if (results.productAnalysis) {
+                        document.getElementById('productAnalysis').innerHTML = results.productAnalysis.html;
+                        document.getElementById('productAnalysis').setAttribute('data-raw-text', results.productAnalysis.rawText);
+                    }
+                    if (results.userNeeds) {
+                        document.getElementById('userNeeds').innerHTML = results.userNeeds.html;
+                        document.getElementById('userNeeds').setAttribute('data-raw-text', results.userNeeds.rawText);
+                    }
+                    if (results.competitiveAnalysis) {
+                        document.getElementById('competitiveAnalysis').innerHTML = results.competitiveAnalysis.html;
+                        document.getElementById('competitiveAnalysis').setAttribute('data-raw-text', results.competitiveAnalysis.rawText);
+                    }
+                    if (results.improvementDirections) {
+                        document.getElementById('improvementDirections').innerHTML = results.improvementDirections.html;
+                        document.getElementById('improvementDirections').setAttribute('data-raw-text', results.improvementDirections.rawText);
+                    }
+                    if (results.specificSuggestions) {
+                        document.getElementById('specificSuggestions').innerHTML = results.specificSuggestions.html;
+                        document.getElementById('specificSuggestions').setAttribute('data-raw-text', results.specificSuggestions.rawText);
+                    }
+                    
+                    // 显示结果容器在红框区域内
+                    document.getElementById('initial-content').classList.add('hidden');
+                    
+                    const loadingContent = document.getElementById('loading-content');
+                    loadingContent.classList.add('hidden');
+                    loadingContent.style.display = 'none';
+                    
+                    const errorContent = document.getElementById('error-content');
+                    errorContent.classList.add('hidden');
+                    errorContent.style.display = 'none';
+                    
+                    const resultContent = document.getElementById('result-content');
+                    resultContent.classList.remove('hidden');
+                    resultContent.style.display = 'block';
+                    
+                    console.log('已恢复选品改款分析的会话结果');
+                    return true;
+                }
+            } catch (error) {
+                console.error('恢复会话结果时出错:', error);
+                sessionStorage.removeItem('productImprovement_results');
+            }
+            return false;
+        }
+        
+        // 保存结果到会话存储
+        function saveSessionResults(data) {
+            try {
+                const resultsToSave = {};
+                const fields = ['productAnalysis', 'userNeeds', 'competitiveAnalysis', 'improvementDirections', 'specificSuggestions'];
+                
+                fields.forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element) {
+                        resultsToSave[field] = {
+                            html: element.innerHTML,
+                            rawText: element.getAttribute('data-raw-text') || element.textContent
+                        };
+                    }
+                });
+                
+                sessionStorage.setItem('productImprovement_results', JSON.stringify(resultsToSave));
+                console.log('已保存选品改款分析结果到会话存储');
+            } catch (error) {
+                console.error('保存会话结果时出错:', error);
+            }
+        }
+        
         // 显示结果
         function showResult(data) {
+            // 隐藏其他内容
             document.getElementById('initial-content').classList.add('hidden');
-            document.getElementById('loading-content').classList.add('hidden');
-            document.getElementById('error-content').classList.add('hidden');
-            document.getElementById('result-content').classList.remove('hidden');
+            
+            const loadingContent = document.getElementById('loading-content');
+            loadingContent.classList.add('hidden');
+            loadingContent.style.display = 'none';
+            
+            const errorContent = document.getElementById('error-content');
+            errorContent.classList.add('hidden');
+            errorContent.style.display = 'none';
+            
+            // 显示结果内容在红框区域内
+            const resultContent = document.getElementById('result-content');
+            resultContent.classList.remove('hidden');
+            resultContent.style.display = 'block';
             
             // 检查当前语言
             const isChinese = document.querySelector('input[name="language"]:checked').value !== 'en';
@@ -909,16 +1008,17 @@
             // 获取字段标签
             const fieldLabels = {
                 productAnalysis: isChinese ? '产品现状分析' : 'Product Analysis',
-                improvementSuggestions: isChinese ? '改款建议' : 'Improvement Suggestions',
-                competitionAnalysis: isChinese ? '市场竞争分析' : 'Competition Analysis',
-                expectedResults: isChinese ? '改款后预期效果' : 'Expected Results'
+                userNeeds: isChinese ? '用户需求识别' : 'User Needs',
+                competitiveAnalysis: isChinese ? '竞品对比分析' : 'Competitive Analysis',
+                improvementDirections: isChinese ? '潜在改进方向' : 'Improvement Directions',
+                specificSuggestions: isChinese ? '具体改款建议' : 'Specific Suggestions'
             };
             
             // 处理特殊情况：如果具体建议是一个数组
-            if (data.improvementSuggestions && Array.isArray(data.improvementSuggestions)) {
+            if (data.specificSuggestions && Array.isArray(data.specificSuggestions)) {
                 // 将数组转换为格式化文本
                 let suggestionsText = '';
-                data.improvementSuggestions.forEach((suggestion, index) => {
+                data.specificSuggestions.forEach((suggestion, index) => {
                     if (typeof suggestion === 'object') {
                         const title = suggestion.title || suggestion.content || suggestion.suggestion || `建议${index + 1}`;
                         const steps = suggestion.steps || '';
@@ -939,16 +1039,16 @@
                         suggestionsText += `${index + 1}. 建议: ${suggestion}\n\n`;
                     }
                 });
-                data.improvementSuggestions = suggestionsText.trim();
+                data.specificSuggestions = suggestionsText.trim();
             }
             
             // 格式化并填充结果数据
-            const fields = ['productAnalysis', 'improvementSuggestions', 'competitionAnalysis', 'expectedResults'];
+            const fields = ['productAnalysis', 'userNeeds', 'competitiveAnalysis', 'improvementDirections', 'specificSuggestions'];
             fields.forEach(field => {
                 let value = data[field] || (isChinese ? '无数据' : 'No data');
                 
                 // 根据字段类型进行特殊处理
-                if (field === 'improvementSuggestions') {
+                if (field === 'specificSuggestions') {
                     // 检查是否是带有标准格式的建议内容
                     if (typeof value === 'string') {
                         // 查找是否包含建议格式模式
@@ -1020,7 +1120,7 @@
                 
                 // 为具体建议字段应用特殊处理
                 let processedText = formattedText;
-                if (field === 'improvementSuggestions') {
+                if (field === 'specificSuggestions') {
                     // 规范化建议格式
                     processedText = processedText
                         // 调整建议标记
@@ -1050,21 +1150,32 @@
             });
             
             // 更新复制全部按钮文本
-            document.getElementById('copyAllButton').innerHTML = 
-                `<i class="ri-file-copy-line mr-1"></i> ${isChinese ? '复制全部' : 'Copy All'}`;
+            document.getElementById('copy-all-btn').innerHTML = 
+                `<i class="ri-file-copy-line mr-2"></i> ${isChinese ? '复制全部内容' : 'Copy All Content'}`;
+            
+            // 保存结果到会话存储
+            saveSessionResults(data);
             
             // 特性追踪 - 使用已加载的feature-tracker.js
-            if (typeof trackFeatureUsage === 'function') {
-                trackFeatureUsage('product_improvement_analysis');
-            }
         }
 
         // 显示错误
         function showError(message) {
+            // 隐藏其他内容
             document.getElementById('initial-content').classList.add('hidden');
-            document.getElementById('loading-content').classList.add('hidden');
+            
+            const loadingContent = document.getElementById('loading-content');
+            loadingContent.classList.add('hidden');
+            loadingContent.style.display = 'none';
+            
             document.getElementById('result-content').classList.add('hidden');
-            document.getElementById('error-content').classList.remove('hidden');
+            
+            // 显示错误内容区域在红框内
+            const errorContent = document.getElementById('error-content');
+            errorContent.classList.remove('hidden');
+            errorContent.style.display = 'flex';
+            
+            // 设置错误消息
             document.getElementById('error-message').textContent = message || '生成失败，请稍后再试。';
         }
 
@@ -1150,11 +1261,11 @@
                         // 处理API返回的数据
                         let processedData = processApiResponse(alternativeResult.data, outputLanguage);
                         
-                        // 如果improvementSuggestions字段不存在或为空，提供默认建议
-                        if (!processedData.improvementSuggestions || 
-                            (typeof processedData.improvementSuggestions === 'string' && processedData.improvementSuggestions.trim() === '') ||
-                            (Array.isArray(processedData.improvementSuggestions) && processedData.improvementSuggestions.length === 0)) {
-                            processedData.improvementSuggestions = generateDefaultSuggestions(title, outputLanguage);
+                        // 如果specificSuggestions字段不存在或为空，提供默认建议
+                        if (!processedData.specificSuggestions || 
+                            (typeof processedData.specificSuggestions === 'string' && processedData.specificSuggestions.trim() === '') ||
+                            (Array.isArray(processedData.specificSuggestions) && processedData.specificSuggestions.length === 0)) {
+                            processedData.specificSuggestions = generateDefaultSuggestions(title, outputLanguage);
                         }
                         
                         showResult(processedData);
@@ -1170,45 +1281,20 @@
                     // 处理API返回的数据
                     let processedData = processApiResponse(result.data, outputLanguage);
                     
-                    // 如果improvementSuggestions字段不存在或为空，提供默认建议
-                    if (!processedData.improvementSuggestions || 
-                        (typeof processedData.improvementSuggestions === 'string' && processedData.improvementSuggestions.trim() === '') ||
-                        (Array.isArray(processedData.improvementSuggestions) && processedData.improvementSuggestions.length === 0)) {
-                        processedData.improvementSuggestions = generateDefaultSuggestions(title, outputLanguage);
+                    // 如果specificSuggestions字段不存在或为空，提供默认建议
+                    if (!processedData.specificSuggestions || 
+                        (typeof processedData.specificSuggestions === 'string' && processedData.specificSuggestions.trim() === '') ||
+                        (Array.isArray(processedData.specificSuggestions) && processedData.specificSuggestions.length === 0)) {
+                        processedData.specificSuggestions = generateDefaultSuggestions(title, outputLanguage);
                     }
                     
                     showResult(processedData);
                 } else {
-                    // 检查是否有API返回的具体错误信息
-                    let errorMsg = result.error || '';
-                    
-                    // 检查是否包含账户余额不足的提示
-                    if (errorMsg.includes('欠费') || errorMsg.includes('余额不足') || errorMsg.includes('insufficient')) {
-                        errorMsg = outputLanguage === 'en' 
-                            ? 'API account balance insufficient. Please contact the administrator.' 
-                            : 'API账户余额不足，请联系管理员充值后重试。';
-                    } else {
-                        errorMsg = errorMsg || (outputLanguage === 'en' ? 'Generation failed, please try again later' : '生成失败，请稍后再试');
-                    }
-                    
-                    showError(errorMsg);
+                    showError(result.error || (outputLanguage === 'en' ? 'Generation failed, please try again later' : '生成失败，请稍后再试'));
                 }
             } catch (error) {
                 console.error('API调用失败:', error);
-                
-                // 检查是否是账户余额不足错误
-                let errorMessage = '';
-                if (error.message && error.message.includes('429')) {
-                    errorMessage = outputLanguage === 'en' 
-                        ? 'API account balance insufficient. Please contact the administrator.' 
-                        : 'API账户余额不足，请联系管理员充值后重试。';
-                } else {
-                    errorMessage = outputLanguage === 'en' 
-                        ? 'Server connection failed, please try again later' 
-                        : '服务器连接失败，请稍后再试';
-                }
-                
-                showError(errorMessage);
+                showError(outputLanguage === 'en' ? 'Server connection failed, please try again later' : '服务器连接失败，请稍后再试');
             }
         }
         
@@ -1264,29 +1350,13 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
             const isChinese = outputLanguage !== 'en';
             const processedData = {...data};
             
-            // 字段映射 - API返回的字段名到前端使用的字段名
-            const fieldMapping = {
-                'productAnalysis': 'productAnalysis',
-                'userNeeds': 'userNeeds',
-                'competitiveAnalysis': 'competitionAnalysis', // 映射竞争分析字段
-                'improvementDirections': 'improvementDirections',
-                'specificSuggestions': 'improvementSuggestions', // 映射具体建议字段
-                'expectedResults': 'expectedResults'
-            };
-            
-            // 应用字段映射
-            Object.entries(fieldMapping).forEach(([apiField, frontendField]) => {
-                if (processedData[apiField] && !processedData[frontendField]) {
-                    processedData[frontendField] = processedData[apiField];
-                }
-            });
-            
             // 初始化主要字段（如果不存在）
             const requiredFields = [
                 'productAnalysis', 
-                'improvementSuggestions', 
-                'competitionAnalysis', 
-                'expectedResults'
+                'userNeeds', 
+                'competitiveAnalysis', 
+                'improvementDirections', 
+                'specificSuggestions'
             ];
             
             requiredFields.forEach(field => {
@@ -1295,16 +1365,15 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                 }
             });
             
-            // 处理特殊情况：improvementSuggestions字段
-            if (processedData.improvementSuggestions) {
+            // 处理特殊情况：specificSuggestions字段
+            if (processedData.specificSuggestions) {
                 // 如果是字符串类型
-                if (typeof processedData.improvementSuggestions === 'string') {
+                if (typeof processedData.specificSuggestions === 'string') {
                     // 检查是否包含特定模式
-                    if (processedData.improvementSuggestions.includes('1.') && 
-                        !processedData.improvementSuggestions.includes('建议:') &&
-                        !processedData.improvementSuggestions.includes('Suggestion:')) {
+                    if (processedData.specificSuggestions.includes('1.') && 
+                        !processedData.specificSuggestions.includes('建议:')) {
                         // 创建格式化的建议列表
-                        const lines = processedData.improvementSuggestions.split('\n');
+                        const lines = processedData.specificSuggestions.split('\n');
                         let formattedSuggestions = '';
                         let currentSuggestion = '';
                         let suggestionNumber = 0;
@@ -1326,39 +1395,21 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                                 suggestionNumber = parseInt(suggestionMatch[1]);
                                 const content = suggestionMatch[2].trim();
                                 
-                                // 根据语言格式化建议内容
-                                if (isChinese) {
+                                // 格式化建议内容
                                 currentSuggestion = `${suggestionNumber}. 建议: ${content}`;
-                                } else {
-                                    currentSuggestion = `${suggestionNumber}. Suggestion: ${content}`;
-                                }
                             } 
                             // 检查是否包含步骤、时间线、预期结果
                             else if (line.toLowerCase().includes('steps') || line.includes('步骤')) {
                                 const value = line.replace(/^steps:?\s*|^步骤:?\s*/i, '').trim();
-                                if (isChinese) {
                                 currentSuggestion += `\n步骤: ${value}`;
-                                } else {
-                                    currentSuggestion += `\nSteps: ${value}`;
-                                }
                             }
                             else if (line.toLowerCase().includes('timeline') || line.includes('时间线')) {
                                 const value = line.replace(/^timeline:?\s*|^时间线:?\s*/i, '').trim();
-                                if (isChinese) {
                                 currentSuggestion += `\n时间线: ${value}`;
-                                } else {
-                                    // 处理时间单位，确保英文模式下显示months
-                                    const timelineValue = value.replace(/个月/g, 'months');
-                                    currentSuggestion += `\nTimeline: ${timelineValue}`;
-                                }
                             }
                             else if (line.toLowerCase().includes('expectedoutcome') || line.includes('预期结果')) {
                                 const value = line.replace(/^expectedoutcome:?\s*|^预期结果:?\s*/i, '').trim();
-                                if (isChinese) {
                                 currentSuggestion += `\n预期结果: ${value}`;
-                                } else {
-                                    currentSuggestion += `\nExpected Outcome: ${value}`;
-                                }
                             }
                             // 其他行作为建议内容的一部分
                             else if (currentSuggestion) {
@@ -1373,16 +1424,16 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                         
                         // 更新数据
                         if (formattedSuggestions) {
-                            processedData.improvementSuggestions = formattedSuggestions;
+                            processedData.specificSuggestions = formattedSuggestions;
                         }
                     }
-                } else if (Array.isArray(processedData.improvementSuggestions)) {
+                } else if (Array.isArray(processedData.specificSuggestions)) {
                     // 处理数组格式
                     let formattedSuggestions = '';
-                    processedData.improvementSuggestions.forEach((suggestion, index) => {
+                    processedData.specificSuggestions.forEach((suggestion, index) => {
                         if (typeof suggestion === 'object') {
                             const title = suggestion.title || suggestion.content || 
-                                          suggestion.suggestion || `${isChinese ? '建议' : 'Suggestion'}${index + 1}`;
+                                          suggestion.suggestion || `建议${index + 1}`;
                             let steps = suggestion.steps || '';
                             const timeline = suggestion.timeline || '';
                             const outcome = suggestion.outcome || suggestion.expectedOutcome || '';
@@ -1392,36 +1443,21 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                                 steps = steps.join(', ');
                             }
                             
-                            if (isChinese) {
                             formattedSuggestions += `${index + 1}. 建议: ${title}\n`;
                             if (steps) formattedSuggestions += `步骤: ${steps}\n`;
                             if (timeline) formattedSuggestions += `时间线: ${timeline}\n`;
                             if (outcome) formattedSuggestions += `预期结果: ${outcome}\n\n`;
                         } else {
-                                formattedSuggestions += `${index + 1}. Suggestion: ${title}\n`;
-                                if (steps) formattedSuggestions += `Steps: ${steps}\n`;
-                                // 处理时间单位，确保英文模式下显示months
-                                if (timeline) {
-                                    const timelineValue = timeline.replace(/个月/g, 'months');
-                                    formattedSuggestions += `Timeline: ${timelineValue}\n`;
-                                }
-                                if (outcome) formattedSuggestions += `Expected Outcome: ${outcome}\n\n`;
-                            }
-                        } else {
-                            if (isChinese) {
                             formattedSuggestions += `${index + 1}. 建议: ${suggestion}\n\n`;
-                            } else {
-                                formattedSuggestions += `${index + 1}. Suggestion: ${suggestion}\n\n`;
-                            }
                         }
                     });
                     
-                    processedData.improvementSuggestions = formattedSuggestions.trim();
+                    processedData.specificSuggestions = formattedSuggestions.trim();
                 }
                 
-                // 添加翻译处理，但只在中文模式下
-                if (isChinese && typeof processedData.improvementSuggestions === 'string') {
-                    processedData.improvementSuggestions = processedData.improvementSuggestions
+                // 添加翻译处理
+                if (isChinese && typeof processedData.specificSuggestions === 'string') {
+                    processedData.specificSuggestions = processedData.specificSuggestions
                         .replace(/suggestion/gi, '建议')
                         .replace(/steps/gi, '步骤')
                         .replace(/timeline/gi, '时间线')
@@ -1430,8 +1466,8 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                 }
             }
             
-            // 处理其他字段的翻译，但只在中文模式下
-            const fieldsToProcess = ['productAnalysis', 'improvementSuggestions', 'competitionAnalysis'];
+            // 处理其他字段的翻译
+            const fieldsToProcess = ['productAnalysis', 'userNeeds', 'competitiveAnalysis', 'improvementDirections'];
             if (isChinese) {
                 fieldsToProcess.forEach(field => {
                     if (typeof processedData[field] === 'string') {
@@ -1445,28 +1481,23 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                 });
             }
             
-            // 使用improvementDirections作为expectedResults的备选值
-            if ((!processedData.expectedResults || processedData.expectedResults === '无数据' || processedData.expectedResults === 'No data') && 
-                processedData.improvementDirections) {
-                processedData.expectedResults = processedData.improvementDirections;
-            }
-            
             return processedData;
         }
 
         // 绑定按钮事件
         document.getElementById('generate-btn').addEventListener('click', generateImprovement);
         
-        // 防止表单默认提交行为
-        document.getElementById('analysis-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            generateImprovement();
-        });
-        
         // 绑定重试按钮事件
         document.getElementById('try-again-btn').addEventListener('click', function() {
-            document.getElementById('initial-content').classList.remove('hidden');
-            document.getElementById('error-content').classList.add('hidden');
+            // 隐藏错误内容
+            const errorContent = document.getElementById('error-content');
+            errorContent.classList.add('hidden');
+            errorContent.style.display = 'none';
+            
+            // 显示初始内容在红框区域内
+            const initialContent = document.getElementById('initial-content');
+            initialContent.classList.remove('hidden');
+            initialContent.style.display = 'flex';
         });
         
         // 绑定复制部分内容按钮事件
@@ -1488,12 +1519,13 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
         });
         
         // 绑定复制全部内容按钮事件
-        document.getElementById('copyAllButton').addEventListener('click', function() {
+        document.getElementById('copy-all-btn').addEventListener('click', function() {
             const allSections = [
                 '产品现状分析：\n' + (document.getElementById('productAnalysis').getAttribute('data-raw-text') || document.getElementById('productAnalysis').textContent) + '\n\n',
-                '改款建议：\n' + (document.getElementById('improvementSuggestions').getAttribute('data-raw-text') || document.getElementById('improvementSuggestions').textContent) + '\n\n',
-                '市场竞争分析：\n' + (document.getElementById('competitionAnalysis').getAttribute('data-raw-text') || document.getElementById('competitionAnalysis').textContent) + '\n\n',
-                '改款后预期效果：\n' + (document.getElementById('expectedResults').getAttribute('data-raw-text') || document.getElementById('expectedResults').textContent)
+                '用户需求识别：\n' + (document.getElementById('userNeeds').getAttribute('data-raw-text') || document.getElementById('userNeeds').textContent) + '\n\n',
+                '竞品对比分析：\n' + (document.getElementById('competitiveAnalysis').getAttribute('data-raw-text') || document.getElementById('competitiveAnalysis').textContent) + '\n\n',
+                '潜在改进方向：\n' + (document.getElementById('improvementDirections').getAttribute('data-raw-text') || document.getElementById('improvementDirections').textContent) + '\n\n',
+                '具体改款建议：\n' + (document.getElementById('specificSuggestions').getAttribute('data-raw-text') || document.getElementById('specificSuggestions').textContent)
             ];
             
             const allText = allSections.join('');

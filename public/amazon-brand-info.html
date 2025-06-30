@@ -282,11 +282,11 @@
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制内容
+                        <span id="copyButtonText">复制内容</span>
                     </button>
                     <button type="button" id="regenerateButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        重新生成
+                        <span id="regenerateButtonText">重新生成</span>
                     </button>
                 </div>
             </div>
@@ -369,6 +369,9 @@
                             titleElement.className = 'font-bold text-xl text-indigo-700 mb-4';
                             titleElement.textContent = results.data.brandName || results.formData?.brandName || '品牌信息';
                             
+                            // 获取语言设置
+                            const isChinese = results.formData?.outputLanguage !== 'en';
+                            
                             // 恢复各个信息部分
                             const sections = [
                                 { key: 'foundingInfo', title: '品牌成立信息', titleEn: 'Founding Information' },
@@ -383,7 +386,7 @@
                                 if (results.data[section.key]) {
                                     const sectionTitle = document.createElement('h4');
                                     sectionTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                                    sectionTitle.textContent = section.title;
+                                    sectionTitle.textContent = isChinese ? section.title : section.titleEn;
                                     
                                     const sectionContent = document.createElement('div');
                                     sectionContent.className = 'text-gray-700 mb-4';
@@ -458,7 +461,10 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在收集和分析品牌信息，请稍候...';
+                const loadingLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                processingText.textContent = loadingLanguage === 'en' ? 
+                    'Collecting and analyzing brand information, please wait...' : 
+                    '正在收集和分析品牌信息，请稍候...';
                 
                 try {
                     // 获取表单数据
@@ -627,7 +633,9 @@
                         // 如果没有品牌信息内容，显示提示信息
                         const noBrandInfoMsg = document.createElement('p');
                         noBrandInfoMsg.className = 'text-gray-600 text-center py-4';
-                        noBrandInfoMsg.textContent = '未能收集到品牌信息，请尝试提供更精确的品牌名称或行业类别。';
+                        noBrandInfoMsg.textContent = formData.outputLanguage === 'en' ? 
+                            'Could not collect brand information. Please try providing a more specific brand name or industry category.' : 
+                            '未能收集到品牌信息，请尝试提供更精确的品牌名称或行业类别。';
                         brandInfoContainer.appendChild(noBrandInfoMsg);
                     }
                     
@@ -682,7 +690,10 @@
                         
                         // 显示复制成功提示
                         const originalText = copyButton.innerHTML;
-                        copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                        const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                        copyButton.innerHTML = outputLanguage === 'en' ? 
+                            '<i class="ri-check-line mr-1"></i>Copied' : 
+                            '<i class="ri-check-line mr-1"></i>已复制';
                         copyButton.classList.add('bg-green-500', 'text-white');
                         copyButton.classList.remove('text-indigo-600', 'bg-white');
                         
@@ -710,6 +721,23 @@
                 // 清除保存的结果
                 clearSavedResults();
                 
+                // 确保表单中有品牌名称
+                const brandNameInput = document.getElementById('brandName');
+                if (!brandNameInput.value.trim()) {
+                    // 尝试从结果中获取品牌名称
+                    const titleElement = document.querySelector('.brand-info-card h3');
+                    if (titleElement && titleElement.textContent) {
+                        brandNameInput.value = titleElement.textContent;
+                    } else {
+                        // 如果没有找到品牌名称，显示错误提示
+                        const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                        alert(outputLanguage === 'en' ? 
+                            'Brand name is required. Please enter a brand name.' : 
+                            '品牌名称是必要参数。请输入品牌名称。');
+                        return;
+                    }
+                }
+                
                 // 直接重新提交表单
                 brandInfoForm.dispatchEvent(new Event('submit'));
             });
@@ -730,7 +758,31 @@
                 }
             }
             
-            // 初始化时调用一次
+            // 更新界面文本语言
+            function updateUILanguage() {
+                const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                const copyButtonText = document.getElementById('copyButtonText');
+                const regenerateButtonText = document.getElementById('regenerateButtonText');
+                const generateButton = document.getElementById('generateBrandInfoButton');
+                
+                if (outputLanguage === 'en') {
+                    copyButtonText.textContent = 'Copy Content';
+                    regenerateButtonText.textContent = 'Regenerate';
+                    generateButton.innerHTML = '<i class="ri-store-line mr-2"></i>Collect Brand Info';
+                } else {
+                    copyButtonText.textContent = '复制内容';
+                    regenerateButtonText.textContent = '重新生成';
+                    generateButton.innerHTML = '<i class="ri-store-line mr-2"></i>收集品牌信息';
+                }
+            }
+            
+            // 监听语言选择变化
+            document.querySelectorAll('input[name="outputLanguage"]').forEach(radio => {
+                radio.addEventListener('change', updateUILanguage);
+            });
+            
+            // 初始化时调用
+            updateUILanguage();
             handleResponsiveLayout();
             
             // 窗口大小改变时调整布局
