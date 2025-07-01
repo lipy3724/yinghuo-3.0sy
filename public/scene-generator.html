@@ -131,10 +131,18 @@
             // 使用payload方式构建URL
             const payloadString = encodeURIComponent(JSON.stringify(params));
             // 使用场景图生成路由
-            // 检查是否为移动设备
-            const isMobile = /Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isMobile) {
-                console.log("检测到移动设备，不加载编辑器");
+            // 改进移动设备检测逻辑
+            function isMobileDevice() {
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                if (/android|iphone|ipod|ipad|windows phone|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())) {
+                    return window.innerWidth < 768; // 只有小屏移动设备才算移动设备
+                }
+                return false;
+            }
+            
+            // 只有在真正的移动设备上跳过加载
+            if (isMobileDevice()) {
+                console.log("检测到小屏移动设备，不加载编辑器");
                 return;
             }
             

@@ -3,14 +3,26 @@
 (function() {
   console.log('iframe移动端拦截脚本已加载');
   
-  // 检测是否为移动设备
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile) {
-    console.log('非移动设备，不进行拦截');
-    return; // 仅在移动浏览器执行
+  // 改进的移动设备检测逻辑
+  function isMobileDevice() {
+    // 检查用户代理
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    if (/android|iphone|ipod|ipad|windows phone|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())) {
+      // 进一步检查屏幕尺寸以排除平板和大屏设备
+      return window.innerWidth < 768; // 只有小屏移动设备才算移动设备
+    }
+    return false;
+  }
+
+  // 在真正的移动设备上执行拦截
+  const shouldBlock = isMobileDevice();
+  
+  if (!shouldBlock) {
+    console.log('非移动设备或大屏设备，不进行拦截');
+    return; // 不拦截
   }
   
-  console.log('iframe页面 - 检测到移动设备');
+  console.log('iframe页面 - 检测到移动设备，执行拦截');
   
   // 创建并显示提示弹窗
   function createMobileAlert() {
@@ -72,7 +84,7 @@
     // 添加到页面
     document.body.appendChild(alertContainer);
     
-    // 隐藏页面中的iframe
+    // 隐藏页面中的iframe（不更改src属性，避免触发CSP规则）
     const iframes = document.querySelectorAll('iframe');
     iframes.forEach(iframe => {
       iframe.style.display = 'none';
@@ -89,51 +101,14 @@
     }, 10);
   }
   
-  // 在DOM加载完成后显示提示
-  function showMobileAlert() {
-    if (document.body) {
+  // 延迟执行，确保不与CSP冲突
+  setTimeout(() => {
+    // 如果DOM已加载，立即显示提示
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
       createMobileAlert();
     } else {
-      // 如果body不存在，等待DOM加载完成
-      window.addEventListener('DOMContentLoaded', createMobileAlert);
+      // 等待DOM加载完成后处理
+      document.addEventListener('DOMContentLoaded', createMobileAlert);
     }
-  }
-  
-  // 阻止iframe加载
-  function blockIframeLoading() {
-    // 监听iframe元素创建
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        if (mutation.addedNodes) {
-          mutation.addedNodes.forEach(node => {
-            if (node.tagName === 'IFRAME') {
-              console.log('检测到iframe创建，阻止加载');
-              node.style.display = 'none';
-              node.src = 'about:blank'; // 清空iframe源
-            }
-          });
-        }
-      });
-    });
-    
-    // 开始观察DOM变化
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
-    
-    // 立即检查并隐藏现有iframe
-    document.addEventListener('DOMContentLoaded', () => {
-      const iframes = document.querySelectorAll('iframe');
-      iframes.forEach(iframe => {
-        console.log('隐藏现有iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'about:blank'; // 清空iframe源
-      });
-    });
-  }
-  
-  // 立即执行
-  showMobileAlert();
-  blockIframeLoading();
+  }, 500);
 })(); 
