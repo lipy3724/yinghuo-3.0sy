@@ -1053,10 +1053,11 @@
             document.getElementById('copyAllButton').innerHTML = 
                 `<i class="ri-file-copy-line mr-1"></i> ${isChinese ? '复制全部' : 'Copy All'}`;
             
+            // 注释掉这里的trackFeatureUsage调用，因为在API调用时已经扣费
             // 特性追踪 - 使用已加载的feature-tracker.js
-            if (typeof trackFeatureUsage === 'function') {
-                trackFeatureUsage('product_improvement_analysis');
-            }
+            // if (typeof trackFeatureUsage === 'function') {
+            //     trackFeatureUsage('product_improvement_analysis');
+            // }
         }
 
         // 显示错误
