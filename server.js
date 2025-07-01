@@ -382,7 +382,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy', 
-    "default-src 'self'; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.googletagmanager.com; connect-src 'self' https://api.openai.com https://exlzvpf9e2.execute-api.ap-southeast-1.amazonaws.com https://*.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'self'"
+    "default-src 'self'; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://g.alicdn.com https://a.alicdn.com; connect-src 'self' https://api.openai.com https://exlzvpf9e2.execute-api.ap-southeast-1.amazonaws.com https://*.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'self' https://editor.d.design https://g.alicdn.com"
   );
   next();
 });
