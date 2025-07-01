@@ -382,7 +382,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy', 
-    "default-src 'self'; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.googletagmanager.com; connect-src 'self' https://api.openai.com https://exlzvpf9e2.execute-api.ap-southeast-1.amazonaws.com https://*.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'self'"
+    "default-src 'self'; media-src 'self' blob: data: * https://*.aliyuncs.com https://*.alicdn.com https://*.aliyun.com https://*.dashscope.aliyuncs.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.googletagmanager.com; connect-src 'self' https://api.openai.com https://exlzvpf9e2.execute-api.ap-southeast-1.amazonaws.com https://*.googleapis.com; img-src 'self' data: https: blob: https://*.aliyuncs.com https://*.alicdn.com https://*.aliyun.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'self'"
   );
   next();
 });
@@ -1042,6 +1042,67 @@ app.get('/api/video-subtitle-removal/download', async (req, res) => {
   }
 });
 
+// 通用下载API - 用于所有类型的文件下载，包括视频数字人
+app.get('/api/download', async (req, res) => {
+  const { url, filename } = req.query;
+  if (!url) {
+    console.error('[download] 缺少URL参数');
+    return res.status(400).send('缺少 url 参数');
+  }
+  
+  console.log('[download] 请求下载文件:', url);
+  
+  try {
+    // 允许跨域访问
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // 添加CSP头，允许从任何源加载媒体
+    res.setHeader('Content-Security-Policy', "default-src 'self'; media-src * blob: data:; img-src * blob: data:;");
+    
+    const axios = require('axios');
+    const response = await axios.get(url, { 
+      responseType: 'arraybuffer',  // 使用arraybuffer而不是stream，避免某些流处理错误
+      timeout: 60000, // 增加到60秒超时
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    console.log('[download] 文件类型:', contentType);
+    
+    // 设置正确的内容类型
+    res.setHeader('Content-Type', contentType);
+    
+    // 设置文件名，优先使用请求中提供的文件名，否则使用默认名称
+    const downloadFilename = filename || 'download-file';
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
+    
+    // 设置缓存控制
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // 直接发送arraybuffer数据，而不是使用流
+    res.send(response.data);
+    
+  } catch (err) {
+    console.error('[download] 代理下载失败:', err.message);
+    if (err.response) {
+      console.error('  状态码:', err.response.status);
+      console.error('  响应头:', JSON.stringify(err.response.headers));
+    }
+    res.status(500).send('下载失败: ' + err.message);
+  }
+});
+
 // 在路由配置部分的开始处添加数字人视频处理路由
 
 // 静态文件服务 - 这应该在代理之前，确保静态文件优先
@@ -1360,15 +1421,21 @@ app.get('/api/digital-human/task/:taskId', async (req, res) => {
               }
             }
             
-                        if (videoDuration > 0) {
+            if (videoDuration > 0) {
               const taskInfo = global.digitalHumanTasks[taskId];
-              const isFree = taskInfo.isFree;
-              const hasChargedCredits = taskInfo.hasChargedCredits;
-              const uploadCreditCost = taskInfo.actualCreditCost || 0;
+              // 确保isFree默认为false，避免错误地将任务标记为免费
+              const isFree = taskInfo && taskInfo.isFree === true ? true : false;
+              const hasChargedCredits = taskInfo && taskInfo.hasChargedCredits ? taskInfo.hasChargedCredits : false;
+              const uploadCreditCost = taskInfo && taskInfo.actualCreditCost ? taskInfo.actualCreditCost : Math.ceil(videoDuration) * 9;
               
               // 若上传阶段已扣费，则沿用 uploadCreditCost；
-              // 否则先记录 0，由 saveTaskDetails 在内部根据真实时长统一扣费
-              let finalCreditCost = hasChargedCredits ? uploadCreditCost : 0;
+              // 否则根据视频时长计算积分（每秒9积分）
+              let finalCreditCost = hasChargedCredits ? uploadCreditCost : Math.ceil(videoDuration) * 9;
+              
+              // 如果是免费使用，则不扣除积分
+              if (isFree) {
+                finalCreditCost = 0;
+              }
               
               console.log(`任务 ${taskId} 积分处理: 扣除=${finalCreditCost} (${isFree ? '免费' : '付费'})，时长 ${videoDuration}秒，上传时已处理=${hasChargedCredits}`);
               
@@ -1409,6 +1476,31 @@ app.get('/api/digital-human/task/:taskId', async (req, res) => {
               global.digitalHumanTasks[taskId].creditCost = finalCreditCost;
               global.digitalHumanTasks[taskId].videoDuration = videoDuration;
               global.digitalHumanTasks[taskId].timestamp = new Date();
+              
+              // 直接更新用户表中的积分，确保积分管理页面能正确显示
+              if (!isFree && finalCreditCost > 0) {
+                const user = await User.findByPk(userId);
+                if (user) {
+                  // 如果是首次扣除积分，直接扣除
+                  if (!hasChargedCredits) {
+                    user.credits -= finalCreditCost;
+                    await user.save();
+                    console.log(`已直接从用户表扣除积分: 用户ID=${userId}, 积分=${finalCreditCost}, 剩余=${user.credits}`);
+                  } else {
+                    // 如果已经扣除过积分，但金额不一致，进行调整
+                    const previousCost = taskInfo.actualCreditCost || 0;
+                    if (previousCost !== finalCreditCost) {
+                      const diff = finalCreditCost - previousCost;
+                      if (diff !== 0) {
+                        // 如果差额为正，补扣积分；如果为负，退还积分
+                        user.credits -= diff;
+                        await user.save();
+                        console.log(`调整用户积分: 用户ID=${userId}, 调整=${diff}, 最终积分=${finalCreditCost}, 剩余=${user.credits}`);
+                      }
+                    }
+                  }
+                }
+              }
               
               console.log(`数字人视频任务ID ${taskId} 详情保存完成，积分 ${finalCreditCost} (${isFree ? '免费' : '付费'})，时长 ${videoDuration}秒`);
             }
@@ -6219,4 +6311,7 @@ module.exports = {
 app.get('/test-scene-refund', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'test-scene-refund.html'));
 });
+
+// 视频直接下载处理
+// 不使用代理API，由前端直接处理下载
 

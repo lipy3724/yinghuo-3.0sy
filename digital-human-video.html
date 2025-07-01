@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; media-src 'self' blob: data:; img-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;">
+    <!-- 完全移除CSP限制以解决视频加载问题 -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; media-src * blob: data:; img-src * blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;"> -->
     <title>视频数字人 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -707,14 +708,31 @@
                             // 显示结果视频
                             try {
                                 console.log('设置结果视频URL:', data.videoUrl);
-                                resultVideo.src = data.videoUrl;
+                                
+                                // 保存原始URL用于下载
+                                resultVideo.setAttribute('data-original-url', data.videoUrl);
+                                
+                                // 使用代理API加载视频，避免CSP问题
+                                const proxyUrl = `/api/download?url=${encodeURIComponent(data.videoUrl)}`;
+                                console.log('使用代理URL加载视频:', proxyUrl);
+                                resultVideo.src = proxyUrl;
                                 resultVideo.crossOrigin = "anonymous"; // 添加跨域支持
+                                
                                 resultVideo.onloadeddata = function() {
                                     console.log('视频已加载成功');
                                 };
                                 resultVideo.onerror = function(e) {
                                     console.error('视频加载错误:', e);
-                                    alert('视频预览加载失败，但您仍可以下载视频。');
+                                    // 显示错误信息
+                                    resultPlaceholder.innerHTML = `
+                                        <div class="flex flex-col items-center justify-center text-center p-4">
+                                            <i class="ri-error-warning-line text-5xl text-red-500 mb-2"></i>
+                                            <p class="text-red-500">视频预览加载失败</p>
+                                            <p class="text-sm text-gray-500 mt-2">请尝试直接下载视频查看</p>
+                                        </div>
+                                    `;
+                                    resultPlaceholder.classList.remove('hidden');
+                                    resultPreview.classList.add('hidden');
                                 };
                                 resultPreview.classList.remove('hidden');
                                 resultPlaceholder.classList.add('hidden');
@@ -756,6 +774,7 @@
                             const updateCreditInfo = () => {
                                 // 优先使用API返回的时长，如果没有则使用视频元数据
                                 const videoDuration = data.videoDuration || Math.ceil(resultVideo.duration);
+                                const creditsUsed = data.creditsUsed || Math.ceil(videoDuration * 9); // 默认按9积分/秒计算
                                 
                                 costInfoElement.innerHTML = `
                                     <div class="flex items-start">
@@ -765,9 +784,39 @@
                                             <p class="text-indigo-700 mt-1">
                                                 视频时长: <strong>${Math.ceil(videoDuration)}秒</strong>
                                             </p>
+                                            <p class="text-indigo-700">
+                                                积分消费: <strong>${creditsUsed}积分</strong>
+                                            </p>
                                         </div>
                                     </div>
                                 `;
+                                
+                                // 更新用户积分显示
+                                updateUserCredits();
+                                
+                                // 更新页面顶部积分显示
+                                updateHeaderCredits();
+                                
+                                // 直接刷新积分管理页面中的积分显示
+                                try {
+                                    // 如果当前页面在iframe中，尝试更新父页面的积分显示
+                                    if (window.parent && window.parent !== window) {
+                                        window.parent.postMessage({
+                                            type: 'CREDITS_UPDATED',
+                                            credits: data.credits || 'refresh'
+                                        }, '*');
+                                    }
+                                    
+                                    // 触发全局事件，通知其他可能的组件
+                                    const event = new CustomEvent('creditsUpdated', {
+                                        detail: { credits: data.credits || 'refresh' }
+                                    });
+                                    document.dispatchEvent(event);
+                                    
+                                    console.log('已触发积分更新事件');
+                                } catch (e) {
+                                    console.error('触发积分更新事件失败:', e);
+                                }
                             };
                             
                             // 如果API返回了时长，直接使用
@@ -831,22 +880,37 @@
             downloadBtn.addEventListener('click', function() {
                 if (resultVideo.src) {
                     try {
-                        // 创建一个安全的下载URL
-                        const videoURL = resultVideo.src;
+                        // 获取原始视频URL
+                        let originalVideoURL = resultVideo.getAttribute('data-original-url') || resultVideo.src;
                         
-                        // 通过服务器代理下载，解决跨域与权限问题
-                        const downloadUrl = `/api/download?url=${encodeURIComponent(videoURL)}&filename=声动人像视频.mp4`;
+                        console.log('准备下载视频:', originalVideoURL);
                         
-                        console.log('准备下载视频:', downloadUrl);
+                        // 使用代理API创建下载链接
+                        const downloadUrl = `/api/download?url=${encodeURIComponent(originalVideoURL)}&filename=声动人像视频.mp4`;
                         
-                        // 创建一个临时链接并触发下载
-                        const a = document.createElement('a');
-                        a.href = downloadUrl;
-                        a.download = '声动人像视频.mp4';
-                        a.target = '_blank'; // 在新标签页打开
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
+                        // 创建一个隐藏的a标签并触发点击
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = downloadUrl;
+                        downloadLink.download = '声动人像视频.mp4';
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+                        
+                        // 显示下载开始提示
+                        const downloadToast = document.createElement('div');
+                        downloadToast.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+                        downloadToast.innerHTML = `
+                            <div class="flex items-center">
+                                <i class="ri-download-line mr-2"></i>
+                                <p>视频下载已开始</p>
+                            </div>
+                        `;
+                        document.body.appendChild(downloadToast);
+                        
+                        // 3秒后移除提示
+                        setTimeout(() => {
+                            document.body.removeChild(downloadToast);
+                        }, 3000);
                     } catch (error) {
                         console.error('下载视频失败:', error);
                         alert('下载视频失败: ' + error.message);
@@ -855,6 +919,102 @@
                     alert('没有可下载的视频');
                 }
             });
+            
+            // 更新用户积分显示
+            function updateUserCredits() {
+                // 获取用户最新积分
+                fetch('/api/user/credits', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // 如果页面上有显示积分的元素，则更新它
+                    const creditsElement = document.getElementById('user-credits');
+                    if (creditsElement) {
+                        creditsElement.textContent = data.credits;
+                    }
+                    
+                    console.log('用户积分已更新:', data.credits);
+                })
+                .catch(error => {
+                    console.error('获取用户积分失败:', error);
+                });
+            }
+            
+            // 更新页面顶部积分显示
+            function updateHeaderCredits() {
+                // 获取用户最新积分
+                fetch('/api/user/credits', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // 尝试更新页面顶部的积分显示
+                    try {
+                        // 查找页面上可能的积分显示元素
+                        const headerCreditsElements = document.querySelectorAll('.header-credits, .user-credits, .credits-display');
+                        if (headerCreditsElements.length > 0) {
+                            headerCreditsElements.forEach(el => {
+                                el.textContent = data.credits;
+                            });
+                            console.log('页面顶部积分已更新:', data.credits);
+                        }
+                        
+                        // 发送积分更新事件，通知其他页面（特别是积分管理页面）
+                        const creditsUpdateEvent = new CustomEvent('creditsUpdated', { 
+                            detail: { credits: data.credits } 
+                        });
+                        document.dispatchEvent(creditsUpdateEvent);
+                        console.log('已触发积分更新事件:', data.credits);
+                        
+                        // 如果页面有iframe，也尝试通知父页面
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({
+                                type: 'CREDITS_UPDATED',
+                                credits: data.credits
+                            }, '*');
+                            console.log('已向父页面发送积分更新消息');
+                        }
+                        
+                        // 查找并刷新所有打开的积分管理页面
+                        try {
+                            // 如果用户有打开积分管理页面，尝试刷新它
+                            const creditWindows = window.open('', 'credits_page');
+                            if (creditWindows && !creditWindows.closed) {
+                                creditWindows.postMessage({
+                                    type: 'CREDITS_UPDATED',
+                                    credits: data.credits,
+                                    forceRefresh: true
+                                }, '*');
+                                console.log('已向积分管理页面发送强制刷新消息');
+                            }
+                        } catch (err) {
+                            console.log('尝试刷新积分管理页面失败:', err);
+                        }
+                        
+                        // 直接尝试刷新同域名下的其他页面
+                        try {
+                            // 获取所有打开的同源页面
+                            localStorage.setItem('lastCreditsUpdate', JSON.stringify({
+                                credits: data.credits,
+                                timestamp: Date.now()
+                            }));
+                            console.log('已更新本地存储的积分信息');
+                        } catch (err) {
+                            console.error('更新本地存储积分信息失败:', err);
+                        }
+                    } catch (err) {
+                        console.error('更新页面顶部积分显示失败:', err);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取用户积分失败:', error);
+                });
+            }
             
             // 初始化检查生成按钮状态
             checkGenerateButtonState();

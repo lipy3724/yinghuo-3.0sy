@@ -4,12 +4,13 @@ const axios = require('axios');
 const { protect } = require('../middleware/auth');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
 const User = require('../models/User');
-const { FeatureUsage } = require('../models/FeatureUsage');
+const FeatureUsage = require('../models/FeatureUsage');
 const ImageHistory = require('../models/ImageHistory');
 const { sequelize } = require('../config/db');
 const multer = require('multer');
 const { uploadFile } = require('../utils/ossService'); // 导入OSS上传服务
 const fs = require('fs');
+const path = require('path');
 
 // 配置文件上传存储
 const storage = multer.diskStorage({
@@ -1654,6 +1655,8 @@ router.post('/image-to-video-sync', protect, createUnifiedFeatureMiddleware('ima
 const uploadImageRoute = express.Router();
 
 uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => {
+    // 确保环境变量已加载
+    require('dotenv').config();
     try {
         if (!req.file) {
             return res.status(400).json({ 
@@ -1683,8 +1686,9 @@ uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => 
             }
         } catch (ossError) {
             console.error('上传到阿里云OSS失败:', ossError);
-            // 返回错误，不使用本地URL
+            // 返回错误信息
             return res.status(500).json({
+                success: false,
                 code: 'OssUploadFailed',
                 message: '上传图片到OSS失败: ' + ossError.message,
                 request_id: null
@@ -1692,13 +1696,17 @@ uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => 
         }
         
         // 返回统一的响应格式
-        return res.json({
+        const response = {
+            success: true, // 添加success字段以兼容前端代码
             output: {
                 img_url: imageUrl
             },
             imageUrl: imageUrl, // 兼容旧代码
             request_id: Date.now().toString() // 生成一个唯一ID作为请求ID
-        });
+        };
+        
+        console.log('图片上传成功，返回数据:', JSON.stringify(response));
+        return res.json(response);
     } catch (error) {
         console.error('图片上传处理错误:', error);
         return res.status(500).json({
@@ -1708,6 +1716,156 @@ uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => 
         });
     }
 });
+
+// 查询任务状态
+router.get('/digital-human/task/:taskId', protect, async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        console.log('查询任务状态:', taskId);
+        
+        // 验证任务ID格式
+        if (!taskId || taskId.length < 5) {
+            return res.status(400).json({ message: '无效的任务ID' });
+        }
+        
+        // 查询任务状态
+        console.log('准备查询任务状态:', taskId);
+        const response = await dashscopeService.queryVideoRetalkTaskStatus(taskId);
+        
+        if (response.status !== 200) {
+            console.error('查询任务状态失败:', response.data);
+            return res.status(response.status).json({ message: '查询任务状态失败', details: response.data });
+        }
+        
+        console.log('完整响应数据:', response.data);
+        
+        // 解析响应数据
+        const output = response.data.output;
+        const taskStatus = output.task_status;
+        
+        // 准备响应数据
+        let responseData = {
+            status: taskStatus
+        };
+        
+        // 如果任务完成，添加视频URL
+        if (taskStatus === 'SUCCEEDED') {
+            const videoUrl = output.video_url;
+            console.log('从output.video_url获取到视频URL:', videoUrl);
+            
+            // 获取视频时长
+            let videoDuration = 0;
+            if (response.data.usage && response.data.usage.video_duration) {
+                videoDuration = Math.ceil(response.data.usage.video_duration);
+                console.log('从API响应的usage.video_duration获取视频时长:', response.data.usage.video_duration, '秒，取整后:', videoDuration, '秒');
+            }
+            
+            // 查询任务详情以获取积分消费信息
+            const userId = req.user.id;
+            const featureUsage = await FeatureUsage.findOne({
+                where: { userId, featureName: 'DIGITAL_HUMAN_VIDEO' }
+            });
+            
+            let creditsUsed = 0;
+            if (featureUsage && featureUsage.details) {
+                try {
+                    const details = JSON.parse(featureUsage.details);
+                    const taskDetail = details.tasks.find(t => t.taskId === taskId);
+                    if (taskDetail) {
+                        creditsUsed = taskDetail.credits || 0;
+                    }
+                } catch (err) {
+                    console.error('解析任务详情失败:', err);
+                }
+            }
+            
+            // 保存任务详情
+            const taskDetails = {
+                status: 'SUCCEEDED',
+                videoUrl: videoUrl,
+                videoDuration: videoDuration,
+                creditsUsed: creditsUsed,
+                requestId: response.data.request_id
+            };
+            
+            console.log('完整响应状态数据:', taskDetails);
+            
+            // 保存任务详情到数据库
+            try {
+                await saveTaskDetails(taskId, req.user.id, taskDetails);
+            } catch (error) {
+                console.error('保存任务详情失败:', error);
+            }
+            
+            responseData = taskDetails;
+        } else if (taskStatus === 'FAILED') {
+            // 如果任务失败，添加错误信息
+            responseData.message = output.message || '任务处理失败';
+        }
+        
+        res.status(200).json(responseData);
+        console.log('响应请求: GET /api/digital-human/task/' + taskId + ' - 状态: 200');
+    } catch (error) {
+        console.error('查询任务状态时出错:', error);
+        res.status(500).json({ message: '查询任务状态时出错', error: error.message });
+    }
+});
+
+// 保存任务详情到数据库
+async function saveTaskDetails(taskId, userId, details) {
+    try {
+        const featureUsage = await FeatureUsage.findOne({
+            where: { userId, featureName: 'DIGITAL_HUMAN_VIDEO' }
+        });
+        
+        if (!featureUsage) {
+            console.error(`未找到用户${userId}的DIGITAL_HUMAN_VIDEO功能使用记录`);
+            return;
+        }
+        
+        // 解析现有details
+        let parsedDetails = { tasks: [] };
+        if (featureUsage.details) {
+            try {
+                parsedDetails = JSON.parse(featureUsage.details);
+                if (!parsedDetails.tasks) {
+                    parsedDetails.tasks = [];
+                }
+            } catch (err) {
+                console.error('解析details失败:', err);
+                parsedDetails = { tasks: [] };
+            }
+        }
+        
+        // 查找是否已存在该任务
+        const taskIndex = parsedDetails.tasks.findIndex(t => t.taskId === taskId);
+        
+        if (taskIndex >= 0) {
+            // 更新现有任务
+            parsedDetails.tasks[taskIndex] = {
+                ...parsedDetails.tasks[taskIndex],
+                ...details
+            };
+        } else {
+            // 添加新任务
+            parsedDetails.tasks.push({
+                taskId,
+                ...details,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // 更新数据库
+        await featureUsage.update({
+            details: JSON.stringify(parsedDetails)
+        });
+        
+        console.log(`任务详情已保存: 任务ID=${taskId}, 积分=${details.creditsUsed}, 是否免费=${details.isFree || false}`);
+    } catch (error) {
+        console.error('保存任务详情失败:', error);
+        throw error;
+    }
+}
 
 module.exports = router;
 module.exports.uploadImageRoute = uploadImageRoute; 

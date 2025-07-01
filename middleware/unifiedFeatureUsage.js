@@ -198,6 +198,35 @@ const saveTaskDetails = async (usage, taskInfo) => {
             await usage.save();
             console.log(`[校正] 已向用户 ${usage.userId} 退款积分 ${refund}`);
           }
+        } else {
+          // 即使积分没有变化，也要确保用户表被更新
+          // 这是为了解决数字人视频功能积分不显示在积分管理页面的问题
+          if (!taskInfo.isFree && taskInfo.creditCost > 0) {
+            const user = await User.findByPk(usage.userId);
+            if (user) {
+              // 检查是否已经扣除过积分
+              const existingTask = tasks.find(t => t.taskId === taskInfo.taskId);
+              const alreadyCharged = existingTask && existingTask.hasChargedToUser;
+              
+              if (!alreadyCharged) {
+                // 如果没有扣除过积分，直接扣除
+                user.credits -= taskInfo.creditCost;
+                await user.save();
+                
+                // 更新任务记录，标记为已扣除
+                if (Array.isArray(tasks) && tasks.length > 0) {
+                  const taskIndex = tasks.findIndex(t => t.taskId === taskInfo.taskId);
+                  if (taskIndex !== -1) {
+                    tasks[taskIndex].hasChargedToUser = true;
+                    usage.details = JSON.stringify({ ...details, tasks });
+                    await usage.save();
+                  }
+                }
+                
+                console.log(`[数字人视频] 已直接从用户表扣除积分: 用户ID=${usage.userId}, 积分=${taskInfo.creditCost}, 剩余=${user.credits}`);
+              }
+            }
+          }
         }
       }
       

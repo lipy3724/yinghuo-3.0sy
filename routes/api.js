@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
+const { sequelize } = require('../config/db');
+const User = require('../models/User');
 const crypto = require('crypto');
 const { refundImageRemovalCredits } = require('../utils/refundManager');
 
@@ -110,6 +112,25 @@ router.post('/refund/image-removal', protect, async (req, res) => {
       success: false, 
       message: '服务器处理退款请求时出错: ' + error.message 
     });
+  }
+});
+
+// 获取用户积分
+router.get('/user/credits', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findByPk(userId, {
+      attributes: ['credits']
+    });
+    
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+    
+    res.json({ credits: user.credits });
+  } catch (error) {
+    console.error('获取用户积分失败:', error);
+    res.status(500).json({ message: '获取用户积分失败' });
   }
 });
 

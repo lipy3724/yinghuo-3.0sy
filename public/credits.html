@@ -323,7 +323,8 @@
         // 加载用户积分信息
         async function loadCreditsInfo() {
             try {
-                const response = await fetch('/api/credits', {
+                // 直接从用户API获取最新积分，而不是从credits API获取
+                const response = await fetch('/api/user/credits', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                     }
@@ -332,19 +333,34 @@
                 if (response.ok) {
                     const data = await response.json();
                     
-                    if (data.success && data.data) {
-                        // 更新用户积分信息
-                        userCredits = data.data.user.credits;
-                        document.getElementById('user-credits').textContent = userCredits;
+                    // 更新用户积分信息
+                    userCredits = data.credits;
+                    document.getElementById('user-credits').textContent = userCredits;
+                    
+                    console.log('积分管理页面：已更新积分为', userCredits);
+                    
+                    // 获取上次充值时间（仍然需要从credits API获取）
+                    try {
+                        const creditsResponse = await fetch('/api/credits', {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        });
                         
-                        // 更新上次充值时间
-                        const lastRechargeTime = data.data.user.lastRechargeTime;
-                        if (lastRechargeTime) {
-                            const date = new Date(lastRechargeTime);
-                            document.getElementById('last-recharge-time').textContent = date.toLocaleString('zh-CN');
+                        if (creditsResponse.ok) {
+                            const creditsData = await creditsResponse.json();
+                            
+                            if (creditsData.success && creditsData.data && creditsData.data.user) {
+                                // 更新上次充值时间
+                                const lastRechargeTime = creditsData.data.user.lastRechargeTime;
+                                if (lastRechargeTime) {
+                                    const date = new Date(lastRechargeTime);
+                                    document.getElementById('last-recharge-time').textContent = date.toLocaleString('zh-CN');
+                                }
+                            }
                         }
-                        
-                        // 使用记录功能已删除，不再处理 featureUsages
+                    } catch (err) {
+                        console.error('获取充值时间失败:', err);
                     }
                 } else {
                     const error = await response.json();
@@ -574,6 +590,56 @@
                     }
                 });
             }
+            
+            // 监听页面可见性变化，当用户切换回页面时刷新积分信息
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') {
+                    console.log('页面变为可见，刷新积分信息');
+                    loadCreditsInfo();
+                }
+            });
+            
+            // 监听自定义事件，当其他页面发出积分更新事件时刷新积分信息
+            document.addEventListener('creditsUpdated', function(event) {
+                console.log('收到积分更新事件，刷新积分信息', event.detail);
+                loadCreditsInfo();
+            });
+            
+            // 监听来自iframe或其他窗口的消息
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'CREDITS_UPDATED') {
+                    console.log('收到积分更新消息，刷新积分信息', event.data);
+                    // 如果是强制刷新消息，直接刷新页面
+                    if (event.data.forceRefresh) {
+                        console.log('收到强制刷新指令，即将刷新页面');
+                        window.location.reload();
+                        return;
+                    }
+                    loadCreditsInfo();
+                }
+            });
+            
+            // 监听本地存储变化
+            window.addEventListener('storage', function(event) {
+                if (event.key === 'lastCreditsUpdate') {
+                    try {
+                        const updateData = JSON.parse(event.newValue);
+                        if (updateData && updateData.timestamp) {
+                            // 检查时间戳是否在30秒内
+                            const now = Date.now();
+                            if (now - updateData.timestamp < 30000) { // 30秒内的更新才处理
+                                console.log('检测到积分更新，刷新积分信息', updateData);
+                                loadCreditsInfo();
+                            }
+                        }
+                    } catch (err) {
+                        console.error('解析积分更新数据失败:', err);
+                    }
+                }
+            });
+            
+            // 每30秒自动刷新一次积分信息
+            setInterval(loadCreditsInfo, 30000);
         });
         
         // 初始化充值表单
