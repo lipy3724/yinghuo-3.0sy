@@ -3,6 +3,7 @@
  */
 const OSS = require('ali-oss');
 const config = require('../config/index');
+const axios = require('axios');
 
 // OSS客户端实例
 let ossClient = null;
@@ -200,6 +201,48 @@ async function uploadVideoToOSS(buffer, ossPath, mimetype) {
 }
 
 /**
+ * 通过远程URL拉取视频并上传到OSS（流式传输，节省内存）
+ * @param {String} sourceUrl 源视频的可访问URL（可为阿里云处理结果临时URL）
+ * @param {String} ossPath 目标OSS存储路径（如: 'video-logo-removal/{userId}/{taskId}_output.mp4'）
+ * @returns {Promise<{ url: string, size?: number, ossPath: string }>} 上传完成后的信息
+ */
+async function uploadVideoFromUrlToOSS(sourceUrl, ossPath) {
+  const client = getOSSClient();
+  if (!client) {
+    console.error('上传远程视频到OSS失败: OSS客户端未初始化');
+    throw new Error('OSS客户端未初始化，请检查OSS配置');
+  }
+  if (!sourceUrl) {
+    throw new Error('sourceUrl 不能为空');
+  }
+  if (!ossPath) {
+    throw new Error('ossPath 不能为空');
+  }
+  console.log(`开始从远程URL拉取视频并上传到OSS: ${sourceUrl} -> ${ossPath}`);
+  try {
+    const response = await axios({
+      method: 'GET',
+      url: sourceUrl,
+      responseType: 'stream',
+      timeout: 300000
+    });
+    const contentLength = parseInt(response.headers['content-length'] || '0', 10) || undefined;
+    const contentType = response.headers['content-type'] || 'video/mp4';
+    const putOptions = {
+      headers: {
+        'Content-Type': contentType
+      }
+    };
+    const result = await client.putStream(ossPath, response.data, putOptions);
+    console.log(`远程视频上传OSS成功: ${result.url}`);
+    return { url: result.url, size: contentLength, ossPath };
+  } catch (error) {
+    console.error('上传远程视频到OSS失败:', error);
+    throw new Error(`上传远程视频到OSS失败: ${error.message}`);
+  }
+}
+
+/**
  * 获取OSS文件的签名URL（用于临时访问私有文件）
  * @param {String} ossPath OSS中的存储路径
  * @param {Number} expireSeconds URL有效期（秒）
@@ -229,5 +272,6 @@ module.exports = {
   uploadToOSS,
   uploadVideoToOSS,
   deleteFromOSS,
-  getSignedUrl
+  getSignedUrl,
+  uploadVideoFromUrlToOSS
 };

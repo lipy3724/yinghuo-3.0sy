@@ -874,7 +874,7 @@
             updateLogoBoxesList();
         }
         
-        // 显示视频
+        // 显示视频（与局部重绘一致：使用主预览区域显示结果）
         function displayVideo(videoUrl, taskId = null) {
             // 使用代理API加载视频，避免CSP问题（特别是http://协议的URL）
             // direct=true 参数表示这是预览而非下载
@@ -882,9 +882,9 @@
             console.log('使用代理URL加载视频:', proxyUrl);
             
             // 添加错误处理
-            outputVideo.onerror = function() {
+            originalVideo.onerror = function() {
                 console.error('视频加载失败:', proxyUrl);
-                outputVideoWrapper.innerHTML = `
+                originalVideoWrapper.innerHTML = `
                     <div class="text-center py-8 text-gray-500">
                         <i class="ri-error-warning-line text-4xl mb-2"></i>
                         <p class="text-sm">视频加载失败，请尝试下载</p>
@@ -896,12 +896,15 @@
                 `;
             };
             
-            outputVideo.src = proxyUrl;
-            outputVideoPlaceholder.classList.add('hidden');
-            outputVideoWrapper.classList.remove('hidden');
-            if (resultContainer) {
-                resultContainer.classList.remove('hidden');
-            }
+            // 在主预览区域展示结果视频
+            originalVideo.src = proxyUrl;
+            originalVideoPlaceholder.classList.add('hidden');
+            originalVideoWrapper.classList.remove('hidden');
+            // 隐藏次级“处理后视频”容器，避免重复
+            if (resultContainer) resultContainer.classList.add('hidden');
+            // 移除任何已存在的水印选择框，避免遮挡播放
+            clearLogoBoxes();
+            
             videoActions.classList.remove('hidden');
             
             // 为下载按钮添加事件监听器
@@ -1472,13 +1475,19 @@
                 
                 // 视频预览（仅当任务成功且有视频URL时）
                 let videoPreview = '';
-                if ((item.status === 'SUCCEEDED' || item.status === 'PROCESS_SUCCESS' || item.status === 'Success' || item.status === 'completed') && videoUrl) {
-                    // 使用代理API加载视频，避免CSP问题（特别是http://协议的URL）
-                    const proxyVideoUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
+                if ((item.status === 'SUCCEEDED' || item.status === 'PROCESS_SUCCESS' || item.status === 'Success' || item.status === 'completed') && videoUrl && taskId) {
+                    // 🔧 修复：使用专用的预览API来获取视频，避免OSS URL过期导致的403错误
+                    // 这个API会从OSS重新获取视频并代理给前端，确保视频可以正常播放
+                    // 通过query参数传递token，因为video标签无法发送自定义header
+                    const authToken = localStorage.getItem('authToken');
+                    const videoPreviewUrl = authToken 
+                        ? `/api/video-logo-removal/preview/${taskId}?token=${encodeURIComponent(authToken)}`
+                        : `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
+                    
                     videoPreview = `
                         <div class="mt-3">
-                            <video controls class="w-full rounded" style="max-height: 180px" onerror="this.parentElement.innerHTML='<div class=\\'text-center py-4 text-gray-500 text-sm\\'><i class=\\'ri-error-warning-line mr-1\\'></i>视频加载失败，请尝试下载</div>'">
-                                <source src="${proxyVideoUrl}" type="video/mp4">
+                            <video controls class="w-full rounded" style="max-height: 180px" preload="metadata" onerror="handleVideoError(this, '${taskId}')">
+                                <source src="${videoPreviewUrl}" type="video/mp4">
                                 您的浏览器不支持视频标签
                             </video>
                             <div class="flex justify-end mt-2">
@@ -1724,6 +1733,60 @@
             });
         }
 
+        // 视频加载错误处理函数
+        function handleVideoError(videoElement, taskId) {
+            console.error('视频加载失败，任务ID:', taskId);
+            const parentDiv = videoElement.parentElement;
+            parentDiv.innerHTML = `
+                <div class="text-center py-4 text-gray-500 text-sm">
+                    <i class="ri-error-warning-line mr-1"></i>视频加载失败
+                    <div class="mt-2">
+                        <button class="history-download-btn text-indigo-600 hover:text-indigo-800 text-sm" data-task-id="${taskId}">
+                            <i class="ri-download-2-line mr-1"></i>尝试下载
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 重新绑定下载按钮事件
+            const downloadBtn = parentDiv.querySelector('.history-download-btn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', async () => {
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        alert('请先登录后再下载视频');
+                        return;
+                    }
+                    
+                    try {
+                        const downloadUrl = `/api/video-logo-removal/download/${taskId}`;
+                        const response = await fetch(downloadUrl, {
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`下载失败: ${response.status}`);
+                        }
+                        
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = '无水印视频.mp4';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    } catch (error) {
+                        console.error('下载失败:', error);
+                        alert(`下载失败: ${error.message}`);
+                    }
+                });
+            }
+        }
+        
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', () => {
             loadTaskHistory();

@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { protect } = require('../middleware/auth');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
-const { uploadVideoToOSS } = require('../utils/ossUtils');
+const { uploadVideoToOSS, getOSSClient, uploadVideoFromUrlToOSS } = require('../utils/ossUtils');
 const { FileNameOptimizer, generateSafeOSSPath, sanitizeFileName } = require('../utils/fileNameUtils');
 const axios = require('axios');
 const VideoLogoRemovalService = require('../services/videoLogoRemovalService');
@@ -563,6 +563,30 @@ router.get('/status/:taskId', protect, async (req, res) => {
                 
                 console.log('✅ 任务完成:', { taskId, resultVideoUrl });
                 
+                // 异步将结果视频保存到自有OSS桶（不阻塞响应）
+                (async () => {
+                    try {
+                        const outputKey = generateSafeOSSPath(task.userId, task.taskId, task.originalFileName || 'video.mp4', '_output');
+                        console.log('📤 开始备份结果视频到OSS:', { outputKey });
+                        const ossRes = await uploadVideoFromUrlToOSS(resultVideoUrl, outputKey);
+                        console.log('✅ 结果视频已保存到自有OSS:', ossRes);
+                        
+                        // 将任务结果URL更新为自有OSS的永久地址，避免临时链接过期
+                        try {
+                            await VideoLogoRemovalService.updateTaskStatus(taskId, 'completed', {
+                                resultVideoUrl: ossRes.url,
+                                // 不覆盖已存在的视频时长；仅在首次完成时写入
+                                videoDuration: task.videoDuration
+                            });
+                            console.log('📝 已将任务结果URL更新为自有OSS地址:', { taskId, url: ossRes.url });
+                        } catch (persistErr) {
+                            console.error('❌ 持久化自有OSS结果URL失败:', persistErr.message);
+                        }
+                    } catch (ossErr) {
+                        console.error('❌ 备份结果视频到OSS失败:', ossErr.message);
+                    }
+                })();
+                
             } catch (parseError) {
                 console.error('❌ 解析任务结果失败:', parseError);
                 const updatedTask = await VideoLogoRemovalService.updateTaskStatus(taskId, 'failed', {
@@ -772,6 +796,324 @@ router.get('/download/:taskId', protect, async (req, res) => {
 });
 
 /**
+ * @route   GET /api/video-logo-removal/preview/:taskId
+ * @desc    预览处理完成的视频（支持通过query参数传递token，供video标签使用）
+ * @access  私有（通过token验证）
+ */
+router.get('/preview/:taskId', async (req, res) => {
+    try {
+        const { taskId } = req.params;
+        // 支持从query参数或header中获取token
+        const token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: '缺少认证令牌'
+            });
+        }
+        
+        // 验证token并获取用户信息
+        const jwt = require('jsonwebtoken');
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (error) {
+            return res.status(401).json({
+                success: false,
+                message: '无效的认证令牌'
+            });
+        }
+        
+        const userId = decoded.id;
+        
+        console.log('📺 开始预览视频:', { taskId, userId });
+        
+        // 从数据库获取任务信息
+        const task = await VideoLogoRemovalService.getTaskById(taskId);
+        
+        // 验证用户权限
+        if (task.userId !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: '无权访问此任务'
+            });
+        }
+        
+        // 检查任务是否完成
+        if (task.status !== 'completed' || !task.resultVideoUrl) {
+            return res.status(400).json({
+                success: false,
+                message: '任务尚未完成或没有可预览的结果'
+            });
+        }
+        
+        try {
+            // 🔧 修复：使用OSS SDK直接获取文件流，避免签名URL过期问题
+            console.log('🌐 从OSS获取视频:', task.resultVideoUrl);
+            
+            // 从OSS URL中提取bucket、region和路径
+            // OSS URL格式: http://bucket.region.aliyuncs.com/path/to/file?query
+            // 或: http://bucket.oss-region.aliyuncs.com/path/to/file?query
+            let ossPath = '';
+            let ossBucket = null;
+            let ossRegion = null;
+            
+            try {
+                const url = new URL(task.resultVideoUrl);
+                const hostname = url.hostname;
+                
+                // 从hostname中提取bucket和region
+                // 格式: bucket.oss-region.aliyuncs.com 或 bucket.region.aliyuncs.com
+                // 例如: vibktprfx-prod-prod-damo-eas-cn-shanghai.oss-cn-shanghai.aliyuncs.com
+                const hostnameParts = hostname.split('.');
+                if (hostnameParts.length >= 3) {
+                    // 第一个部分是bucket
+                    ossBucket = hostnameParts[0];
+                    // 第二个部分可能是region
+                    const regionPart = hostnameParts[1];
+                    // OSS SDK需要的region格式是 'oss-cn-shanghai'，保持原样
+                    ossRegion = regionPart;
+                }
+                
+                // 提取路径并进行URL解码
+                // url.pathname返回的是URL编码后的路径，需要解码
+                let rawPath = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
+                // 对路径进行URL解码，处理特殊字符如 %3A (冒号)
+                ossPath = decodeURIComponent(rawPath);
+                
+                console.log('📁 提取的OSS信息:', { 
+                    bucket: ossBucket, 
+                    region: ossRegion, 
+                    path: ossPath,
+                    rawPath: rawPath
+                });
+            } catch (urlError) {
+                console.error('❌ 解析OSS URL失败:', urlError);
+                // 如果URL解析失败，尝试直接使用resultVideoUrl作为路径
+                // 可能是相对路径或已经处理过的路径
+                ossPath = task.resultVideoUrl.replace(/^https?:\/\/[^\/]+/, '').replace(/^\//, '');
+                // 尝试解码
+                try {
+                    ossPath = decodeURIComponent(ossPath);
+                } catch (e) {
+                    // 如果解码失败，使用原始路径
+                }
+                console.log('📁 使用备用方法提取的OSS路径:', ossPath);
+            }
+            
+            // 如果目标bucket不是本账号的bucket，则直接代理签名URL，而不是用本账号凭证访问他人bucket
+            const config = require('../config/index');
+            const configuredBucket = config.oss?.bucket;
+            const isForeignBucket = Boolean(ossBucket && configuredBucket && ossBucket !== configuredBucket);
+            if (isForeignBucket) {
+                console.log('🔁 目标bucket与本账号不一致，使用签名URL直连代理:', {
+                    urlBucket: ossBucket,
+                    myBucket: configuredBucket
+                });
+                try {
+                    const response = await axios({
+                        method: 'GET',
+                        url: task.resultVideoUrl,
+                        responseType: 'stream',
+                        timeout: 300000
+                    });
+                    // 透传关键响应头
+                    res.setHeader('Content-Type', response.headers['content-type'] || 'video/mp4');
+                    res.setHeader('Cache-Control', 'no-cache');
+                    response.data.pipe(res);
+                    return;
+                } catch (proxyErr) {
+                    console.error('❌ 通过签名URL代理失败:', proxyErr?.response?.status || proxyErr.message);
+                    if (proxyErr?.response?.status === 403) {
+                        return res.status(410).json({
+                            success: false,
+                            code: 'PREVIEW_URL_EXPIRED',
+                            message: '预览链接已过期，请重新处理生成视频后再试'
+                        });
+                    }
+                    return res.status(500).json({
+                        success: false,
+                        message: '通过签名URL获取视频失败: ' + proxyErr.message
+                    });
+                }
+            }
+            
+            if (!ossPath) {
+                throw new Error('无法从URL中提取OSS路径');
+            }
+            
+            // 获取OSS客户端
+            let ossClient = null;
+            
+            // 如果从URL中提取到了bucket和region，使用它们创建OSS客户端
+            if (ossBucket && ossRegion) {
+                const OSS = require('ali-oss');
+                
+                // 从配置或环境变量获取OSS凭证
+                const accessKeyId = config.oss?.accessKeyId || process.env.ALIYUN_ACCESS_KEY_ID;
+                const accessKeySecret = config.oss?.accessKeySecret || process.env.ALIYUN_ACCESS_KEY_SECRET;
+                
+                if (accessKeyId && accessKeySecret) {
+                    console.log('📦 使用URL中的bucket和region创建OSS客户端:', { bucket: ossBucket, region: ossRegion });
+                    ossClient = new OSS({
+                        region: ossRegion,
+                        accessKeyId: accessKeyId,
+                        accessKeySecret: accessKeySecret,
+                        bucket: ossBucket,
+                        secure: true
+                    });
+                } else {
+                    console.warn('⚠️ 无法获取OSS凭证，使用默认OSS客户端');
+                    ossClient = getOSSClient();
+                }
+            } else {
+                // 如果无法从URL中提取bucket和region，使用默认OSS客户端
+                console.log('📦 使用默认OSS客户端');
+                ossClient = getOSSClient();
+            }
+            
+            if (!ossClient) {
+                throw new Error('OSS客户端未初始化，请检查OSS配置');
+            }
+            
+            console.log('📥 使用OSS SDK获取文件流...');
+            
+            // 使用OSS SDK的get方法获取文件
+            // 对于大文件，使用流模式传输
+            let result;
+            try {
+                result = await ossClient.get(ossPath);
+            } catch (sdkErr) {
+                // 如果因为权限问题失败，回退到签名URL代理方案
+                if (sdkErr && (sdkErr.code === 'AccessDenied' || sdkErr.status === 403)) {
+                    console.warn('⚠️ OSS权限不足，回退到签名URL代理方案');
+                    try {
+                        const response = await axios({
+                            method: 'GET',
+                            url: task.resultVideoUrl,
+                            responseType: 'stream',
+                            timeout: 300000
+                        });
+                        res.setHeader('Content-Type', response.headers['content-type'] || 'video/mp4');
+                        res.setHeader('Cache-Control', 'no-cache');
+                        response.data.pipe(res);
+                        return;
+                    } catch (proxyErr) {
+                        if (proxyErr?.response?.status === 403) {
+                            return res.status(410).json({
+                                success: false,
+                                code: 'PREVIEW_URL_EXPIRED',
+                                message: '预览链接已过期，请重新处理生成视频后再试'
+                            });
+                        }
+                        throw proxyErr;
+                    }
+                }
+                throw sdkErr;
+            }
+            
+            // 设置响应头，用于视频预览
+            res.setHeader('Content-Type', 'video/mp4');
+            res.setHeader('Cache-Control', 'public, max-age=3600'); // 1小时缓存
+            res.setHeader('Accept-Ranges', 'bytes');
+            
+            // 支持Range请求（视频跳转）
+            const rangeHeader = req.headers.range;
+            if (rangeHeader) {
+                // 如果有Range请求，需要从源服务器获取范围内容
+                // 这里简化处理，直接返回完整视频
+                // 实际应用中可以根据需要实现Range支持
+            }
+            
+            // OSS SDK的get方法返回result.res（HTTP响应对象）或result.content（Buffer）
+            // 如果result.res存在，使用其流；否则将content转换为流
+            if (result.res && result.res.readable) {
+                // 使用HTTP响应的流
+                result.res.pipe(res);
+                
+                // 处理下载完成
+                result.res.on('end', () => {
+                    console.log('✅ 视频预览完成:', taskId);
+                });
+                
+                // 处理下载错误
+                result.res.on('error', (error) => {
+                    console.error('❌ 视频预览流错误:', error);
+                    if (!res.headersSent) {
+                        res.status(500).json({
+                            success: false,
+                            message: '预览视频时发生错误'
+                        });
+                    }
+                });
+            } else if (result.content) {
+                // 如果只有content（Buffer），将其转换为流
+                const { Readable } = require('stream');
+                const stream = Readable.from(result.content);
+                stream.pipe(res);
+                
+                // 处理下载完成
+                stream.on('end', () => {
+                    console.log('✅ 视频预览完成:', taskId);
+                });
+                
+                // 处理下载错误
+                stream.on('error', (error) => {
+                    console.error('❌ 视频预览流错误:', error);
+                    if (!res.headersSent) {
+                        res.status(500).json({
+                            success: false,
+                            message: '预览视频时发生错误'
+                        });
+                    }
+                });
+            } else {
+                throw new Error('无法从OSS获取文件流或内容');
+            }
+            
+        } catch (downloadError) {
+            console.error('❌ 预览视频失败:', downloadError);
+            
+            if (downloadError.code === 'ECONNABORTED') {
+                return res.status(408).json({
+                    success: false,
+                    message: '预览超时，请稍后重试'
+                });
+            }
+            
+            // 如果是OSS错误，提供更详细的错误信息
+            if (downloadError.code === 'NoSuchKey' || downloadError.status === 404) {
+                return res.status(404).json({
+                    success: false,
+                    message: '视频文件不存在，可能已被删除'
+                });
+            }
+            
+            return res.status(500).json({
+                success: false,
+                message: '预览视频失败: ' + downloadError.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ 预览视频失败:', error);
+        
+        if (error.message === '任务不存在') {
+            return res.status(404).json({
+                success: false,
+                message: '任务不存在'
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: '预览视频失败: ' + error.message
+        });
+    }
+});
+
+/**
  * @route   GET /api/video-logo-removal/stats
  * @desc    获取用户的视频去水印任务统计
  * @access  私有
@@ -794,6 +1136,38 @@ router.get('/stats', protect, async (req, res) => {
         res.status(500).json({
             success: false,
             message: '获取任务统计失败: ' + error.message
+        });
+    }
+});
+
+/**
+ * @route   POST /api/video-logo-removal/clear-all-tasks
+ * @desc    清空当前用户的视频去水印任务记录（仅清DB记录）
+ * @access  私有
+ */
+router.post('/clear-all-tasks', protect, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        console.log(`🗑️ [视频去水印] 用户 ${userId} 请求清空所有任务记录`);
+        
+        // 仅删除数据库中的任务记录（不删除OSS上已生成的视频文件）
+        const { VideoLogoRemovalTask } = require('../models/VideoLogoRemovalTask');
+        const deleted = await VideoLogoRemovalTask.destroy({
+            where: { userId }
+        });
+        
+        console.log(`✅ [视频去水印] 已为用户 ${userId} 清空 ${deleted} 条任务记录`);
+        
+        return res.json({
+            success: true,
+            message: '所有任务记录已清空',
+            deleted
+        });
+    } catch (error) {
+        console.error('❌ 清空视频去水印任务记录失败:', error);
+        return res.status(500).json({
+            success: false,
+            error: '清空任务记录失败'
         });
     }
 });

@@ -358,7 +358,8 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
         // 只有在未扣除过积分的情况下才扣除
         if (!alreadyCharged) {
           // 对于视频去除字幕功能、局部重绘功能和视频换人功能，在任务提交阶段不扣除积分
-          if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoFaceSwap) {
+          // 修复：视频去水印/logo 也属于延迟计费，提交阶段不扣费
+          if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoFaceSwap && !isVideoLogoRemoval) {
             // 扣除积分
             user.credits -= creditCost;
             await user.save();
@@ -373,12 +374,14 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
             console.log(`用户ID ${userId} 使用 ${featureName} 功能，扣除 ${creditCost} 积分，剩余 ${user.credits} 积分，功能总消费 ${usage.credits} 积分`);
           } else {
             // 视频去除字幕功能、局部重绘功能和视频换人功能 - 不扣除积分，但标记为付费使用
+            // 修复：包含视频去水印/logo
             usageType = 'paid';
             finalCreditCost = creditCost; // 记录积分消耗，但实际不扣除
             let featureDisplayName = '未知功能';
             if (isVideoSubtitleRemover) featureDisplayName = '视频去除字幕';
             else if (isLocalRedraw) featureDisplayName = '局部重绘';
             else if (isVideoFaceSwap) featureDisplayName = '视频换人';
+            else if (isVideoLogoRemoval) featureDisplayName = '视频去水印';
             console.log(`用户ID ${userId} 使用${featureDisplayName}功能，需要 ${creditCost} 积分，暂不扣除，任务完成后再扣费`);
           }
         } else {
@@ -397,7 +400,8 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
       // 更新使用次数 - 修复视频去除字幕功能、局部重绘功能、视频风格重绘功能、文生视频和图生视频功能的累积逻辑
       if (!alreadyCharged && featureName !== 'MULTI_IMAGE_TO_VIDEO') {
         // 对于延迟计费的功能，使用次数将在saveTaskDetails中正确累积
-        if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoStyleRepaint && !isTextToVideo && !isImageToVideo && !isVideoFaceSwap) {
+        // 修复：视频去水印/logo 也是延迟计费，创建时不增加 usageCount
+        if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoStyleRepaint && !isTextToVideo && !isImageToVideo && !isVideoFaceSwap && !isVideoLogoRemoval) {
           usage.usageCount += 1;
           usage.lastUsedAt = new Date();
           await usage.save();

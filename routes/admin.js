@@ -436,6 +436,7 @@ router.get('/statistics', protect, checkAdmin, async (req, res) => {
     // 功能名称中英文映射
     const featureNames = {
       'image-upscaler': '图像高清放大',
+      'VIDEO_LOGO_REMOVAL': '视频去水印/logo',
       'marketing-images': 'AI营销图生成',
       'cutout': '商品换背景',
       'translate': '图片翻译',
