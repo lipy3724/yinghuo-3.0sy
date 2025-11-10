@@ -3510,8 +3510,8 @@ app.get('/api/direct-download', async (req, res) => {
 
 // 通用下载API - 用于所有类型的文件下载，包括视频数字人
 app.get('/api/download', async (req, res) => {
-  const { url, filename } = req.query;
-  if (!url) {
+  const { url: rawUrl, filename } = req.query;
+  if (!rawUrl) {
     console.error('[download] 缺少URL参数');
     return res.status(400).json({
       success: false,
@@ -3519,7 +3519,31 @@ app.get('/api/download', async (req, res) => {
     });
   }
   
-  console.log('[download] 请求下载/代理文件:', url);
+  // 尝试解码URL（如果已编码）
+  let url = rawUrl;
+  try {
+    // 只解码一次，避免双重解码问题
+    if (rawUrl.includes('%')) {
+      url = decodeURIComponent(rawUrl);
+      console.log('[download] URL已解码');
+    }
+  } catch (e) {
+    console.warn('[download] URL解码失败，使用原始URL:', e.message);
+    url = rawUrl;
+  }
+  
+  // 检查URL是否有效
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    console.error('[download] 无效的URL格式:', url.substring(0, 100));
+    return res.status(400).json({
+      success: false,
+      message: '无效的URL格式，必须以http://或https://开头'
+    });
+  }
+  
+  // 记录日志，但限制URL长度避免日志过大
+  const logUrl = url.length > 150 ? url.substring(0, 150) + '...' : url;
+  console.log('[download] 请求下载/代理文件:', logUrl);
   
   try {
     // 允许跨域访问
@@ -3536,7 +3560,7 @@ app.get('/api/download', async (req, res) => {
     let fileInfo;
     
     try {
-      console.log('[download] 发送HEAD请求检查文件:', url);
+      console.log('[download] 发送HEAD请求检查文件:', logUrl);
       fileInfo = await axios.head(url, {
         timeout: 10000,
         maxRedirects: 5,
@@ -3544,6 +3568,9 @@ app.get('/api/download', async (req, res) => {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Accept': '*/*',
           'Cache-Control': 'no-cache'
+        },
+        validateStatus: function (status) {
+          return status >= 200 && status < 400; // 接受2xx和3xx的状态码
         }
       });
       
@@ -3554,6 +3581,7 @@ app.get('/api/download', async (req, res) => {
       });
     } catch (headError) {
       console.error('[download] HEAD请求失败，尝试直接GET请求:', headError.message);
+      // 如果HEAD请求失败，继续尝试GET请求
     }
     
     // 获取请求中的Range头，以支持断点续传和视频跳转
@@ -3568,6 +3596,9 @@ app.get('/api/download', async (req, res) => {
         'Accept-Encoding': 'identity', // 避免压缩，以便正确处理Range
         'Connection': 'keep-alive',
         'Cache-Control': 'no-cache'
+      },
+      validateStatus: function (status) {
+        return status >= 200 && status < 400; // 接受2xx和3xx的状态码
       }
     };
     
@@ -3577,7 +3608,7 @@ app.get('/api/download', async (req, res) => {
       requestOptions.headers['Range'] = rangeHeader;
     }
     
-    console.log('[download] 开始下载文件:', url);
+    console.log('[download] 开始下载文件:', logUrl);
     const response = await axios.get(url, requestOptions);
     
     // 获取内容类型和大小
@@ -3652,18 +3683,48 @@ app.get('/api/download', async (req, res) => {
     
   } catch (err) {
     console.error('[download] 代理下载失败:', err.message);
+    
+    // 提供更详细的错误信息
+    let errorDetails = err.message;
     if (err.response) {
-      console.error('  状态码:', err.response.status);
-      console.error('  响应头:', JSON.stringify(err.response.headers));
+      console.error('[download] 响应状态码:', err.response.status);
+      errorDetails += ` (状态码: ${err.response.status})`;
+      
+      if (err.response.headers) {
+        console.error('[download] 响应头:', JSON.stringify(err.response.headers));
+      }
+      
+      if (err.response.data) {
+        try {
+          const dataStr = err.response.data.toString().substring(0, 200);
+          console.error('[download] 响应数据片段:', dataStr);
+          errorDetails += ` - ${dataStr}`;
+        } catch (e) {
+          console.error('[download] 无法读取响应数据');
+        }
+      }
+    } else if (err.request) {
+      console.error('[download] 请求已发送但未收到响应');
+      errorDetails += ' (请求超时或网络错误)';
+    } else {
+      console.error('[download] 请求配置错误:', err.message);
     }
     
     // 检查是否已发送响应头
     if (!res.headersSent) {
+      // 根据错误类型返回不同的状态码
+      let statusCode = 500;
+      if (err.response) {
+        statusCode = err.response.status >= 400 && err.response.status < 600 ? err.response.status : 500;
+      } else if (err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT') {
+        statusCode = 503; // 服务不可用
+      }
+      
       // 返回JSON错误信息，便于前端处理
-      res.status(500).json({
+      res.status(statusCode).json({
         success: false,
-        message: '下载失败: ' + err.message,
-        url: url
+        message: `下载失败: ${errorDetails}`,
+        url: logUrl
       });
     } else {
       // 如果已经发送了部分响应，则结束响应
@@ -12370,133 +12431,6 @@ app.post('/api/check-feature-access', protect, async (req, res) => {
       message: '服务器错误，无法检查功能访问权限',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
-  }
-});
-
-// 增强版代理下载API，解决跨域和安全验证问题
-app.get('/api/download', async (req, res) => {
-  try {
-    const { url, filename } = req.query;
-    
-    if (!url) {
-      return res.status(400).json({ success: false, message: '缺少URL参数' });
-    }
-
-    // 记录日志，但限制URL长度避免日志过大
-    const logUrl = url.length > 150 ? url.substring(0, 150) + '...' : url;
-    console.log(`处理代理下载请求: ${logUrl}`);
-    
-    // 尝试解码URL（如果已编码）
-    let decodedUrl = url;
-    try {
-      // 只解码一次，避免双重解码问题
-      if (url.includes('%')) {
-        decodedUrl = decodeURIComponent(url);
-        console.log('URL已解码');
-      }
-    } catch (e) {
-      console.warn('URL解码失败，使用原始URL');
-    }
-    
-    // 检查URL是否有效
-    if (!decodedUrl.startsWith('http')) {
-      console.error('无效的下载URL:', decodedUrl.substring(0, 50));
-      return res.status(400).json({ success: false, message: '无效的URL格式' });
-    }
-    
-    // 设置正确的文件名，使浏览器下载而不是打开
-    const downloadFilename = filename || 'download.mp4';
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadFilename)}"`);
-    
-    // 获取远程资源
-    const axios = require('axios');
-    
-    // 增强请求配置
-    const requestConfig = {
-      method: 'GET',
-      url: decodedUrl,
-      responseType: 'stream',
-      timeout: 60000, // 增加到60秒超时
-      maxContentLength: 1024 * 1024 * 1024, // 允许下载最大1GB
-      maxRedirects: 5,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Encoding': 'identity', // 避免压缩
-        'Connection': 'keep-alive'
-      },
-      validateStatus: function (status) {
-        return status >= 200 && status < 400; // 接受2xx和3xx的状态码
-      }
-    };
-    
-    console.log('开始下载文件...');
-    const response = await axios(requestConfig);
-    
-    // 记录响应信息
-    console.log('下载请求成功，状态码:', response.status);
-    console.log('内容类型:', response.headers['content-type']);
-    if (response.headers['content-length']) {
-      const sizeMB = parseInt(response.headers['content-length']) / (1024 * 1024);
-      console.log('文件大小:', sizeMB.toFixed(2), 'MB');
-    } else {
-      console.log('文件大小: 未知');
-    }
-    
-    // 设置适当的内容类型
-    if (response.headers['content-type']) {
-      res.setHeader('Content-Type', response.headers['content-type']);
-    } else {
-      res.setHeader('Content-Type', 'video/mp4'); // 默认为MP4
-    }
-    
-    // 设置文件大小（如果有）
-    if (response.headers['content-length']) {
-      res.setHeader('Content-Length', response.headers['content-length']);
-    }
-    
-    // 流式传输给客户端，减少服务器内存使用
-    response.data.pipe(res);
-    
-    // 处理流完成
-    response.data.on('end', () => {
-      console.log('文件下载完成，流已结束');
-    });
-    
-    // 处理错误
-    response.data.on('error', (error) => {
-      console.error('下载流出错:', error);
-      if (!res.headersSent) {
-        res.status(500).json({ success: false, message: `下载流出错: ${error.message}` });
-      }
-    });
-  } catch (error) {
-    console.error('代理下载失败:', error.message);
-    
-    // 提供更详细的错误信息
-    let errorDetails = error.message;
-    if (error.response) {
-      console.error('响应状态码:', error.response.status);
-      errorDetails += ` (状态码: ${error.response.status})`;
-      
-      if (error.response.headers) {
-        console.error('响应头:', JSON.stringify(error.response.headers));
-      }
-      
-      if (error.response.data) {
-        try {
-          const dataStr = error.response.data.toString().substring(0, 200);
-          console.error('响应数据片段:', dataStr);
-          errorDetails += ` - ${dataStr}`;
-        } catch (e) {
-          console.error('无法读取响应数据');
-        }
-      }
-    }
-    
-    if (!res.headersSent) {
-      res.status(500).json({ success: false, message: `下载失败: ${errorDetails}` });
-    }
   }
 });
 

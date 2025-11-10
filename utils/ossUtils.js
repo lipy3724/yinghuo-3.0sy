@@ -159,6 +159,47 @@ async function deleteFromOSS(ossPath) {
 }
 
 /**
+ * 上传视频文件到OSS
+ * @param {Buffer} buffer 视频文件的Buffer内容
+ * @param {String} ossPath OSS中的存储路径
+ * @param {String} mimetype 视频文件的MIME类型（可选）
+ * @returns {Promise<String>} 上传成功后的访问URL
+ */
+async function uploadVideoToOSS(buffer, ossPath, mimetype) {
+  try {
+    const client = getOSSClient();
+    
+    if (!client) {
+      console.error('上传视频到OSS失败: OSS客户端未初始化');
+      throw new Error('OSS客户端未初始化，请检查OSS配置');
+    }
+    
+    if (!buffer) {
+      throw new Error('视频文件buffer不存在');
+    }
+    
+    console.log(`正在上传视频到OSS路径: ${ossPath}, 大小: ${buffer.length} bytes`);
+    
+    // 构建上传选项
+    const putOptions = {};
+    if (mimetype) {
+      putOptions.headers = {
+        'Content-Type': mimetype
+      };
+    }
+    
+    const result = await client.put(ossPath, buffer, putOptions);
+    
+    // 返回可访问的URL
+    console.log(`视频上传成功，URL: ${result.url}`);
+    return result.url;
+  } catch (error) {
+    console.error('上传视频到OSS失败:', error);
+    throw new Error(`上传视频到OSS失败: ${error.message}`);
+  }
+}
+
+/**
  * 获取OSS文件的签名URL（用于临时访问私有文件）
  * @param {String} ossPath OSS中的存储路径
  * @param {Number} expireSeconds URL有效期（秒）
@@ -186,6 +227,7 @@ function getSignedUrl(ossPath, expireSeconds = 3600) {
 module.exports = {
   getOSSClient,
   uploadToOSS,
+  uploadVideoToOSS,
   deleteFromOSS,
   getSignedUrl
 };

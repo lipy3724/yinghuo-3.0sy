@@ -182,9 +182,10 @@
 
                 <!-- 水印区域设置（上传后显示） -->
                 <div id="logo-settings-section" class="mb-6" style="display: none;">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">水印区域设置</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">水印区域设置 <span class="text-red-500">*</span></label>
                     <div class="text-gray-600 text-sm mb-2">
-                        <p class="mb-1">在右侧视频预览区域点击并拖拽来选择要去除的水印区域，最多可选择2个区域</p>
+                        <p class="mb-1"><strong class="text-red-600">重要：</strong>请务必在右侧视频预览区域点击并拖拽来选择要去除的水印区域，<strong>至少需要选择1个区域</strong>才能获得最佳去水印效果。最多可选择2个区域。</p>
+                        <p class="mt-1 text-orange-600"><i class="ri-alert-line mr-1"></i>如果不选择水印区域，系统可能无法准确识别和去除水印！</p>
                     </div>
                     <div class="flex flex-wrap gap-2 mb-2">
                         <button id="add-logo-box" class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">
@@ -874,11 +875,26 @@
         }
         
         // 显示视频
-        function displayVideo(videoUrl) {
+        function displayVideo(videoUrl, taskId = null) {
             // 使用代理API加载视频，避免CSP问题（特别是http://协议的URL）
             // direct=true 参数表示这是预览而非下载
             const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
             console.log('使用代理URL加载视频:', proxyUrl);
+            
+            // 添加错误处理
+            outputVideo.onerror = function() {
+                console.error('视频加载失败:', proxyUrl);
+                outputVideoWrapper.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="ri-error-warning-line text-4xl mb-2"></i>
+                        <p class="text-sm">视频加载失败，请尝试下载</p>
+                        <a href="/api/download?url=${encodeURIComponent(videoUrl)}&filename=去水印视频.mp4" 
+                           class="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">
+                            <i class="ri-download-2-line mr-1"></i>下载视频
+                        </a>
+                    </div>
+                `;
+            };
             
             outputVideo.src = proxyUrl;
             outputVideoPlaceholder.classList.add('hidden');
@@ -894,8 +910,9 @@
                 downloadBtn.replaceWith(downloadBtn.cloneNode(true));
                 const newDownloadBtn = document.getElementById('download-btn');
                 
-                newDownloadBtn.addEventListener('click', () => {
+                newDownloadBtn.addEventListener('click', async () => {
                     console.log('预览区域下载按钮被点击，视频URL:', videoUrl);
+                    console.log('当前任务ID:', taskId || currentTask?.taskId);
                     
                     if (!videoUrl || !videoUrl.trim()) {
                         console.error('视频URL为空，无法下载');
@@ -904,31 +921,75 @@
                     }
                     
                     try {
-                        // 使用代理API下载视频
-                        const downloadUrl = `/api/video-logo-removal/download/${currentTask?.taskId || ''}`;
-                        console.log('使用下载API:', downloadUrl);
+                        // 优先使用传入的taskId，其次使用currentTask.taskId
+                        const finalTaskId = taskId || currentTask?.taskId;
                         
-                        // 创建一个隐藏的下载链接
-                        const a = document.createElement('a');
-                        a.href = downloadUrl;
-                        a.download = '无水印视频.mp4'; // 设置下载文件名
-                        
-                        // 添加到文档中
-                        document.body.appendChild(a);
-                        
-                        // 模拟点击
-                        a.click();
-                        console.log('下载链接已点击');
-                        
-                        // 移除下载链接
-                        setTimeout(() => {
+                        if (finalTaskId) {
+                            // 使用专用下载API（推荐方式，可以获取正确的文件名）
+                            const downloadUrl = `/api/video-logo-removal/download/${finalTaskId}`;
+                            console.log('使用下载API:', downloadUrl);
+                            
+                            // 使用fetch下载，以便处理错误
+                            const response = await fetch(downloadUrl, {
+                                headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                }
+                            });
+                            
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: '下载失败' }));
+                                throw new Error(errorData.message || `下载失败: ${response.status}`);
+                            }
+                            
+                            // 获取文件名
+                            const contentDisposition = response.headers.get('Content-Disposition');
+                            let filename = '无水印视频.mp4';
+                            if (contentDisposition) {
+                                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                                if (filenameMatch && filenameMatch[1]) {
+                                    filename = filenameMatch[1].replace(/['"]/g, '');
+                                }
+                            }
+                            
+                            // 获取blob并下载
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
                             document.body.removeChild(a);
-                        }, 100);
+                            
+                            console.log('✅ 视频下载成功:', filename);
+                        } else {
+                            // 备用方案：使用代理API下载
+                            console.log('⚠️ 未找到任务ID，使用代理API下载');
+                            const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=无水印视频.mp4`;
+                            
+                            const a = document.createElement('a');
+                            a.href = proxyDownloadUrl;
+                            a.download = '无水印视频.mp4';
+                            document.body.appendChild(a);
+                            a.click();
+                            
+                            setTimeout(() => {
+                                document.body.removeChild(a);
+                            }, 100);
+                        }
                         
                     } catch (error) {
                         console.error('下载失败:', error);
-                        // 备用方案：直接在新窗口打开视频URL
-                        window.open(videoUrl, '_blank');
+                        alert(`下载失败: ${error.message || '未知错误'}。请尝试使用备用下载方式。`);
+                        
+                        // 最终备用方案：直接在新窗口打开视频URL
+                        try {
+                            window.open(videoUrl, '_blank');
+                        } catch (openError) {
+                            console.error('打开视频URL失败:', openError);
+                            alert('无法下载视频，请复制视频URL手动下载');
+                        }
                     }
                 });
             }
@@ -966,6 +1027,12 @@
                 return;
             }
             
+            // 强制要求至少选择一个水印区域
+            if (logoBoxes.length === 0) {
+                alert('请至少选择一个水印区域！\n\n在右侧视频预览区域点击并拖拽来选择要去除的水印区域。\n\n如果不选择水印区域，系统可能无法准确识别和去除水印。');
+                return;
+            }
+            
             try {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>提交中...';
@@ -973,10 +1040,8 @@
                 const formData = new FormData();
                 formData.append('video', uploadedVideo);
                 
-                // 添加水印区域参数
-                if (logoBoxes.length > 0) {
-                    formData.append('logoBoxes', JSON.stringify(logoBoxes));
-                }
+                // 添加水印区域参数（现在必须存在）
+                formData.append('logoBoxes', JSON.stringify(logoBoxes));
                 
                 // 获取认证令牌
                 const authToken = localStorage.getItem('authToken');
@@ -1071,7 +1136,8 @@
         async function checkTaskStatus(taskId) {
             let retryCount = 0;
             const maxRetries = 3;
-            let progress = 0;
+            // 从进度条元素中读取当前进度值，而不是初始化为0，避免进度回退
+            let progress = parseFloat(progressBar.style.width) || 0;
             
             // 获取认证令牌
             const authToken = localStorage.getItem('authToken');
@@ -1129,7 +1195,8 @@
                             // 获取视频URL
                             const videoUrl = taskResult?.videoUrl || result.data?.resultUrl || result.resultUrl || result.data?.resultVideoUrl;
                             if (videoUrl) {
-                                displayVideo(videoUrl);
+                                // 传递taskId以便下载功能正常工作
+                                displayVideo(videoUrl, taskId);
                             } else {
                                 console.error('未找到视频URL:', { taskResult, result });
                                 alert('任务完成但未找到视频文件，请重试');
@@ -1167,9 +1234,13 @@
                             // 更新进度条
                             const serverProgress = result.data?.progress || 0;
                             if (serverProgress > 0) {
+                                // 如果服务器返回了进度，使用服务器进度
                                 progress = serverProgress;
                             } else {
-                                progress += 2; // 每5秒增加2%
+                                // 如果服务器没有返回进度，从当前进度继续递增
+                                // 确保进度不会回退，至少保持当前值
+                                const currentProgress = parseFloat(progressBar.style.width) || progress;
+                                progress = Math.max(currentProgress, progress) + 2; // 每5秒增加2%
                                 if (progress > 95) progress = 95; // 最多到95%
                             }
                             progressBar.style.width = `${progress}%`;
@@ -1406,14 +1477,14 @@
                     const proxyVideoUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
                     videoPreview = `
                         <div class="mt-3">
-                            <video controls class="w-full rounded" style="max-height: 180px">
+                            <video controls class="w-full rounded" style="max-height: 180px" onerror="this.parentElement.innerHTML='<div class=\\'text-center py-4 text-gray-500 text-sm\\'><i class=\\'ri-error-warning-line mr-1\\'></i>视频加载失败，请尝试下载</div>'">
                                 <source src="${proxyVideoUrl}" type="video/mp4">
                                 您的浏览器不支持视频标签
                             </video>
                             <div class="flex justify-end mt-2">
-                                <a href="/api/video-logo-removal/download/${taskId}" class="text-indigo-600 hover:text-indigo-800 text-sm mr-3" download>
+                                <button class="history-download-btn text-indigo-600 hover:text-indigo-800 text-sm mr-3" data-task-id="${taskId}" data-video-url="${videoUrl}">
                                     <i class="ri-download-2-line mr-1"></i>下载
-                                </a>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -1492,6 +1563,109 @@
                         } catch (error) {
                             console.error('检查状态出错:', error);
                         }
+                    }
+                });
+            });
+            
+            // 添加历史记录下载按钮事件监听器
+            document.querySelectorAll('.history-download-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const taskId = btn.dataset.taskId;
+                    const videoUrl = btn.dataset.videoUrl;
+                    
+                    console.log('历史记录下载按钮被点击，任务ID:', taskId, '视频URL:', videoUrl);
+                    
+                    if (!videoUrl || !videoUrl.trim()) {
+                        console.error('视频URL为空，无法下载');
+                        alert('视频URL为空，无法下载');
+                        return;
+                    }
+                    
+                    // 禁用按钮，防止重复点击
+                    btn.disabled = true;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-1"></i>下载中...';
+                    
+                    try {
+                        // 获取认证令牌
+                        const authToken = localStorage.getItem('authToken');
+                        if (!authToken) {
+                            alert('请先登录后再下载视频');
+                            btn.disabled = false;
+                            btn.innerHTML = originalText;
+                            return;
+                        }
+                        
+                        if (taskId) {
+                            // 使用专用下载API（推荐方式，可以获取正确的文件名）
+                            const downloadUrl = `/api/video-logo-removal/download/${taskId}`;
+                            console.log('使用下载API:', downloadUrl);
+                            
+                            // 使用fetch下载，以便处理错误
+                            const response = await fetch(downloadUrl, {
+                                headers: {
+                                    'Authorization': `Bearer ${authToken}`
+                                }
+                            });
+                            
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: '下载失败' }));
+                                throw new Error(errorData.message || `下载失败: ${response.status}`);
+                            }
+                            
+                            // 获取文件名
+                            const contentDisposition = response.headers.get('Content-Disposition');
+                            let filename = '无水印视频.mp4';
+                            if (contentDisposition) {
+                                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                                if (filenameMatch && filenameMatch[1]) {
+                                    filename = filenameMatch[1].replace(/['"]/g, '');
+                                }
+                            }
+                            
+                            // 获取blob并下载
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            console.log('✅ 视频下载成功:', filename);
+                        } else {
+                            // 备用方案：使用代理API下载
+                            console.log('⚠️ 未找到任务ID，使用代理API下载');
+                            const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=无水印视频.mp4`;
+                            
+                            const a = document.createElement('a');
+                            a.href = proxyDownloadUrl;
+                            a.download = '无水印视频.mp4';
+                            document.body.appendChild(a);
+                            a.click();
+                            
+                            setTimeout(() => {
+                                document.body.removeChild(a);
+                            }, 100);
+                        }
+                        
+                    } catch (error) {
+                        console.error('下载失败:', error);
+                        alert(`下载失败: ${error.message || '未知错误'}。请尝试使用备用下载方式。`);
+                        
+                        // 最终备用方案：直接在新窗口打开视频URL
+                        try {
+                            window.open(videoUrl, '_blank');
+                        } catch (openError) {
+                            console.error('打开视频URL失败:', openError);
+                            alert('无法下载视频，请复制视频URL手动下载');
+                        }
+                    } finally {
+                        // 恢复按钮状态
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
                     }
                 });
             });

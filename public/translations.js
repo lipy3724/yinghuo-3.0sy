@@ -52,6 +52,7 @@ const translations = {
         'feature.multi_image_to_video': '多图转视频',
         'feature.digital_human_video': '视频数字人',
         'feature.video_subtitle_remover': '视频去除字幕',
+        'feature.video_logo_removal': '视频去水印/Logo',
         'feature.ai_model_change': 'AI换模特',
         'feature.image_to_video': '图生视频',
         'feature.prompt_editor': '指令编辑',
@@ -261,6 +262,7 @@ const translations = {
         'desc.multi_image_to_video': '将多张图片合成为视频',
         'desc.digital_human_video': '创建数字人视频内容',
         'desc.video_subtitle_remover': '智能去除视频中的字幕',
+        'desc.video_logo_removal': '智能去除视频中的水印和Logo',
         
         // 视频去除字幕页面翻译
         'video_subtitle_remover.page_title': '视频去除字幕 - 萤火.AI',
@@ -1820,6 +1822,7 @@ const translations = {
         'feature.multi_image_to_video': 'Multi-Image to Video',
         'feature.digital_human_video': 'Digital Human Video',
         'feature.video_subtitle_remover': 'Video Subtitle Remover',
+        'feature.video_logo_removal': 'Video Logo/Watermark Removal',
         'feature.ai_model_change': 'AI Model Change',
         'feature.image_to_video': 'Image to Video',
         'feature.prompt_editor': 'Prompt Editor',

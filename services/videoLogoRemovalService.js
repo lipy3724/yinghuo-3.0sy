@@ -67,20 +67,30 @@ class VideoLogoRemovalService {
   
   /**
    * 根据用户ID查询任务历史
+   * 仅返回24小时内的最新一条记录
    */
   static async getUserTasks(userId, limit = 20, offset = 0) {
     try {
+      // 计算24小时前的时间
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      
+      // 查询24小时内的记录，只返回最新的一条
       const { count, rows } = await VideoLogoRemovalTask.findAndCountAll({
-        where: { userId },
+        where: { 
+          userId,
+          createdAt: {
+            [require('sequelize').Op.gte]: twentyFourHoursAgo
+          }
+        },
         order: [['createdAt', 'DESC']],
-        limit,
-        offset
+        limit: 1, // 只返回最新的一条
+        offset: 0 // 从第一条开始
       });
       
       return {
         tasks: rows,
         total: count,
-        hasMore: offset + limit < count
+        hasMore: false // 只返回一条，所以没有更多
       };
     } catch (error) {
       console.error('❌ 查询用户任务历史失败:', error);
