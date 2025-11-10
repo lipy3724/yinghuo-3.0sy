@@ -38,6 +38,7 @@
                         <div>
                             <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing">图像处理</h3>
                             <ul class="space-y-1">
+                                <!-- 🔧 按照用户要求调整：图片改尺寸和图像裁剪移动到垫图下面 -->
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">场景图生成</a></li>
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像智能消除</a></li>
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能扩图</a></li>
@@ -47,6 +48,9 @@
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">局部重绘</a></li>
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">全局风格化</a></li>
                                 <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">垫图</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图片改尺寸</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像裁剪</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/qwen-image-edit.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像编辑</a></li>
                             </ul>
                         </div>
                         <!-- 模特/服饰类 -->
@@ -76,6 +80,7 @@
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频风格重绘</a></li>
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频数字人</a></li>
                                 <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频去除字幕</a></li>
+                                <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-logo-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频去水印/Logo</a></li>
                             </ul>
                         </div>
                         <!-- 亚马逊助手 -->

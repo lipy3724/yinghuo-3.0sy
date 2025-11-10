@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语言设置调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-title {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .test-text {
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>语言设置调试工具</h1>
+    
+    <div class="debug-section">
+        <h2 class="debug-title">当前状态检查</h2>
+        <div id="currentStatus"></div>
+        <button onclick="checkStatus()">刷新状态</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2 class="debug-title">语言切换测试</h2>
+        <button onclick="setLanguage('zh')">设置为中文</button>
+        <button onclick="setLanguage('en')">设置为英文</button>
+        <button onclick="clearLanguage()">清除语言设置</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2 class="debug-title">测试文本</h2>
+        <div class="test-text">
+            <div data-translate="credits_management">积分管理</div>
+            <div data-translate="current_credits">积分余额</div>
+            <div data-translate="recharge_credits">充值积分</div>
+            <div data-translate="feature_price_list">功能价格列表</div>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2 class="debug-title">Components.js 测试</h2>
+        <div id="componentsTest"></div>
+        <button onclick="testComponents()">测试Components功能</button>
+    </div>
+
+    <!-- 加载components.js -->
+    <script src="public/components/components.js"></script>
+    
+    <script>
+        function checkStatus() {
+            const statusDiv = document.getElementById('currentStatus');
+            const language = localStorage.getItem('language');
+            const hasUpdatePageText = typeof updatePageText === 'function';
+            const hasTranslations = typeof translations !== 'undefined';
+            
+            statusDiv.innerHTML = `
+                <div class="debug-info">localStorage语言设置: ${language || '未设置'}</div>
+                <div class="debug-info">updatePageText函数: ${hasUpdatePageText ? '✅ 已加载' : '❌ 未加载'}</div>
+                <div class="debug-info">translations对象: ${hasTranslations ? '✅ 已加载' : '❌ 未加载'}</div>
+                <div class="debug-info">当前时间: ${new Date().toLocaleString()}</div>
+            `;
+            
+            if (hasTranslations) {
+                statusDiv.innerHTML += `<div class="debug-info">可用语言: ${Object.keys(translations).join(', ')}</div>`;
+            }
+        }
+        
+        function setLanguage(lang) {
+            console.log('设置语言为:', lang);
+            localStorage.setItem('language', lang);
+            
+            if (typeof updatePageText === 'function') {
+                updatePageText(lang);
+                console.log('已调用updatePageText函数');
+            } else {
+                console.error('updatePageText函数不可用');
+            }
+            
+            checkStatus();
+        }
+        
+        function clearLanguage() {
+            localStorage.removeItem('language');
+            console.log('已清除语言设置');
+            checkStatus();
+        }
+        
+        function testComponents() {
+            const testDiv = document.getElementById('componentsTest');
+            
+            if (typeof updatePageText === 'function') {
+                testDiv.innerHTML = '<div class="debug-info">✅ updatePageText函数可用</div>';
+                
+                if (typeof translations !== 'undefined') {
+                    testDiv.innerHTML += '<div class="debug-info">✅ translations对象可用</div>';
+                    testDiv.innerHTML += '<div class="debug-info">中文翻译示例: ' + (translations.zh?.credits_management || '未找到') + '</div>';
+                    testDiv.innerHTML += '<div class="debug-info">英文翻译示例: ' + (translations.en?.credits_management || '未找到') + '</div>';
+                } else {
+                    testDiv.innerHTML += '<div class="debug-info">❌ translations对象不可用</div>';
+                }
+            } else {
+                testDiv.innerHTML = '<div class="debug-info">❌ updatePageText函数不可用</div>';
+            }
+        }
+        
+        // 页面加载时检查状态
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+            testComponents();
+            
+            // 应用当前语言设置
+            const currentLanguage = localStorage.getItem('language') || 'zh';
+            if (typeof updatePageText === 'function') {
+                updatePageText(currentLanguage);
+            }
+        });
+        
+        // 监听语言变化
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'language') {
+                console.log('检测到语言变化:', e.newValue);
+                checkStatus();
+            }
+        });
+    </script>
+</body>
+</html>

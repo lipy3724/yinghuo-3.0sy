@@ -3,57 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图像上色 - 萤火AI</title>
+    <title data-translate="image_colorization.page_title">图像上色 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/image-colorization.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
+    <script src="/translations.js"></script>
+    <script src="/js/image-colorization-history.js"></script>
+    <script src="/js/image-colorization-history-fallback.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
-        .upload-area {
-            border: 2px dashed #cbd5e0;
-            border-radius: 8px;
-            cursor: pointer;
+        .card {
             transition: all 0.3s ease;
         }
-        .upload-area:hover {
-            border-color: #6366f1;
-            background-color: #f9fafb;
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        .result-section {
-            border-left: 1px solid #e5e7eb;
-        }
-        /* 使用Tailwind自带的animate-spin替代自定义spinner */
-        .prompt-input {
-            resize: none;
-            min-height: 120px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        .prompt-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
-        .instructions {
-            font-size: 0.875rem;
-            color: #4b5563;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
-        .preview-area {
-            background-color: #f9fafb;
+        .feature-card {
+            background-color: white;
             border-radius: 0.5rem;
-            min-height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
         }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+        .image-preview {
+            aspect-ratio: 16/9;
+            background-color: #f3f4f6;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: rgba(99, 102, 241, 1);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .colorization-task {
+            transition: all 0.3s ease;
+        }
+        .active-option {
+            background-color: #ede9fe;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+        
+        .history-card {
+            transition: all 0.3s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .history-thumbnail {
+            transition: transform 0.3s ease;
+        }
+        
+        .history-card:hover .history-thumbnail {
+            transform: scale(1.05);
+        }
+        
+        .history-card .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .history-card .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
+        
+        #history-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
         /* 图片拖动禁用 */
         img {
             -webkit-user-drag: none;
@@ -64,123 +117,203 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/auth-check.js"></script>
-    <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
 </head>
-<body class="min-h-screen bg-white">
+<body class="bg-gray-100 min-h-screen">
     <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
-        <div class="flex flex-col lg:flex-row bg-white h-full w-full">
-            <!-- 左侧：上传图片和提示词 -->
-            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-3">图像上色</h2>
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="image_colorization.main_title">图像上色</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 图片上传和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4" data-translate="image_colorization.settings_title">图像上色设置</h2>
                 
-                <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
-                    <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2">此功能可以为黑白照片或素描添加自然色彩，让历史照片焕发新生。</p>
-                        <p class="mb-2">上传黑白或灰度图像后，可以在提示框中描述您期望的颜色风格，例如："使用鲜艳的色彩"、"复古暖色调"或"自然色彩"。</p>
-                        <p class="mb-2">可以指定具体元素的颜色，如："蓝色背景，黄色的叶子"、"人物穿红色衣服，背景为绿色"。</p>
-                        <p class="mb-2">图片尺寸要求：宽度和高度都必须在512到4096像素之间，文件大小不超过10MB。</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的内容，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="image_colorization.image_upload">图片上传</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="image_colorization.upload_description">上传需要上色的图片</span>
                     </div>
-                </div>
-
-                <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
-                    <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动任意文件到这区域来上传</p>
-                    <!-- 添加回文件类型限制 -->
-                    <input type="file" id="image-upload" class="hidden" accept="image/jpeg, image/png, image/webp, image/gif, image/bmp">
-                </div>
-                <p class="text-xs text-gray-500 mb-4">上传文件</p>
-
-                <div class="flex-grow mb-4">
-                    <div class="mb-2">
-                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入指令:</label>
+                    <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
+                        <input type="file" id="image-upload" class="hidden" accept="image/jpeg, image/png, image/webp, image/gif, image/bmp">
+                        <div id="upload-placeholder">
+                            <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500"><span data-translate="image_colorization.drag_drop_text">拖放图片到此处或</span> <span class="text-indigo-600 font-medium" data-translate="image_colorization.click_upload">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="image_colorization.supported_formats">支持 JPG, PNG, WEBP, GIF, BMP 格式</p>
+                        </div>
+                        <div id="preview-container" class="hidden">
+                            <img id="image-preview" class="max-h-48 mx-auto mb-3">
+                            <p id="image-info" class="text-sm text-gray-500"></p>
+                            <button type="button" id="remove-image" class="mt-2 text-sm text-red-500 hover:text-red-700" data-translate="image_colorization.remove_image">
+                                移除图片
+                            </button>
+                        </div>
                     </div>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="请输入提示词，如: 使用鲜艳的色彩为图片上色，天空为蓝色，树木为深绿色"></textarea>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="image_colorization.size_requirements">图片尺寸要求：宽度和高度都必须在512到4096像素之间，文件大小不超过10MB</p>
                 </div>
                 
-                <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
-                    <i class="ri-magic-line mr-2"></i>
-                    立即生成
-                </button>
+                <div class="mb-6">
+                    <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1" data-translate="image_colorization.prompt_label">上色提示词</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="image_colorization.prompt_description">描述期望的颜色风格</span>
+                    </div>
+                    <textarea id="prompt-input" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate="image_colorization.prompt_placeholder" placeholder="请输入提示词，如: 使用鲜艳的色彩为图片上色，天空为蓝色，树木为深绿色"></textarea>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="image_colorization.prompt_tip">详细描述颜色风格可以获得更好的上色效果</p>
+                </div>
+                
+                <div class="pt-4">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ri-magic-line mr-2"></i>
+                        <span data-translate="image_colorization.start_colorization">开始上色</span>
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500" data-translate="image_colorization.processing_info">
+                        图像上色需要5-10秒，消耗7积分
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium" data-translate="image_colorization.warning_text">
+                        请上传合法合规的内容，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                    </p>
+                </div>
             </div>
             
-            <!-- 右侧：效果展示 -->
-            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
-                
-                <div class="flex flex-col md:flex-row gap-6 flex-grow">
-                    <div class="w-full md:w-1/2">
-                        <h3 class="text-base font-medium mb-3 text-center">原始图像:</h3>
-                        <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden relative">
-                            <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片" draggable="false">
-                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
+            <!-- 右侧面板: 预览和历史记录 -->
+            <div class="lg:col-span-3">
+                <!-- 处理结果区域 -->
+                <div id="resultContainer" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="image_colorization.processing_result">处理结果</h2>
+                    
+                    <!-- 初始状态：提示用户上传图片 -->
+                    <div id="resultInitialState" class="text-center py-8 text-gray-500">
+                        <i class="ri-image-line text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-lg" data-translate="image_colorization.upload_first">请先上传图片并输入上色提示词</p>
+                        <p class="text-sm mt-1" data-translate="image_colorization.comparison_hint">上传图片后，这里将显示原始图片和处理后的对比结果</p>
+                    </div>
+                    
+                    <!-- 图片对比结果区域 -->
+                    <div id="resultImages" class="hidden">
+                    <div class="flex flex-col md:flex-row gap-6 mb-6">
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-700 mb-2" data-translate="image_colorization.original_image">原始图片</h3>
+                            <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                <img id="original-image" class="max-w-full max-h-64 mx-auto">
+                                <p id="original-image-info" class="text-sm text-gray-500 mt-2 text-center"></p>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-700 mb-2" data-translate="image_colorization.colorized_image">上色后图片</h3>
+                            <div id="result-image-wrapper" class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                <img id="result-image" class="max-w-full max-h-64 mx-auto">
+                                <p id="result-image-info" class="text-sm text-gray-500 mt-2 text-center"></p>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="w-full md:w-1/2">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-medium text-center">生成结果:</h3>
-                            <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-1 px-2 rounded-md hover:bg-indigo-700 text-sm flex items-center">
-                                <i class="ri-save-line mr-1"></i>
-                                保存到下载中心
-                            </button>
-                        </div>
-                        <div id="result-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                            <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="生成的图片">
-                            <p id="result-image-placeholder" class="text-gray-500 text-center px-4">生成结果将在这里显示</p>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="download-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-download-2-line mr-1"></i>
+                            <span data-translate="image_colorization.download_image">下载图片</span>
+                        </button>
+                        <button type="button" id="save-to-downloads-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-save-line mr-1"></i>
+                            <span data-translate="image_colorization.save">保存</span>
+                        </button>
+                        <button type="button" id="new-colorization-btn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-add-line mr-1"></i>
+                            <span data-translate="image_colorization.upload_new">上传新图片</span>
+                        </button>
                         </div>
                     </div>
                 </div>
-
-                <div class="mt-4 flex justify-center">
-                    <button id="download-btn" class="hidden bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
-                        <i class="ri-download-line mr-2"></i>
-                        下载结果
-                    </button>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" data-translate="image_colorization.generation_history">生成历史</h2>
+                        <div class="flex space-x-2">
+                            <button id="clear-history-btn" class="text-gray-500 hover:text-red-600" data-translate="image_colorization.clear_history_title" title="清空历史记录">
+                                <i class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800" data-translate="image_colorization.refresh_history_title" title="刷新历史记录">
+                                <i class="ri-refresh-line text-xl"></i>
+                        </button>
+                    </div>
+                        </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 历史记录将通过JavaScript动态添加到这里 -->
+                        <p class="text-gray-500 col-span-full text-center py-4" data-translate="image_colorization.no_history">暂无历史记录</p>
+                    </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="image_colorization.history_retention">历史记录仅保存24小时</p>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- 加载中遮罩 -->
-    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <div class="flex flex-col items-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                <p id="loading-message" class="text-gray-700 text-center">处理中，请耐心等待...</p>
-            <p class="text-sm text-gray-500 mt-2">处理时间约为5-10秒</p>
-            </div>
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
+            <div class="loading-spinner mb-4"></div>
+            <p id="loading-message" class="text-lg font-medium" data-translate="image_colorization.processing_wait">图像上色中，请耐心等待...</p>
+            <p class="text-sm text-gray-500 mt-2" data-translate="image_colorization.processing_time">图像上色需要5-10秒</p>
         </div>
     </div>
 
     <!-- 引用外部Javascript文件 -->
     <script>
+        // 全局变量（在DOMContentLoaded之前定义）
+        let history = [];
+
         document.addEventListener('DOMContentLoaded', function() {
             // DOM元素
             const uploadArea = document.getElementById('upload-area');
             const imageUpload = document.getElementById('image-upload');
-            const originalImage = document.getElementById('original-image');
-            const originalImageContainer = document.getElementById('original-image-container');
-            const originalImagePlaceholder = document.getElementById('original-image-placeholder');
-            const resultImage = document.getElementById('result-image');
-            const resultImagePlaceholder = document.getElementById('result-image-placeholder');
+            const previewContainer = document.getElementById('preview-container');
+            const imagePreview = document.getElementById('image-preview');
+            const imageInfo = document.getElementById('image-info');
+            const removeImageBtn = document.getElementById('remove-image');
             const generateBtn = document.getElementById('generate-btn');
             const promptInput = document.getElementById('prompt-input');
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
-            const userMenuBtn = document.getElementById('user-menu-btn');
-            const loginBtn = document.getElementById('login-btn');
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
+            const newColorizationBtn = document.getElementById('new-colorization-btn');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultInitialState = document.getElementById('resultInitialState');
+            const resultImages = document.getElementById('resultImages');
+            const originalImage = document.getElementById('original-image');
+            const originalImageInfo = document.getElementById('original-image-info');
+            const resultImage = document.getElementById('result-image');
+            const resultImageInfo = document.getElementById('result-image-info');
+            const historyContainer = document.getElementById('history-container');
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            
+            // 用户界面元素（可能不存在，需要检查）
+            const loginBtn = document.getElementById('login-btn');
+            const userMenuBtn = document.getElementById('user-menu-btn');
+            
+            // 确保提示词输入框的value为空，只使用placeholder
+            if (promptInput) {
+                promptInput.value = '';
+            }
             
             // 用户状态由统一的auth-check.js处理，这里只需要初始化UI
             initializeUserUI();
+            
+            // 初始化历史记录功能
+            initializeHistoryFeatures();
+            
+            // 设置用户状态监听，检测用户切换
+            setupUserStateListener();
+            
+            // 延迟加载历史记录，确保页面完全加载
+            // 注意：历史记录模块的初始化在DOMContentLoaded事件中，这里先不加载
+            // 历史记录将在模块初始化完成后自动加载
             
             // 图片上传处理
             uploadArea.addEventListener('click', () => {
@@ -214,12 +347,12 @@
                 // 恢复文件类型检查
                 if (file) {
                     if (!file.type.match('image.*')) {
-                        alert('请上传图片文件！');
+                        alert(translate('image_colorization.select_image_first'));
                         return;
                     }
                     handleImageFile(file);
                 } else {
-                    alert('请上传文件！');
+                    alert(translate('image_colorization.select_image_first'));
                 }
             });
             
@@ -227,36 +360,40 @@
             generateBtn.addEventListener('click', async () => {
                 const prompt = promptInput.value.trim();
                 
-                if (!originalImage.src || originalImage.classList.contains('hidden')) {
-                    alert('请先上传图片！');
+                if (!imagePreview.src || imagePreview.classList.contains('hidden')) {
+                    alert(translate('image_colorization.select_image_first'));
                     return;
                 }
                 
+                // 提前保存原始图片URL，避免在处理过程中被清空
+                const originalImagePreviewSrc = imagePreview.src;
+                console.log('保存原始图片URL:', originalImagePreviewSrc.substring(0, 50) + '...');
+                
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                loadingMessage.textContent = '正在处理图像，请稍候...';
+                loadingMessage.textContent = translate('image_colorization.processing_wait');
                 
                 try {
                     // 1. 上传原图到服务器获取URL
-                    loadingMessage.textContent = '正在上传图片...';
+                    loadingMessage.textContent = translate('image_colorization.uploading_image');
                     console.log('正在上传图片...');
                     let imageUrl;
                     
                     try {
-                        imageUrl = await uploadImageToServer(originalImage.src);
+                        imageUrl = await uploadImageToServer(originalImagePreviewSrc);
                     } catch (uploadError) {
                         console.error('图片上传错误:', uploadError);
-                        throw new Error(`图片上传失败: ${uploadError.message}`);
+                        throw new Error(`${translate('image_colorization.upload_failed')}: ${uploadError.message}`);
                     }
                     
                     if (!imageUrl) {
-                        throw new Error('图片上传失败，未获取到有效URL');
+                        throw new Error(translate('image_colorization.upload_failed'));
                     }
                     
                     console.log('图片上传成功，获取到的URL:', imageUrl);
                     
                     // 2. 调用API创建图像上色任务
-                    loadingMessage.textContent = '正在创建图像上色任务...';
+                    loadingMessage.textContent = translate('image_colorization.creating_task');
                     console.log('正在创建图像上色任务...');
                     
                     let taskId;
@@ -264,11 +401,11 @@
                         taskId = await createColorizationTask(prompt, imageUrl);
                     } catch (taskError) {
                         console.error('创建任务错误:', taskError);
-                        throw new Error(`创建图像上色任务失败: ${taskError.message}`);
+                        throw new Error(`${translate('image_colorization.task_creation_failed')}: ${taskError.message}`);
                     }
                     
                     if (!taskId) {
-                        throw new Error('创建图像上色任务失败，未获取到任务ID');
+                        throw new Error(translate('image_colorization.task_creation_failed'));
                     }
                     
                     console.log('创建任务成功，任务ID:', taskId);
@@ -277,7 +414,7 @@
                     window.currentTaskId = taskId;
                     
                     // 3. 轮询任务状态
-                    loadingMessage.textContent = '处理中，请耐心等待...';
+                    loadingMessage.textContent = translate('image_colorization.processing_wait');
                     console.log('开始轮询任务状态...');
                     
                     let resultImageUrl;
@@ -285,49 +422,75 @@
                         resultImageUrl = await pollTaskStatus(taskId);
                     } catch (pollError) {
                         console.error('轮询任务状态错误:', pollError);
-                        throw new Error(`获取任务结果失败: ${pollError.message}`);
+                        throw new Error(`${translate('image_colorization.task_failed')}: ${pollError.message}`);
                     }
                     
                     if (!resultImageUrl) {
-                        throw new Error('获取结果图像失败，未获取到有效URL');
+                        throw new Error(translate('image_colorization.task_failed'));
                     }
                     
                     console.log('获取任务结果成功，图像URL:', resultImageUrl);
                     
                     // 4. 显示结果图像
-                    loadingMessage.textContent = '正在加载结果图像...';
+                    loadingMessage.textContent = translate('image_colorization.loading_result');
+                    
+                    // 先清除之前的状态，避免冲突
+                    resultImage.onload = null;
+                    resultImage.onerror = null;
+                    resultImage.src = '';
                     
                     resultImage.onload = () => {
                         loadingOverlay.classList.add('hidden');
+                        // 在图片加载完成后设置尺寸信息
+                        resultImageInfo.textContent = `上色后图片 (尺寸: ${resultImage.naturalWidth}x${resultImage.naturalHeight})`;
                     };
                     
                     resultImage.onerror = () => {
                         loadingOverlay.classList.add('hidden');
+                        resultImage.classList.add('hidden');
+                        resultImageInfo.textContent = '';
                         alert('加载结果图像失败，请稍后重试');
                     };
                     
                     resultImage.src = resultImageUrl;
                     resultImage.classList.remove('hidden');
-                    resultImagePlaceholder.classList.add('hidden');
-                    downloadBtn.classList.remove('hidden');
-                    saveToDownloadsBtn.classList.remove('hidden');
+                    
+                    // 设置原始图片显示，使用提前保存的URL
+                    if (originalImagePreviewSrc) {
+                        originalImage.src = originalImagePreviewSrc;
+                        originalImage.classList.remove('hidden');
+                        // 创建临时图片对象来获取尺寸信息
+                        const tempImg = new Image();
+                        tempImg.onload = function() {
+                            originalImageInfo.textContent = `原始图片 (尺寸: ${tempImg.naturalWidth}x${tempImg.naturalHeight})`;
+                        };
+                        tempImg.src = originalImagePreviewSrc;
+                    }
+                    
+                    // 隐藏初始状态，显示图片对比结果
+                    resultInitialState.classList.add('hidden');
+                    resultImages.classList.remove('hidden');
+                    
+                    // 这里不再需要重复添加历史记录，因为已经在任务成功时添加了
                 } catch (error) {
                     console.error('处理失败:', error);
                     
                     // 显示错误提示在结果区域
                     resultImage.classList.add('hidden');
-                    resultImagePlaceholder.classList.remove('hidden');
+                    resultImageInfo.textContent = '';
+                    resultContainer.classList.add('hidden');
                     downloadBtn.classList.add('hidden');
                     saveToDownloadsBtn.classList.add('hidden');
+                    newColorizationBtn.classList.add('hidden');
                     
                     resultImagePlaceholder.innerHTML = `
                         <div class="text-center p-4 bg-red-50 rounded-lg">
                             <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <h3 class="text-lg font-medium text-red-600 mb-2">图像处理失败</h3>
-                            <p class="text-red-600 mb-2">错误原因: ${error.message}</p>
-                            ${taskId ? '<p class="text-green-600">系统已自动退还您使用的积分</p>' : ''}
+                            <h3 class="text-lg font-medium text-red-600 mb-2">${translate('image_colorization.processing_failed')}</h3>
+                            <p class="text-red-600 mb-2">${translate('image_colorization.error_reason')}: ${error.message}</p>
+                            ${taskId ? `<p class="text-green-600">${translate('image_colorization.credits_refunded')}</p>` : ''}
                         </div>
                     `;
                     
@@ -519,6 +682,72 @@
                                         // 至少有一个成功的结果
                                         const resultImageUrl = successResults[0].url;
                                         clearTimeout(timeoutId);
+                                        
+                                        // 添加到历史记录
+                                        try {
+                                            const promptForHistory = promptInput.value.trim() || '图像上色';
+                                            
+                                            // 获取原始图片URL，优先使用originalImage.src，如果为空则使用imagePreview.src
+                                            const originalImageUrl = originalImage.src || imagePreview.src;
+                                            
+                                            // 验证必要参数
+                                            if (!originalImageUrl) {
+                                                console.error('原始图片URL为空，无法保存历史记录');
+                                                throw new Error('原始图片URL为空');
+                                            }
+                                            
+                                            if (!resultImageUrl) {
+                                                console.error('结果图片URL为空，无法保存历史记录');
+                                                throw new Error('结果图片URL为空');
+                                            }
+                                            
+                                            if (typeof ImageColorizationHistory !== 'undefined' && ImageColorizationHistory) {
+                                                console.log('使用新的历史记录模块保存历史记录');
+                                                console.log('历史记录参数 - 原图:', originalImageUrl.substring(0, 50) + '...');
+                                                console.log('历史记录参数 - 结果图:', resultImageUrl.substring(0, 50) + '...');
+                                                console.log('历史记录参数 - 提示词:', promptForHistory);
+                                                
+                                                // 清除旧的历史记录缓存，确保使用最新数据
+                                                localStorage.removeItem(getUserHistoryKey());
+                                                
+                                                // 确保使用结果图URL作为结果图参数
+                                                // 使用新的历史记录模块保存历史记录
+                                                const historyData = {
+                                                    originalImage: originalImageUrl,
+                                                    resultImage: resultImageUrl,
+                                                    prompt: promptForHistory,
+                                                    metadata: {
+                                                        timestamp: new Date().toISOString(),
+                                                        feature: 'image-colorization'
+                                                    }
+                                                };
+                                                
+                                                try {
+                                                    await window.ImageColorizationHistory.save(historyData);
+                                                    console.log('历史记录保存成功');
+                                                    
+                                                    // 手动刷新历史记录显示
+                                                    setTimeout(() => {
+                                                        console.log('延迟刷新历史记录显示');
+                                                        loadHistory();
+                                                    }, 1000);
+                                                } catch (saveError) {
+                                                    console.error('保存历史记录失败:', saveError);
+                                                }
+                                            } else {
+                                                console.log('使用旧的历史记录函数保存历史记录');
+                                                
+                                                // 清除旧的历史记录缓存，确保使用最新数据
+                                                localStorage.removeItem(getUserHistoryKey());
+                                                
+                                                // 确保使用结果图URL作为结果图参数
+                                                addToHistory(originalImageUrl, resultImageUrl, promptForHistory);
+                                            }
+                                            console.log('历史记录已添加');
+                                        } catch (historyError) {
+                                            console.error('保存历史记录失败:', historyError);
+                                        }
+                                        
                                         resolve(resultImageUrl);
                                         
                                         // 如果有部分失败，在控制台记录
@@ -545,7 +774,14 @@
                                 const errorMsg = data.output?.message || '未知错误';
                                 
                                 // 显示失败提示
-                                resultImagePlaceholder.classList.remove('hidden');
+                                resultImageInfo.textContent = ''; // Clear previous info
+                                resultImage.classList.add('hidden');
+                                resultImage.src = ''; // Clear image source
+                                resultContainer.classList.add('hidden');
+                                downloadBtn.classList.add('hidden');
+                                saveToDownloadsBtn.classList.add('hidden');
+                                newColorizationBtn.classList.add('hidden');
+                                
                                 resultImagePlaceholder.innerHTML = `
                                     <div class="text-center p-4 bg-red-50 rounded-lg">
                                         <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -574,7 +810,14 @@
                                 clearTimeout(timeoutId);
                                 
                                 // 显示取消提示
-                                resultImagePlaceholder.classList.remove('hidden');
+                                resultImageInfo.textContent = ''; // Clear previous info
+                                resultImage.classList.add('hidden');
+                                resultImage.src = ''; // Clear image source
+                                resultContainer.classList.add('hidden');
+                                downloadBtn.classList.add('hidden');
+                                saveToDownloadsBtn.classList.add('hidden');
+                                newColorizationBtn.classList.add('hidden');
+                                
                                 resultImagePlaceholder.innerHTML = `
                                     <div class="text-center p-4 bg-yellow-50 rounded-lg">
                                         <svg class="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -601,7 +844,14 @@
                                 clearTimeout(timeoutId);
                                 
                                 // 显示未知状态提示
-                                resultImagePlaceholder.classList.remove('hidden');
+                                resultImageInfo.textContent = ''; // Clear previous info
+                                resultImage.classList.add('hidden');
+                                resultImage.src = ''; // Clear image source
+                                resultContainer.classList.add('hidden');
+                                downloadBtn.classList.add('hidden');
+                                saveToDownloadsBtn.classList.add('hidden');
+                                newColorizationBtn.classList.add('hidden');
+                                
                                 resultImagePlaceholder.innerHTML = `
                                     <div class="text-center p-4 bg-gray-50 rounded-lg">
                                         <svg class="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -681,18 +931,60 @@
                     // 获取提示文本
                     const promptText = promptInput.value.trim() || '图像上色';
                     
+                    // 获取原始图片URL，优先使用originalImage.src，如果为空则使用imagePreview.src
+                    const originalImageUrl = originalImage.src || imagePreview.src;
+                    
                     console.log('准备保存图片到下载中心:', resultImage.src.substring(0, 50) + '...');
+                    console.log('原始图片URL:', originalImageUrl ? originalImageUrl.substring(0, 50) + '...' : '无');
+                    
+                    // 检查结果图片是否为base64格式，如果是则先上传到OSS
+                    let processedImageUrl = resultImage.src;
+                    if (resultImage.src.startsWith('data:image/')) {
+                        loadingMessage.textContent = '正在上传处理后的图片...';
+                        console.log('检测到base64图片，正在上传到OSS...');
+                        
+                        try {
+                            // 上传base64图片到OSS
+                            const uploadResponse = await fetch('/api/upload/image', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                },
+                                body: JSON.stringify({
+                                    image: resultImage.src,
+                                    type: 'base64',
+                                    description: '图像上色结果'
+                                })
+                            });
+                            
+                            const uploadData = await uploadResponse.json();
+                            if (uploadResponse.ok && uploadData.success && uploadData.url) {
+                                processedImageUrl = uploadData.url;
+                                console.log('图片上传成功，OSS URL:', processedImageUrl);
+                            } else {
+                                throw new Error(uploadData.message || '图片上传失败');
+                            }
+                        } catch (uploadError) {
+                            console.error('上传图片到OSS失败:', uploadError);
+                            throw new Error('上传图片失败: ' + uploadError.message);
+                        }
+                    }
+                    
+                    loadingMessage.textContent = '正在保存到下载中心...';
                     
                     // 调用API保存图片到下载中心
-                    const response = await fetch('/api/downloads/save', {
+                    const response = await fetch('/api/save-result', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                         },
                         body: JSON.stringify({
-                            imageUrl: resultImage.src,
-                            title: '图像上色: ' + (promptText.substring(0, 30) + (promptText.length > 30 ? '...' : '')),
+                            originalImageUrl: originalImageUrl,
+                            processedImageUrl: processedImageUrl,
+                            processTime: new Date().toISOString(),
+                            processType: '图像上色',
                             description: promptText,
                             type: 'IMAGE_COLORIZATION'
                         })
@@ -720,6 +1012,59 @@
                     loadingOverlay.classList.add('hidden');
                 }
             });
+
+            // 上传新图片按钮
+            newColorizationBtn.addEventListener('click', () => {
+                resetImageUpload();
+                // 重置到初始状态
+                resultInitialState.classList.remove('hidden');
+                resultImages.classList.add('hidden');
+            });
+
+            // 移除图片按钮
+            removeImageBtn.addEventListener('click', () => {
+                resetImageUpload();
+                // 重置到初始状态
+                resultInitialState.classList.remove('hidden');
+                resultImages.classList.add('hidden');
+            });
+            
+            // 重置图片上传
+            function resetImageUpload() {
+                // 清空文件输入
+                imageUpload.value = '';
+                
+                // 重置上传区域样式
+                uploadArea.classList.remove('border-indigo-400', 'bg-indigo-50');
+                uploadArea.classList.add('border-dashed', 'border-gray-300');
+                
+                // 隐藏预览容器，显示上传占位符
+                previewContainer.classList.add('hidden');
+                const uploadPlaceholder = document.getElementById('upload-placeholder');
+                if (uploadPlaceholder) {
+                    uploadPlaceholder.classList.remove('hidden');
+                }
+                
+                // 清空图片预览
+                imagePreview.src = '';
+                imagePreview.classList.add('hidden');
+                imageInfo.textContent = '';
+                
+                // 清空提示词
+                promptInput.value = '';
+                
+                // 重置结果图片显示状态
+                // 先移除事件监听器，避免触发错误
+                resultImage.onload = null;
+                resultImage.onerror = null;
+                
+                originalImage.src = '';
+                originalImage.classList.add('hidden');
+                originalImageInfo.textContent = '';
+                resultImage.src = '';
+                resultImage.classList.add('hidden');
+                resultImageInfo.textContent = '';
+            }
             
             // 辅助函数
             function handleImageFile(file) {
@@ -756,15 +1101,20 @@
                         }
                         
                         // 显示原始图片
-                        originalImage.src = event.target.result;
-                        originalImage.classList.remove('hidden');
-                        originalImagePlaceholder.classList.add('hidden');
+                        imagePreview.src = event.target.result;
+                        imagePreview.classList.remove('hidden');
+                        imageInfo.textContent = `原始图片 (尺寸: ${img.naturalWidth}x${img.naturalHeight})`;
+                        
+                        // 显示预览容器，隐藏上传占位符
+                        previewContainer.classList.remove('hidden');
+                        const uploadPlaceholder = document.getElementById('upload-placeholder');
+                        if (uploadPlaceholder) {
+                            uploadPlaceholder.classList.add('hidden');
+                        }
                         
                         // 重置结果区域
-                        resultImage.classList.add('hidden');
-                        resultImagePlaceholder.classList.remove('hidden');
-                        downloadBtn.classList.add('hidden');
-                        saveToDownloadsBtn.classList.add('hidden');
+                        resultInitialState.classList.remove('hidden');
+                        resultImages.classList.add('hidden');
                     };
                     img.src = event.target.result;
                 };
@@ -869,6 +1219,586 @@
             }
         });
 
+        // 历史记录相关函数
+        // 添加到历史记录
+        async function addToHistory(originalImage, resultImage, prompt) {
+            try {
+                // 检查localStorage是否可用
+                if (!isLocalStorageAvailable()) {
+                    console.warn('localStorage不可用，无法保存历史记录');
+                    return;
+                }
+                
+                console.log('添加历史记录 - 开始');
+                
+                // 获取用户特定的历史记录键
+                const historyKey = getUserHistoryKey();
+                console.log('添加历史记录 - 使用键:', historyKey);
+                
+                // 压缩图片数据，避免localStorage超出限制
+                const compressedOriginalImage = await compressImageDataIfNeeded(originalImage);
+                const compressedResultImage = await compressImageDataIfNeeded(resultImage);
+                
+                console.log('添加历史记录 - 原始图片(压缩后):', compressedOriginalImage.substring(0, 50) + '...');
+                console.log('添加历史记录 - 结果图片(压缩后):', compressedResultImage.substring(0, 50) + '...');
+                console.log('添加历史记录 - 提示词:', prompt);
+                
+                const historyItem = {
+                    originalImage: compressedOriginalImage,
+                    resultImage: compressedResultImage, // 确保这是结果图，将在历史记录中显示
+                    prompt: prompt,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // 添加调试日志，确认历史记录项的结构
+                console.log('创建的历史记录项:', {
+                    hasOriginalImage: !!compressedOriginalImage,
+                    hasResultImage: !!compressedResultImage,
+                    originalImageType: typeof compressedOriginalImage,
+                    resultImageType: typeof compressedResultImage,
+                    originalImageStart: compressedOriginalImage ? compressedOriginalImage.substring(0, 50) + '...' : 'null',
+                    resultImageStart: compressedResultImage ? compressedResultImage.substring(0, 50) + '...' : 'null',
+                    prompt: prompt,
+                    createdAt: new Date().toISOString()
+                });
+                
+                // 保存到本地存储
+                let history = [];
+                try {
+                    const historyData = localStorage.getItem(historyKey);
+                    console.log('添加历史记录 - 现有历史数据:', historyData ? '存在' : '不存在');
+                    
+                    if (historyData) {
+                        history = JSON.parse(historyData);
+                        console.log('添加历史记录 - 解析后的历史记录数量:', history.length);
+                    }
+                } catch (e) {
+                    console.error('解析历史记录失败，重置历史记录', e);
+                    // 如果解析失败，重置历史记录
+                    history = [];
+                }
+                
+                // 添加新记录到开头
+                history.unshift(historyItem);
+                console.log('添加历史记录 - 添加新记录后数量:', history.length);
+                
+                // 只保留最新的3条记录
+                history = history.slice(0, 3);
+                console.log('添加历史记录 - 截取后的历史记录数量:', history.length);
+                
+                try {
+                    // 尝试保存到localStorage
+                    const historyString = JSON.stringify(history);
+                    console.log('添加历史记录 - 准备保存的数据大小:', historyString.length, '字节');
+                    
+                    // 检查数据大小，避免超出配额
+                    if (historyString.length > 3500000) { // 约3.5MB限制
+                        console.warn('历史记录过大，清理旧记录');
+                        // 如果数据太大，尝试只保留最新的2条记录
+                        history = history.slice(0, 2);
+                        const reducedHistoryString = JSON.stringify(history);
+                        
+                        if (reducedHistoryString.length > 3500000) {
+                            // 如果仍然太大，只保留最新的记录
+                            history = [history[0]];
+                            localStorage.setItem(historyKey, JSON.stringify(history));
+                            console.log('添加历史记录 - 数据过大，仅保存最新一条');
+                        } else {
+                            localStorage.setItem(historyKey, reducedHistoryString);
+                            console.log('添加历史记录 - 数据过大，保存最新两条');
+                        }
+                    } else {
+                        localStorage.setItem(historyKey, historyString);
+                        console.log('添加历史记录 - 保存成功，共', history.length, '条记录');
+                    }
+                    
+                    // 验证保存是否成功
+                    const savedData = localStorage.getItem(historyKey);
+                    if (savedData) {
+                        const savedHistory = JSON.parse(savedData);
+                        console.log('添加历史记录 - 验证保存结果:', savedHistory.length, '条记录');
+                    }
+                } catch (e) {
+                    console.error('保存历史记录失败', e);
+                    // 如果保存失败，尝试清除所有历史记录并只保存当前记录
+                    try {
+                        localStorage.removeItem(historyKey);
+                        localStorage.setItem(historyKey, JSON.stringify([historyItem]));
+                        console.log('添加历史记录 - 保存失败后重试，仅保存当前记录');
+                    } catch (clearError) {
+                        console.error('清除并重设历史记录失败', clearError);
+                    }
+                }
+                
+                // 刷新历史记录显示
+                console.log('添加历史记录 - 调用历史记录刷新显示');
+                if (typeof ImageColorizationHistory !== 'undefined' && ImageColorizationHistory) {
+                    console.log('使用新的历史记录模块加载历史记录');
+                    // 直接使用模块的fetch和display方法
+                    ImageColorizationHistory.fetch().then(records => {
+                        ImageColorizationHistory.display(records, 'history-container');
+                    }).catch(error => {
+                        console.error('刷新历史记录失败:', error);
+                    });
+                } else {
+                    console.log('使用旧的历史记录函数加载历史记录');
+                    loadHistory();
+                }
+                console.log('添加历史记录 - 完成');
+            } catch (error) {
+                console.error('添加历史记录失败:', error);
+            }
+        }
+        
+        // 压缩图片数据以适应localStorage限制
+        function compressImageDataIfNeeded(imageData) {
+            return new Promise((resolve) => {
+                try {
+                    // 如果不是base64数据，直接返回
+                    if (!imageData || !imageData.startsWith('data:image')) {
+                        resolve(imageData);
+                        return;
+                    }
+                    
+                    // 如果数据大小已经小于500KB，不需要压缩
+                    if (imageData.length < 500000) {
+                        resolve(imageData);
+                        return;
+                    }
+                    
+                    console.log('压缩图片 - 原始大小:', imageData.length, '字节');
+                    
+                    // 创建一个临时的canvas和Image对象
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        // 创建一个canvas元素
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 设置合适的尺寸，保持宽高比
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 如果图片太大，按比例缩小
+                        const MAX_SIZE = 800;
+                        if (width > height && width > MAX_SIZE) {
+                            height = Math.round((height * MAX_SIZE) / width);
+                            width = MAX_SIZE;
+                        } else if (height > MAX_SIZE) {
+                            width = Math.round((width * MAX_SIZE) / height);
+                            height = MAX_SIZE;
+                        }
+                        
+                        // 设置canvas尺寸
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // 绘制图片到canvas
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 将canvas转换为压缩后的base64数据
+                        // 使用较低的质量值来减小文件大小
+                        const compressedData = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        console.log('压缩图片 - 压缩后大小:', compressedData.length, '字节');
+                        console.log('压缩图片 - 压缩率:', Math.round((compressedData.length / imageData.length) * 100) + '%');
+                        
+                        resolve(compressedData);
+                    };
+                    
+                    img.onerror = () => {
+                        console.error('压缩图片失败: 图片加载错误');
+                        resolve(imageData); // 如果加载失败，返回原始数据
+                    };
+                    
+                    img.src = imageData;
+                } catch (error) {
+                    console.error('压缩图片失败:', error);
+                    // 如果压缩失败，返回原始数据
+                    resolve(imageData);
+                }
+            });
+        }
+        
+        // 检查localStorage是否可用
+        function isLocalStorageAvailable() {
+            try {
+                const test = '__test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // 加载历史记录 - 使用OSS优先的模块
+        async function loadHistory() {
+            console.log('loadHistory函数被调用 - 使用新的OSS存储模块');
+            
+            // 检查是否已加载了新的历史记录模块
+            if (typeof window.ImageColorizationHistory !== 'undefined') {
+                console.log('使用新的图像上色历史记录模块');
+                try {
+                    const records = await window.ImageColorizationHistory.fetch();
+                    window.ImageColorizationHistory.display(records, 'history-container');
+                } catch (error) {
+                    console.error('加载历史记录失败:', error);
+                    loadHistoryFallback();
+                }
+                return;
+            }
+            
+            // 如果模块未加载，显示加载中状态
+            const historyContainer = document.getElementById('history-container');
+            if (historyContainer) {
+                historyContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">正在加载历史记录...</p>';
+            }
+            
+            // 等待模块加载完成后重试
+            setTimeout(() => {
+                if (typeof window.ImageColorizationHistory !== 'undefined') {
+                    console.log('模块加载完成，重新加载历史记录');
+                    loadHistory();
+                } else {
+                    console.warn('新的历史记录模块未加载，使用备用方案');
+                    loadHistoryFallback();
+                }
+            }, 1000);
+        }
+        
+        // 备用历史记录加载方案（仅用于模块未加载时）
+        function loadHistoryFallback() {
+            console.log('使用备用历史记录加载方案');
+            try {
+                // 检查localStorage是否可用
+                if (!isLocalStorageAvailable()) {
+                    console.warn('localStorage不可用，无法加载历史记录');
+                    const historyContainer = document.getElementById('history-container');
+                    if (historyContainer) {
+                        historyContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">历史记录功能不可用</p>';
+                    }
+                    return;
+                }
+                
+                const historyContainer = document.getElementById('history-container');
+                if (!historyContainer) {
+                    console.error('未找到历史记录容器元素');
+                    return;
+                }
+                console.log('找到历史记录容器元素');
+                
+                // 获取用户特定的历史记录键
+                const historyKey = getUserHistoryKey();
+                console.log('加载历史记录 - 使用键:', historyKey);
+                
+                let history = [];
+                try {
+                    // 添加调试日志
+                    console.log('开始加载历史记录');
+                    const historyData = localStorage.getItem(historyKey);
+                    console.log('从localStorage获取的历史记录数据:', historyData);
+                    
+                    if (historyData) {
+                        history = JSON.parse(historyData);
+                        console.log('解析后的历史记录:', history);
+                        console.log('历史记录数量:', history.length);
+                    } else {
+                        console.log('localStorage中没有历史记录数据');
+                    }
+                } catch (e) {
+                    console.error('解析历史记录失败', e);
+                    history = [];
+                }
+                
+                // 过滤24小时内的记录
+                const now = new Date();
+                const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                
+                const recentHistory = history.filter(item => {
+                    if (!item.createdAt) {
+                        console.warn('历史记录缺少创建时间，跳过:', item);
+                        return false;
+                    }
+                    
+                    const itemDate = new Date(item.createdAt);
+                    const isRecent = itemDate >= twentyFourHoursAgo;
+                    
+                    if (!isRecent) {
+                        console.log('过滤掉超过24小时的记录:', {
+                            记录时间: itemDate.toLocaleString(),
+                            当前时间: now.toLocaleString(),
+                            提示词: item.prompt
+                        });
+                    }
+                    
+                    return isRecent;
+                });
+                
+                console.log('24小时过滤结果:', {
+                    原始记录数: history.length,
+                    过滤后记录数: recentHistory.length,
+                    过滤时间范围: `${twentyFourHoursAgo.toLocaleString()} 至 ${now.toLocaleString()}`
+                });
+                
+                // 确保显示最新的3条记录
+                const limitedHistory = recentHistory.slice(0, 3);
+                console.log('将显示的历史记录数量:', limitedHistory.length);
+            
+                if (limitedHistory.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">暂无历史记录</p>';
+                    return;
+                }
+                
+                // 清空历史记录容器
+                historyContainer.innerHTML = '';
+                
+                // 遍历历史记录并创建卡片
+                limitedHistory.forEach((item, index) => {
+                    console.log(`处理第${index+1}条历史记录:`, item.prompt);
+                    
+                    // 创建历史记录卡片
+                    const historyCard = document.createElement('div');
+                    historyCard.className = 'history-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all';
+                
+                    const originalImage = item.originalImage;
+                    // 确保使用结果图而不是原始图
+                    const resultImage = item.resultImage;
+                    
+                    // 添加调试日志，查看历史记录项的内容
+                    console.log('历史记录项内容:', {
+                        hasOriginalImage: !!originalImage,
+                        hasResultImage: !!resultImage,
+                        originalImageType: typeof originalImage,
+                        resultImageType: typeof resultImage,
+                        originalImageStart: originalImage ? originalImage.substring(0, 50) + '...' : 'null',
+                        resultImageStart: resultImage ? resultImage.substring(0, 50) + '...' : 'null'
+                    });
+                    
+                    const prompt = item.prompt || '图像上色';
+                    const createdAt = new Date(item.createdAt).toLocaleString();
+                    
+                    // 设置卡片内容 - 确保使用结果图而不是原始图
+                    historyCard.innerHTML = `
+                        <div class="relative">
+                            <img src="${resultImage}" alt="结果图" class="history-thumbnail w-full h-32 object-cover" loading="lazy" onerror="this.onerror=null; this.src='/images/image-placeholder.png'; console.error('历史图片加载失败:', this.src);">
+                        </div>
+                        <div class="p-3">
+                            <p class="text-sm text-gray-700 truncate" title="${prompt}">${prompt}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs text-gray-500">${createdAt}</span>
+                                <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 下载按钮点击事件
+                    const downloadHistoryBtn = historyCard.querySelector('.download-history-btn');
+                    downloadHistoryBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // 防止触发卡片点击事件
+                        downloadImage(resultImage, `图像上色_${Date.now()}.png`);
+                    });
+                    
+                    // 将卡片添加到容器
+                    historyContainer.appendChild(historyCard);
+                });
+                
+                console.log('历史记录加载完成');
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                const historyContainer = document.getElementById('history-container');
+                if (historyContainer) {
+                    historyContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">加载历史记录失败</p>';
+                }
+            }
+        }
+        
+        // 清空历史记录
+        async function clearHistory() {
+            if (confirm(translate('image_colorization.confirm_clear_history'))) {
+                try {
+                    // 使用新的历史记录模块清空
+                    if (typeof window.ImageColorizationHistory !== 'undefined') {
+                        console.log('使用新的历史记录模块清空历史记录');
+                        try {
+                            await window.ImageColorizationHistory.remove('all');
+                            console.log('OSS历史记录已清空');
+                        } catch (ossError) {
+                            console.error('清空OSS历史记录失败:', ossError);
+                        }
+                    }
+                    
+                    // 清空本地存储作为备用
+                    const historyKey = getUserHistoryKey();
+                    localStorage.removeItem(historyKey);
+                    console.log('本地历史记录已清空，键:', historyKey);
+                    
+                    // 重新加载历史记录显示
+                    loadHistory();
+                    alert('历史记录已清空');
+                } catch (error) {
+                    console.error('清空历史记录失败:', error);
+                    alert('清空历史记录失败');
+                }
+            }
+        }
+        
+        // 获取用户特定的历史记录键
+        function getUserHistoryKey() {
+            try {
+                const userInfo = localStorage.getItem('user');
+                if (userInfo) {
+                    const user = JSON.parse(userInfo);
+                    const userId = user.id || user.phone || 'unknown';
+                    return `imageColorizationHistory_${userId}`;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+            }
+            return 'imageColorizationHistory_anonymous';
+        }
+
+        // 用户状态监听函数
+        function setupUserStateListener() {
+            let currentUserId = null;
+            let currentAuthToken = null;
+            
+            // 获取当前用户ID
+            function getCurrentUserId() {
+                try {
+                    const userInfo = localStorage.getItem('user');
+                    if (userInfo) {
+                        const user = JSON.parse(userInfo);
+                        return user.id || user.phone || 'unknown';
+                    }
+                } catch (error) {
+                    console.error('获取用户ID失败:', error);
+                }
+                return null;
+            }
+            
+            // 检查用户状态变化
+            function checkUserState() {
+                const newUserId = getCurrentUserId();
+                const newAuthToken = localStorage.getItem('authToken');
+                
+                // 检查用户是否切换
+                if (newUserId !== currentUserId || newAuthToken !== currentAuthToken) {
+                    console.log('检测到用户状态变化:', {
+                        之前用户ID: currentUserId,
+                        当前用户ID: newUserId,
+                        之前令牌: currentAuthToken ? '存在' : '不存在',
+                        当前令牌: newAuthToken ? '存在' : '不存在'
+                    });
+                    
+                    // 如果用户切换了，重新加载历史记录
+                    if (currentUserId !== null) {
+                        console.log('用户切换，重新加载历史记录');
+                        // 重新加载历史记录（不清除localStorage中的数据）
+                        if (typeof window.ImageColorizationHistory !== 'undefined') {
+                            console.log('使用新的历史记录模块加载历史记录');
+                            loadHistory();
+                        } else {
+                            console.log('使用旧的历史记录函数加载历史记录');
+                            loadHistory();
+                        }
+                    }
+                    
+                    // 更新当前用户信息
+                    currentUserId = newUserId;
+                    currentAuthToken = newAuthToken;
+                }
+            }
+            
+            // 定期检查用户状态（每2秒检查一次）
+            setInterval(checkUserState, 2000);
+            
+            // 监听localStorage变化（处理跨标签页切换）
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'user' || e.key === 'authToken') {
+                    console.log('检测到localStorage变化:', e.key);
+                    setTimeout(checkUserState, 100); // 延迟检查，确保数据已更新
+                }
+            });
+            
+            // 监听页面焦点变化（处理用户切换后回到页面）
+            window.addEventListener('focus', function() {
+                console.log('页面获得焦点，检查用户状态');
+                setTimeout(checkUserState, 100);
+            });
+            
+            // 初始化当前用户状态
+            checkUserState();
+        }
+
+        // 初始化历史记录功能
+        function initializeHistoryFeatures() {
+            // 绑定清空历史记录按钮
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            if (clearHistoryBtn) {
+                clearHistoryBtn.addEventListener('click', function() {
+                    if (typeof window.ImageColorizationHistory !== 'undefined') {
+                        console.log('使用新的历史记录模块清空历史记录');
+                        clearHistory();
+                    } else {
+                        console.log('使用旧的历史记录函数清空历史记录');
+                        clearHistory();
+                    }
+                });
+            }
+            
+            // 绑定刷新历史记录按钮
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            if (refreshHistoryBtn) {
+                refreshHistoryBtn.addEventListener('click', function() {
+                    console.log('刷新历史记录按钮被点击');
+                    // 添加视觉反馈
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                    if (typeof window.ImageColorizationHistory !== 'undefined') {
+                        console.log('使用新的历史记录模块加载历史记录');
+                        loadHistory();
+                    } else {
+                        console.log('使用旧的历史记录函数加载历史记录');
+                        loadHistory();
+                    }
+                });
+            } else {
+                console.error('未找到刷新历史记录按钮元素');
+            }
+        }
+        
+        // 下载图片函数
+        function downloadImage(imageUrl, fileName) {
+            try {
+                // 创建一个临时的a标签来触发下载
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = fileName || 'image.png';
+                
+                // 添加到DOM中
+                document.body.appendChild(link);
+                
+                // 触发点击事件
+                link.click();
+                
+                // 清理DOM
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('下载图片失败:', error);
+                alert('下载图片失败');
+            }
+        }
+        
+
+
+
+
         // 加载导航栏组件
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -880,6 +1810,49 @@
                 const script = document.createElement('script');
                 script.src = '/components/components.js';
                 document.head.appendChild(script);
+                
+                // 初始化历史记录模块
+                console.log('准备初始化历史记录模块');
+                // 确保DOM已加载完成
+                setTimeout(() => {
+                    try {
+                        const historyContainer = document.getElementById('history-container');
+                        if (!historyContainer) {
+                            console.error('未找到历史记录容器元素，ID: history-container');
+                            return;
+                        }
+                        console.log('找到历史记录容器元素:', historyContainer);
+                        
+                        const colorizationHistory = ImageColorizationHistory.init({
+                            containerId: 'history-container',
+                            onHistoryItemClick: (item) => {
+                                console.log('历史记录项点击:', item);
+                            },
+                            onHistoryLoad: () => {
+                                console.log('历史记录加载完成回调');
+                            }
+                        });
+                        console.log('历史记录模块初始化成功');
+                        
+                        // 加载历史记录
+                        if (colorizationHistory && colorizationHistory.loadHistory) {
+                            colorizationHistory.loadHistory().catch(error => {
+                                console.error('加载历史记录失败:', error);
+                            });
+                        }
+                        
+                        // 初始化历史记录备份恢复模块
+                        if (window.ColorizationHistoryFallback) {
+                            console.log('初始化历史记录备份恢复模块');
+                            ColorizationHistoryFallback.init();
+                        } else {
+                            console.warn('历史记录备份恢复模块未加载');
+                        }
+                        
+                    } catch (error) {
+                        console.error('初始化历史记录模块失败:', error);
+                    }
+                }, 500);
             } catch (error) {
                 console.error('Failed to load navbar component:', error);
             }

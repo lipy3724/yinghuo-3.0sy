@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="image_resizer.page_title">图片改尺寸 - 萤火AI</title>
+    <script src="/js/tailwind.min.js"></script>
+    <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/error-styles.css" rel="stylesheet">
+    <script src="/js/logout-handler.js"></script>
+    <script src="/js/auth-check.js"></script>
+    <script src="/feature-tracker.js"></script>
+    <script src="/js/error-handler.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/auth-helper.js"></script>
+    <script src="/translations.js"></script>
+    <!-- 本地备份的remixicon -->
+    <link href="/css/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .card {
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .feature-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: rgba(99, 102, 241, 1);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .active-option {
+            background-color: #ede9fe;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+        
+        .history-card {
+            transition: all 0.3s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .history-thumbnail {
+            transition: transform 0.3s ease;
+        }
+        
+        .history-card:hover .history-thumbnail {
+            transform: scale(1.05);
+        }
+        
+        .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
+        
+        #history-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+    </style>
+
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 导航栏组件容器 -->
+    <div id="navbar-simple"></div>
+
+    <!-- 主内容区域 -->
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="image_resizer.main_title">图片改尺寸</h1>
+        
+        <!-- 错误信息容器 -->
+        <div id="error-message-container"></div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 图片上传和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4" data-translate="image_resizer.settings_title">图片尺寸设置</h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="image_resizer.image_upload">图片上传</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="image_resizer.upload_description">上传需要调整的图片</span>
+                    </div>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer" id="dropZone">
+                        <input type="file" id="imageInput" name="image" accept="image/*" class="hidden">
+                        <div id="uploadPlaceholder">
+                            <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500"><span data-translate="image_resizer.drag_drop_text">拖放图片到此处或</span> <span class="text-indigo-600 font-medium" data-translate="image_resizer.click_upload">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="image_resizer.supported_formats">支持 JPG, PNG, WEBP 格式</p>
+                        </div>
+                        <div id="previewContainer" class="hidden">
+                            <img id="imagePreview" class="max-h-48 mx-auto mb-3">
+                            <p id="imageInfo" class="text-sm text-gray-500"></p>
+                            <button type="button" id="removeImage" class="mt-2 text-sm text-red-500 hover:text-red-700" data-translate="image_resizer.remove_image">
+                                移除图片
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="image_resizer.size_limit">图片尺寸需小于 10MB</p>
+                </div>
+                
+                <!-- 尺寸调整设置 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="image_resizer.resize_settings">修改图像大小</label>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1" data-translate="image_resizer.width">宽度</label>
+                            <input type="number" id="widthInput" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="0" min="1">
+                            <p class="text-xs text-gray-500 mt-1">px</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1" data-translate="image_resizer.height">高度</label>
+                            <input type="number" id="heightInput" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="0" min="1">
+                            <p class="text-xs text-gray-500 mt-1">px</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" id="keepRatioCheckbox" class="form-checkbox h-5 w-5 text-indigo-600" checked>
+                            <span class="ml-2 text-sm text-gray-700" data-translate="image_resizer.keep_ratio">保持原始比例</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" id="resizeButton" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ri-aspect-ratio-line mr-2"></i>
+                        <span data-translate="image_resizer.start_resize">立即调整尺寸</span>
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500">
+                        <span data-translate="image_resizer.feature_description">此功能可以快速调整图片尺寸，支持保持原始比例</span>
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium">
+                        <span data-translate="image_resizer.compliance_warning">请上传合法合规的图片，如有违反会进行封号处理</span>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 右侧面板: 预览和效果展示 -->
+            <div class="lg:col-span-3">
+                <!-- 处理结果区域 -->
+                <div id="resultContainer" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="image_resizer.effect_display">效果展示</h2>
+                    
+                    <!-- 初始状态：提示用户上传图片 -->
+                    <div id="resultInitialState" class="text-center py-8 text-gray-500">
+                        <i class="ri-image-line text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-lg" data-translate="image_resizer.upload_first">请先上传图片并设置尺寸</p>
+                        <p class="text-sm mt-1" data-translate="image_resizer.comparison_hint">上传图片后，这里将显示原始图片和调整后的对比结果</p>
+                    </div>
+                    
+                    <!-- 图片对比结果区域 -->
+                    <div id="resultImages" class="hidden">
+                        <div class="flex flex-col md:flex-row gap-6 mb-6">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-700 mb-2" data-translate="image_resizer.original_image">原始图片</h3>
+                                <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                    <img id="originalImage" class="max-w-full max-h-64 mx-auto">
+                                    <p id="originalImageInfo" class="text-sm text-gray-500 mt-2 text-center"></p>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-700 mb-2" data-translate="image_resizer.resized_image">调整后图片</h3>
+                                <div id="resultImageWrapper" class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                    <img id="resultImage" class="max-w-full max-h-64 mx-auto">
+                                    <p id="resultImageInfo" class="text-sm text-gray-500 mt-2 text-center"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end gap-3">
+                            <button type="button" id="downloadButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <i class="ri-download-2-line mr-1"></i>
+                                <span data-translate="image_resizer.download_image">下载图片</span>
+                            </button>
+                            <button type="button" id="newResizeButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <i class="ri-add-line mr-1"></i>
+                                <span data-translate="image_resizer.upload_new">上传新图片</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 使用说明部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4" data-translate="image_resizer.usage_instructions">使用说明</h2>
+                    
+                    <div class="text-gray-600 space-y-3">
+                        <p data-translate="image_resizer.usage_description">此功能可以快速调整图片尺寸，支持以下操作：</p>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li data-translate="image_resizer.usage_tip1">上传图片后，可以设置目标宽度和高度</li>
+                            <li data-translate="image_resizer.usage_tip2">勾选“保持原始比例”选项，可在修改一个值时自动计算另一个值</li>
+                            <li data-translate="image_resizer.usage_tip3">支持JPG、PNG、WEBP格式，大小不超过10MB</li>
+                            <li data-translate="image_resizer.usage_tip4">上传图片后，可以预览原始图片与调整后的效果对比</li>
+                            <li data-translate="image_resizer.usage_tip5">调整完成后，可以直接下载调整后的图片</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载中遮罩 -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
+            <div class="loading-spinner mb-4"></div>
+            <p id="processingText" class="text-lg font-medium" data-translate="image_resizer.processing_message">图片处理中，请稍候...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 首先检查用户认证状态
+            console.log('图片改尺寸页面：开始检查用户认证状态');
+            
+            // 检查本地存储
+            const authToken = localStorage.getItem('authToken');
+            const userInfo = localStorage.getItem('user');
+            
+            if (!authToken || !userInfo) {
+                console.log('图片改尺寸页面：用户未登录，跳转到登录页');
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                return;
+            }
+            
+            // 如果有统一的认证检查函数，使用它
+            if (typeof window.checkAuth === 'function') {
+                try {
+                    const isAuthenticated = await window.checkAuth(true);
+                    if (!isAuthenticated) {
+                        console.log('图片改尺寸页面：认证检查失败');
+                        return; // checkAuth会自动处理重定向
+                    }
+                    console.log('图片改尺寸页面：认证检查通过');
+                } catch (error) {
+                    console.error('图片改尺寸页面：认证检查出错:', error);
+                    // 出错时也继续加载页面，但记录错误
+                }
+            }
+            
+            const dropZone = document.getElementById('dropZone');
+            const imageInput = document.getElementById('imageInput');
+            const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const imageInfo = document.getElementById('imageInfo');
+            const removeImageBtn = document.getElementById('removeImage');
+            const widthInput = document.getElementById('widthInput');
+            const heightInput = document.getElementById('heightInput');
+            const keepRatioCheckbox = document.getElementById('keepRatioCheckbox');
+            const resizeButton = document.getElementById('resizeButton');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultInitialState = document.getElementById('resultInitialState');
+            const resultImages = document.getElementById('resultImages');
+            const originalImage = document.getElementById('originalImage');
+            const originalImageInfo = document.getElementById('originalImageInfo');
+            const resultImage = document.getElementById('resultImage');
+            const resultImageInfo = document.getElementById('resultImageInfo');
+            const downloadButton = document.getElementById('downloadButton');
+            const newResizeButton = document.getElementById('newResizeButton');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const processingText = document.getElementById('processingText');
+            
+            let selectedFile = null;
+            let originalWidth = 0;
+            let originalHeight = 0;
+            let aspectRatio = 0;
+            let resizedImageBlob = null;
+            
+            // 初始化禁用调整按钮
+            resizeButton.disabled = true;
+            
+            // 点击上传区域触发文件选择
+            dropZone.addEventListener('click', () => {
+                imageInput.click();
+            });
+            
+            // 拖拽文件处理
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-indigo-400');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-indigo-400');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-400');
+                
+                if (e.dataTransfer.files.length) {
+                    handleSelectedFile(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // 选择文件处理
+            imageInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleSelectedFile(e.target.files[0]);
+                }
+            });
+            
+            // 移除图片按钮
+            removeImageBtn.addEventListener('click', () => {
+                resetImageUpload();
+            });
+            
+            // 处理选择的文件
+            function handleSelectedFile(file) {
+                // 检查文件类型
+                if (!file.type.match('image.*')) {
+                    alert(translate('image_resizer.invalid_file_type'));
+                    return;
+                }
+                
+                // 检查文件大小
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(translate('image_resizer.file_too_large'));
+                    return;
+                }
+                
+                selectedFile = file;
+                
+                // 显示预览
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    // 更新左侧小预览
+                    imagePreview.src = e.target.result;
+                    uploadPlaceholder.classList.add('hidden');
+                    previewContainer.classList.remove('hidden');
+                    
+                    // 检查图片尺寸
+                    const img = new Image();
+                    img.onload = () => {
+                        originalWidth = img.width;
+                        originalHeight = img.height;
+                        aspectRatio = originalWidth / originalHeight;
+                        
+                        imageInfo.textContent = `${file.name} (${originalWidth}×${originalHeight} px, ${formatFileSize(file.size)})`;
+                        
+                        // 设置输入框的初始值为原始尺寸
+                        widthInput.value = originalWidth;
+                        heightInput.value = originalHeight;
+                        
+                        // 启用调整按钮
+                        resizeButton.disabled = false;
+                    };
+                    
+                    img.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // 宽度输入框变化时，如果保持比例，则自动计算高度
+            widthInput.addEventListener('input', () => {
+                if (keepRatioCheckbox.checked && aspectRatio > 0) {
+                    const newWidth = parseInt(widthInput.value) || 0;
+                    const newHeight = Math.round(newWidth / aspectRatio);
+                    heightInput.value = newHeight;
+                }
+            });
+            
+            // 高度输入框变化时，如果保持比例，则自动计算宽度
+            heightInput.addEventListener('input', () => {
+                if (keepRatioCheckbox.checked && aspectRatio > 0) {
+                    const newHeight = parseInt(heightInput.value) || 0;
+                    const newWidth = Math.round(newHeight * aspectRatio);
+                    widthInput.value = newWidth;
+                }
+            });
+            
+            // 调整尺寸按钮点击事件
+            resizeButton.addEventListener('click', () => {
+                if (!selectedFile) {
+                    alert(translate('image_resizer.select_image_first'));
+                    return;
+                }
+                
+                const targetWidth = parseInt(widthInput.value);
+                const targetHeight = parseInt(heightInput.value);
+                
+                if (!targetWidth || !targetHeight) {
+                    alert(translate('image_resizer.enter_valid_dimensions'));
+                    return;
+                }
+                
+                // 显示加载遮罩
+                showLoadingOverlay(translate('image_resizer.resizing_image'));
+                
+                // 使用Canvas调整图片尺寸
+                resizeImage(imagePreview.src, targetWidth, targetHeight)
+                    .then(async resizedDataUrl => {
+                        // 隐藏加载遮罩
+                        hideLoadingOverlay();
+                        
+                        // 显示结果
+                        originalImage.src = imagePreview.src;
+                        resultImage.src = resizedDataUrl;
+                        
+                        originalImageInfo.textContent = `${translate('image_resizer.original_size')}: ${originalWidth}×${originalHeight} px`;
+                        resultImageInfo.textContent = `${translate('image_resizer.resized_size')}: ${targetWidth}×${targetHeight} px`;
+                        
+                        // 隐藏初始状态，显示图片对比结果
+                        resultInitialState.classList.add('hidden');
+                        resultImages.classList.remove('hidden');
+                        
+                        // 将DataURL转换为Blob对象，用于下载
+                        fetch(resizedDataUrl)
+                            .then(res => res.blob())
+                            .then(blob => {
+                                resizedImageBlob = blob;
+                            });
+                        
+                        // 记录功能使用（免费功能）
+                        try {
+                            console.log('准备记录功能使用: IMAGE_RESIZE');
+                            const result = await trackFeatureUsage('use', 'IMAGE_RESIZE');
+                            if (result) {
+                                console.log('图片改尺寸使用已记录:', result);
+                            } else {
+                                console.log('trackFeatureUsage返回了false或undefined');
+                            }
+                        } catch (error) {
+                            console.error('记录使用统计失败:', error);
+                        }
+                    })
+                    .catch(error => {
+                        hideLoadingOverlay();
+                        alert(translate('image_resizer.resize_failed') + ': ' + error.message);
+                    });
+            });
+            
+            // 下载结果图片
+            downloadButton.addEventListener('click', () => {
+                if (resultImage.src) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(resizedImageBlob || dataURLtoBlob(resultImage.src));
+                    link.download = `resized_${selectedFile.name}`;
+                    link.click();
+                }
+            });
+            
+            // 新的图片上传按钮
+            newResizeButton.addEventListener('click', () => {
+                resetImageUpload();
+                // 重置到初始状态
+                resultInitialState.classList.remove('hidden');
+                resultImages.classList.add('hidden');
+            });
+            
+            // 重置图片上传
+            function resetImageUpload() {
+                imageInput.value = '';
+                uploadPlaceholder.classList.remove('hidden');
+                previewContainer.classList.add('hidden');
+                imagePreview.src = '';
+                imageInfo.textContent = '';
+                selectedFile = null;
+                originalWidth = 0;
+                originalHeight = 0;
+                aspectRatio = 0;
+                widthInput.value = '';
+                heightInput.value = '';
+                resizeButton.disabled = true;
+            }
+            
+            // 使用Canvas调整图片尺寸
+            function resizeImage(src, width, height) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 使用高质量的图像平滑算法
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        
+                        // 绘制调整大小的图像
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 获取DataURL
+                        const dataUrl = canvas.toDataURL(selectedFile.type || 'image/jpeg', 0.9);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = () => {
+                        reject(new Error('图片加载失败'));
+                    };
+                    img.src = src;
+                });
+            }
+            
+            // 显示加载蒙层
+            function showLoadingOverlay(message) {
+                processingText.textContent = message || translate('image_resizer.processing_message');
+                loadingOverlay.classList.remove('hidden');
+            }
+            
+            // 隐藏加载蒙层
+            function hideLoadingOverlay() {
+                loadingOverlay.classList.add('hidden');
+            }
+            
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+            
+            // DataURL转Blob
+            function dataURLtoBlob(dataURL) {
+                const arr = dataURL.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new Blob([u8arr], { type: mime });
+            }
+        });
+        
+        // 加载导航栏组件
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件脚本
+                const script = document.createElement('script');
+                script.src = '/components/components.js';
+                document.head.appendChild(script);
+                
+                // 初始化翻译系统
+                if (typeof initializeTranslations === 'function') {
+                    initializeTranslations();
+                }
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
+            }
+        });
+    </script>
+</body>
+</html>

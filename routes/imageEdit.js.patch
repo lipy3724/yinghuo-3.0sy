@@ -1,0 +1,88 @@
+--- routes/imageEdit.js
++++ routes/imageEdit.js
+@@ -3,6 +3,7 @@ const router = express.Router();
+ const axios = require('axios');
+ const https = require('https');
+ const { protect } = require('../middleware/auth');
++const { saveDiantuResultToOSS } = require('../utils/diantuOssStorage');
+ 
+ // 通义万相API配置
+ const API_KEY = process.env.DASHSCOPE_API_KEY || 'sk-a53c9eb917ce49558997c6bc0edac820';
+@@ -118,6 +119,7 @@ router.post('/create-task', protect, async (req, res) => {
+     const isDiantu = requestData.input?.function === 'control_cartoon_feature';
+     if (isDiantu) {
+       console.log(`检测到垫图功能请求: 用户ID=${userId}`);
++      global.imageEditTasks[taskId].isDiantu = true; // 标记为垫图任务
+     }
+     
+     // 调用创建任务
+@@ -258,6 +260,14 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
+         // 任务成功完成，获取结果URL
+         let resultUrl = getResultUrl(statusResponse);
+         
++        // 如果是垫图功能，将结果图保存到OSS
++        if (task.isDiantu || task.function === 'control_cartoon_feature') {
++          try {
++            resultUrl = await saveDiantuResultToOSS(resultUrl, req.user.id, taskId);
++            console.log(`垫图结果已保存到OSS: ${resultUrl}`);
++          } catch (ossError) {
++            console.error('保存垫图结果到OSS失败:', ossError);
++          }
++        }
++        
+         if (resultUrl) {
+           // 将结果URL缓存起来
+           imageCache.set(taskId, {
+@@ -265,6 +275,44 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
+             timestamp: new Date(),
+             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24小时过期
+           });
++          
++          // 如果是垫图功能，更新任务详情中的resultUrl
++          try {
++            // 判断是否为垫图功能
++            if (task.isDiantu || task.function === 'control_cartoon_feature') {
++              console.log(`垫图任务成功，更新结果URL: 任务ID=${taskId}, 结果URL=${resultUrl}`);
++              const { FeatureUsage } = require('../models/FeatureUsage');
++              const userId = req.user.id;
++              
++              // 查找用户的垫图功能使用记录
++              const usage = await FeatureUsage.findOne({
++                where: {
++                  userId: userId,
++                  featureName: 'DIANTU'
++                }
++              });
++              
++              if (usage) {
++                // 解析现有详情
++                const details = JSON.parse(usage.details || '{}');
++                const tasks = details.tasks || [];
++                
++                // 找到对应的任务并更新resultUrl
++                const taskIndex = tasks.findIndex(t => t.taskId === taskId);
++                if (taskIndex !== -1) {
++                  tasks[taskIndex].resultUrl = resultUrl;
++                  tasks[taskIndex].status = 'SUCCEEDED';
++                  tasks[taskIndex].completedAt = new Date().toISOString();
++                  
++                  // 更新数据库
++                  usage.details = JSON.stringify({
++                    ...details,
++                    tasks: tasks
++                  });
++                  await usage.save();
++                  
++                  console.log(`垫图任务结果已保存到数据库: 任务ID=${taskId}`);
++                } else {
++                  console.warn(`未找到对应的垫图任务记录: 任务ID=${taskId}`);
++                }
++              } else {
++                console.warn(`未找到用户的垫图功能使用记录: 用户ID=${userId}`);
++              }
++            }
++          } catch (saveError) {
++            console.error('保存垫图任务结果URL失败:', saveError);
++            // 继续执行，不中断流程
++          }
+         }

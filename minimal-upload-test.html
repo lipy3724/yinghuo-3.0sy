@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小化上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            background-color: white;
+            margin: 20px 0;
+            transition: border-color 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .preview {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #e9ecef;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>最小化上传测试</h1>
+    
+    <div class="status" id="status">等待测试...</div>
+    
+    <div class="upload-area" id="upload-area">
+        <p>点击或拖拽图片到这里上传</p>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+    </div>
+    
+    <img id="preview" class="preview" style="display: none;">
+    
+    <div>
+        <button onclick="testClick()">测试点击</button>
+        <button onclick="testFileInput()">测试文件输入</button>
+        <button onclick="clearStatus()">清除状态</button>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+        const status = document.getElementById('status');
+        
+        function updateStatus(message, type = 'info') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            console.log(message);
+        }
+        
+        function clearStatus() {
+            status.textContent = '状态已清除';
+            status.className = 'status';
+        }
+        
+        function testClick() {
+            updateStatus('手动测试点击事件', 'info');
+            uploadArea.click();
+        }
+        
+        function testFileInput() {
+            updateStatus('手动测试文件输入', 'info');
+            fileInput.click();
+        }
+        
+        // 点击上传区域
+        uploadArea.addEventListener('click', function(e) {
+            updateStatus('✅ 点击事件触发', 'success');
+            fileInput.click();
+        });
+        
+        // 文件选择变化
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                updateStatus(`✅ 文件选择: ${file.name}`, 'success');
+                
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    updateStatus('❌ 不是图片文件', 'error');
+                    return;
+                }
+                
+                // 创建预览
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    updateStatus('✅ 图片预览成功', 'success');
+                };
+                reader.onerror = function() {
+                    updateStatus('❌ 文件读取失败', 'error');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                updateStatus('⚠️ 未选择文件', 'info');
+            }
+        });
+        
+        // 拖拽事件
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+            updateStatus('拖拽悬停', 'info');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            updateStatus('拖拽离开', 'info');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                updateStatus(`✅ 拖拽文件: ${file.name}`, 'success');
+                
+                if (file.type.startsWith('image/')) {
+                    // 模拟文件选择
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+                    
+                    // 触发change事件
+                    const event = new Event('change', { bubbles: true });
+                    fileInput.dispatchEvent(event);
+                } else {
+                    updateStatus('❌ 拖拽的不是图片文件', 'error');
+                }
+            }
+        });
+        
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('✅ 页面加载完成，事件监听器已设置', 'success');
+        });
+    </script>
+</body>
+</html> 

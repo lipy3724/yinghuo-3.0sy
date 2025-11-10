@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 完全移除CSP限制以解决视频加载问题 -->
     <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; media-src * blob: data:; img-src * blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;"> -->
-    <title>视频数字人 - 萤火AI</title>
+    <title data-translate="digital_human_video.page_title">视频数字人 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="/components/styles.css" rel="stylesheet">
     <script src="/js/mobile-guard.js"></script>
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            overflow: hidden;
+            overflow-y: auto;
         }
         @keyframes firefly-glow {
             0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
@@ -81,22 +82,26 @@
             position: relative;
             border: 1px dashed #d1d5db;
         }
-        .scrollable-panel {
-            height: calc(100vh - 60px);
-            overflow-y: auto;
-            scrollbar-width: thin;
+        
+        /* 确保视频在容器中完整显示 */
+        .preview-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 保持视频比例，确保完整显示 */
         }
-        .scrollable-panel::-webkit-scrollbar {
+        /* 移除固定高度的滚动面板，改为整体页面滚动 */
+        /* 全局滚动条样式 */
+        ::-webkit-scrollbar {
             width: 6px;
         }
-        .scrollable-panel::-webkit-scrollbar-track {
+        ::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
-        .scrollable-panel::-webkit-scrollbar-thumb {
+        ::-webkit-scrollbar-thumb {
             background: #d1d5db;
             border-radius: 3px;
         }
-        .scrollable-panel::-webkit-scrollbar-thumb:hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: #9ca3af;
         }
         .upload-progress {
@@ -133,43 +138,43 @@
     <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
-    <main class="flex h-[calc(100vh-60px)]" style="margin-top: 60px;">
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="digital_human_video.main_title">视频数字人</h1>
+        
+    <main>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- 左侧区域：上传区域和配置 -->
-        <div class="w-full md:w-1/3 scrollable-panel p-6">
+        <div class="md:col-span-1">
             <div class="space-y-6">
                 <!-- 上传视频 -->
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">上传人物视频</h2>
+                    <h2 class="text-xl font-semibold mb-4" data-translate="digital_human_video.upload_video_title">上传人物视频</h2>
                     <div class="preview-container flex items-center justify-center mb-4 relative">
                         <div id="video-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
                             <i class="ri-video-upload-line text-5xl text-gray-300 mb-2"></i>
-                            <p class="text-gray-500 text-sm">点击或者拖拽视频文件到这里上传</p>
-                            <p class="text-gray-400 text-xs mt-2">支持MP4格式，≤300MB，2秒＜时长＜120秒</p>
+                            <p class="text-gray-500 text-sm" data-translate="digital_human_video.video_upload_hint">点击或者拖拽视频文件到这里上传</p>
+                            <p class="text-gray-400 text-xs mt-2" data-translate="digital_human_video.video_format_requirements">支持MP4格式，≤300MB，2秒＜时长＜120秒</p>
                             <input type="file" id="video-upload" accept="video/mp4" class="hidden" />
-                            <button onclick="document.getElementById('video-upload').click()" class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
-                                上传视频
-                            </button>
+                            <button onclick="document.getElementById('video-upload').click()" class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none" data-translate="digital_human_video.upload_video_btn">上传视频</button>
                         </div>
                         <div id="video-preview" class="hidden w-full h-full">
                             <video id="uploaded-video" class="w-full h-full object-contain" controls></video>
                         </div>
                         <div class="upload-progress" id="video-progress"></div>
                     </div>
-                    <p class="text-xs text-gray-500">视频要求: 人物正面出镜的近景画面，人脸清晰可见且占比适中，避免大角度侧脸。</p>
+                    <p class="text-xs text-gray-500" data-translate="digital_human_video.video_requirements">视频要求: 人物正面出镜的近景画面，人脸清晰可见且占比适中，避免大角度侧脸。</p>
                 </div>
 
                 <!-- 上传音频 -->
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">上传语音/音频</h2>
+                    <h2 class="text-xl font-semibold mb-4" data-translate="digital_human_video.upload_audio_title">上传语音/音频</h2>
                     <div class="preview-container flex items-center justify-center mb-4 relative">
                         <div id="audio-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
                             <i class="ri-file-music-line text-5xl text-gray-300 mb-2"></i>
-                            <p class="text-gray-500 text-sm">点击或者拖拽音频文件到这里上传</p>
-                            <p class="text-gray-400 text-xs mt-2">支持MP3格式，≤50MB，时长无特别限制</p>
+                            <p class="text-gray-500 text-sm" data-translate="digital_human_video.audio_upload_hint">点击或者拖拽音频文件到这里上传</p>
+                            <p class="text-gray-400 text-xs mt-2" data-translate="digital_human_video.audio_format_requirements">支持MP3格式，≤50MB，时长无特别限制</p>
                             <input type="file" id="audio-upload" accept="audio/mp3,audio/mpeg" class="hidden" />
-                            <button onclick="document.getElementById('audio-upload').click()" class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
-                                上传音频
-                            </button>
+                            <button onclick="document.getElementById('audio-upload').click()" class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none" data-translate="digital_human_video.upload_audio_btn">上传音频</button>
                         </div>
                         <div id="audio-preview" class="hidden w-full h-full">
                             <div class="flex flex-col items-center justify-center">
@@ -180,89 +185,85 @@
                         </div>
                         <div class="upload-progress" id="audio-progress"></div>
                     </div>
-                    <p class="text-xs text-gray-500">音频要求: 清晰的人声录音，背景噪音小，普通话/方言不限，尽量避免混有明显背景音乐。</p>
+                    <p class="text-xs text-gray-500" data-translate="digital_human_video.audio_requirements">音频要求: 清晰的人声录音，背景噪音小，普通话/方言不限，尽量避免混有明显背景音乐。</p>
                 </div>
 
-                <!-- 法律合规提示 -->
-                <div class="bg-indigo-50 p-4 rounded-lg mt-4">
-                    <div class="flex items-start">
-                        <i class="ri-information-line text-indigo-600 text-xl mr-2 mt-0.5"></i>
-                        <div>
-                            <p class="text-xs text-red-500 font-medium">
-                                请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- 人脸参考图（可选） -->
                 <div class="bg-white p-6 rounded-lg shadow-sm">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold">人脸参考图</h2>
-                        <span class="text-xs text-gray-500">选填</span>
+                        <h2 class="text-xl font-semibold" data-translate="digital_human_video.face_reference_title">人脸参考图</h2>
+                        <span class="text-xs text-gray-500" data-translate="digital_human_video.optional">选填</span>
                     </div>
                     <div class="preview-container flex items-center justify-center mb-4 relative">
                         <div id="image-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
                             <i class="ri-user-line text-5xl text-gray-300 mb-2"></i>
-                            <p class="text-gray-500 text-sm">点击或者拖拽人脸图片到这里上传</p>
-                            <p class="text-gray-400 text-xs mt-2">支持JPEG、PNG等格式，≤10MB</p>
+                            <p class="text-gray-500 text-sm" data-translate="digital_human_video.image_upload_hint">点击或者拖拽人脸图片到这里上传</p>
+                            <p class="text-gray-400 text-xs mt-2" data-translate="digital_human_video.image_format_requirements">支持JPEG、PNG等格式，≤10MB</p>
                             <input type="file" id="image-upload" accept="image/jpeg,image/png,image/bmp,image/webp" class="hidden" />
-                            <button onclick="document.getElementById('image-upload').click()" class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
-                                上传图片
-                            </button>
+                            <button onclick="document.getElementById('image-upload').click()" class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none" data-translate="digital_human_video.upload_image_btn">上传图片</button>
                         </div>
                         <div id="image-preview" class="hidden w-full h-full">
                             <img id="uploaded-image" class="w-full h-full object-contain" alt="人脸参考图" />
                         </div>
                         <div class="upload-progress" id="image-progress"></div>
                     </div>
-                    <p class="text-xs text-gray-500">用于指定视频中的哪个人物进行口型合成，如不上传将自动选择主要人物。</p>
+                    <p class="text-xs text-gray-500" data-translate="digital_human_video.face_reference_description">用于指定视频中的哪个人物进行口型合成，如不上传将自动选择主要人物。</p>
                 </div>
                 
                 <!-- 高级选项 -->
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">高级选项</h2>
+                    <h2 class="text-xl font-semibold mb-4" data-translate="digital_human_video.advanced_options_title">高级选项</h2>
                     <div class="flex items-center">
                         <input type="checkbox" id="video-extension" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                        <label for="video-extension" class="ml-2 text-sm text-gray-700">视频延长模式（视频会延长以匹配音频时长）</label>
+                        <label for="video-extension" class="ml-2 text-sm text-gray-700" data-translate="digital_human_video.video_extension_label">视频延长模式（视频会延长以匹配音频时长）</label>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">当音频长度超过视频长度时，自动扩展视频时长以匹配音频长度。</p>
+                    <p class="text-xs text-gray-500 mt-2" data-translate="digital_human_video.video_extension_description">当音频长度超过视频长度时，自动扩展视频时长以匹配音频长度。</p>
                 </div>
 
-                <button id="generate-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    <i class="ri-magic-line mr-2"></i>立即生成
+                <button id="generate-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed" data-translate="digital_human_video.generate_btn">
                 </button>
+                
+                <!-- 法律合规提示 -->
+                <div class="bg-indigo-50 p-4 rounded-lg mt-4">
+                    <div class="flex items-start">
+                        <i class="ri-information-line text-indigo-600 text-xl mr-2 mt-0.5"></i>
+                        <div>
+                            <p class="text-xs text-red-500 font-medium" data-translate="digital_human_video.compliance_warning">
+                                请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- 右侧区域：效果展示和输出视频 -->
-        <div class="w-full md:w-2/3 scrollable-panel p-6 border-l border-gray-200">
+        <div class="md:col-span-2 border-l border-gray-200 pl-6">
             <div class="space-y-6">
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">效果展示</h2>
+                    <h2 class="text-xl font-semibold mb-4" data-translate="digital_human_video.preview_title">效果展示</h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- 源视频 -->
                         <div>
-                            <h3 class="text-lg font-medium text-gray-800 mb-3">源视频:</h3>
+                            <h3 class="text-lg font-medium text-gray-800 mb-3" data-translate="digital_human_video.source_video">源视频:</h3>
                             <div class="preview-container flex items-center justify-center">
-                                <div id="source-preview" class="text-center text-gray-500">
-                                    上传视频后将在这里显示
-                                </div>
+                                <div id="source-preview" class="text-center text-gray-500 w-full h-full flex items-center justify-center" data-translate="digital_human_video.source_video_placeholder">上传视频后将在这里显示</div>
                             </div>
                         </div>
                         
                         <!-- 输出视频 -->
                         <div>
-                            <h3 class="text-lg font-medium text-gray-800 mb-3">输出视频:</h3>
+                            <h3 class="text-lg font-medium text-gray-800 mb-3" data-translate="digital_human_video.output_video">输出视频:</h3>
                             <div class="preview-container flex items-center justify-center">
                                 <div id="result-preview" class="hidden w-full h-full">
                                     <video id="result-video" class="w-full h-full object-cover" controls></video>
                                 </div>
                                 <div id="result-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500">
                                     <i class="ri-video-line text-5xl text-gray-300 mb-2"></i>
-                                    <p>视频生成后将在这里显示</p>
-                                    <p class="text-xs mt-1">处理需要3-10分钟</p>
+                                    <p data-translate="digital_human_video.output_video_placeholder">视频生成后将在这里显示</p>
+                                    <p class="text-xs mt-1" data-translate="digital_human_video.processing_time">处理需要3-10分钟</p>
                                 </div>
                             </div>
                         </div>
@@ -270,8 +271,8 @@
                     
                     <div id="generation-status" class="mt-4 hidden">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-700">处理进度</span>
-                            <span id="status-text" class="text-sm text-indigo-600">正在处理...</span>
+                            <span class="text-sm font-medium text-gray-700" data-translate="digital_human_video.processing_progress">处理进度</span>
+                            <span id="status-text" class="text-sm text-indigo-600" data-translate="digital_human_video.processing">正在处理...</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
                             <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
@@ -280,53 +281,75 @@
                     
                     <div id="result-actions" class="mt-4 hidden">
                         <div class="flex space-x-4">
-                            <button id="download-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none">
-                                <i class="ri-download-line mr-1"></i> 下载视频
+                            <button id="download-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none" data-translate="digital_human_video.download_video_btn">
                             </button>
                         </div>
                     </div>
                 </div>
                 
+                <!-- 任务列表 -->
+                <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold" data-translate="digital_human_video.task_list_title">任务列表</h2>
+                            <p class="text-sm text-gray-500 mt-1" data-translate="digital_human_video.task_list_info">仅显示24小时内的最新1条任务</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="clear-all-tasks-btn" class="text-red-600 hover:text-red-800 text-sm px-3 py-1 border border-red-300 rounded-md" data-translate="digital_human_video.clear_all_btn">
+                            </button>
+                            <button id="refresh-tasks-btn" class="text-indigo-600 hover:text-indigo-800">
+                                <i class="ri-refresh-line text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="tasks-container" class="space-y-4">
+                        <div class="text-center py-8 text-gray-500">
+                            <p data-translate="digital_human_video.no_tasks">暂无视频数字人任务</p>
+                            <p class="text-sm mt-2 text-gray-400" data-translate="digital_human_video.no_tasks_hint">生成视频后，任务将在此处显示</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">注意事项</h2>
+                    <h2 class="text-xl font-semibold mb-4" data-translate="digital_human_video.notes_title">注意事项</h2>
                     <div class="space-y-4">
                         <div>
-                            <p class="font-medium text-indigo-700">视频要求：</p>
+                            <p class="font-medium text-indigo-700" data-translate="digital_human_video.video_requirements_title">视频要求：</p>
                             <ul class="space-y-1 mt-1">
-                                <li>• 文件限制：支持mp4、avi、mov，文件≤300MB，2秒＜时长＜120秒。</li>
-                                <li>• 视频限制：15fps≤帧率≤60fps；编码采用H.264或H.265；边长不低于640，不大于2048。</li>
-                                <li>• 视频内容：视频应为人物正面出镜的近景画面。避免大角度侧脸或人脸过小。</li>
+                                <li data-translate="digital_human_video.video_file_requirements">• 文件限制：支持mp4、avi、mov，文件≤300MB，2秒＜时长＜120秒。</li>
+                                <li data-translate="digital_human_video.video_technical_requirements">• 视频限制：15fps≤帧率≤60fps；编码采用H.264或H.265；边长不低于640，不大于2048。</li>
+                                <li data-translate="digital_human_video.video_content_requirements">• 视频内容：视频应为人物正面出镜的近景画面。避免大角度侧脸或人脸过小。</li>
                             </ul>
                         </div>
                         
                         <div>
-                            <p class="font-medium text-indigo-700">音频要求：</p>
+                            <p class="font-medium text-indigo-700" data-translate="digital_human_video.audio_requirements_title">音频要求：</p>
                             <ul class="space-y-1 mt-1">
-                                <li>• 文件限制：支持wav、mp3、aac，文件≤30MB，2秒＜时长＜120秒。</li>
-                                <li>• 音频内容：音频中需包含清晰、响亮的人声语音，并去除了环境噪音、背景音乐等声音干扰信息。</li>
+                                <li data-translate="digital_human_video.audio_file_requirements">• 文件限制：支持wav、mp3、aac，文件≤30MB，2秒＜时长＜120秒。</li>
+                                <li data-translate="digital_human_video.audio_content_requirements">• 音频内容：音频中需包含清晰、响亮的人声语音，并去除了环境噪音、背景音乐等声音干扰信息。</li>
                             </ul>
                         </div>
                         
                         <div>
-                            <p class="font-medium text-indigo-700">人物参考图要求：</p>
+                            <p class="font-medium text-indigo-700" data-translate="digital_human_video.face_reference_requirements_title">人物参考图要求：</p>
                             <ul class="space-y-1 mt-1">
-                                <li>• 文件限制：支持jpeg、jpg、png、bmp、webp，文件≤10MB。</li>
-                                <li>• 图片内容：需包含一张清晰的人物正脸，且该人物出现在视频画面中。也可从视频画面中截图用作人物参考图。</li>
+                                <li data-translate="digital_human_video.face_reference_file_requirements">• 文件限制：支持jpeg、jpg、png、bmp、webp，文件≤10MB。</li>
+                                <li data-translate="digital_human_video.face_reference_content_requirements">• 图片内容：需包含一张清晰的人物正脸，且该人物出现在视频画面中。也可从视频画面中截图用作人物参考图。</li>
                             </ul>
                         </div>
                         
                         <div>
-                            <p class="font-medium text-indigo-700">常见问题：</p>
+                            <p class="font-medium text-indigo-700" data-translate="digital_human_video.faq_title">常见问题：</p>
                             <ul class="space-y-1 mt-1">
-                                <li>• 输入语音和视频长度不一致，会如何处理？</li>
-                                <li class="ml-4 text-sm">默认将按音频、视频两者中时长较短的来截断。</li>
-                                <li class="ml-4 text-sm">当输入的音频时长大于视频时长时，并希望按音频长度来生成时，可将入参的视频扩展（parameters.video_extension）值设为true，算法将使用原视频画面"倒放-正放"交替模式扩展视频时长，直至与音频相同。</li>
-                                <li>• 输入音频中有静音的情况，会如何处理？</li>
-                                <li class="ml-4 text-sm">音频静音的时段，预期视频中人物也会闭嘴。</li>
-                                <li>• 输入视频的画面中有无人/脸拍不全的情况，会如何处理？</li>
-                                <li class="ml-4 text-sm">若音频中有人声，但画面无人或未出现人物嘴型，则保留原视频画面，音频正常播放。</li>
-                                <li>• 输入视频的画面中有多人的情况，会如何处理？</li>
-                                <li class="ml-4 text-sm">仅支持替换一个人物。算法会按照输入人脸参考图（input.ref_image_url），识别指定人脸。若未输入人脸参考图，则默认选择第一个有人脸画面中，占比最大的人脸。</li>
+                                <li data-translate="digital_human_video.faq_audio_video_length">• 输入语音和视频长度不一致，会如何处理？</li>
+                                <li class="ml-4 text-sm" data-translate="digital_human_video.faq_audio_video_length_answer1">默认将按音频、视频两者中时长较短的来截断。</li>
+                                <li class="ml-4 text-sm" data-translate="digital_human_video.faq_audio_video_length_answer2">当输入的音频时长大于视频时长时，并希望按音频长度来生成时，可将入参的视频扩展（parameters.video_extension）值设为true，算法将使用原视频画面"倒放-正放"交替模式扩展视频时长，直至与音频相同。</li>
+                                <li data-translate="digital_human_video.faq_silence">• 输入音频中有静音的情况，会如何处理？</li>
+                                <li class="ml-4 text-sm" data-translate="digital_human_video.faq_silence_answer">音频静音的时段，预期视频中人物也会闭嘴。</li>
+                                <li data-translate="digital_human_video.faq_no_face">• 输入视频的画面中有无人/脸拍不全的情况，会如何处理？</li>
+                                <li class="ml-4 text-sm" data-translate="digital_human_video.faq_no_face_answer">若音频中有人声，但画面无人或未出现人物嘴型，则保留原视频画面，音频正常播放。</li>
+                                <li data-translate="digital_human_video.faq_multiple_people">• 输入视频的画面中有多人的情况，会如何处理？</li>
+                                <li class="ml-4 text-sm" data-translate="digital_human_video.faq_multiple_people_answer">仅支持替换一个人物。算法会按照输入人脸参考图（input.ref_image_url），识别指定人脸。若未输入人脸参考图，则默认选择第一个有人脸画面中，占比最大的人脸。</li>
                             </ul>
                         </div>
                     </div>
@@ -334,6 +357,7 @@
             </div>
         </div>
     </main>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -380,8 +404,150 @@
             let uploadedFiles = {
                 video: null,
                 audio: null,
-                image: null
+                image: null,
+                videoDuration: null,  // 保存视频时长（秒）
+                audioDuration: null   // 保存音频时长（秒）
             };
+            
+            // 🎯 检查音频和视频时长差异的函数（已禁用提示框显示）
+            function checkDurationMismatch() {
+                // 不显示任何提示框
+                return;
+            }
+            
+            
+            // 🎯 裁剪音频到指定时长（使用Web Audio API）
+            async function trimAudioToLength(audioFile, targetDuration) {
+                return new Promise((resolve, reject) => {
+                    console.log(`开始裁剪音频: 原始时长 ${uploadedFiles.audioDuration}秒 → 目标时长 ${targetDuration}秒`);
+                    
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const reader = new FileReader();
+                    
+                    reader.onload = async function(e) {
+                        try {
+                            // 解码音频数据
+                            const audioBuffer = await audioContext.decodeAudioData(e.target.result);
+                            
+                            // 计算需要裁剪的采样数
+                            const sampleRate = audioBuffer.sampleRate;
+                            const targetSamples = Math.floor(targetDuration * sampleRate);
+                            const actualSamples = Math.min(targetSamples, audioBuffer.length);
+                            
+                            // 创建新的音频缓冲区
+                            const trimmedBuffer = audioContext.createBuffer(
+                                audioBuffer.numberOfChannels,
+                                actualSamples,
+                                sampleRate
+                            );
+                            
+                            // 复制音频数据到新缓冲区（只复制前N秒）
+                            for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+                                const sourceData = audioBuffer.getChannelData(channel);
+                                const targetData = trimmedBuffer.getChannelData(channel);
+                                for (let i = 0; i < actualSamples; i++) {
+                                    targetData[i] = sourceData[i];
+                                }
+                            }
+                            
+                            // 将缓冲区转换为WAV格式的Blob
+                            const trimmedBlob = audioBufferToWav(trimmedBuffer);
+                            
+                            // 创建新的File对象，保持原始文件名
+                            const trimmedFile = new File(
+                                [trimmedBlob], 
+                                audioFile.name.replace(/\.[^/.]+$/, '') + '_trimmed.wav',
+                                { type: 'audio/wav' }
+                            );
+                            
+                            console.log(`✅ 音频裁剪完成: ${targetDuration}秒，文件大小 ${(trimmedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                            
+                            // 关闭音频上下文
+                            audioContext.close();
+                            
+                            resolve(trimmedFile);
+                        } catch (error) {
+                            console.error('音频裁剪失败:', error);
+                            audioContext.close();
+                            reject(error);
+                        }
+                    };
+                    
+                    reader.onerror = function(error) {
+                        console.error('读取音频文件失败:', error);
+                        reject(error);
+                    };
+                    
+                    reader.readAsArrayBuffer(audioFile);
+                });
+            }
+            
+            // 🎯 将AudioBuffer转换为WAV格式的Blob
+            function audioBufferToWav(buffer) {
+                const numberOfChannels = buffer.numberOfChannels;
+                const sampleRate = buffer.sampleRate;
+                const format = 1; // PCM
+                const bitDepth = 16;
+                
+                const bytesPerSample = bitDepth / 8;
+                const blockAlign = numberOfChannels * bytesPerSample;
+                
+                const data = interleave(buffer);
+                const dataLength = data.length * bytesPerSample;
+                const headerLength = 44;
+                const totalLength = headerLength + dataLength;
+                
+                const arrayBuffer = new ArrayBuffer(totalLength);
+                const view = new DataView(arrayBuffer);
+                
+                // 写入WAV文件头
+                writeString(view, 0, 'RIFF');
+                view.setUint32(4, totalLength - 8, true);
+                writeString(view, 8, 'WAVE');
+                writeString(view, 12, 'fmt ');
+                view.setUint32(16, 16, true); // fmt chunk size
+                view.setUint16(20, format, true);
+                view.setUint16(22, numberOfChannels, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * blockAlign, true);
+                view.setUint16(32, blockAlign, true);
+                view.setUint16(34, bitDepth, true);
+                writeString(view, 36, 'data');
+                view.setUint32(40, dataLength, true);
+                
+                // 写入音频数据
+                floatTo16BitPCM(view, 44, data);
+                
+                return new Blob([arrayBuffer], { type: 'audio/wav' });
+            }
+            
+            function interleave(buffer) {
+                const numberOfChannels = buffer.numberOfChannels;
+                const length = buffer.length * numberOfChannels;
+                const result = new Float32Array(length);
+                
+                let offset = 0;
+                for (let i = 0; i < buffer.length; i++) {
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        result[offset++] = buffer.getChannelData(channel)[i];
+                    }
+                }
+                
+                return result;
+            }
+            
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+            
+            function floatTo16BitPCM(view, offset, input) {
+                for (let i = 0; i < input.length; i++, offset += 2) {
+                    const s = Math.max(-1, Math.min(1, input[i]));
+                    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                }
+            }
             
             // 任务ID - 用于状态查询
             let taskId = null;
@@ -443,6 +609,7 @@
                     videoPlaceholder.classList.add('hidden');
                     
                     // 更新右侧预览
+                    // 更新右侧预览区域，使用object-fit: contain确保视频完整显示
                     sourcePreview.innerHTML = `<video src="${url}" class="w-full h-full object-contain" controls></video>`;
                     
                     // 存储文件信息
@@ -451,15 +618,24 @@
                     
                     // 加载视频元数据
                     uploadedVideo.onloadedmetadata = function() {
+                        // 保存视频时长
+                        uploadedFiles.videoDuration = uploadedVideo.duration;
+                        console.log('✅ 视频时长:', uploadedFiles.videoDuration, '秒');
+                        
                         // 检查视频时长 (秒)
                         if (uploadedVideo.duration < 2 || uploadedVideo.duration > 120) {
                             alert('视频时长必须在2-120秒之间，请重新选择符合要求的视频');
                             videoPreview.classList.add('hidden');
                             videoPlaceholder.classList.remove('hidden');
                             uploadedFiles.video = null;
+                            uploadedFiles.videoDuration = null;
                             checkGenerateButtonState();
                             return;
                         }
+                        
+                        // 🎯 检查音频和视频时长差异
+                        checkDurationMismatch();
+                        
                         checkGenerateButtonState();
                     };
                 }
@@ -498,15 +674,24 @@
                     
                     // 加载音频元数据
                     uploadedAudio.onloadedmetadata = function() {
+                        // 保存音频时长
+                        uploadedFiles.audioDuration = uploadedAudio.duration;
+                        console.log('✅ 音频时长:', uploadedFiles.audioDuration, '秒');
+                        
                         // 检查音频时长 (秒)
                         if (uploadedAudio.duration < 2 || uploadedAudio.duration > 120) {
                             alert('音频时长必须在2-120秒之间，请重新选择符合要求的音频');
                             audioPreview.classList.add('hidden');
                             audioPlaceholder.classList.remove('hidden');
                             uploadedFiles.audio = null;
+                            uploadedFiles.audioDuration = null;
                             checkGenerateButtonState();
                             return;
                         }
+                        
+                        // 🎯 检查音频和视频时长差异
+                        checkDurationMismatch();
+                        
                         checkGenerateButtonState();
                     };
                 }
@@ -544,6 +729,11 @@
                 }
             });
             
+            // 监听视频延长选项的变化
+            videoExtension.addEventListener('change', function() {
+                checkDurationMismatch();
+            });
+            
             // 显示进度条
             function showProgress(progressElement) {
                 progressElement.style.width = '100%';
@@ -555,7 +745,7 @@
             }
             
             // 生成按钮处理
-            generateBtn.addEventListener('click', function() {
+            generateBtn.addEventListener('click', async function() {
                 if (!uploadedFiles.video || !uploadedFiles.audio) {
                     alert('请上传人物视频和音频文件以生成视频数字人');
                     return;
@@ -567,6 +757,50 @@
                     if (confirm('使用视频数字人功能需要先登录，是否前往登录页面？')) {
                         window.location.href = '/login.html';
                     }
+                    return;
+                }
+                
+                // 预估视频时长（假设10秒，实际会根据上传的视频调整）
+                const estimatedDuration = 10;
+                
+                try {
+                    // 先检查用户积分和权限
+                    const checkResponse = await fetch('/api/check-feature-access', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            featureName: 'DIGITAL_HUMAN_VIDEO',
+                            duration: estimatedDuration
+                        })
+                    });
+                    
+                    if (!checkResponse.ok && checkResponse.status === 402) {
+                        // 积分不足，显示详细错误信息
+                        const errorData = await checkResponse.json();
+                        let errorMessage = '积分不足，无法生成视频数字人！\n\n';
+                        errorMessage += `所需积分: ${errorData.requiredCredits || estimatedDuration * 9}积分\n`;
+                        errorMessage += `当前余额: ${errorData.currentCredits || 0}积分\n`;
+                        errorMessage += `缺少积分: ${errorData.shortfall || 'N/A'}积分\n\n`;
+                        errorMessage += '请前往积分充值页面充值后再试。';
+                        
+                        if (confirm(errorMessage + '\n\n是否前往积分充值页面？')) {
+                            window.location.href = '/credits.html';
+                        }
+                        return;
+                    } else if (!checkResponse.ok) {
+                        const errorData = await checkResponse.json();
+                        alert('权限检查失败: ' + (errorData.message || '未知错误'));
+                        return;
+                    }
+                    
+                    console.log('积分检查通过，开始生成视频数字人');
+                    
+                } catch (error) {
+                    console.error('积分检查失败:', error);
+                    alert('权限检查失败，请稍后重试');
                     return;
                 }
                 
@@ -591,26 +825,62 @@
             // 上传文件到服务器
             async function uploadFiles() {
                 try {
-                    updateProgress('准备上传文件...', 10);
+                    updateProgress(translate('digital_human_video.preparing_upload'), 10);
                     const loadingMessage = document.getElementById('loading-message');
-                    loadingMessage.textContent = '准备上传文件...';
+                    loadingMessage.textContent = translate('digital_human_video.preparing_upload');
+                    
+                    // 🎯 检查是否需要裁剪音频
+                    let audioToUpload = uploadedFiles.audio;
+                    const isExtensionEnabled = videoExtension.checked;
+                    
+                    // 如果未启用延长模式，且音频长于视频，自动裁剪音频
+                    if (!isExtensionEnabled && 
+                        uploadedFiles.audioDuration && 
+                        uploadedFiles.videoDuration && 
+                        uploadedFiles.audioDuration > uploadedFiles.videoDuration + 0.5) {
+                        
+                        console.log('🎯 检测到音频需要裁剪');
+                        loadingMessage.textContent = '正在裁剪音频到视频长度...';
+                        updateProgress('正在裁剪音频...', 15);
+                        
+                        try {
+                            // 裁剪音频到视频长度
+                            audioToUpload = await trimAudioToLength(uploadedFiles.audio, uploadedFiles.videoDuration);
+                            console.log('✅ 音频裁剪成功，继续上传');
+                            
+                            // 更新音频时长记录
+                            uploadedFiles.audioDuration = uploadedFiles.videoDuration;
+                        } catch (trimError) {
+                            console.error('⚠️ 音频裁剪失败，使用原始音频:', trimError);
+                            // 如果裁剪失败，仍使用原音频（降级处理）
+                            alert('音频裁剪失败，将使用原始音频。可能导致视频时长与预期不符。');
+                        }
+                    }
                     
                     // 创建FormData对象
                     const formData = new FormData();
                     formData.append('video', uploadedFiles.video);
-                    formData.append('audio', uploadedFiles.audio);
+                    formData.append('audio', audioToUpload);  // 使用裁剪后的音频（或原音频）
                     if (uploadedFiles.image) {
                         formData.append('image', uploadedFiles.image);
                     }
                     formData.append('videoExtension', videoExtension.checked);
                     
-                    updateProgress('上传文件中...', 30);
-                    loadingMessage.textContent = '上传文件中...';
+                    // ✅ 传递视频时长给后端（秒）
+                    if (uploadedFiles.videoDuration) {
+                        formData.append('videoDuration', uploadedFiles.videoDuration);
+                        console.log('✅ 上传视频时长:', uploadedFiles.videoDuration, '秒');
+                    } else {
+                        console.warn('⚠️ 视频时长未知，后端将自行检测');
+                    }
+                    
+                    updateProgress(translate('digital_human_video.uploading'), 30);
+                    loadingMessage.textContent = translate('digital_human_video.uploading');
                     
                     // 获取认证Token
                     const token = localStorage.getItem('authToken');
                     if (!token) {
-                        throw new Error('身份验证失败，请重新登录');
+                        throw new Error(translate('digital_human_video.auth_failed'));
                     }
                     
                     // 发送请求
@@ -650,16 +920,16 @@
                     
                 } catch (error) {
                     console.error('上传文件失败:', error);
-                    updateProgress('上传失败: ' + error.message, 0);
+                    updateProgress(translate('digital_human_video.upload_failed') + ': ' + error.message, 0);
                     
                     // 隐藏加载遮罩
                     document.getElementById('loading-overlay').classList.add('hidden');
                     
                     // 恢复生成按钮
                     generateBtn.disabled = false;
-                    generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>立即生成';
+                    generateBtn.innerHTML = translate('digital_human_video.generate_btn');
                     
-                    alert('视频数字人生成失败: ' + error.message);
+                    alert(translate('digital_human_video.generation_failed') + ': ' + error.message);
                 }
             }
             
@@ -712,37 +982,101 @@
                                 // 保存原始URL用于下载
                                 resultVideo.setAttribute('data-original-url', data.videoUrl);
                                 
-                                // 使用代理API加载视频，避免CSP问题
-                                const proxyUrl = `/api/download?url=${encodeURIComponent(data.videoUrl)}`;
+                                // 使用代理API加载视频，避免CSP问题 - 添加direct=true参数表示这是预览而非下载
+                                const proxyUrl = `/api/download?url=${encodeURIComponent(data.videoUrl)}&direct=true`;
                                 console.log('使用代理URL加载视频:', proxyUrl);
-                                resultVideo.src = proxyUrl;
-                                resultVideo.crossOrigin = "anonymous"; // 添加跨域支持
                                 
-                                resultVideo.onloadeddata = function() {
-                                    console.log('视频已加载成功');
-                                };
-                                resultVideo.onerror = function(e) {
-                                    console.error('视频加载错误:', e);
-                                    // 显示错误信息
-                                    resultPlaceholder.innerHTML = `
-                                        <div class="flex flex-col items-center justify-center text-center p-4">
-                                            <i class="ri-error-warning-line text-5xl text-red-500 mb-2"></i>
-                                            <p class="text-red-500">视频预览加载失败</p>
-                                            <p class="text-sm text-gray-500 mt-2">请尝试直接下载视频查看</p>
-                                        </div>
-                                    `;
-                                    resultPlaceholder.classList.remove('hidden');
-                                    resultPreview.classList.add('hidden');
-                                };
-                                resultPreview.classList.remove('hidden');
-                                resultPlaceholder.classList.add('hidden');
+                                // 使用fetch API加载视频，以便更好地处理错误
+                                async function loadVideoWithFetch(url) {
+                                    console.log('尝试使用fetch加载视频:', url);
+                                    try {
+                                        // 先检查视频URL是否可访问
+                                        const response = await fetch(url, {
+                                            method: 'HEAD',
+                                            cache: 'no-cache'
+                                        });
+                                        
+                                        if (!response.ok) {
+                                            throw new Error(`视频URL响应错误: ${response.status} ${response.statusText}`);
+                                        }
+                                        
+                                        console.log('视频URL检查成功，开始加载视频');
+                                        resultVideo.src = url;
+                                        
+                                        // 设置加载和错误处理
+                                        resultVideo.onloadeddata = function() {
+                                            console.log('视频已成功加载');
+                                            resultPreview.classList.remove('hidden');
+                                            resultPlaceholder.classList.add('hidden');
+                                        };
+                                        
+                                        resultVideo.onerror = function(e) {
+                                            const errorDetails = e.target && e.target.error ? 
+                                                `错误代码: ${e.target.error.code}, 消息: ${e.target.error.message}` : 
+                                                '未知错误';
+                                            
+                                            console.error('视频加载详细错误:', errorDetails);
+                                            console.error('视频URL:', url);
+                                            
+                                            // 显示更详细的错误信息
+                                            resultPlaceholder.innerHTML = `
+                                                <div class="flex flex-col items-center justify-center text-center p-4">
+                                                    <i class="ri-error-warning-line text-5xl text-red-500 mb-2"></i>
+                                                    <p class="text-red-500">视频预览加载失败</p>
+                                                    <p class="text-xs text-gray-500 mt-2">错误详情: ${errorDetails}</p>
+                                                    <p class="text-sm text-gray-500 mt-2">${translate('digital_human_video.try_direct_download')}</p>
+                                                    <button id="retry-load-btn" class="mt-3 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm rounded hover:bg-indigo-200">
+                                                        重试加载
+                                                    </button>
+                                                </div>
+                                            `;
+                                            
+                                            // 添加重试按钮事件
+                                            setTimeout(() => {
+                                                const retryBtn = document.getElementById('retry-load-btn');
+                                                if (retryBtn) {
+                                                    retryBtn.addEventListener('click', () => loadVideoWithFetch(url));
+                                                }
+                                            }, 100);
+                                            
+                                            resultPlaceholder.classList.remove('hidden');
+                                            resultPreview.classList.add('hidden');
+                                        };
+                                    } catch (error) {
+                                        console.error('视频预加载检查失败:', error);
+                                        resultPlaceholder.innerHTML = `
+                                            <div class="flex flex-col items-center justify-center text-center p-4">
+                                                <i class="ri-error-warning-line text-5xl text-red-500 mb-2"></i>
+                                                <p class="text-red-500">视频预览加载失败</p>
+                                                <p class="text-xs text-gray-500 mt-2">错误详情: ${error.message}</p>
+                                                <p class="text-sm text-gray-500 mt-2">请尝试直接下载视频查看</p>
+                                                <button id="retry-load-btn" class="mt-3 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm rounded hover:bg-indigo-200">
+                                                    重试加载
+                                                </button>
+                                            </div>
+                                        `;
+                                        
+                                        // 添加重试按钮事件
+                                        setTimeout(() => {
+                                            const retryBtn = document.getElementById('retry-load-btn');
+                                            if (retryBtn) {
+                                                retryBtn.addEventListener('click', () => loadVideoWithFetch(url));
+                                            }
+                                        }, 100);
+                                        
+                                        resultPlaceholder.classList.remove('hidden');
+                                        resultPreview.classList.add('hidden');
+                                    }
+                                }
+                                
+                                loadVideoWithFetch(proxyUrl);
                             } catch (videoErr) {
                                 console.error('设置视频源时出错:', videoErr);
                                 resultPlaceholder.innerHTML = `
                                     <div class="flex flex-col items-center justify-center text-center p-4">
                                         <i class="ri-error-warning-line text-5xl text-red-500 mb-2"></i>
                                         <p class="text-red-500">视频预览加载失败</p>
-                                        <p class="text-sm text-gray-500 mt-2">但您仍可以通过下方按钮下载视频</p>
+                                        <p class="text-sm text-gray-500 mt-2">${translate('digital_human_video.can_download_via_button')}</p>
                                     </div>
                                 `;
                                 resultPlaceholder.classList.remove('hidden');
@@ -829,7 +1163,13 @@
                             
                             // 恢复生成按钮
                             generateBtn.disabled = false;
-                            generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>立即生成';
+                            generateBtn.innerHTML = translate('digital_human_video.generate_btn');
+                            
+                            // 刷新任务列表（延迟3秒确保后端已完成任务保存）
+                            setTimeout(() => {
+                                console.log('🔄 视频生成成功，正在刷新任务列表...');
+                                loadUserTasks();
+                            }, 3000); // ✅ 增加到3秒，确保后端有足够时间完成积分扣除和任务保存
                             
                         } else if (data.status === 'FAILED') {
                             // 任务失败
@@ -842,21 +1182,21 @@
                             
                             // 恢复生成按钮
                             generateBtn.disabled = false;
-                            generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>立即生成';
+                            generateBtn.innerHTML = translate('digital_human_video.generate_btn');
                             
-                            alert('视频处理失败: ' + data.message);
+                            alert(translate('digital_human_video.processing_failed') + ': ' + data.message);
                             
                         } else if (data.status === 'PENDING' || data.status === 'RUNNING') {
                             // 任务正在处理中
                             let progress = data.status === 'PENDING' ? 50 : 70;
-                            updateProgress('处理中...', progress);
-                            if (loadingMessage) loadingMessage.textContent = '视频处理中，请稍候...';
+                            updateProgress(translate('digital_human_video.processing'), progress);
+                            if (loadingMessage) loadingMessage.textContent = translate('digital_human_video.processing_please_wait');
                         }
                         
                     } catch (error) {
                         console.error('查询任务状态失败:', error);
-                        updateProgress('查询状态失败', 0);
-                        if (loadingMessage) loadingMessage.textContent = '查询状态失败';
+                        updateProgress(translate('digital_human_video.status_check_failed'), 0);
+                        if (loadingMessage) loadingMessage.textContent = translate('digital_human_video.status_check_failed');
                         
                         // 隐藏加载遮罩
                         document.getElementById('loading-overlay').classList.add('hidden');
@@ -877,47 +1217,113 @@
             }
             
             // 下载按钮
-            downloadBtn.addEventListener('click', function() {
-                if (resultVideo.src) {
+            downloadBtn.addEventListener('click', function(e) {
+                // 阻止默认行为，防止页面刷新
+                e.preventDefault();
+                e.stopPropagation(); // 阻止事件冒泡
+                
+                if (resultVideo.src || resultVideo.getAttribute('data-original-url')) {
                     try {
                         // 获取原始视频URL
                         let originalVideoURL = resultVideo.getAttribute('data-original-url') || resultVideo.src;
                         
                         console.log('准备下载视频:', originalVideoURL);
                         
-                        // 使用代理API创建下载链接
-                        const downloadUrl = `/api/download?url=${encodeURIComponent(originalVideoURL)}&filename=声动人像视频.mp4`;
+                        // 直接下载原始URL，确保获取到真实的视频文件
+                        // 如果是相对路径，转换为绝对路径
+                        if (originalVideoURL.startsWith('/')) {
+                            originalVideoURL = window.location.origin + originalVideoURL;
+                        }
                         
-                        // 创建一个隐藏的a标签并触发点击
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = downloadUrl;
-                        downloadLink.download = '声动人像视频.mp4';
-                        document.body.appendChild(downloadLink);
-                        downloadLink.click();
-                        document.body.removeChild(downloadLink);
+                        // 检查是否为DashScope生成的URL (包含dashscope和签名参数)
+                        const isDashScopeUrl = originalVideoURL.includes('dashscope-result-sh.oss-cn-shanghai.aliyuncs.com') || 
+                                              (originalVideoURL.includes('OSSAccessKeyId=') && originalVideoURL.includes('Signature='));
                         
-                        // 显示下载开始提示
-                        const downloadToast = document.createElement('div');
-                        downloadToast.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
-                        downloadToast.innerHTML = `
-                            <div class="flex items-center">
-                                <i class="ri-download-line mr-2"></i>
-                                <p>视频下载已开始</p>
-                            </div>
-                        `;
-                        document.body.appendChild(downloadToast);
-                        
-                        // 3秒后移除提示
-                        setTimeout(() => {
-                            document.body.removeChild(downloadToast);
-                        }, 3000);
+                        if (isDashScopeUrl) {
+                            // 对DashScope URL使用代理API下载以解决跨域问题
+                            console.log('检测到DashScope URL，使用代理下载');
+                            
+                            // 使用代理API下载，避免跨域问题
+                            const downloadUrl = `/api/download?url=${encodeURIComponent(originalVideoURL)}&filename=声动人像视频.mp4`;
+                            
+                            console.log('使用代理下载URL:', downloadUrl);
+                            
+                            // 创建下载链接并点击
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = downloadUrl;
+                            downloadLink.download = '声动人像视频.mp4';
+                            downloadLink.style.display = 'none';
+                            
+                            // 添加到页面并点击
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            
+                            // 短暂延迟后移除链接
+                            setTimeout(() => {
+                                document.body.removeChild(downloadLink);
+                            }, 1000);
+                        } else {
+                            // 非DashScope URL，尝试获取直接下载链接
+                            fetch(`/api/direct-download?url=${encodeURIComponent(originalVideoURL)}&filename=声动人像视频.mp4`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success && data.url) {
+                                        // 使用直接OSS下载链接
+                                        console.log('获取到OSS直接下载链接，有效期:', data.expiresIn);
+                                        
+                                        // 使用签名URL直接下载
+                                        const downloadLink = document.createElement('a');
+                                        downloadLink.href = data.url;
+                                        downloadLink.download = '声动人像视频.mp4';
+                                        downloadLink.style.display = 'none';
+                                        
+                                        // 添加到页面并点击
+                                        document.body.appendChild(downloadLink);
+                                        downloadLink.click();
+                                        
+                                        // 短暂延迟后移除链接
+                                        setTimeout(() => {
+                                            document.body.removeChild(downloadLink);
+                                        }, 1000);
+                                    } else {
+                                        throw new Error(data.message || '获取直接下载链接失败，将使用服务器代理下载');
+                                    }
+                                })
+                                .catch(error => {
+                                    // 直接下载失败，回退到服务器代理方式
+                                    console.warn('直接下载失败，使用服务器代理方式:', error.message);
+                                    
+                                    // 使用代理API下载，避免跨域问题
+                                    const downloadUrl = `/api/download?url=${encodeURIComponent(originalVideoURL)}&filename=声动人像视频.mp4`;
+                                    
+                                    console.log('回退到代理下载URL:', downloadUrl);
+                                    
+                                    // 创建下载链接并点击
+                                    const downloadLink = document.createElement('a');
+                                    downloadLink.href = downloadUrl;
+                                    downloadLink.download = '声动人像视频.mp4';
+                                    downloadLink.style.display = 'none';
+                                    
+                                    // 添加到页面并点击
+                                    document.body.appendChild(downloadLink);
+                                    downloadLink.click();
+                                    
+                                    // 短暂延迟后移除链接
+                                    setTimeout(() => {
+                                        document.body.removeChild(downloadLink);
+                                    }, 1000);
+                                });
+                        }
                     } catch (error) {
                         console.error('下载视频失败:', error);
-                        alert('下载视频失败: ' + error.message);
+                        alert(translate('digital_human_video.download_failed') + ': ' + error.message);
                     }
                 } else {
-                    alert('没有可下载的视频');
+                    alert(translate('digital_human_video.no_video_to_download'));
                 }
+                
+                // 确保不会触发表单提交或页面跳转
+                return false;
             });
             
             // 更新用户积分显示
@@ -942,6 +1348,416 @@
                     console.error('获取用户积分失败:', error);
                 });
             }
+            
+            // 设置任务列表事件监听器
+            function setupTaskListEventListeners() {
+                const refreshTasksBtn = document.getElementById('refresh-tasks-btn');
+                const clearAllTasksBtn = document.getElementById('clear-all-tasks-btn');
+                
+                if (refreshTasksBtn) {
+                    refreshTasksBtn.addEventListener('click', loadUserTasks);
+                }
+                
+                if (clearAllTasksBtn) {
+                    clearAllTasksBtn.addEventListener('click', confirmClearAllTasks);
+                }
+            }
+            
+            // 加载用户任务列表
+            function loadUserTasks() {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    console.log('用户未登录，不加载任务');
+                    return;
+                }
+                
+                console.log('📋 开始加载视频数字人任务列表...');
+                
+                fetch('/api/digital-human/tasks', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    console.log('✅ API响应状态:', response.status, response.statusText);
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || translate('digital_human_video.get_task_list_failed'));
+                        });
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    console.log('📦 数字人任务API完整响应:', response);
+                    console.log('📦 存储类型:', response.storageType);
+                    console.log('📦 响应消息:', response.message);
+                    
+                    // 检查响应结构，处理不同的数据格式
+                    let tasks = [];
+                    if (Array.isArray(response)) {
+                        // 如果直接返回数组
+                        tasks = response;
+                    } else if (response && Array.isArray(response.tasks)) {
+                        // 如果返回包含tasks字段的对象
+                        tasks = response.tasks;
+                    } else if (response && response.success && Array.isArray(response.tasks)) {
+                        // 如果返回成功响应对象
+                        tasks = response.tasks;
+                    } else {
+                        console.warn('⚠️ 数字人任务API返回了意外的数据格式:', response);
+                        tasks = [];
+                    }
+                    
+                    console.log(`✅ 获取到 ${tasks.length} 个数字人任务`);
+                    if (tasks.length > 0) {
+                        console.log('📋 任务列表详情:', tasks.map(t => ({
+                            id: t.id?.substring(0, 8),
+                            status: t.status,
+                            createdAt: t.createdAt,
+                            hasVideo: !!t.videoUrl
+                        })));
+                    }
+                    renderTaskList(tasks);
+                })
+                .catch(error => {
+                    console.error('❌ 获取任务列表出错:', error);
+                    showTaskError(translate('digital_human_video.get_task_list_failed') + ': ' + error.message);
+                });
+            }
+            
+            // 渲染任务列表
+            function renderTaskList(tasks) {
+                console.log('🎨 开始渲染任务列表，收到的任务:', tasks);
+                
+                const tasksContainer = document.getElementById('tasks-container');
+                if (!tasksContainer) {
+                    console.error('❌ 找不到 tasks-container 元素');
+                    return;
+                }
+                
+                // 确保tasks是数组
+                if (!Array.isArray(tasks)) {
+                    console.error('❌ renderTaskList: tasks不是数组:', tasks);
+                    tasks = [];
+                }
+                
+                if (tasks.length === 0) {
+                    console.log('ℹ️ 没有任务，显示空状态提示');
+                    tasksContainer.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <p>${translate('digital_human_video.no_tasks')}</p>
+                            <p class="text-sm mt-2 text-gray-400">${translate('digital_human_video.no_tasks_hint')}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 再次确保tasks是数组，防止运行时错误
+                if (!Array.isArray(tasks)) {
+                    console.error('❌ renderTaskList: 在map之前tasks不是数组:', tasks);
+                    tasksContainer.innerHTML = `
+                        <div class="text-center py-8 text-red-500">
+                            <p>${translate('digital_human_video.data_format_error')}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 过滤24小时内的任务并按创建时间排序，只取最新的一条
+                const now = new Date();
+                const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                
+                console.log('⏰ 当前时间:', now.toLocaleString('zh-CN'));
+                console.log('⏰ 24小时前时间:', twentyFourHoursAgo.toLocaleString('zh-CN'));
+                
+                const recentTasks = tasks.filter(task => {
+                    if (!task.createdAt) {
+                        console.warn('⚠️ 任务缺少 createdAt 字段:', task);
+                        return false;
+                    }
+                    const taskDate = new Date(task.createdAt);
+                    const isRecent = taskDate >= twentyFourHoursAgo;
+                    console.log(`📅 任务 ${task.id?.substring(0, 8)}: 创建时间 ${taskDate.toLocaleString('zh-CN')}, 是否在24小时内: ${isRecent}`);
+                    return isRecent;
+                }).sort((a, b) => {
+                    // 按创建时间降序排序（最新的在前）
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
+                
+                console.log(`📊 统计: 原始任务数=${tasks.length}, 24小时内任务数=${recentTasks.length}`);
+                
+                // 只显示最新的一条任务
+                const displayTasks = recentTasks.slice(0, 1);
+                console.log(`✅ 将要显示 ${displayTasks.length} 条任务`);
+                
+                if (displayTasks.length === 0) {
+                    tasksContainer.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <p>暂无24小时内的视频数字人任务</p>
+                            <p class="text-sm mt-2 text-gray-400">最近24小时内没有生成过视频任务</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const tasksHtml = displayTasks.map(task => {
+                    const createdDate = new Date(task.createdAt);
+                    const formattedDate = createdDate.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    // 显示API返回的实际生成视频时长
+                    const duration = task.videoDuration ? `${Math.ceil(task.videoDuration)}秒` : '未知';
+                    const creditCost = task.creditCost || 0;
+                    
+                    // 任务状态显示
+                    let statusBadge = '';
+                    if (task.status) {
+                        let statusClass, statusText;
+                        switch (task.status) {
+                            case 'PENDING':
+                                statusClass = 'bg-yellow-100 text-yellow-800';
+                                statusText = '排队中';
+                                break;
+                            case 'RUNNING':
+                                statusClass = 'bg-blue-100 text-blue-800';
+                                statusText = '生成中';
+                                break;
+                            case 'SUCCEEDED':
+                                statusClass = 'bg-green-100 text-green-800';
+                                statusText = '已完成';
+                                break;
+                            case 'FAILED':
+                                statusClass = 'bg-red-100 text-red-800';
+                                statusText = '失败';
+                                break;
+                            default:
+                                statusClass = 'bg-gray-100 text-gray-800';
+                                statusText = '未知';
+                        }
+                        statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">${statusText}</span>`;
+                    }
+                    
+                    // 视频预览（仅当任务成功且有视频URL时）
+                    let videoPreview = '';
+                    if (task.status === 'SUCCEEDED' && task.videoUrl) {
+                        videoPreview = `
+                            <div class="mt-3">
+                                <video controls class="w-full rounded" style="max-height: 180px">
+                                    <source src="/api/download?url=${encodeURIComponent(task.videoUrl)}&direct=true" type="video/mp4">
+                                    您的浏览器不支持视频标签
+                                </video>
+                                <div class="flex justify-end mt-2">
+                                    <button onclick="downloadTask('${task.videoUrl}')" class="text-indigo-600 hover:text-indigo-800 text-sm mr-3">
+                                        <i class="ri-download-2-line mr-1"></i>下载
+                                    </button>
+                                    <button onclick="previewTask('${task.id}', '${task.videoUrl}')" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                        <i class="ri-fullscreen-line mr-1"></i>预览
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 对于未完成的任务，不显示额外的按钮
+                        videoPreview = '';
+                    }
+                    
+                    return `
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900">任务 #${task.id.substring(0, 8)}</h3>
+                                        ${statusBadge}
+                                    </div>
+                                    <p class="text-sm text-gray-500">创建时间: ${formattedDate}</p>
+                                    <p class="text-sm text-gray-500">视频时长: ${duration} | 消耗积分: ${creditCost}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    ${!task.videoUrl ? `
+                                        <span class="text-gray-400 text-sm px-3 py-1 border border-gray-300 rounded-md">
+                                            <i class="ri-time-line mr-1"></i>任务进行中...
+                                        </span>
+                                    ` : ''}
+                                    <button onclick="deleteTask('${task.id}')" class="text-red-600 hover:text-red-800 text-sm px-3 py-1 border border-red-300 rounded-md">
+                                        <i class="ri-delete-bin-line mr-1"></i>删除任务
+                                    </button>
+                                </div>
+                            </div>
+                            ${videoPreview}
+                        </div>
+                    `;
+                }).join('');
+                
+                tasksContainer.innerHTML = tasksHtml;
+            }
+            
+            // 预览任务视频
+            function previewTask(taskId, videoUrl) {
+                console.log('预览任务视频:', taskId, videoUrl);
+                
+                // 使用代理API加载视频，避免跨域问题
+                const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
+                
+                // 在右侧预览区域显示视频
+                const resultPreview = document.getElementById('result-preview');
+                const resultPlaceholder = document.getElementById('result-placeholder');
+                const resultVideo = document.getElementById('result-video');
+                
+                if (resultPreview && resultVideo) {
+                    resultVideo.src = proxyUrl;
+                    resultVideo.setAttribute('data-original-url', videoUrl);
+                    resultPreview.classList.remove('hidden');
+                    resultPlaceholder.classList.add('hidden');
+                    
+                    // 显示下载按钮
+                    const resultActions = document.getElementById('result-actions');
+                    if (resultActions) {
+                        resultActions.classList.remove('hidden');
+                    }
+                    
+                    // 滚动到预览区域
+                    resultPreview.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+            
+            // 下载任务视频
+            function downloadTask(videoUrl) {
+                console.log('下载任务视频:', videoUrl);
+                
+                // 检查是否为DashScope生成的URL
+                const isDashScopeUrl = videoUrl.includes('dashscope-result-sh.oss-cn-shanghai.aliyuncs.com') || 
+                                      (videoUrl.includes('OSSAccessKeyId=') && videoUrl.includes('Signature='));
+                
+                if (isDashScopeUrl) {
+                    // 使用代理API下载
+                    const downloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=视频数字人.mp4`;
+                    
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.download = '视频数字人.mp4';
+                    downloadLink.style.display = 'none';
+                    
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(downloadLink);
+                    }, 1000);
+                } else {
+                    // 尝试直接下载
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = videoUrl;
+                    downloadLink.download = '视频数字人.mp4';
+                    downloadLink.style.display = 'none';
+                    
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(downloadLink);
+                    }, 1000);
+                }
+            }
+            
+            // 删除单个任务
+            function deleteTask(taskId) {
+                if (!confirm('确定要删除这个任务吗？此操作不可撤销。')) {
+                    return;
+                }
+                
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    alert('请先登录');
+                    return;
+                }
+                
+                fetch(`/api/digital-human/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('任务删除成功');
+                        loadUserTasks(); // 重新加载任务列表
+                    } else {
+                        alert('删除失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('删除任务失败:', error);
+                    alert('删除失败: ' + error.message);
+                });
+            }
+            
+            // 确认清空所有任务
+            function confirmClearAllTasks() {
+                if (!confirm('确定要清空所有任务吗？此操作将删除所有任务记录，且不可撤销。')) {
+                    return;
+                }
+                
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    alert('请先登录');
+                    return;
+                }
+                
+                fetch('/api/digital-human/tasks/clear-all', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('所有任务清空成功');
+                        loadUserTasks(); // 重新加载任务列表
+                        
+                        // 清空右侧预览区域
+                        const resultPreview = document.getElementById('result-preview');
+                        const resultPlaceholder = document.getElementById('result-placeholder');
+                        const resultActions = document.getElementById('result-actions');
+                        
+                        if (resultPreview) resultPreview.classList.add('hidden');
+                        if (resultPlaceholder) resultPlaceholder.classList.remove('hidden');
+                        if (resultActions) resultActions.classList.add('hidden');
+                        
+                        alert(`已清空 ${data.deletedCount} 个任务`);
+                    } else {
+                        alert('清空失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('清空任务失败:', error);
+                    alert('清空失败: ' + error.message);
+                });
+            }
+            
+            // 显示任务错误信息
+            function showTaskError(message) {
+                const tasksContainer = document.getElementById('tasks-container');
+                if (tasksContainer) {
+                    tasksContainer.innerHTML = `
+                        <div class="text-center py-8 text-red-500">
+                            <p>${message}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 将函数暴露到全局作用域，以便在HTML中调用
+            window.previewTask = previewTask;
+            window.downloadTask = downloadTask;
+            window.deleteTask = deleteTask;
+            window.confirmClearAllTasks = confirmClearAllTasks;
             
             // 更新页面顶部积分显示
             function updateHeaderCredits() {
@@ -980,25 +1796,9 @@
                             console.log('已向父页面发送积分更新消息');
                         }
                         
-                        // 查找并刷新所有打开的积分管理页面
+                        // 使用本地存储方式共享积分更新，避免打开新窗口
                         try {
-                            // 如果用户有打开积分管理页面，尝试刷新它
-                            const creditWindows = window.open('', 'credits_page');
-                            if (creditWindows && !creditWindows.closed) {
-                                creditWindows.postMessage({
-                                    type: 'CREDITS_UPDATED',
-                                    credits: data.credits,
-                                    forceRefresh: true
-                                }, '*');
-                                console.log('已向积分管理页面发送强制刷新消息');
-                            }
-                        } catch (err) {
-                            console.log('尝试刷新积分管理页面失败:', err);
-                        }
-                        
-                        // 直接尝试刷新同域名下的其他页面
-                        try {
-                            // 获取所有打开的同源页面
+                            // 将最新积分信息存储到localStorage
                             localStorage.setItem('lastCreditsUpdate', JSON.stringify({
                                 credits: data.credits,
                                 timestamp: Date.now()
@@ -1018,6 +1818,12 @@
             
             // 初始化检查生成按钮状态
             checkGenerateButtonState();
+            
+            // 加载任务列表
+            loadUserTasks();
+            
+            // 设置任务列表相关事件监听器
+            setupTaskListEventListeners();
         });
 
         // 加载导航栏组件
@@ -1046,5 +1852,56 @@
             </div>
         </div>
     </div>
+
+    <!-- 清除右下角提示的脚本 -->
+    <script>
+        // 监视DOM变化，自动移除页面右下角的下载提示
+        (function() {
+            // 创建一个观察器实例
+            const observer = new MutationObserver(function(mutations) {
+                // 查找并移除右下角的提示框
+                const toastElements = document.querySelectorAll('.fixed.bottom-4.right-4');
+                if (toastElements.length > 0) {
+                    toastElements.forEach(el => {
+                        // 检查元素内容是否包含"准备通过代理下载"或其他下载相关文本
+                        if (el.innerText.includes('下载') || el.innerHTML.includes('download') || 
+                            el.innerHTML.includes('ri-download') || el.classList.contains('bg-green-100')) {
+                            console.log('已自动移除下载提示框');
+                            el.remove();
+                        }
+                    });
+                }
+            });
+            
+            // 配置观察选项
+            const config = { 
+                childList: true, // 观察目标子节点的增减
+                subtree: true    // 观察所有后代节点
+            };
+            
+            // 开始观察document.body的变化
+            observer.observe(document.body, config);
+            
+            // 页面加载后立即检查一次
+            document.addEventListener('DOMContentLoaded', function() {
+                const toastElements = document.querySelectorAll('.fixed.bottom-4.right-4');
+                if (toastElements.length > 0) {
+                    toastElements.forEach(el => {
+                        if (el.innerText.includes('下载') || el.innerHTML.includes('download') || 
+                            el.innerHTML.includes('ri-download') || el.classList.contains('bg-green-100')) {
+                            console.log('页面加载后移除已存在的下载提示框');
+                            el.remove();
+                        }
+                    });
+                }
+            });
+        })();
+        
+        // 监听语言变化事件，确保页面文本能够实时更新
+        window.addEventListener('languageChanged', function() {
+            // translations.js 会自动更新页面文本，这里不需要额外操作
+            console.log('Language changed, page text updated');
+        });
+    </script>
 </body>
 </html> 

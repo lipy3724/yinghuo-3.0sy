@@ -5,6 +5,8 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { createUnifiedFeatureMiddleware, saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
 const { uploadToOSS } = require('../api-utils');
+const ImageHistory = require('../models/ImageHistory');
+const { saveTextToImageHistory } = require('../services/textToImageHistoryOSS');
 
 // 通义万相API密钥
 const API_KEY = process.env.DASHSCOPE_API_KEY || 'sk-a53c9eb917ce49558997c6bc0edac820';
@@ -164,6 +166,9 @@ router.get('/task/:taskId', protect, async (req, res) => {
           const { FeatureUsage } = require('../models/FeatureUsage');
           const userId = req.user.id;
           
+          // 从全局任务记录中获取prompt
+          const prompt = global.textToImageTasks[taskId].prompt || '文生图片';
+          
           // 获取功能配置信息
           const { FEATURES } = require('../middleware/featureAccess');
           const creditCost = FEATURES.TEXT_TO_IMAGE.creditCost;
@@ -240,6 +245,83 @@ router.get('/task/:taskId', protect, async (req, res) => {
       if (response.data.output.results && response.data.output.results.length > 0) {
         // 获取图片URL列表 - 每个result对象中的url属性包含图片URL
         const imageUrls = response.data.output.results.map(result => result.url);
+        
+        // 注意：完全停止自动保存到下载中心和ImageHistory表
+        // 文生图片现在只保存在内存中的textToImageTasks对象和前端历史记录中
+        // 用户如需长期保存，必须手动点击"保存到下载中心"按钮
+        console.log(`文生图片生成成功，用户ID: ${req.user.id}, 任务ID: ${taskId}。结果仅保存在内存中，不会自动写入数据库。`);
+
+        // 注释：移除自动写入ImageHistory表的逻辑
+        // 这样可以彻底避免文生图片自动出现在下载中心
+        // 只有用户手动点击"保存到下载中心"按钮时，才会调用downloads.js的API将图片保存到ImageHistory表
+        
+        // 将图片URL和任务信息存储到全局变量，供前端获取
+        if (global.textToImageTasks && global.textToImageTasks[taskId]) {
+          global.textToImageTasks[taskId].imageUrls = imageUrls;
+          global.textToImageTasks[taskId].originalPrompt = response.data.output.results[0].orig_prompt || global.textToImageTasks[taskId].prompt;
+          global.textToImageTasks[taskId].actualPrompt = response.data.output.results[0].actual_prompt || global.textToImageTasks[taskId].prompt;
+          // 确保不会自动保存到下载中心
+          global.textToImageTasks[taskId].autoSaved = false;
+          
+          // 自动保存到OSS历史记录（每张图片单独保存）
+          console.log(`[文生图片] 开始自动保存到OSS历史记录，任务ID: ${taskId}, 图片数量: ${imageUrls.length}`);
+          
+          // 等待所有OSS保存操作完成再返回响应，确保前端能立即获取到历史记录
+          const savePromises = imageUrls.map(async (imageUrl, index) => {
+            try {
+              const recordData = {
+                userId: req.user.id,
+                prompt: global.textToImageTasks[taskId].actualPrompt || global.textToImageTasks[taskId].prompt,
+                negativePrompt: global.textToImageTasks[taskId].negativePrompt || '',
+                size: global.textToImageTasks[taskId].size || '1024*1024',
+                imageUrl: imageUrl,
+                parameters: {
+                  n: global.textToImageTasks[taskId].n || 1,
+                  prompt_extend: global.textToImageTasks[taskId].prompt_extend,
+                  watermark: global.textToImageTasks[taskId].watermark,
+                  model: global.textToImageTasks[taskId].model || 'wanx2.1-t2i-turbo',
+                  taskId: taskId,
+                  imageIndex: index
+                },
+                model: global.textToImageTasks[taskId].model || 'wanx2.1-t2i-turbo'
+              };
+              
+              const ossResult = await saveTextToImageHistory(recordData);
+              
+              if (ossResult.success) {
+                console.log(`[文生图片] OSS历史记录保存成功，任务ID: ${taskId}, 图片 ${index + 1}/${imageUrls.length}, 记录ID: ${ossResult.recordId}`);
+                
+                // 在全局变量中记录OSS信息
+                if (!global.textToImageTasks[taskId].ossRecords) {
+                  global.textToImageTasks[taskId].ossRecords = [];
+                }
+                global.textToImageTasks[taskId].ossRecords.push({
+                  recordId: ossResult.recordId,
+                  imageIndex: index,
+                  ossImageUrl: ossResult.urls.generatedImage,
+                  metadataUrl: ossResult.urls.metadata
+                });
+                
+                return { success: true, recordId: ossResult.recordId };
+              } else {
+                console.error(`[文生图片] OSS历史记录保存失败，任务ID: ${taskId}, 图片 ${index + 1}/${imageUrls.length}, 错误: ${ossResult.error}`);
+                return { success: false, error: ossResult.error };
+              }
+            } catch (error) {
+              console.error(`[文生图片] OSS历史记录保存异常，任务ID: ${taskId}, 图片 ${index + 1}/${imageUrls.length}:`, error);
+              return { success: false, error: error.message };
+            }
+          });
+          
+          // 等待所有保存操作完成
+          try {
+            const saveResults = await Promise.all(savePromises);
+            const successCount = saveResults.filter(result => result.success).length;
+            console.log(`[文生图片] OSS历史记录保存完成，任务ID: ${taskId}, 成功: ${successCount}/${imageUrls.length}`);
+          } catch (error) {
+            console.error(`[文生图片] OSS历史记录保存过程中出现错误，任务ID: ${taskId}:`, error);
+          }
+        }
         
         return res.json({
           success: true,
@@ -333,5 +415,63 @@ router.get('/task/:taskId', protect, async (req, res) => {
     });
   }
 });
+
+/**
+ * @route   POST /api/text-to-image/clear-history
+ * @desc    清空文生图片历史记录
+ * @access  私有
+ */
+router.post('/clear-history', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // 使用ImageHistory模型删除用户的所有文生图片历史记录
+    const ImageHistory = require('../models/ImageHistory');
+    
+    // 使用原生SQL查询，避免可能的模型定义问题
+    const sequelize = require('../config/db');
+    const result = await sequelize.query(
+      'DELETE FROM image_histories WHERE userId = ? AND (type = ? OR type = ?)',
+      {
+        replacements: [userId, 'TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_HISTORY'],
+        type: sequelize.QueryTypes.DELETE
+      }
+    );
+    
+    console.log(`用户 ${userId} 清空了文生图片历史记录，删除了 ${result} 条记录`);
+    
+    res.json({
+      success: true,
+      message: '历史记录已清空',
+      deletedCount: result
+    });
+    
+  } catch (error) {
+    console.error('清空文生图片历史记录出错:', error);
+    res.status(500).json({
+      success: false,
+      message: '清空历史记录失败',
+      error: error.message
+    });
+  }
+});
+
+// 下载代理路由, 避免 CORS 跨域问题
+router.get('/download', async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send('缺少 url 参数');
+  try {
+    const response = await axios.get(url, { responseType: 'stream' });
+    res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    response.data.pipe(res);
+  } catch (e) {
+    console.error('[text-to-image-proxy-download] 失败:', e.message);
+    res.status(500).send('文件下载失败');
+  }
+});
+
 
 module.exports = router; 

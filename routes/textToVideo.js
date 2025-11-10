@@ -3,8 +3,9 @@ const router = express.Router();
 const axios = require('axios');
 const { protect } = require('../middleware/auth');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
+const { checkFeatureAccess } = require('../middleware/featureAccess');
 const User = require('../models/User');
-const FeatureUsage = require('../models/FeatureUsage');
+const { FeatureUsage } = require('../models/FeatureUsage');
 const ImageHistory = require('../models/ImageHistory');
 const { sequelize } = require('../config/db');
 const multer = require('multer');
@@ -87,7 +88,7 @@ router.post('/create', protect, createUnifiedFeatureMiddleware('text-to-video'),
     const costPerSecond = model === 'wanx2.1-t2v-turbo' ? 13.2 : 70; // 改为13.2积分/秒，使5秒视频总计为66积分
     const estimatedCost = costPerSecond * 5; // 假设生成5秒视频
 
-    // 积分检查和扣除已由中间件处理，这里不需要重复检查
+    // 积分检查已由中间件处理，任务完成后再扣除积分
     console.log(`文生视频任务创建，预计消耗积分: ${estimatedCost}${req.featureUsage?.usageType === 'free' ? ' (免费次数)' : ''}`);
     
     // 用户验证（中间件已验证积分，这里只需验证用户存在）
@@ -166,15 +167,27 @@ router.post('/create', protect, createUnifiedFeatureMiddleware('text-to-video'),
         userTasks[userId] = [];
       }
       
-      userTasks[userId].unshift({
+      const newTask = {
         id: taskId,
         prompt,
         model,
         size,
         status: normalizedStatus, // 使用规范化后的状态
         createdAt: new Date().toISOString(),
-        cost: estimatedCost // 存储任务预计消耗积分，在任务成功后扣除
-      });
+        cost: estimatedCost, // 存储任务预计消耗积分，在任务成功后扣除
+        videoUrl: null
+      };
+      
+      userTasks[userId].unshift(newTask);
+      
+      // 同时保存到OSS存储
+      try {
+        await addTaskToOSS(userId, newTask);
+        console.log(`任务已保存到OSS: ${taskId}`);
+      } catch (ossError) {
+        console.error('保存任务到OSS失败:', ossError);
+        // 不抛出错误，继续执行，确保任务创建成功
+      }
       
       // 同时存储任务信息到全局变量，方便同步到积分使用情况页面
       if (!global.textToVideoTasks) {
@@ -199,8 +212,9 @@ router.post('/create', protect, createUnifiedFeatureMiddleware('text-to-video'),
           const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
           await saveTaskDetails(req.featureUsage.usage, {
             taskId: taskId,
-            creditCost: estimatedCost,
-            isFree: req.featureUsage?.usageType === 'free'
+            creditCost: 0, // 创建时不扣费，任务完成后再扣费
+            isFree: req.featureUsage?.usageType === 'free',
+            status: 'pending' // 添加任务状态
           });
           console.log(`已即时写入文生视频任务记录到数据库 taskId=${taskId}`);
         }
@@ -445,6 +459,15 @@ router.get('/status/:taskId', protect, async (req, res) => {
         // 更新任务状态
         userTasks[userId][userTaskIndex].status = normalizedStatus;
         
+        // 同时更新OSS存储
+        try {
+          await updateTaskInOSS(userId, taskId, { status: normalizedStatus });
+          console.log(`任务状态已更新到OSS: ${taskId} -> ${normalizedStatus}`);
+        } catch (ossError) {
+          console.error('更新任务状态到OSS失败:', ossError);
+          // 不抛出错误，继续执行
+        }
+        
         // 如果任务完成，记录视频URL
         if (normalizedStatus === 'SUCCEEDED') {
           // 检查视频URL
@@ -469,11 +492,9 @@ router.get('/status/:taskId', protect, async (req, res) => {
             });
           }
           
-          // 如果是首次成功（状态从非SUCCEEDED变为SUCCEEDED），扣除积分
+          // 如果是首次成功（状态从非SUCCEEDED变为SUCCEEDED），更新任务状态
           if (isFirstSuccess) {
-            // 获取任务消耗的积分
-            const taskCost = userTasks[userId][userTaskIndex].cost || 0;
-            console.log(`准备扣除积分: 任务ID=${taskId}, 积分=${taskCost}, 用户ID=${userId}`);
+            console.log(`任务首次成功: 任务ID=${taskId}, 用户ID=${userId}`);
             
             // 更新全局变量中的任务状态
             if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
@@ -483,54 +504,65 @@ router.get('/status/:taskId', protect, async (req, res) => {
               console.log(`更新全局变量中的任务状态: taskId=${taskId}, status=SUCCEEDED`);
             }
             
-            // 检查是否为免费使用
-            const isFree = global.textToVideoTasks && global.textToVideoTasks[taskId] && global.textToVideoTasks[taskId].isFree;
-            
-            if (isFree) {
-              console.log(`任务是免费次数使用，跳过扣除积分: 任务ID=${taskId}`);
-              // 更新全局变量中的状态，但不扣除积分
-              if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
-                global.textToVideoTasks[taskId].hasChargedCredits = true;
-                global.textToVideoTasks[taskId].creditCost = 0; // 免费使用不消耗积分
-              }
-            } else {
-              // 调用saveTaskDetails函数，传入status='completed'参数，触发后续扣费逻辑
-              try {
-                // 查找用户的功能使用记录
-                const featureUsage = await FeatureUsage.findOne({
-                  where: {
-                    userId: userId,
-                    featureName: 'text-to-video'
+            // 使用统一的任务完成处理逻辑，扣除积分
+            try {
+              const featureUsage = await FeatureUsage.findOne({
+                where: {
+                  userId: userId,
+                  featureName: 'text-to-video'
+                }
+              });
+              
+              if (featureUsage) {
+                // 获取任务的免费标记和积分消耗
+                const isFree = global.textToVideoTasks[taskId]?.isFree || false;
+                const creditCost = isFree ? 0 : 66; // 固定66积分
+                
+                console.log(`文生视频任务完成: 任务ID=${taskId}, 是否免费=${isFree}, 积分=${creditCost}`);
+                
+                // 使用统一的saveTaskDetails函数处理任务完成
+                const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                await saveTaskDetails(featureUsage, {
+                  taskId: taskId,
+                  featureName: 'text-to-video',
+                  status: 'completed',
+                  statusCode: 'SUCCEEDED',
+                  creditCost: creditCost,
+                  isFree: isFree,
+                  operationText: '文生视频',
+                  extraData: {
+                    videoUrl: videoUrl,
+                    prompt: userTasks[userId][userTaskIndex].prompt,
+                    model: userTasks[userId][userTaskIndex].model,
+                    size: userTasks[userId][userTaskIndex].size
                   }
                 });
                 
-                if (featureUsage) {
-                  const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
-                  await saveTaskDetails(featureUsage, {
-                    taskId: taskId,
-                    featureName: 'text-to-video',
-                    status: 'completed', // 添加status参数，触发任务完成后扣费逻辑
-                    creditCost: taskCost,
-                    isFree: isFree
-                  });
-                  console.log(`已触发文生视频任务完成扣费逻辑: 任务ID=${taskId}, 积分=${taskCost}`);
-                } else {
-                  console.error(`未找到用户ID=${userId}的text-to-video功能使用记录`);
+                // 标记状态
+                if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
+                  global.textToVideoTasks[taskId].hasChargedCredits = true;
                 }
-              } catch (err) {
-                console.error('触发任务完成扣费逻辑失败:', err);
+                
+                console.log(`文生视频任务完成处理成功: 任务ID=${taskId}, 积分=${creditCost}, 免费=${isFree}`);
+              } else {
+                console.error(`未找到用户ID=${userId}的text-to-video功能使用记录`);
               }
-              
-              // 标记状态
-              console.log(`任务完成，积分已在任务完成时扣除: 任务ID=${taskId}`);
-              if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
-                global.textToVideoTasks[taskId].hasChargedCredits = true;
-              }
+            } catch (err) {
+              console.error('处理文生视频任务完成扣费逻辑失败:', err);
             }
           }
           
           userTasks[userId][userTaskIndex].videoUrl = videoUrl;
           console.log(`任务完成，视频URL已保存: ${videoUrl}`);
+          
+          // 同时更新OSS存储中的视频URL
+          try {
+            await updateTaskInOSS(userId, taskId, { videoUrl: videoUrl });
+            console.log(`视频URL已更新到OSS: ${taskId}`);
+          } catch (ossError) {
+            console.error('更新视频URL到OSS失败:', ossError);
+            // 不抛出错误，继续执行
+          }
           
           // 文生视频不保存到下载中心，注释掉历史记录保存
           console.log('文生视频完成，跳过保存到下载中心历史记录');
@@ -673,19 +705,31 @@ router.get('/status/:taskId', protect, async (req, res) => {
       
       // 更新全局变量中的任务状态
       const taskStatusFromResponse = response.data.output?.task_status;
-      if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
+      if (global.imageToVideoTasks && global.imageToVideoTasks[taskId]) {
           // 如果任务成功完成
           if (taskStatusFromResponse === 'SUCCEEDED') {
-              global.textToVideoTasks[taskId].status = 'SUCCEEDED';
-              global.textToVideoTasks[taskId].videoUrl = response.data.output.video_url;
-              global.textToVideoTasks[taskId].completedAt = new Date();
+              // 检查是否是首次成功（避免重复扣费）
+              const wasAlreadySucceeded = global.imageToVideoTasks[taskId].status === 'SUCCEEDED';
+              
+              global.imageToVideoTasks[taskId].status = 'SUCCEEDED';
+              global.imageToVideoTasks[taskId].videoUrl = response.data.output.video_url;
+              global.imageToVideoTasks[taskId].completedAt = new Date();
               console.log(`更新全局变量中的任务状态: taskId=${taskId}, status=SUCCEEDED`);
+              
+              // 🔧 修复三重记录问题：删除重复的积分扣除逻辑
+              // 积分扣除逻辑已在后续的统一处理中完成（第2197行），这里不再重复处理
+              if (!wasAlreadySucceeded) {
+                  console.log(`图生视频任务首次成功: 任务ID=${taskId}, 用户ID=${req.user.id} - 积分扣除将在统一处理中完成`);
+                  
+                  // 仅标记状态，不进行积分扣除
+                  global.imageToVideoTasks[taskId].hasChargedCredits = true;
+              }
           }
           // 如果任务失败
           else if (taskStatusFromResponse === 'FAILED') {
-              global.textToVideoTasks[taskId].status = 'FAILED';
-              global.textToVideoTasks[taskId].errorMessage = response.data.message || '任务执行失败';
-              global.textToVideoTasks[taskId].completedAt = new Date();
+              global.imageToVideoTasks[taskId].status = 'FAILED';
+              global.imageToVideoTasks[taskId].errorMessage = response.data.message || '任务执行失败';
+              global.imageToVideoTasks[taskId].completedAt = new Date();
               console.log(`更新全局变量中的任务状态: taskId=${taskId}, status=FAILED`);
           }
       }
@@ -773,27 +817,254 @@ router.get('/status/:taskId', protect, async (req, res) => {
 
 /**
  * @route   GET /api/text-to-video/tasks
- * @desc    获取用户所有文生视频任务
+ * @desc    获取用户所有文生视频任务（从OSS存储）
  * @access  私有
  */
-router.get('/tasks', protect, (req, res) => {
+router.get('/tasks', protect, async (req, res) => {
   try {
     const userId = req.user.id;
     
     console.log(`获取用户任务列表: userId=${userId}`);
     
-    // 返回用户的所有任务
-    const tasks = userTasks[userId] || [];
+    // 从OSS加载任务列表
+    const tasks = await loadTasksFromOSS(userId);
     
-    console.log(`找到 ${tasks.length} 个任务`);
+    // 过滤24小时内的任务
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
-    return res.json(tasks);
+    const recentTasks = tasks.filter(task => {
+      const taskTime = new Date(task.createdAt);
+      return taskTime >= twentyFourHoursAgo;
+    });
+    
+    // 只返回最新的一条记录
+    const latestTask = recentTasks.length > 0 ? [recentTasks[0]] : [];
+    
+    console.log(`找到 ${tasks.length} 个任务，24小时内 ${recentTasks.length} 个，返回最新 ${latestTask.length} 个`);
+    
+    return res.json(latestTask);
   } catch (error) {
     console.error('获取用户任务列表出错:', error);
     return res.status(500).json({
       success: false,
       code: 'InternalServerError',
       message: '服务器内部错误',
+      request_id: null
+    });
+  }
+});
+
+/**
+ * @route   GET /api/tasks/image-to-video
+ * @desc    获取用户所有图生视频任务（从OSS存储）
+ * @access  私有
+ */
+router.get('/tasks/image-to-video', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    console.log(`获取用户图生视频任务列表: userId=${userId}`);
+    
+    // 从OSS加载任务列表
+    const tasks = await loadTasksFromOSS(userId, 'image-to-video');
+    
+    // 过滤24小时内的任务
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    const recentTasks = tasks.filter(task => {
+      const taskTime = new Date(task.createdAt);
+      return taskTime >= twentyFourHoursAgo;
+    });
+    
+    // 只返回最新的一条记录
+    const latestTask = recentTasks.length > 0 ? [recentTasks[0]] : [];
+    
+    // 如果有任务，查询最新状态
+    if (latestTask.length > 0) {
+      const task = latestTask[0];
+      try {
+        // 查询任务最新状态
+        const response = await axios({
+          method: 'GET',
+          url: `https://dashscope.aliyuncs.com/api/v1/tasks/${task.id}`,
+          headers: {
+            'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`
+          }
+        });
+        
+        if (response.data && response.data.output) {
+          const taskStatus = response.data.output.task_status;
+          const videoUrl = response.data.output.result_url || response.data.output.video_url;
+          
+          // 更新任务状态
+          task.status = taskStatus;
+          if (videoUrl) {
+            task.videoUrl = videoUrl;
+          }
+          
+          console.log(`更新任务 ${task.id} 状态: ${taskStatus}`);
+          
+          // 如果状态有变化，更新OSS存储
+          if (task.status !== recentTasks[0].status) {
+            await saveTasksToOSS(userId, 'image-to-video', [task]);
+            console.log(`已更新OSS中任务 ${task.id} 的状态`);
+          }
+        }
+      } catch (statusError) {
+        console.error(`查询任务 ${task.id} 状态失败:`, statusError.message);
+        // 如果查询失败，保持原有状态
+      }
+    }
+    
+    console.log(`找到 ${tasks.length} 个图生视频任务，24小时内 ${recentTasks.length} 个，返回最新 ${latestTask.length} 个`);
+    
+    return res.json({
+      success: true,
+      tasks: latestTask
+    });
+  } catch (error) {
+    console.error('获取用户图生视频任务列表出错:', error);
+    return res.status(500).json({
+      success: false,
+      code: 'InternalServerError',
+      message: '服务器内部错误',
+      request_id: null
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/tasks/image-to-video
+ * @desc    清空用户所有图生视频任务记录
+ * @access  私有
+ */
+router.delete('/tasks/image-to-video', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    console.log(`清空用户所有图生视频任务: userId=${userId}`);
+    
+    // 清空OSS存储
+    try {
+      const ossPath = `image-to-video/tasks/${userId}/tasks.json`;
+      await client.put(ossPath, Buffer.from('[]', 'utf8'), {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log(`已清空图生视频OSS存储: ${ossPath}`);
+    } catch (ossError) {
+      console.error('清空图生视频OSS存储失败:', ossError);
+      // 不抛出错误，继续执行
+    }
+    
+    // 清空全局任务记录
+    if (global.imageToVideoTasks) {
+      const globalTaskIds = Object.keys(global.imageToVideoTasks);
+      globalTaskIds.forEach(taskId => {
+        if (global.imageToVideoTasks[taskId] && global.imageToVideoTasks[taskId].userId === userId) {
+          delete global.imageToVideoTasks[taskId];
+        }
+      });
+      console.log(`已清空图生视频全局任务记录: ${globalTaskIds.length} 个任务`);
+    }
+    
+    return res.json({
+      success: true,
+      message: '所有图生视频任务已清空'
+    });
+  } catch (error) {
+    console.error('清空图生视频任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      code: 'InternalServerError',
+      message: '清空任务失败: ' + error.message,
+      request_id: null
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/text-to-video/tasks/clear-all
+ * @desc    清空用户所有文生视频任务记录
+ * @access  私有
+ */
+router.delete('/tasks/clear-all', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    console.log(`清空用户所有任务: userId=${userId}`);
+    
+    // 清空用户任务列表
+    if (userTasks[userId]) {
+      const taskCount = userTasks[userId].length;
+      userTasks[userId] = [];
+      console.log(`已清空用户任务列表: ${taskCount} 个任务`);
+    }
+    
+    // 清空OSS存储
+    try {
+      const ossPath = `text-to-video/tasks/${userId}/tasks.json`;
+      await client.put(ossPath, Buffer.from('[]', 'utf8'), {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log(`已清空OSS存储: ${ossPath}`);
+    } catch (ossError) {
+      console.error('清空OSS存储失败:', ossError);
+      // 不抛出错误，继续执行
+    }
+    
+    // 清空全局任务记录
+    if (global.textToVideoTasks) {
+      const globalTaskIds = Object.keys(global.textToVideoTasks);
+      globalTaskIds.forEach(taskId => {
+        if (global.textToVideoTasks[taskId] && global.textToVideoTasks[taskId].userId === userId) {
+          delete global.textToVideoTasks[taskId];
+        }
+      });
+      console.log(`已清空全局任务记录: ${globalTaskIds.length} 个任务`);
+    }
+    
+    // 尝试从数据库中删除相关记录
+    try {
+      // 删除视频结果记录
+      const deletedVideoResults = await VideoResult.destroy({
+        where: { user: userId }
+      });
+      
+      // 删除历史记录
+      const deletedHistory = await ImageHistory.destroy({
+        where: { 
+          userId: userId,
+          processType: '文生视频'
+        }
+      });
+      
+      console.log(`已从数据库中删除记录: 视频结果 ${deletedVideoResults} 条，历史记录 ${deletedHistory} 条`);
+    } catch (dbError) {
+      console.error('删除数据库记录时出错:', dbError);
+      // 继续处理，不影响主要清空功能
+    }
+    
+    return res.json({
+      success: true,
+      message: '所有历史记录已清空',
+      data: {
+        clearedTasks: userTasks[userId] ? 0 : 'unknown',
+        clearedFromOSS: true,
+        clearedFromGlobal: true
+      }
+    });
+  } catch (error) {
+    console.error('清空所有任务出错:', error);
+    return res.status(500).json({
+      success: false,
+      code: 'InternalServerError',
+      message: '清空任务失败: ' + error.message,
       request_id: null
     });
   }
@@ -817,6 +1088,15 @@ router.delete('/tasks/:taskId', protect, async (req, res) => {
       if (taskIndex !== -1) {
         const deletedTask = userTasks[userId].splice(taskIndex, 1)[0];
         console.log(`已从用户任务列表中删除任务: ${taskId}`);
+        
+        // 同时从OSS存储中删除
+        try {
+          await deleteTaskFromOSS(userId, taskId);
+          console.log(`任务已从OSS删除: ${taskId}`);
+        } catch (ossError) {
+          console.error('从OSS删除任务失败:', ossError);
+          // 不抛出错误，继续执行
+        }
         
         // 从全局任务记录中删除
         if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
@@ -880,6 +1160,379 @@ router.delete('/tasks/:taskId', protect, async (req, res) => {
     });
   }
 });
+
+/**
+ * @route   GET /api/text-to-video/tasks/cleanup
+ * @desc    清理过期的文生视频任务记录
+ * @access  私有
+ */
+router.get('/tasks/cleanup', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    console.log(`清理用户过期任务: userId=${userId}`);
+    
+    // 从OSS加载任务列表
+    const tasks = await loadTasksFromOSS(userId);
+    
+    // 过滤24小时内的任务
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    const recentTasks = tasks.filter(task => {
+      const taskTime = new Date(task.createdAt);
+      return taskTime >= twentyFourHoursAgo;
+    });
+    
+    const expiredCount = tasks.length - recentTasks.length;
+    
+    // 只保存最新的1个任务
+    const tasksToSave = recentTasks.slice(0, 1);
+    
+    // 保存清理后的任务列表
+    await saveTasksToOSS(userId, tasksToSave);
+    
+    console.log(`清理完成: 原有 ${tasks.length} 个任务，过期 ${expiredCount} 个，保留 ${tasksToSave.length} 个`);
+    
+    return res.json({
+      success: true,
+      message: '任务清理完成',
+      data: {
+        originalCount: tasks.length,
+        expiredCount: expiredCount,
+        remainingCount: tasksToSave.length
+      }
+    });
+  } catch (error) {
+    console.error('清理过期任务出错:', error);
+    return res.status(500).json({
+      success: false,
+      code: 'InternalServerError',
+      message: '清理任务失败: ' + error.message,
+      request_id: null
+    });
+  }
+});
+
+
+/**
+ * 图生视频退款函数
+ * 当任务失败时，退还已扣除的积分
+ */
+async function refundImageToVideoCredits(userId, taskId, reason = '任务失败') {
+    try {
+        console.log(`开始处理图生视频退款: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason}`);
+        
+        // 查找该功能的使用记录
+        const usage = await FeatureUsage.findOne({
+            where: {
+                userId: userId,
+                featureName: 'image-to-video'
+            }
+        });
+        
+        if (!usage) {
+            console.log(`未找到用户${userId}的图生视频使用记录，无需退款`);
+            return false;
+        }
+        
+        // 解析details字段，查找对应的任务记录
+        let details = {};
+        if (usage.details) {
+            try {
+                details = JSON.parse(usage.details);
+            } catch (e) {
+                console.error('解析details字段失败:', e);
+                details = {};
+            }
+        }
+        
+        // 确保refunds数组存在
+        if (!details.refunds) {
+            details.refunds = [];
+        }
+        
+        // 查找对应的任务记录
+        const tasks = details.tasks || [];
+        let task = null;
+        
+        if (taskId) {
+            // 如果提供了taskId，先尝试精确匹配
+            task = tasks.find(t => t.taskId === taskId);
+            
+            // 检查是否已经退款过
+            const existingRefund = details.refunds.find(refund => refund.taskId === taskId);
+            if (existingRefund) {
+                console.log(`任务${taskId}已经退款过，跳过重复退款`);
+                return false;
+            }
+        }
+        
+        // 如果没找到任务记录或没有提供taskId，尝试从最近的任务中推断
+        if (!task && tasks.length > 0) {
+            // 按时间排序，取最近的一个没有退款的任务
+            const sortedTasks = tasks.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            for (const t of sortedTasks) {
+                const existingRefund = details.refunds.find(refund => refund.taskId === t.taskId);
+                if (!existingRefund) {
+                    task = t;
+                    console.log(`使用最近的未退款任务记录进行退款: ${task.taskId}`);
+                    break;
+                }
+            }
+        }
+        
+        if (!task) {
+            console.log(`未找到任务记录，无法退款`);
+            return false;
+        }
+        
+        const creditCost = task.creditCost || 0;
+        const isFree = task.isFree || false;
+        
+        console.log(`找到任务记录: 积分=${creditCost}, 是否免费=${isFree}`);
+        
+        // 如果是免费使用，只需要回退使用次数，不退还积分
+        if (isFree) {
+            console.log('免费使用失败，回退使用次数');
+            
+            // 减少使用次数
+            if (usage.usageCount > 0) {
+                usage.usageCount -= 1;
+            }
+            
+            // 记录退款信息（标记为免费退款）
+            details.refunds.push({
+                taskId: task.taskId, // 使用实际的任务ID
+                creditCost: 0,
+                isFree: true,
+                reason: reason,
+                refundTime: new Date().toISOString()
+            });
+            
+            usage.details = JSON.stringify(details);
+            await usage.save();
+            
+            console.log(`图生视频免费使用退款完成: 用户ID=${userId}, 回退使用次数`);
+            return true;
+        }
+        
+        // 付费使用退款
+        if (creditCost > 0) {
+            console.log(`开始退还积分: ${creditCost}`);
+            
+            // 获取用户信息
+            const User = require('../models/User');
+            const user = await User.findByPk(userId);
+            
+            if (!user) {
+                console.error(`未找到用户ID=${userId}`);
+                return false;
+            }
+            
+            // 退还积分
+            user.credits += creditCost;
+            await user.save();
+            
+            // 减少该功能的积分消费记录
+            if (usage.credits >= creditCost) {
+                usage.credits -= creditCost;
+            } else {
+                usage.credits = 0;
+            }
+            
+            // 减少使用次数
+            if (usage.usageCount > 0) {
+                usage.usageCount -= 1;
+            }
+            
+            // 记录退款信息
+            details.refunds.push({
+                taskId: task.taskId, // 使用实际的任务ID
+                creditCost: creditCost,
+                isFree: false,
+                reason: reason,
+                refundTime: new Date().toISOString()
+            });
+            
+            usage.details = JSON.stringify(details);
+            await usage.save();
+            
+            console.log(`图生视频积分退款完成: 用户ID=${userId}, 退还积分=${creditCost}, 用户当前积分=${user.credits}`);
+            return true;
+        }
+        
+        console.log(`任务${taskId}无需退款: 积分=${creditCost}, 免费=${isFree}`);
+        return false;
+        
+    } catch (error) {
+        console.error('图生视频退款失败:', error);
+        return false;
+    }
+}
+
+/**
+ * @route   POST /api/text-to-video/image-to-video
+ * @desc    创建图生视频任务
+ * @access  Private
+ */
+/**
+ * 图生视频退款函数
+ * 当任务失败时，退还已扣除的积分
+ */
+async function refundImageToVideoCredits(userId, taskId, reason = '任务失败') {
+    try {
+        console.log(`开始处理图生视频退款: 用户ID=${userId}, 任务ID=${taskId}, 原因=${reason}`);
+        
+        // 查找该功能的使用记录
+        const usage = await FeatureUsage.findOne({
+            where: {
+                userId: userId,
+                featureName: 'image-to-video'
+            }
+        });
+        
+        if (!usage) {
+            console.log(`未找到用户${userId}的图生视频使用记录，无需退款`);
+            return false;
+        }
+        
+        // 解析details字段，查找对应的任务记录
+        let details = {};
+        if (usage.details) {
+            try {
+                details = JSON.parse(usage.details);
+            } catch (e) {
+                console.error('解析details字段失败:', e);
+                details = {};
+            }
+        }
+        
+        // 确保refunds数组存在
+        if (!details.refunds) {
+            details.refunds = [];
+        }
+        
+        // 查找对应的任务记录
+        const tasks = details.tasks || [];
+        let task = null;
+        
+        if (taskId) {
+            // 如果提供了taskId，先尝试精确匹配
+            task = tasks.find(t => t.taskId === taskId);
+            
+            // 检查是否已经退款过
+            const existingRefund = details.refunds.find(refund => refund.taskId === taskId);
+            if (existingRefund) {
+                console.log(`任务${taskId}已经退款过，跳过重复退款`);
+                return false;
+            }
+        }
+        
+        // 如果没找到任务记录或没有提供taskId，尝试从最近的任务中推断
+        if (!task && tasks.length > 0) {
+            // 按时间排序，取最近的一个没有退款的任务
+            const sortedTasks = tasks.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            for (const t of sortedTasks) {
+                const existingRefund = details.refunds.find(refund => refund.taskId === t.taskId);
+                if (!existingRefund) {
+                    task = t;
+                    console.log(`使用最近的未退款任务记录进行退款: ${task.taskId}`);
+                    break;
+                }
+            }
+        }
+        
+        if (!task) {
+            console.log(`未找到任务记录，无法退款`);
+            return false;
+        }
+        
+        const creditCost = task.creditCost || 0;
+        const isFree = task.isFree || false;
+        
+        console.log(`找到任务记录: 积分=${creditCost}, 是否免费=${isFree}`);
+        
+        // 如果是免费使用，只需要回退使用次数，不退还积分
+        if (isFree) {
+            console.log('免费使用失败，回退使用次数');
+            
+            // 减少使用次数
+            if (usage.usageCount > 0) {
+                usage.usageCount -= 1;
+            }
+            
+            // 记录退款信息（标记为免费退款）
+            details.refunds.push({
+                taskId: task.taskId, // 使用实际的任务ID
+                creditCost: 0,
+                isFree: true,
+                reason: reason,
+                refundTime: new Date().toISOString()
+            });
+            
+            usage.details = JSON.stringify(details);
+            await usage.save();
+            
+            console.log(`图生视频免费使用退款完成: 用户ID=${userId}, 回退使用次数`);
+            return true;
+        }
+        
+        // 付费使用退款
+        if (creditCost > 0) {
+            console.log(`开始退还积分: ${creditCost}`);
+            
+            // 获取用户信息
+            const User = require('../models/User');
+            const user = await User.findByPk(userId);
+            
+            if (!user) {
+                console.error(`未找到用户ID=${userId}`);
+                return false;
+            }
+            
+            // 退还积分
+            user.credits += creditCost;
+            await user.save();
+            
+            // 减少该功能的积分消费记录
+            if (usage.credits >= creditCost) {
+                usage.credits -= creditCost;
+            } else {
+                usage.credits = 0;
+            }
+            
+            // 减少使用次数
+            if (usage.usageCount > 0) {
+                usage.usageCount -= 1;
+            }
+            
+            // 记录退款信息
+            details.refunds.push({
+                taskId: task.taskId, // 使用实际的任务ID
+                creditCost: creditCost,
+                isFree: false,
+                reason: reason,
+                refundTime: new Date().toISOString()
+            });
+            
+            usage.details = JSON.stringify(details);
+            await usage.save();
+            
+            console.log(`图生视频积分退款完成: 用户ID=${userId}, 退还积分=${creditCost}, 用户当前积分=${user.credits}`);
+            return true;
+        }
+        
+        console.log(`任务${taskId}无需退款: 积分=${creditCost}, 免费=${isFree}`);
+        return false;
+        
+    } catch (error) {
+        console.error('图生视频退款失败:', error);
+        return false;
+    }
+}
 
 /**
  * @route   POST /api/text-to-video/image-to-video
@@ -1017,37 +1670,77 @@ router.post('/image-to-video', protect, createUnifiedFeatureMiddleware('image-to
             const taskId = dashscopeResponse.output.task_id;
             console.log('成功获取任务ID:', taskId);
             
-            // 获取功能配置信息
-            const { FEATURES } = require('../middleware/featureAccess');
-            const creditCost = FEATURES['image-to-video']?.creditCost || 66; // 默认与文生视频相同的成本
+            // 积分已在统一中间件中扣除，先记录任务信息（无论API是否成功）
+            const creditCost = req.featureUsage?.creditCost || 0;
+            const isFree = req.featureUsage?.isFree || false;
             
             // 记录任务信息到全局变量，方便后续查询和积分统计
+            if (!global.imageToVideoTasks) {
+                global.imageToVideoTasks = {};
+            }
+            
             global.imageToVideoTasks[taskId] = {
                 userId: userId,
                 prompt: input.prompt,
                 img_url: input.img_url,
+                model: model,
                 timestamp: new Date(),
                 creditCost: creditCost,
-                hasChargedCredits: false,  // 修改为false，确保任务完成后扣除积分
-                isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
+                status: 'RUNNING', // 与文生视频保持一致的状态命名
+                hasChargedCredits: false, // 与文生视频保持一致
+                isFree: isFree // 标记是否为免费使用
             };
             
-            // 立即写入数据库记录
+            // 🚀 统一与文生视频的逻辑：创建时立即将任务详情写入数据库（pending状态）
             try {
                 if (req.featureUsage && req.featureUsage.usage) {
                     const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
                     await saveTaskDetails(req.featureUsage.usage, {
                         taskId: taskId,
-                        creditCost: creditCost,
-                        isFree: req.featureUsage?.usageType === 'free'
+                        featureName: 'image-to-video',
+                        status: 'pending', // 创建时记录为pending状态
+                        creditCost: 0, // 创建时不扣费，任务完成后再扣费
+                        isFree: req.featureUsage?.usageType === 'free',
+                        operationText: '图生视频',
+                        extraData: {
+                            prompt: input.prompt,
+                            img_url: input.img_url,
+                            model: model,
+                            createdAt: new Date().toISOString()
+                        }
                     });
-                    console.log(`已即时写入图生视频任务记录到数据库 taskId=${taskId}`);
+                    console.log(`已即时写入图生视频任务记录到数据库 taskId=${taskId}, status=pending`);
                 }
-            } catch (dbErr) {
-                console.error('即时保存图生视频任务详情失败:', dbErr);
+            } catch (saveErr) {
+                console.error('即时保存图生视频任务详情失败:', saveErr);
+                // 继续流程，不影响用户体验
+            }
+            
+            console.log(`图生视频任务创建成功: 用户ID=${req.user.id}, 任务ID=${taskId}, 积分=${creditCost}, 是否免费=${isFree}`);
+            
+            // 添加OSS存储功能（与文生视频逻辑对齐）
+            try {
+                const newTask = {
+                    id: taskId,
+                    prompt: input.prompt,
+                    img_url: input.img_url,
+                    model: model,
+                    status: 'RUNNING', // 与文生视频保持一致的状态命名
+                    createdAt: new Date().toISOString(),
+                    cost: creditCost,
+                    videoUrl: null
+                };
+                
+                // 🔧 修复：添加 'image-to-video' 参数，确保保存到正确的任务类型
+                await addTaskToOSS(userId, newTask, 'image-to-video');
+                console.log(`图生视频任务已保存到OSS: ${taskId}`);
+            } catch (ossError) {
+                console.error('保存图生视频任务到OSS失败:', ossError);
+                // 不抛出错误，继续执行，确保任务创建成功
             }
             
             console.log(`保存图生视频任务信息: 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCost}${req.featureUsage?.usageType === 'free' ? ' (免费次数)' : ''}`);
+            console.log(`当前imageToVideoTasks记录数: ${Object.keys(global.imageToVideoTasks).length}`);
             
             // 标准化响应格式
             if (!dashscopeResponse.status_code) {
@@ -1110,6 +1803,10 @@ router.post('/image-to-video', protect, createUnifiedFeatureMiddleware('image-to
         } catch (error) {
             console.error('处理图生视频请求出错:', error);
             
+            // API调用失败，进行退款
+            console.log(`图生视频API调用失败，开始退款流程: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+            await refundImageToVideoCredits(req.user.id, taskId, `API调用失败: ${error.message}`);
+            
             // 处理阿里云API错误
             if (error.response && error.response.data) {
                 console.error('阿里云API返回错误:', error.response.data);
@@ -1137,6 +1834,13 @@ router.post('/image-to-video', protect, createUnifiedFeatureMiddleware('image-to
         }
     } catch (error) {
         console.error('处理图生视频请求出错:', error);
+        
+        // 如果有taskId，进行退款
+        if (typeof taskId !== 'undefined') {
+            console.log(`图生视频服务器错误，开始退款流程: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+            await refundImageToVideoCredits(req.user.id, taskId, `服务器错误: ${error.message}`);
+        }
+        
         return res.status(500).json({
             success: false,
             code: 'InternalServerError',
@@ -1166,103 +1870,365 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
             });
         }
         
-        // 调用阿里云API获取任务状态
-        const response = await axios.get(
-            `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`
-                },
-                timeout: 15000 // 设置15秒超时
-            }
-        );
+        console.log(`查询任务状态: taskId=${taskId}, userId=${req.user.id}`);
         
-        const dashscopeResponse = response.data;
-        console.log('任务状态查询响应:', JSON.stringify(dashscopeResponse, null, 2));
+        // 🔧 优先从数据库中查询已同步的任务状态
+        const { FeatureUsage } = require('../models/FeatureUsage');
+        
+        // 检查图生视频任务
+        let taskFromDB = null;
+        let featureName = null;
+        
+        try {
+            // 先检查图生视频
+            const imageToVideoUsage = await FeatureUsage.findOne({
+                where: { userId: req.user.id, featureName: 'image-to-video' }
+            });
+            
+            if (imageToVideoUsage && imageToVideoUsage.details) {
+                const details = JSON.parse(imageToVideoUsage.details);
+                if (details.tasks) {
+                    taskFromDB = details.tasks.find(task => task.taskId === taskId);
+                    if (taskFromDB) {
+                        featureName = 'image-to-video';
+                        console.log(`从数据库找到图生视频任务: ${taskId}, 状态: ${taskFromDB.status}`);
+                    }
+                }
+            }
+            
+            // 如果没找到，再检查文生视频
+            if (!taskFromDB) {
+                const textToVideoUsage = await FeatureUsage.findOne({
+                    where: { userId: req.user.id, featureName: 'text-to-video' }
+                });
+                
+                if (textToVideoUsage && textToVideoUsage.details) {
+                    const details = JSON.parse(textToVideoUsage.details);
+                    if (details.tasks) {
+                        taskFromDB = details.tasks.find(task => task.taskId === taskId);
+                        if (taskFromDB) {
+                            featureName = 'text-to-video';
+                            console.log(`从数据库找到文生视频任务: ${taskId}, 状态: ${taskFromDB.status}`);
+                        }
+                    }
+                }
+            }
+        } catch (dbError) {
+            console.error('查询数据库任务状态失败:', dbError);
+        }
+        
+        // 如果数据库中有已完成的任务，直接返回数据库中的状态
+        if (taskFromDB && (taskFromDB.status === 'completed' || taskFromDB.status === 'SUCCEEDED')) {
+            console.log(`返回数据库中的已完成任务状态: ${taskId}`);
+            
+            const videoUrl = taskFromDB.extraData?.videoUrl;
+            
+            return res.json({
+                status_code: 200,
+                code: null,
+                message: 'success',
+                request_id: `db-${Date.now()}`,
+                output: {
+                    task_status: 'SUCCEEDED',
+                    video_url: videoUrl,
+                    task_id: taskId
+                },
+                usage: null
+            });
+        }
+        
+        // 如果数据库中没有找到或任务未完成，则查询阿里云API
+        console.log(`数据库中未找到已完成任务，查询阿里云API: ${taskId}`);
+        
+        let dashscopeResponse;
+        try {
+            const response = await axios.get(
+                `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY}`
+                    },
+                    timeout: 15000 // 设置15秒超时
+                }
+            );
+            
+            dashscopeResponse = response.data;
+            console.log('阿里云任务状态查询响应:', JSON.stringify(dashscopeResponse, null, 2));
+        } catch (apiError) {
+            // 如果阿里云API查询失败，但数据库中有任务记录，返回数据库状态
+            if (taskFromDB) {
+                console.log(`阿里云API查询失败，返回数据库中的任务状态: ${taskId}, 状态: ${taskFromDB.status}`);
+                
+                return res.json({
+                    status_code: 200,
+                    code: null,
+                    message: 'success',
+                    request_id: `db-fallback-${Date.now()}`,
+                    output: {
+                        task_status: taskFromDB.status === 'completed' ? 'SUCCEEDED' : (taskFromDB.status || 'PENDING'),
+                        video_url: taskFromDB.extraData?.videoUrl || null,
+                        task_id: taskId
+                    },
+                    usage: null
+                });
+            }
+            
+            // 如果数据库中也没有，返回错误
+            console.error('阿里云API查询失败且数据库中无记录:', apiError.message);
+            return res.status(500).json({
+                status_code: 500,
+                code: 'QueryFailed',
+                message: '查询任务状态失败',
+                request_id: null,
+                output: null,
+                usage: null
+            });
+        }
         
         // 更新全局变量中的任务状态
         const currentTaskStatus = dashscopeResponse.output?.task_status;
         
-        // 检查文生视频任务
-        if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
-            // 如果任务成功完成
-            if (currentTaskStatus === 'SUCCEEDED') {
-                global.textToVideoTasks[taskId].status = 'SUCCEEDED';
-                global.textToVideoTasks[taskId].videoUrl = dashscopeResponse.output.video_url;
-                global.textToVideoTasks[taskId].completedAt = new Date();
-                console.log(`更新文生视频任务状态: taskId=${taskId}, status=SUCCEEDED`);
+        // 确保全局变量存在
+        if (!global.textToVideoTasks) {
+            global.textToVideoTasks = {};
+            console.log('初始化全局变量 global.textToVideoTasks');
+        }
+        if (!global.imageToVideoTasks) {
+            global.imageToVideoTasks = {};
+            console.log('初始化全局变量 global.imageToVideoTasks');
+        }
+        
+        // 检查是否为文生视频任务（通过数据库查询确定）
+        let isTextToVideo = false;
+        try {
+            const { FeatureUsage } = require('../models/FeatureUsage');
+            const textToVideoUsage = await FeatureUsage.findOne({
+                where: { userId: req.user.id, featureName: 'text-to-video' }
+            });
+            
+            if (textToVideoUsage && textToVideoUsage.details) {
+                const details = JSON.parse(textToVideoUsage.details);
+                if (details.tasks && details.tasks.some(task => task.taskId === taskId)) {
+                    isTextToVideo = true;
+                }
             }
-            // 如果任务失败
-            else if (currentTaskStatus === 'FAILED') {
-                global.textToVideoTasks[taskId].status = 'FAILED';
-                global.textToVideoTasks[taskId].errorMessage = dashscopeResponse.message || '任务执行失败';
-                global.textToVideoTasks[taskId].completedAt = new Date();
-                console.log(`更新文生视频任务状态: taskId=${taskId}, status=FAILED`);
+        } catch (e) {
+            console.log('检查任务类型时出错:', e.message);
+        }
+        
+        // 根据任务类型创建或更新全局变量记录
+        if (isTextToVideo) {
+            if (!global.textToVideoTasks[taskId]) {
+                console.log(`文生视频任务全局变量中不存在任务记录，创建新记录: taskId=${taskId}`);
+                global.textToVideoTasks[taskId] = {
+                    taskId: taskId,
+                    status: currentTaskStatus,
+                    videoUrl: dashscopeResponse.output?.video_url || null,
+                    timestamp: new Date().toISOString(),
+                    userId: req.user.id,
+                    isFree: false // 默认值，实际值需要从数据库获取
+                };
+            }
+        } else {
+            if (!global.imageToVideoTasks[taskId]) {
+                console.log(`图生视频任务全局变量中不存在任务记录，创建新记录: taskId=${taskId}`);
+                global.imageToVideoTasks[taskId] = {
+                    taskId: taskId,
+                    status: currentTaskStatus,
+                    videoUrl: dashscopeResponse.output?.video_url || null,
+                    timestamp: new Date().toISOString(),
+                    userId: req.user.id
+                };
             }
         }
         
-        // 检查图生视频任务
-        if (global.imageToVideoTasks && global.imageToVideoTasks[taskId]) {
-            // 如果任务成功完成
-            if (currentTaskStatus === 'SUCCEEDED') {
-                    // 标记已扣除积分标志，避免重复计算积分
-                    const hasChargedCredits = global.imageToVideoTasks[taskId].hasChargedCredits || false;
+        // 检查文生视频任务 - 修复：不依赖全局变量，直接处理任务完成
+        if (isTextToVideo && currentTaskStatus === 'SUCCEEDED') {
+            // 更新全局变量（如果存在）
+            if (global.textToVideoTasks && global.textToVideoTasks[taskId]) {
+                global.textToVideoTasks[taskId].status = 'SUCCEEDED';
+                global.textToVideoTasks[taskId].videoUrl = dashscopeResponse.output.video_url;
+                global.textToVideoTasks[taskId].completedAt = new Date();
+            }
+            
+            // 更新数据库中的任务状态为成功并处理积分扣除
+            try {
+                const { FeatureUsage } = require('../models/FeatureUsage');
+                const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                
+                let usage = await FeatureUsage.findOne({
+                    where: { userId: req.user.id, featureName: 'text-to-video' }
+                });
+                
+                if (usage) {
+                    // 从数据库中获取任务的免费标记
+                    let isFree = false;
+                    try {
+                        const details = JSON.parse(usage.details || '{}');
+                        if (details.tasks && Array.isArray(details.tasks)) {
+                            const dbTask = details.tasks.find(t => t.taskId === taskId);
+                            if (dbTask) {
+                                isFree = dbTask.isFree || false;
+                                console.log(`从数据库获取任务免费标记: taskId=${taskId}, isFree=${isFree}`);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('解析任务详情失败，使用默认免费标记:', e.message);
+                    }
                     
+                    const creditCost = isFree ? 0 : 66;
+                    
+                    // 调用统一的积分扣除逻辑
+                    await saveTaskDetails(usage, {
+                        taskId: taskId,
+                        featureName: 'text-to-video',
+                        status: 'completed',
+                        statusCode: 'SUCCEEDED',
+                        creditCost: creditCost,
+                        isFree: isFree,
+                        operationText: '文生视频'
+                    });
+                    
+                    console.log(`文生视频任务完成，积分处理完成: 任务ID=${taskId}, 积分=${creditCost}, 免费=${isFree}`);
+                }
+                
+                console.log(`文生视频任务状态已更新为完成: 任务ID=${taskId}`);
+            } catch (dbError) {
+                console.error('更新文生视频任务状态失败:', dbError);
+                // 继续处理，不影响用户使用
+            }
+            
+            console.log(`更新文生视频任务状态: taskId=${taskId}, status=SUCCEEDED`);
+        }
+        
+        // 检查图生视频任务 - 修复：不依赖全局变量，直接处理任务完成
+        if (!isTextToVideo && currentTaskStatus === 'SUCCEEDED') {
+            // 更新全局变量（如果存在）
+            if (global.imageToVideoTasks && global.imageToVideoTasks[taskId]) {
                 global.imageToVideoTasks[taskId].status = 'SUCCEEDED';
                 global.imageToVideoTasks[taskId].videoUrl = dashscopeResponse.output.video_url;
                 global.imageToVideoTasks[taskId].completedAt = new Date();
-                
-                    // 更新数据库中的使用记录，仅在未扣除积分时执行
-                    if (!hasChargedCredits) {
-                        try {
-                            const userId = global.imageToVideoTasks[taskId].userId;
-                            
-                            // 检查是否为免费使用
-                            const isFree = global.imageToVideoTasks[taskId].isFree || false;
-                            // 确定实际积分消耗，免费使用为0，付费使用为66积分
-                            const creditCost = isFree ? 0 : 66;
-                            
-                            console.log(`图生视频任务完成(首次计费): 任务ID=${taskId}, 用户ID=${userId}, 免费使用=${isFree}, 实际积分消耗=${creditCost}`);
-                            
-                            let usage = await FeatureUsage.findOne({
-                                where: { userId, featureName: 'image-to-video' }
-                            });
-                            
-                            if (usage) {
-                                // 调用saveTaskDetails函数，传入status='completed'参数，触发后续扣费逻辑
-                                const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
-                                await saveTaskDetails(usage, {
-                                    taskId: taskId,
-                                    featureName: 'image-to-video',
-                                    status: 'completed', // 添加status参数，触发任务完成后扣费逻辑
-                                    creditCost: creditCost,
-                                    isFree: isFree
-                                });
-                                console.log(`已触发图生视频任务完成扣费逻辑: 任务ID=${taskId}, 积分=${creditCost}, 免费=${isFree}`);
-                                
-                                // 标记为已扣除积分，避免重复计算
-                                global.imageToVideoTasks[taskId].hasChargedCredits = true;
-                                
-                                console.log(`已更新用户 ${userId} 的图生视频使用记录，添加任务 ${taskId}`);
-                            } else {
-                                console.log(`未找到用户ID=${userId}的image-to-video功能使用记录`);
-                            }
-                        } catch (dbError) {
-                            console.error('保存图生视频使用记录失败:', dbError);
-                            // 继续处理，不影响用户使用
-                        }
-                    } else {
-                        console.log(`任务 ${taskId} 已扣除积分，跳过重复计算`);
-                    }
-                
-                console.log(`更新图生视频任务状态: taskId=${taskId}, status=SUCCEEDED`);
             }
-            // 如果任务失败
-            else if (currentTaskStatus === 'FAILED') {
+            
+            // 更新数据库中的任务状态为成功并处理积分扣除
+            try {
+                const { FeatureUsage } = require('../models/FeatureUsage');
+                const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                
+                let usage = await FeatureUsage.findOne({
+                    where: { userId: req.user.id, featureName: 'image-to-video' }
+                });
+                
+                if (usage) {
+                    // 🚀 统一与文生视频的逻辑：检查任务是否已经完成处理（避免重复扣费）
+                    let taskAlreadyCompleted = false;
+                    let taskStatus = 'pending'; // 默认pending状态
+                    let isFree = false;
+                    
+                    // 从全局变量获取任务信息
+                    if (global.imageToVideoTasks && global.imageToVideoTasks[taskId]) {
+                        isFree = global.imageToVideoTasks[taskId].isFree || false;
+                        console.log(`从全局变量获取任务信息: taskId=${taskId}, isFree=${isFree}`);
+                    }
+                    
+                    // 检查数据库中任务的当前状态
+                    try {
+                        const details = JSON.parse(usage.details || '{}');
+                        if (details.tasks && Array.isArray(details.tasks)) {
+                            const dbTask = details.tasks.find(t => t.taskId === taskId);
+                            if (dbTask) {
+                                taskStatus = dbTask.status || 'pending';
+                                if (dbTask.status === 'completed') {
+                                    taskAlreadyCompleted = true;
+                                    console.log(`任务已在数据库中标记为完成: taskId=${taskId}`);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.log('解析任务详情失败，继续处理:', e.message);
+                    }
+                    
+                    // 🚀 只有pending状态的任务才更新为completed并扣除积分
+                    if (!taskAlreadyCompleted && taskStatus === 'pending') {
+                        const creditCost = isFree ? 0 : 66;
+                        
+                        console.log(`🚀 图生视频任务从pending更新为completed: 任务ID=${taskId}, 积分=${creditCost}, 免费=${isFree}`);
+                        
+                        // 更新任务状态为completed并扣除积分
+                        await saveTaskDetails(usage, {
+                            taskId: taskId,
+                            featureName: 'image-to-video',
+                            status: 'completed',
+                            statusCode: 'SUCCEEDED',
+                            creditCost: creditCost,
+                            isFree: isFree,
+                            extraData: {
+                                videoUrl: dashscopeResponse.output.video_url,
+                                originalImage: global.imageToVideoTasks[taskId]?.imageUrl || '未知',
+                                prompt: global.imageToVideoTasks[taskId]?.prompt || '未知',
+                                img_url: global.imageToVideoTasks[taskId]?.img_url || '未知',
+                                model: global.imageToVideoTasks[taskId]?.model || 'wanx2.1-i2v-turbo',
+                                createdAt: global.imageToVideoTasks[taskId]?.timestamp || new Date().toISOString()
+                            },
+                            operationText: '图生视频'
+                        });
+                        
+                        console.log(`✅ 图生视频任务完成，积分处理完成: 任务ID=${taskId}, 积分=${creditCost}, 免费=${isFree}`);
+                    } else {
+                        console.log(`⚠️ 图生视频任务已处理过，跳过重复扣费: 任务ID=${taskId}, 状态=${taskStatus}`);
+                    }
+                }
+                
+                console.log(`图生视频任务状态已更新为完成: 任务ID=${taskId}`);
+            } catch (dbError) {
+                console.error('更新图生视频任务状态失败:', dbError);
+                // 继续处理，不影响用户使用
+            }
+            
+            // 🚀 统一OSS更新逻辑：任务完成时更新OSS存储
+            try {
+                await updateTaskInOSS(req.user.id, taskId, {
+                    status: 'SUCCEEDED',
+                    videoUrl: dashscopeResponse.output.video_url,
+                    completedAt: new Date().toISOString()
+                }, 'image-to-video');
+                console.log(`已更新OSS中的图生视频任务状态: taskId=${taskId}, status=SUCCEEDED`);
+            } catch (ossError) {
+                console.error('更新OSS中的图生视频任务失败:', ossError);
+                // 不影响用户体验，继续处理
+            }
+            
+            console.log(`更新图生视频任务状态: taskId=${taskId}, status=SUCCEEDED`);
+        }
+        
+        // 处理任务失败的情况
+        if (currentTaskStatus === 'FAILED') {
+            // 更新全局变量（如果存在）
+            if (global.imageToVideoTasks && global.imageToVideoTasks[taskId]) {
                 global.imageToVideoTasks[taskId].status = 'FAILED';
                 global.imageToVideoTasks[taskId].errorMessage = dashscopeResponse.message || '任务执行失败';
                 global.imageToVideoTasks[taskId].completedAt = new Date();
-                console.log(`更新图生视频任务状态: taskId=${taskId}, status=FAILED`);
+            }
+            console.log(`更新任务状态: taskId=${taskId}, status=FAILED`);
+            
+            // 🚀 统一OSS更新逻辑：任务失败时也更新OSS存储
+            try {
+                await updateTaskInOSS(req.user.id, taskId, {
+                    status: 'FAILED',
+                    errorMessage: dashscopeResponse.message || '任务执行失败',
+                    completedAt: new Date().toISOString()
+                }, 'image-to-video');
+                console.log(`已更新OSS中的图生视频任务状态: taskId=${taskId}, status=FAILED`);
+            } catch (ossError) {
+                console.error('更新OSS中的图生视频任务失败:', ossError);
+                // 不影响用户体验，继续处理
+            }
+            
+            // 任务失败，进行退款（如果是图生视频）
+            if (!isTextToVideo) {
+                console.log(`图生视频任务失败，开始退款流程: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+                const failureReason = dashscopeResponse.message || '图生视频任务失败';
+                await refundImageToVideoCredits(req.user.id, taskId, failureReason);
             }
         }
         
@@ -1361,6 +2327,14 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
  */
 router.post('/upload-image', protect, upload.single('image'), async (req, res) => {
     try {
+        // 添加调试日志
+        console.log('=== 图片上传调试信息 ===');
+        console.log('Content-Type:', req.headers['content-type']);
+        console.log('isMultipart:', req.is('multipart/*'));
+        console.log('req.file:', req.file);
+        console.log('req.body:', req.body);
+        console.log('========================');
+        
         if (!req.file) {
             return res.status(400).json({ 
                 code: 'InvalidParameter',
@@ -1602,6 +2576,10 @@ router.post('/image-to-video-sync', protect, createUnifiedFeatureMiddleware('ima
         const taskId = response.data.output?.task_id || `sync-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
         
         // 记录任务信息到全局变量，方便后续查询和积分统计
+        if (!global.imageToVideoTasks) {
+            global.imageToVideoTasks = {};
+        }
+        
         global.imageToVideoTasks[taskId] = {
             userId: userId,
             prompt: prompt,
@@ -1612,16 +2590,28 @@ router.post('/image-to-video-sync', protect, createUnifiedFeatureMiddleware('ima
             isFree: req.featureUsage?.usageType === 'free' // 标记是否为免费使用
         };
         
-        // 立即写入数据库记录
+        // 🔧 修复重复记录问题：同步模式的图生视频立即记录完成状态
+        // 避免创建时记录pending状态，直接记录completed状态
         try {
             if (req.featureUsage && req.featureUsage.usage) {
                 const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
                 await saveTaskDetails(req.featureUsage.usage, {
                     taskId: taskId,
+                    featureName: 'image-to-video',
+                    status: 'completed',
+                    statusCode: 'SUCCEEDED',
                     creditCost: creditCost,
-                    isFree: req.featureUsage?.usageType === 'free'
+                    isFree: req.featureUsage?.usageType === 'free',
+                    operationText: '图生视频',
+                    extraData: {
+                        videoUrl: videoUrl,
+                        prompt: prompt,
+                        img_url: imageUrl,
+                        model: model,
+                        createdAt: new Date().toISOString()
+                    }
                 });
-                console.log(`已即时写入图生视频(同步)任务记录到数据库 taskId=${taskId}`);
+                console.log(`已即时写入图生视频(同步)任务记录到数据库 taskId=${taskId}, 积分=${creditCost}, 免费=${req.featureUsage?.usageType === 'free'}`);
             }
         } catch (dbErr) {
             console.error('即时保存图生视频(同步)任务详情失败:', dbErr);
@@ -1654,10 +2644,56 @@ router.post('/image-to-video-sync', protect, createUnifiedFeatureMiddleware('ima
 // 创建一个单独的上传图片路由处理函数
 const uploadImageRoute = express.Router();
 
-uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => {
+// 使用JSON解析中间件
+uploadImageRoute.use(express.json({ limit: '10mb' }));
+
+// 创建FormData解析中间件 - 支持文件上传和Base64
+const fileUploadParser = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB限制
+}).single('image');
+
+// 处理图片上传（支持文件上传和Base64）- 不需要认证
+uploadImageRoute.post('/', fileUploadParser, async (req, res) => {
     // 确保环境变量已加载
     require('dotenv').config();
     try {
+        // 添加调试日志
+        console.log('=== 图片上传请求调试信息 ===');
+        console.log('请求到达uploadImageRoute');
+        console.log('Content-Type:', req.headers['content-type']);
+        console.log('req.file:', req.file);
+        console.log('req.body:', JSON.stringify(req.body, null, 2));
+        
+        // 检查是否是Base64上传（通过body参数）
+        const isBase64Upload = (req.body && req.body.type === 'base64' && req.body.image) || 
+                              (req.body && req.body.image && typeof req.body.image === 'string' && req.body.image.startsWith('data:')) ||
+                              (req.body && req.body.image && typeof req.body.image === 'string' && req.body.image.length > 100); // 纯Base64数据通常很长
+        
+        console.log('isBase64Upload:', isBase64Upload);
+        
+        if (isBase64Upload) {
+            // 处理Base64图片
+            let base64Data = req.body.image;
+            
+            // 如果是data:image格式，提取Base64部分
+            if (base64Data.startsWith('data:')) {
+                base64Data = base64Data.split(',')[1];
+            }
+            
+            const imageUrl = await uploadBase64Image(base64Data);
+            
+            return res.json({
+                success: true,
+                output: {
+                    img_url: imageUrl
+                },
+                imageUrl: imageUrl,
+                url: imageUrl
+            });
+        }
+        
+        // 处理文件上传
         if (!req.file) {
             return res.status(400).json({ 
                 code: 'InvalidParameter',
@@ -1666,26 +2702,52 @@ uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => 
             });
         }
         
-        // 获取上传的文件路径
-        const filePath = req.file.path;
         let imageUrl;
         
         try {
-            // 确保文件存在
-            if (!fs.existsSync(filePath)) {
-                throw new Error(`上传的文件不存在: ${filePath}`);
+            // 将buffer写入临时文件
+            const tempDir = path.join(__dirname, '../uploads/temp');
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
             }
+            
+            const tempFilePath = path.join(tempDir, `${Date.now()}-${req.file.originalname}`);
+            fs.writeFileSync(tempFilePath, req.file.buffer);
+            
+            console.log('临时文件已创建:', tempFilePath);
             
             // 使用OSS服务上传图片到阿里云
             console.log('开始将图片上传到阿里云OSS...');
-            imageUrl = await uploadFile(filePath, 'images/');
+            imageUrl = await uploadFile(tempFilePath, 'images/');
             console.log('图片已成功上传到阿里云OSS:', imageUrl);
             
             if (!imageUrl || !imageUrl.startsWith('http')) {
                 throw new Error('OSS未返回有效的URL');
             }
+            
+            // 上传成功后清理临时文件
+            try {
+                if (fs.existsSync(tempFilePath)) {
+                    fs.unlinkSync(tempFilePath);
+                    console.log('临时文件已清理:', tempFilePath);
+                }
+            } catch (cleanupError) {
+                console.warn('清理临时文件失败:', cleanupError);
+                // 不影响主流程，仅记录警告
+            }
         } catch (ossError) {
             console.error('上传到阿里云OSS失败:', ossError);
+            
+            // 失败时也要清理临时文件
+            try {
+                if (fs.existsSync(tempFilePath)) {
+                    fs.unlinkSync(tempFilePath);
+                    console.log('上传失败，临时文件已清理:', tempFilePath);
+                }
+            } catch (cleanupError) {
+                console.warn('清理临时文件失败:', cleanupError);
+            }
+            
             // 返回错误信息
             return res.status(500).json({
                 success: false,
@@ -1702,20 +2764,102 @@ uploadImageRoute.post('/', protect, upload.single('image'), async (req, res) => 
                 img_url: imageUrl
             },
             imageUrl: imageUrl, // 兼容旧代码
-            request_id: Date.now().toString() // 生成一个唯一ID作为请求ID
+            url: imageUrl // 兼容旧代码
         };
         
-        console.log('图片上传成功，返回数据:', JSON.stringify(response));
-        return res.json(response);
+        res.json(response);
     } catch (error) {
-        console.error('图片上传处理错误:', error);
-        return res.status(500).json({
-            code: 'InternalServerError',
-            message: '图片上传处理失败: ' + error.message,
-            request_id: null
+        console.error('上传图片失败:', error);
+        
+        // 发生错误时清理可能存在的临时文件
+        try {
+            const tempDir = path.join(__dirname, '../uploads/temp');
+            const tempFilePath = path.join(tempDir, `${Date.now()}-${req.file?.originalname || 'unknown'}`);
+            if (fs.existsSync(tempFilePath)) {
+                fs.unlinkSync(tempFilePath);
+                console.log('错误处理中清理临时文件:', tempFilePath);
+            }
+        } catch (cleanupError) {
+            console.warn('错误处理中清理临时文件失败:', cleanupError);
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: '上传图片失败: ' + error.message
         });
     }
 });
+
+// 处理Base64图片上传的辅助函数
+async function uploadBase64Image(base64Data) {
+    try {
+        // 将Base64转换为Buffer
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        // 生成临时文件名
+        const tempFileName = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+        const tempFilePath = path.join('uploads', tempFileName);
+        
+        // 确保uploads目录存在
+        if (!fs.existsSync('uploads')) {
+            fs.mkdirSync('uploads', { recursive: true });
+        }
+        
+        // 写入临时文件
+        fs.writeFileSync(tempFilePath, imageBuffer);
+        
+        try {
+            // 检查OSS配置是否完整
+            if (!process.env.OSS_REGION || !process.env.ALIYUN_ACCESS_KEY_ID || 
+                !process.env.ALIYUN_ACCESS_KEY_SECRET || !process.env.OSS_BUCKET) {
+                console.log('OSS配置不完整，使用本地存储...');
+                
+                // 使用本地存储作为降级方案
+                const publicPath = path.join(__dirname, '../public/uploads');
+                if (!fs.existsSync(publicPath)) {
+                    fs.mkdirSync(publicPath, { recursive: true });
+                }
+                
+                const fileName = `image-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.jpg`;
+                const publicFilePath = path.join(publicPath, fileName);
+                
+                // 复制文件到public目录
+                fs.copyFileSync(tempFilePath, publicFilePath);
+                
+                // 返回本地URL
+                const imageUrl = `http://localhost:8080/uploads/${fileName}`;
+                console.log('Base64图片已保存到本地:', imageUrl);
+                
+                return imageUrl;
+            } else {
+                // 上传到OSS
+                console.log('开始将Base64图片上传到阿里云OSS...');
+                const imageUrl = await uploadFile(tempFilePath, 'images/');
+                console.log('Base64图片已成功上传到阿里云OSS:', imageUrl);
+                
+                if (!imageUrl || !imageUrl.startsWith('http')) {
+                    throw new Error('OSS未返回有效的URL');
+                }
+                
+                return imageUrl;
+            }
+        } finally {
+            // 清理临时文件
+            try {
+                if (fs.existsSync(tempFilePath)) {
+                    fs.unlinkSync(tempFilePath);
+                    console.log('Base64临时文件已清理:', tempFilePath);
+                }
+            } catch (cleanupError) {
+                console.warn('清理Base64临时文件失败:', cleanupError);
+            }
+        }
+    } catch (error) {
+        console.error('处理Base64图片失败:', error);
+        throw error;
+    }
+}
+
 
 // 查询任务状态
 router.get('/digital-human/task/:taskId', protect, async (req, res) => {
@@ -1753,11 +2897,19 @@ router.get('/digital-human/task/:taskId', protect, async (req, res) => {
             const videoUrl = output.video_url;
             console.log('从output.video_url获取到视频URL:', videoUrl);
             
-            // 获取视频时长
-            let videoDuration = 0;
+// 获取视频时长 - 直接使用API返回的时长（不设默认值）
+let videoDuration;
+            
             if (response.data.usage && response.data.usage.video_duration) {
-                videoDuration = Math.ceil(response.data.usage.video_duration);
-                console.log('从API响应的usage.video_duration获取视频时长:', response.data.usage.video_duration, '秒，取整后:', videoDuration, '秒');
+                const rawDuration = parseFloat(response.data.usage.video_duration);
+                if (!isNaN(rawDuration) && rawDuration > 0) {
+                    videoDuration = Math.max(1, Math.ceil(rawDuration));
+                    console.log('✅ 直接使用API返回的视频时长:', rawDuration, '秒，取整后:', videoDuration, '秒');
+                } else {
+                    console.log('⚠️ API返回的视频时长无效，使用默认值:', videoDuration, '秒');
+                }
+            } else {
+                console.log('⚠️ API未返回视频时长，使用默认值:', videoDuration, '秒');
             }
             
             // 查询任务详情以获取积分消费信息
@@ -1766,17 +2918,21 @@ router.get('/digital-human/task/:taskId', protect, async (req, res) => {
                 where: { userId, featureName: 'DIGITAL_HUMAN_VIDEO' }
             });
             
+            // 计算积分消费：每秒9积分
             let creditsUsed = 0;
-            if (featureUsage && featureUsage.details) {
-                try {
-                    const details = JSON.parse(featureUsage.details);
-                    const taskDetail = details.tasks.find(t => t.taskId === taskId);
-                    if (taskDetail) {
-                        creditsUsed = taskDetail.credits || 0;
-                    }
-                } catch (err) {
-                    console.error('解析任务详情失败:', err);
-                }
+            if (videoDuration > 0) {
+                creditsUsed = videoDuration * 9;
+                console.log(`计算视频数字人积分消费: ${videoDuration}秒 × 9积分/秒 = ${creditsUsed}积分`);
+            } else {
+                console.log('警告: 视频时长为0，无法计算积分消费');
+            }
+            
+            // 检查是否为免费使用
+            let isFree = false; // 🔧 修改：视频数字人功能无免费次数，所有使用都收费
+            if (featureUsage) {
+                console.log(`用户${userId}的视频数字人功能使用次数: ${featureUsage.usageCount}, 是否免费: ${isFree}`);
+            } else {
+                console.log(`警告: 未找到用户${userId}的DIGITAL_HUMAN_VIDEO功能使用记录`);
             }
             
             // 保存任务详情
@@ -1784,18 +2940,33 @@ router.get('/digital-human/task/:taskId', protect, async (req, res) => {
                 status: 'SUCCEEDED',
                 videoUrl: videoUrl,
                 videoDuration: videoDuration,
-                creditsUsed: creditsUsed,
+                creditCost: isFree ? 0 : creditsUsed, // 如果是免费使用，积分为0
+                isFree: isFree, // 添加是否免费标记
+                creditsUsed: creditsUsed, // 保留原有字段，兼容旧代码
                 requestId: response.data.request_id
             };
             
             console.log('完整响应状态数据:', taskDetails);
+            console.log('🔍 调试: videoDuration值检查:', {
+                rawValue: response.data.usage?.video_duration,
+                processedValue: videoDuration,
+                taskDetailsVideoDuration: taskDetails.videoDuration
+            });
             
             // 保存任务详情到数据库
             try {
+                console.log('🔍 调试: 保存任务数据前:', {
+                    taskId: taskId,
+                    videoDuration: taskDetails.videoDuration,
+                    creditCost: taskDetails.creditCost
+                });
                 await saveTaskDetails(taskId, req.user.id, taskDetails);
+                console.log('✅ 任务数据保存成功');
             } catch (error) {
                 console.error('保存任务详情失败:', error);
             }
+            
+            // 已通过saveTaskDetails保存任务详情，无需重复调用
             
             responseData = taskDetails;
         } else if (taskStatus === 'FAILED') {
@@ -1808,6 +2979,60 @@ router.get('/digital-human/task/:taskId', protect, async (req, res) => {
     } catch (error) {
         console.error('查询任务状态时出错:', error);
         res.status(500).json({ message: '查询任务状态时出错', error: error.message });
+    }
+});
+
+// 获取数字人任务列表
+router.get('/digital-human/tasks', protect, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        console.log(`获取用户数字人任务列表: userId=${userId}`);
+        
+        // 查找功能使用记录
+        const featureUsage = await FeatureUsage.findOne({
+            where: { userId, featureName: 'DIGITAL_HUMAN_VIDEO' }
+        });
+        
+        if (!featureUsage) {
+            console.log(`用户${userId}没有数字人功能使用记录`);
+            return res.json({ tasks: [] });
+        }
+        
+        // 解析任务详情
+        let tasks = [];
+        if (featureUsage.details) {
+            try {
+                const details = JSON.parse(featureUsage.details);
+                if (details.tasks && Array.isArray(details.tasks)) {
+                    tasks = details.tasks;
+                }
+            } catch (err) {
+                console.error('解析任务详情失败:', err);
+            }
+        }
+        
+        // 过滤24小时内的任务，按创建时间倒序排列
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        const recentTasks = tasks
+            .filter(task => {
+                const taskTime = new Date(task.timestamp || task.createdAt);
+                return taskTime >= twentyFourHoursAgo;
+            })
+            .sort((a, b) => {
+                const timeA = new Date(a.timestamp || a.createdAt);
+                const timeB = new Date(b.timestamp || b.createdAt);
+                return timeB - timeA;
+            })
+            .slice(0, 1); // 只显示最新1条任务
+        
+        console.log(`用户${userId}的数字人任务数量: ${recentTasks.length}`);
+        
+        res.json({ tasks: recentTasks });
+    } catch (error) {
+        console.error('获取数字人任务列表失败:', error);
+        res.status(500).json({ message: '获取任务列表失败', error: error.message });
     }
 });
 
@@ -1840,29 +3065,369 @@ async function saveTaskDetails(taskId, userId, details) {
         // 查找是否已存在该任务
         const taskIndex = parsedDetails.tasks.findIndex(t => t.taskId === taskId);
         
+        // 检查是否需要更新使用次数和扣除积分
+        const isTaskCompleted = details.status === 'SUCCEEDED';
+        const isFirstTask = featureUsage.usageCount === 0;
+        const isFree = details.isFree || isFirstTask;
+        
+        // 调试日志
+        console.log(`任务${taskId}状态检查: 完成状态=${isTaskCompleted}, 首次使用=${isFirstTask}, 免费=${isFree}, 视频时长=${details.videoDuration}秒, 积分消费=${details.creditCost}`);
+        console.log('🔍 调试: 任务数据保存前检查:', {
+            taskId: taskId,
+            videoDuration: details.videoDuration,
+            creditCost: details.creditCost,
+            isFree: details.isFree,
+            status: details.status
+        });
+        
+        // 特别检查videoDuration的值
+        console.log('🔍 调试: videoDuration详细检查:', {
+            type: typeof details.videoDuration,
+            value: details.videoDuration,
+            isNull: details.videoDuration === null,
+            isUndefined: details.videoDuration === undefined,
+            isNaN: isNaN(details.videoDuration)
+        });
+        
+        // 确保视频时长有效 - 不再设置3秒默认值
+        if (details.videoDuration === null || details.videoDuration === undefined || details.videoDuration <= 0) {
+            console.log(`⚠️ 任务${taskId}视频时长无效，保持未设置状态`);
+        } else {
+            console.log(`✅ 任务${taskId}视频时长有效: ${details.videoDuration}秒`);
+        }
+        
+        // 🔧 关键修复：确保使用API返回的时长，不要被重置
+        console.log(`🔍 保存前最终检查: 任务${taskId}视频时长=${details.videoDuration}秒，类型=${typeof details.videoDuration}`);
+        
+        // 如果任务完成且不是免费的，需要扣除积分
+        // 确保视频时长大于0且积分消费大于0
+        if (isTaskCompleted && !isFree) {
+            // 重新计算积分消费，确保使用正确的视频时长
+            const creditCost = details.videoDuration * 9;
+            details.creditCost = creditCost;
+            console.log(`重新计算积分消费: ${details.videoDuration}秒 × 9积分/秒 = ${creditCost}积分`);
+            
+            // 强制记录到日志，确保看到完整的计算过程
+            console.log(`强制记录积分计算: 任务完成=${isTaskCompleted}, 免费=${isFree}, 视频时长=${details.videoDuration}, 积分=${creditCost}`);
+            
+            try {
+                // 查找用户
+                const User = require('../models/User');
+                const user = await User.findByPk(userId);
+                
+                if (!user) {
+                    console.error(`未找到用户ID: ${userId}`);
+                    return;
+                }
+                
+                // 检查是否已经扣除过积分
+                const alreadyCharged = parsedDetails.recordedTaskIds && 
+                                      parsedDetails.recordedTaskIds.includes(taskId);
+                
+                if (!alreadyCharged) {
+                    // 扣除积分
+                    // 确保使用重新计算的积分值
+                    const deductCredits = Math.min(details.creditCost, user.credits);
+                    
+                    console.log(`准备扣除积分: 用户ID=${userId}, 当前积分=${user.credits}, 需扣除=${deductCredits}`);
+                    
+                    user.credits -= deductCredits;
+                    await user.save();
+                    
+                    // 记录已扣除积分的任务ID
+                    if (!parsedDetails.recordedTaskIds) {
+                        parsedDetails.recordedTaskIds = [];
+                    }
+                    parsedDetails.recordedTaskIds.push(taskId);
+                    
+                    console.log(`已从用户${userId}扣除${deductCredits}积分，剩余${user.credits}积分`);
+                    
+                    // 更新功能使用记录中的积分消耗
+                    featureUsage.credits = (featureUsage.credits || 0) + deductCredits;
+                    await featureUsage.save(); // 确保功能使用记录保存
+                } else {
+                    console.log(`任务${taskId}已扣除过积分，跳过重复扣除`);
+                }
+            } catch (error) {
+                console.error(`扣除积分过程中出错: ${error.message}`, error);
+            }
+        } else {
+            // 如果没有进入积分扣除流程，强制重新检查条件
+            console.log(`任务${taskId}未进入积分扣除流程，重新检查条件`);
+            
+            // 重新检查任务完成状态
+            if (details.status === 'SUCCEEDED' && !isFree) {
+                console.log(`检测到任务${taskId}已完成但未扣除积分，尝试强制扣除`);
+                
+                try {
+                    // 查找用户
+                    const User = require('../models/User');
+                    const user = await User.findByPk(userId);
+                    
+                    if (!user) {
+                        console.error(`未找到用户ID: ${userId}`);
+                    } else {
+                        // 确保视频时长有效
+                        const validDuration = details.videoDuration > 0 ? details.videoDuration : 3;
+                        
+                        // 计算积分
+                        const forceCreditCost = validDuration * 9;
+                        const forceDeductCredits = Math.min(forceCreditCost, user.credits);
+                        
+                        console.log(`强制扣除积分: 用户ID=${userId}, 当前积分=${user.credits}, 需扣除=${forceDeductCredits}`);
+                        
+                        // 检查是否已经扣除过积分
+                        const alreadyCharged = parsedDetails.recordedTaskIds && 
+                                              parsedDetails.recordedTaskIds.includes(taskId);
+                        
+                        if (!alreadyCharged) {
+                            // 扣除积分
+                            user.credits -= forceDeductCredits;
+                            await user.save();
+                            
+                            // 记录已扣除积分的任务ID
+                            if (!parsedDetails.recordedTaskIds) {
+                                parsedDetails.recordedTaskIds = [];
+                            }
+                            parsedDetails.recordedTaskIds.push(taskId);
+                            
+                            // 更新任务详情中的积分信息
+                            details.creditCost = forceCreditCost;
+                            details.creditsUsed = forceCreditCost;
+                            
+                            console.log(`已强制从用户${userId}扣除${forceDeductCredits}积分，剩余${user.credits}积分`);
+                            
+                            // 更新功能使用记录中的积分消耗
+                            featureUsage.credits = (featureUsage.credits || 0) + forceDeductCredits;
+                            await featureUsage.save();
+                        } else {
+                            console.log(`任务${taskId}已扣除过积分，跳过重复扣除`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`强制扣除积分过程中出错: ${error.message}`, error);
+                }
+            } else if (isTaskCompleted) {
+                if (isFree) {
+                    console.log(`任务${taskId}免费使用，不需要扣除积分`);
+                } else {
+                    console.log(`任务${taskId}不需要扣除积分: 完成状态=${isTaskCompleted}, 免费=${isFree}, 视频时长=${details.videoDuration}秒`);
+                }
+            } else {
+                console.log(`任务${taskId}未完成，状态: ${details.status}，不扣除积分`);
+            }
+        }
+        
+        // 如果任务完成，增加使用次数
+        if (isTaskCompleted) {
+            try {
+                featureUsage.usageCount += 1;
+                featureUsage.lastUsedAt = new Date();
+                await featureUsage.save(); // 确保保存使用次数更新
+                console.log(`更新用户${userId}的视频数字人功能使用次数为${featureUsage.usageCount}`);
+                
+                // 确保更新featureUsage.details中的usageCount
+                if (!parsedDetails.usageCount || parsedDetails.usageCount < featureUsage.usageCount) {
+                    parsedDetails.usageCount = featureUsage.usageCount;
+                    console.log(`更新任务详情中的使用次数为: ${parsedDetails.usageCount}`);
+                }
+            } catch (error) {
+                console.error(`更新使用次数时出错: ${error.message}`, error);
+            }
+        }
+        
         if (taskIndex >= 0) {
             // 更新现有任务
             parsedDetails.tasks[taskIndex] = {
                 ...parsedDetails.tasks[taskIndex],
-                ...details
+                ...details,
+                isFree: isFree, // 确保免费标记正确
+                updatedAt: new Date().toISOString()
             };
         } else {
             // 添加新任务
             parsedDetails.tasks.push({
                 taskId,
                 ...details,
-                timestamp: new Date().toISOString()
+                isFree: isFree, // 确保免费标记正确
+                timestamp: new Date().toISOString(),
+                createdAt: new Date().toISOString()
             });
         }
         
-        // 更新数据库
-        await featureUsage.update({
-            details: JSON.stringify(parsedDetails)
-        });
-        
-        console.log(`任务详情已保存: 任务ID=${taskId}, 积分=${details.creditsUsed}, 是否免费=${details.isFree || false}`);
+        try {
+            // 调试：保存前检查数据
+            console.log('🔍 调试: 数据库保存前检查:', {
+                taskId: taskId,
+                videoDuration: details.videoDuration,
+                creditCost: details.creditCost,
+                status: details.status
+            });
+            
+            // 更新数据库
+            await featureUsage.update({
+                details: JSON.stringify(parsedDetails)
+            });
+            
+            console.log(`任务详情已保存: 任务ID=${taskId}, 积分=${details.creditsUsed}, 实际扣除积分=${details.creditCost}, 是否免费=${details.isFree || false}`);
+            console.log('✅ 数据库保存成功，videoDuration:', details.videoDuration);
+        } catch (error) {
+            console.error(`更新任务详情时出错: ${error.message}`, error);
+        }
     } catch (error) {
         console.error('保存任务详情失败:', error);
+        throw error;
+    }
+}
+
+// OSS存储相关函数
+const { client } = require('../utils/ossService');
+
+/**
+ * 从OSS加载用户任务列表
+ * @param {string} userId - 用户ID
+ * @returns {Promise<Array>} 任务列表
+ */
+async function loadTasksFromOSS(userId, taskType = 'text-to-video') {
+    try {
+        const ossPath = `${taskType}/tasks/${userId}/tasks.json`;
+        
+        console.log(`从OSS加载任务列表: ${ossPath}`);
+        
+        // 尝试从OSS获取任务列表
+        const result = await client.get(ossPath);
+        const tasksData = JSON.parse(result.content.toString());
+        
+        console.log(`从OSS加载到 ${tasksData.length} 个任务`);
+        return tasksData;
+    } catch (error) {
+        if (error.code === 'NoSuchKey') {
+            console.log('OSS中不存在任务文件，返回空数组');
+            return [];
+        }
+        console.error('从OSS加载任务列表失败:', error);
+        throw error;
+    }
+}
+
+/**
+ * 保存任务列表到OSS
+ * @param {string} userId - 用户ID
+ * @param {Array} tasks - 任务列表
+ * @returns {Promise<void>}
+ */
+async function saveTasksToOSS(userId, tasks, taskType = 'text-to-video') {
+    try {
+        const ossPath = `${taskType}/tasks/${userId}/tasks.json`;
+        
+        console.log(`保存任务列表到OSS: ${ossPath}, 任务数量: ${tasks.length}`);
+        
+        // 过滤24小时内的任务
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        
+        const recentTasks = tasks.filter(task => {
+            const taskTime = new Date(task.createdAt);
+            return taskTime >= twentyFourHoursAgo;
+        });
+        
+        // 按创建时间降序排序，确保最新的任务在前面
+        const sortedTasks = recentTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        // 只保存最新的1个任务，符合显示要求
+        const tasksToSave = sortedTasks.slice(0, 1);
+        
+        console.log(`过滤后24小时内任务: ${recentTasks.length} 个，保存最新: ${tasksToSave.length} 个`);
+        
+        const tasksJson = JSON.stringify(tasksToSave, null, 2);
+        
+        await client.put(ossPath, Buffer.from(tasksJson, 'utf8'), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log(`任务列表已保存到OSS: ${ossPath}`);
+    } catch (error) {
+        console.error('保存任务列表到OSS失败:', error);
+        throw error;
+    }
+}
+
+/**
+ * 添加任务到OSS存储
+ * @param {string} userId - 用户ID
+ * @param {Object} task - 任务对象
+ * @returns {Promise<void>}
+ */
+async function addTaskToOSS(userId, task, taskType = 'text-to-video') {
+    try {
+        // 先加载现有任务
+        const existingTasks = await loadTasksFromOSS(userId, taskType);
+        
+        // 添加新任务到开头
+        existingTasks.unshift(task);
+        
+        // 保存更新后的任务列表（会自动过滤24小时内的任务并只保存最新1条）
+        await saveTasksToOSS(userId, existingTasks, taskType);
+        
+        console.log(`任务已添加到OSS: ${task.id}`);
+    } catch (error) {
+        console.error('添加任务到OSS失败:', error);
+        throw error;
+    }
+}
+
+/**
+ * 更新OSS中的任务
+ * @param {string} userId - 用户ID
+ * @param {string} taskId - 任务ID
+ * @param {Object} updates - 更新内容
+ * @returns {Promise<void>}
+ */
+async function updateTaskInOSS(userId, taskId, updates, taskType = 'text-to-video') {
+    try {
+        // 先加载现有任务
+        const existingTasks = await loadTasksFromOSS(userId, taskType);
+        
+        // 找到并更新任务
+        const taskIndex = existingTasks.findIndex(task => task.id === taskId);
+        if (taskIndex !== -1) {
+            existingTasks[taskIndex] = { ...existingTasks[taskIndex], ...updates };
+            
+            // 保存更新后的任务列表
+            await saveTasksToOSS(userId, existingTasks, taskType);
+            
+            console.log(`任务已更新到OSS: ${taskId}`);
+        } else {
+            console.warn(`未找到要更新的任务: ${taskId}`);
+        }
+    } catch (error) {
+        console.error('更新任务到OSS失败:', error);
+        throw error;
+    }
+}
+
+/**
+ * 从OSS删除任务
+ * @param {string} userId - 用户ID
+ * @param {string} taskId - 任务ID
+ * @returns {Promise<void>}
+ */
+async function deleteTaskFromOSS(userId, taskId, taskType = 'text-to-video') {
+    try {
+        // 先加载现有任务
+        const existingTasks = await loadTasksFromOSS(userId, taskType);
+        
+        // 过滤掉要删除的任务
+        const filteredTasks = existingTasks.filter(task => task.id !== taskId);
+        
+        // 保存更新后的任务列表
+        await saveTasksToOSS(userId, filteredTasks, taskType);
+        
+        console.log(`任务已从OSS删除: ${taskId}`);
+    } catch (error) {
+        console.error('从OSS删除任务失败:', error);
         throw error;
     }
 }

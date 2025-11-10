@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>亚马逊消费者洞察专家 - 萤火AI</title>
+    <title data-translate="amazon_consumer_insights.page_title">亚马逊消费者洞察专家 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
@@ -222,6 +222,7 @@
     <link rel="stylesheet" href="/components/styles.css">
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
+    <script src="/js/translations.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏容器 -->
@@ -252,10 +253,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">亚马逊消费者洞察专家</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="amazon_consumer_insights.main_title">亚马逊消费者洞察专家</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="consumer-insights" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入商品类目和销售市场/人群，AI将为您提供深入的消费者洞察，包括用户画像、使用场景、痛点、购买动机和未被满足的需求。</p>
+                    <p class="text-gray-600 mb-4" data-translate="amazon_consumer_insights.description">输入商品类目和销售市场/人群，AI将为您提供深入的消费者洞察，包括用户画像、使用场景、痛点、购买动机和未被满足的需求。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -263,12 +264,12 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="amazon_consumer_insights.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>输入商品类目，例如：电子产品、厨房用具、户外装备等</li>
-                                    <li>输入目标销售市场或人群，例如：美国、欧洲、年轻父母、健身爱好者等</li>
-                                    <li>分析结果可用于产品创新、Listing创建与优化、营销策略制定等</li>
-                                    <li>洞察基于市场数据、消费者评论和行为分析，提供针对性的见解</li>
+                                    <li data-translate="amazon_consumer_insights.tip1">输入商品类目，例如：电子产品、厨房用具、户外装备等</li>
+                                    <li data-translate="amazon_consumer_insights.tip2">输入目标销售市场或人群，例如：美国、欧洲、年轻父母、健身爱好者等</li>
+                                    <li data-translate="amazon_consumer_insights.tip3">分析结果可用于产品创新、Listing创建与优化、营销策略制定等</li>
+                                    <li data-translate="amazon_consumer_insights.tip4">洞察基于市场数据、消费者评论和行为分析，提供针对性的见解</li>
                                 </ul>
                             </div>
                         </div>
@@ -276,25 +277,25 @@
                     
                     <form id="consumerInsightsForm">
                         <div class="mb-5">
-                            <label for="productCategory" class="block text-gray-700 font-medium mb-2">商品类目 <span class="text-red-500">*</span></label>
-                            <input type="text" id="productCategory" name="productCategory" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入商品类目，例如：智能手表、婴儿玩具、瑜伽垫..." required>
+                            <label for="productCategory" class="block text-gray-700 font-medium mb-2"><span data-translate="amazon_consumer_insights.product_category">商品类目</span> <span class="text-red-500">*</span></label>
+                            <input type="text" id="productCategory" name="productCategory" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_consumer_insights.product_category_placeholder" placeholder="请输入商品类目，例如：智能手表、婴儿玩具、瑜伽垫..." required>
                         </div>
                         
                         <div class="mb-5">
-                            <label for="targetMarket" class="block text-gray-700 font-medium mb-2">销售市场/目标人群 <span class="text-red-500">*</span></label>
-                            <input type="text" id="targetMarket" name="targetMarket" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入销售市场或目标人群，例如：美国、日本、运动爱好者、职场人士..." required>
+                            <label for="targetMarket" class="block text-gray-700 font-medium mb-2"><span data-translate="amazon_consumer_insights.target_market">销售市场/目标人群</span> <span class="text-red-500">*</span></label>
+                            <input type="text" id="targetMarket" name="targetMarket" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_consumer_insights.target_market_placeholder" placeholder="请输入销售市场或目标人群，例如：美国、日本、运动爱好者、职场人士..." required>
                         </div>
                         
                         <div class="mb-5">
-                            <label class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label class="block text-gray-700 font-medium mb-2" data-translate="amazon_consumer_insights.output_language">输出语言</label>
                             <div class="flex gap-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="text-indigo-600 focus:ring-indigo-500" checked>
-                                    <span class="ml-2">中文</span>
+                                    <span class="ml-2" data-translate="amazon_consumer_insights.chinese">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="ml-2">英文</span>
+                                    <span class="ml-2" data-translate="amazon_consumer_insights.english">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -302,7 +303,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateInsightsButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-search-line mr-2"></i>
-                                生成消费者洞察
+                                <span data-translate="amazon_consumer_insights.generate_insights">生成消费者洞察</span>
                             </button>
                         </div>
                     </form>
@@ -313,11 +314,11 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-3 rounded-lg shadow-md slide-in">
-                <h2 class="text-lg font-semibold mb-2 text-indigo-700 border-b pb-1">洞察分析结果</h2>
+                <h2 class="text-lg font-semibold mb-2 text-indigo-700 border-b pb-1" data-translate="amazon_consumer_insights.analysis_results">洞察分析结果</h2>
                 
                 <div class="mb-3">
                     <h3 class="font-medium text-gray-700 mb-1 flex items-center">
-                        <i class="ri-user-line mr-1 text-indigo-500"></i>用户画像
+                        <i class="ri-user-line mr-1 text-indigo-500"></i><span data-translate="amazon_consumer_insights.user_persona">用户画像</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg bg-gray-50 hover:bg-white">
                         <div id="userPersonaResult" class="text-gray-800"></div>
@@ -326,7 +327,7 @@
                 
                 <div class="mb-3">
                     <h3 class="font-medium text-gray-700 mb-1 flex items-center">
-                        <i class="ri-slideshow-line mr-1 text-indigo-500"></i>产品使用场景
+                        <i class="ri-slideshow-line mr-1 text-indigo-500"></i><span data-translate="amazon_consumer_insights.usage_scenarios">产品使用场景</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg bg-gray-50 hover:bg-white">
                         <div id="usageScenariosResult" class="text-gray-800"></div>
@@ -335,7 +336,7 @@
                 
                 <div class="mb-3">
                     <h3 class="font-medium text-gray-700 mb-1 flex items-center">
-                        <i class="ri-error-warning-line mr-1 text-indigo-500"></i>用户痛点
+                        <i class="ri-error-warning-line mr-1 text-indigo-500"></i><span data-translate="amazon_consumer_insights.pain_points">用户痛点</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg bg-gray-50 hover:bg-white">
                         <div id="painPointsResult" class="text-gray-800"></div>
@@ -344,7 +345,7 @@
                 
                 <div class="mb-3">
                     <h3 class="font-medium text-gray-700 mb-1 flex items-center">
-                        <i class="ri-shopping-cart-line mr-1 text-indigo-500"></i>购买动机
+                        <i class="ri-shopping-cart-line mr-1 text-indigo-500"></i><span data-translate="amazon_consumer_insights.purchase_motivations">购买动机</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg bg-gray-50 hover:bg-white">
                         <div id="purchaseMotivationsResult" class="text-gray-800"></div>
@@ -353,7 +354,7 @@
                 
                 <div class="mb-3">
                     <h3 class="font-medium text-gray-700 mb-1 flex items-center">
-                        <i class="ri-lightbulb-line mr-1 text-indigo-500"></i>未被满足的需求
+                        <i class="ri-lightbulb-line mr-1 text-indigo-500"></i><span data-translate="amazon_consumer_insights.unmet_needs">未被满足的需求</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg bg-gray-50 hover:bg-white">
                         <div id="unmetNeedsResult" class="text-gray-800"></div>
@@ -363,11 +364,11 @@
                 <div class="flex justify-end gap-2 mt-2">
                     <button type="button" id="copyButton" class="inline-flex items-center px-2 py-1 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all duration-300 text-sm">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制全部内容
+                        <span data-translate="amazon_consumer_insights.copy_all_content">复制全部内容</span>
                     </button>
                     <button type="button" id="newAnalysisButton" class="inline-flex items-center px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all duration-300 text-sm">
                         <i class="ri-refresh-line mr-1"></i>
-                        重新分析
+                        <span data-translate="amazon_consumer_insights.new_analysis">重新分析</span>
                     </button>
                 </div>
                 
@@ -379,8 +380,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-user-search-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">您的消费者洞察结果将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"生成消费者洞察"按钮开始分析</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="amazon_consumer_insights.result_placeholder_title">您的消费者洞察结果将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="amazon_consumer_insights.result_placeholder_desc">填写左侧表单并点击"生成消费者洞察"按钮开始分析</p>
                 </div>
             </div>
         </div>
@@ -388,13 +389,56 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在分析中，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="amazon_consumer_insights.processing">正在分析中，请稍候...</p>
             </div>
         </div>
     </div>
 
     <script>
+        // 翻译系统支持
+        function getTranslation(key) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+        }
+
+        // 更新页面语言
+        function updatePageLanguage() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 更新页面标题
+            document.title = getTranslation('amazon_consumer_insights.page_title');
+            
+            // 更新所有带有 data-translate 属性的元素
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                
+                if (element.tagName === 'TITLE') {
+                    element.textContent = translation;
+                } else if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                    element.placeholder = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            });
+            
+            // 更新所有带有 data-translate-placeholder 属性的元素
+            document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                const translation = getTranslation(key);
+                element.placeholder = translation;
+            });
+        }
+
+        // 监听语言变化
+        window.addEventListener('languageChanged', function() {
+            updatePageLanguage();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            // 初始化翻译系统
+            updatePageLanguage();
+            
             // 消费者洞察表单提交
             const consumerInsightsForm = document.getElementById('consumerInsightsForm');
             const generateInsightsButton = document.getElementById('generateInsightsButton');
@@ -551,7 +595,7 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在生成消费者洞察，请稍候...';
+                processingText.textContent = getTranslation('amazon_consumer_insights.processing');
                 
                 try {// 获取表单数据
                     const formData = {
@@ -573,7 +617,7 @@
                     const result = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(result.error || '生成消费者洞察失败');
+                        throw new Error(result.error || getTranslation('amazon_consumer_insights.error.generation_failed'));
                     }
                     
                     // 预处理API返回的数据，移除所有星号
@@ -610,7 +654,7 @@
                     
                 } catch (error) {
                     console.error('生成消费者洞察出错:', error);
-                    alert(`生成失败: ${error.message}`);
+                    alert(`${getTranslation('amazon_consumer_insights.error.generation_failed')}: ${error.message}`);
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -625,12 +669,13 @@
                 const purchaseMotivations = document.getElementById('purchaseMotivationsResult').innerText;
                 const unmetNeeds = document.getElementById('unmetNeedsResult').innerText;
                 
-                const fullText = `用户画像：\n${userPersona}\n\n产品使用场景：\n${usageScenarios}\n\n用户痛点：\n${painPoints}\n\n购买动机：\n${purchaseMotivations}\n\n未被满足的需求：\n${unmetNeeds}`;
+                const fullText = `${getTranslation('amazon_consumer_insights.user_persona')}：\n${userPersona}\n\n${getTranslation('amazon_consumer_insights.usage_scenarios')}：\n${usageScenarios}\n\n${getTranslation('amazon_consumer_insights.pain_points')}：\n${painPoints}\n\n${getTranslation('amazon_consumer_insights.purchase_motivations')}：\n${purchaseMotivations}\n\n${getTranslation('amazon_consumer_insights.unmet_needs')}：\n${unmetNeeds}`;
                 
                 navigator.clipboard.writeText(fullText).then(() => {
                     // 显示复制成功提示
                     const originalText = copyButton.innerHTML;
-                    copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                    const copiedText = getTranslation('amazon_consumer_insights.copied');
+                    copyButton.innerHTML = `<i class="ri-check-line mr-1"></i>${copiedText}`;
                     copyButton.classList.add('bg-green-500', 'text-white');
                     copyButton.classList.remove('text-indigo-600', 'bg-white');
                     

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片上传调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .upload-area { 
+            border: 2px dashed #ccc; 
+            padding: 20px; 
+            text-align: center; 
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        .upload-area:hover { border-color: #007bff; }
+        .preview { margin: 20px 0; }
+        .preview img { max-width: 300px; max-height: 300px; }
+        .log { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>图片上传调试工具</h1>
+        
+        <div class="upload-area" id="upload-area">
+            <p>点击选择图片或拖拽图片到此处</p>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="preview" id="preview"></div>
+        
+        <button onclick="testUpload()">测试上传</button>
+        <button onclick="clearLog()">清空日志</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        const log = document.getElementById('log');
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            log.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            log.innerHTML = '';
+        }
+
+        // 文件选择处理
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // 拖拽处理
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007bff';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            addLog(`选择文件: ${file.name}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB, 类型: ${file.type}`);
+            
+            if (!file.type.startsWith('image/')) {
+                addLog('错误: 请选择图片文件', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" alt="预览">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function testUpload() {
+            if (!selectedFile) {
+                addLog('错误: 请先选择文件', 'error');
+                return;
+            }
+
+            addLog('开始测试上传...');
+            
+            try {
+                // 获取认证token
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    addLog('错误: 未找到认证token，请先登录', 'error');
+                    return;
+                }
+
+                addLog(`使用token: ${authToken.substring(0, 20)}...`);
+
+                // 方法1: 直接使用文件上传
+                addLog('方法1: 直接使用文件上传');
+                await testDirectFileUpload();
+
+                // 方法2: 转换为Base64后上传
+                addLog('方法2: 转换为Base64后上传');
+                await testBase64Upload();
+
+            } catch (error) {
+                addLog(`测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDirectFileUpload() {
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            addLog(`FormData内容: image字段=${selectedFile.name}`);
+
+            const response = await fetch('/api/upload-image', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            addLog(`直接上传响应: ${response.status} - ${JSON.stringify(data)}`);
+            
+            if (response.ok) {
+                addLog('直接上传成功!', 'success');
+            } else {
+                addLog('直接上传失败', 'error');
+            }
+        }
+
+        async function testBase64Upload() {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const base64Data = e.target.result;
+                        addLog(`Base64数据长度: ${base64Data.length}`);
+
+                        const formData = new FormData();
+                        const blob = dataURLtoBlob(base64Data);
+                        formData.append('image', blob, 'test-image.jpg');
+
+                        addLog(`Blob大小: ${blob.size} bytes, 类型: ${blob.type}`);
+
+                        const response = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            },
+                            body: formData
+                        });
+
+                        const data = await response.json();
+                        addLog(`Base64上传响应: ${response.status} - ${JSON.stringify(data)}`);
+                        
+                        if (response.ok) {
+                            addLog('Base64上传成功!', 'success');
+                        } else {
+                            addLog('Base64上传失败', 'error');
+                        }
+                        
+                        resolve();
+                    } catch (error) {
+                        addLog(`Base64上传错误: ${error.message}`, 'error');
+                        reject(error);
+                    }
+                };
+                reader.readAsDataURL(selectedFile);
+            });
+        }
+
+        function dataURLtoBlob(dataurl) {
+            const arr = dataurl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+    </script>
+</body>
+</html>

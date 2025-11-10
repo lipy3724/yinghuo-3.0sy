@@ -198,6 +198,61 @@
         
         // 标记是否已经打开编辑器
         let editorLoaded = false;
+        // 添加全局语言变量
+        let currentLanguage = 'zh-cn';
+        
+        // 获取语言参数的函数
+        function getLanguageFromParams() {
+            try {
+                // 1. 首先从URL参数获取
+                const urlParams = new URLSearchParams(window.location.search);
+                let langParam = urlParams.get('lang');
+                
+                if (langParam) {
+                    console.log('从URL参数获取语言:', langParam);
+                    // 转换语言格式：zh/en -> zh-cn/en-us
+                    if (langParam === 'zh') {
+                        langParam = 'zh-cn';
+                    } else if (langParam === 'en') {
+                        langParam = 'en-us';
+                    }
+                    currentLanguage = langParam;
+                    // 保存到localStorage
+                    localStorage.setItem('preferred_language', langParam);
+                    return langParam;
+                }
+                
+                // 2. 从localStorage获取
+                const savedLang = localStorage.getItem('preferred_language');
+                if (savedLang) {
+                    console.log('从localStorage获取语言:', savedLang);
+                    currentLanguage = savedLang;
+                    return savedLang;
+                }
+                
+                // 3. 使用默认语言
+                console.log('使用默认语言:', currentLanguage);
+                return currentLanguage;
+            } catch (error) {
+                console.error('获取语言参数失败:', error);
+                return 'zh-cn';
+            }
+        }
+        
+        // 动态切换编辑器语言
+        function changeEditorLanguage(lang) {
+            console.log('切换编辑器语言到:', lang);
+            currentLanguage = lang;
+            
+            // 向编辑器iframe发送语言切换消息
+            if (editorFrame && editorFrame.contentWindow) {
+                const message = {
+                    lang: lang
+                };
+                editorFrame.contentWindow.postMessage(message, '*');
+                console.log('已向编辑器发送语言切换消息:', message);
+            }
+        }
         
         // 检查登录状态
         async function checkLoginStatus() {
@@ -548,7 +603,10 @@
                 params.append('sign', signData.sign);
                 params.append('userId', signData.userId);
                 params.append('timeStamp', signData.timeStamp);
-                params.append('lang', 'cn');
+                // 获取当前语言设置
+                const currentLang = getLanguageFromParams();
+                const langParam = currentLang === 'en-us' ? 'en' : 'cn';
+                params.append('lang', langParam);
                 params.append('_t', Date.now());
                 
                 // 直接使用官方域名
@@ -580,7 +638,10 @@
                 params.append('sign', signData.sign);
                 params.append('userId', signData.userId);
                 params.append('timeStamp', signData.timeStamp);
-                params.append('lang', 'cn');
+                // 获取当前语言设置
+                const currentLang2 = getLanguageFromParams();
+                const langParam2 = currentLang2 === 'en-us' ? 'en' : 'cn';
+                params.append('lang', langParam2);
                 
                 // 使用demo参数，尝试解决登录问题
                 params.append('demo', 'true');
@@ -665,6 +726,35 @@
             
             // 设置消息监听器
             window.addEventListener('message', handleMessageEvent);
+            
+            // 监听来自父页面的语言切换消息
+            window.addEventListener('message', function(event) {
+                try {
+                    if (event.data && event.data.type === 'changeLanguage') {
+                        const newLanguage = event.data.language;
+                        console.log('收到语言切换消息:', newLanguage);
+                        
+                        if (newLanguage && newLanguage !== currentLanguage) {
+                            currentLanguage = newLanguage;
+                            localStorage.setItem('preferred_language', newLanguage);
+                            
+                            // 向编辑器发送语言切换消息
+                            changeEditorLanguage(newLanguage);
+                            
+                            // 向父页面发送确认消息
+                            if (event.source) {
+                                event.source.postMessage({
+                                    type: 'languageChanged',
+                                    language: newLanguage,
+                                    success: true
+                                }, '*');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('处理语言切换消息失败:', error);
+                }
+            });
             
             // 设置iframe加载检查
             setupIframeLoadCheck();

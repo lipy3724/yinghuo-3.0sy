@@ -36,6 +36,21 @@ function initializeComponents() {
     initializeSidebar();
     initializeQuickAccess();
     initializeAuth();
+    initializeLanguageSelector();
+    
+    // 监听积分更新事件
+    document.addEventListener('creditsUpdated', function(event) {
+        if (event.detail && event.detail.credits !== undefined) {
+            updateCreditsDisplay(event.detail.credits);
+        }
+    });
+    
+    // 监听来自iframe的消息
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'CREDITS_UPDATED') {
+            updateCreditsDisplay(event.data.credits);
+        }
+    });
 }
 
 // 初始化导航栏功能
@@ -413,12 +428,15 @@ function initializeQuickAccess() {
 function initializeAuth() {
     console.log('初始化认证功能...');
     
-    // 检查登录状态并更新UI
-    updateNavbarLoginStatus();
+    // 确保auth-check.js已加载，如果没有则动态加载
+    loadAuthCheckScript().then(() => {
+        // 检查登录状态并更新UI
+        updateNavbarLoginStatus();
+    });
 }
 
 // 检查用户登录状态并更新导航栏UI
-function updateNavbarLoginStatus() {
+async function updateNavbarLoginStatus() {
     const token = getAuthToken();
     const userInfo = localStorage.getItem('user');
     
@@ -427,6 +445,28 @@ function updateNavbarLoginStatus() {
     
     console.log('登录状态检查 - Token:', !!token, 'UserInfo:', !!userInfo);
     console.log('登录按钮:', loginBtn, '用户信息元素:', userInfoEl);
+    
+    // 如果有认证检查函数，先进行认证验证
+    if (typeof window.checkAuth === 'function' && token && userInfo) {
+        try {
+            console.log('执行认证检查...');
+            const isAuthenticated = await window.checkAuth(false); // 不自动跳转
+            if (!isAuthenticated) {
+                console.log('认证检查失败，清除本地存储');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                // 更新UI为未登录状态
+                if (loginBtn && userInfoEl) {
+                    loginBtn.classList.remove('hidden');
+                    userInfoEl.classList.add('hidden');
+                }
+                return;
+            }
+        } catch (error) {
+            console.error('认证检查出错:', error);
+            // 继续执行UI更新，不阻塞界面
+        }
+    }
     
     if (token && userInfo && loginBtn && userInfoEl) {
         try {
@@ -473,6 +513,13 @@ function updateNavbarLoginStatus() {
             }
         } catch (e) {
             console.error('解析用户信息出错:', e);
+            // 清除无效的用户信息
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            if (loginBtn && userInfoEl) {
+                loginBtn.classList.remove('hidden');
+                userInfoEl.classList.add('hidden');
+            }
         }
     } else if (loginBtn && userInfoEl) {
         // 用户未登录，显示登录按钮
@@ -1270,6 +1317,41 @@ setTimeout(function() {
 
 csLog('📝 客服组件脚本加载完成');
 
+// 动态加载认证检查脚本
+function loadAuthCheckScript() {
+    return new Promise((resolve) => {
+        // 检查是否已经存在 checkAuth 函数
+        if (typeof window.checkAuth === 'function') {
+            console.log('认证脚本已存在，跳过加载');
+            resolve();
+            return;
+        }
+        
+        // 检查是否已经加载了auth-check.js脚本
+        const existingScript = document.querySelector('script[src*="auth-check.js"]');
+        if (existingScript) {
+            console.log('认证脚本已在DOM中，等待加载完成');
+            // 等待脚本加载完成
+            existingScript.onload = resolve;
+            existingScript.onerror = resolve; // 即使加载失败也继续
+            return;
+        }
+        
+        console.log('动态加载认证检查脚本...');
+        const script = document.createElement('script');
+        script.src = '/public/js/auth-check.js';
+        script.onload = () => {
+            console.log('认证检查脚本加载成功');
+            resolve();
+        };
+        script.onerror = (error) => {
+            console.error('认证检查脚本加载失败:', error);
+            resolve(); // 即使加载失败也继续，避免阻塞
+        };
+        document.head.appendChild(script);
+    });
+}
+
 // 导出函数供外部使用
 window.ComponentsJS = {
     initializeComponents,
@@ -1277,7 +1359,8 @@ window.ComponentsJS = {
     initializeSidebar,
     initializeQuickAccess,
     initializeAuth,
-    showToast
+    showToast,
+    loadAuthCheckScript
 };
 
 // 获取认证token
@@ -1291,4 +1374,252 @@ function getAuthToken() {
     }
     
     return token;
+}
+
+// 更新积分显示
+function updateCreditsDisplay(credits) {
+    console.log('更新积分显示:', credits);
+    
+    // 更新导航栏中的积分显示
+    const creditsElements = document.querySelectorAll('#user-credits, .header-credits, .credits-display');
+    if (creditsElements.length > 0) {
+        creditsElements.forEach(el => {
+            el.textContent = credits;
+        });
+    }
+}
+
+// 语言系统相关变量
+let currentLanguage = localStorage.getItem('language') || 'zh';
+
+// 翻译数据
+const translations = {
+    zh: {
+        "text.select_language": "选择语言",
+        "nav.credits_center": "积分中心",
+        "nav.recharge_center": "积分充值中心",
+        "nav.download_center": "下载中心",
+        "credits_management": "积分管理",
+        "credits_usage": "积分使用情况",
+        "my_account": "我的账户",
+        "logout": "退出登录",
+        "login_register": "登录/注册",
+        
+        // 积分管理页面翻译
+        "page.credits_title": "积分管理 - 萤火AI",
+        "page.credits_management": "积分管理",
+        "credits.balance": "积分余额",
+        "credits.unit": "积分",
+        "credits.last_recharge": "上次充值",
+        "credits.never_recharged": "从未充值",
+        "credits.recharge_button": "充值积分",
+        "credits.recharge_title": "积分充值",
+        "credits.recharge_amount": "充值金额",
+        "credits.payment_method": "支付方式",
+        "credits.confirm_recharge": "确认充值",
+        "credits.pricing_list": "功能价格列表",
+        "credits.free_trial": "免费试用",
+        "credits.times": "次",
+        "credits.resolution_pricing_note": "不同分辨率价格不同，按实际选择计费",
+        "currency.yuan": "元",
+        "payment.alipay": "支付宝",
+        "time.second": "秒",
+        "feature.video_style_repaint": "视频风格重绘",
+        
+        // 下载中心页面翻译
+        "page.download_center_title": "下载中心 - 萤火AI",
+        "download_center.title": "下载中心",
+        "download_center.search_placeholder": "搜索图片...",
+        "download_center.warm_tip": "温馨提示：",
+        "download_center.expiration_notice": "下载中心的图片和视频仅保存12小时，请及时下载保存到本地。",
+        "download_center.no_images": "暂无图片记录",
+        "download_center.all_images": "全部图片",
+        "download_center.grid_view": "网格",
+        "download_center.list_view": "列表",
+        "download_center.all": "全选",
+        "download_center.view": "视图:",
+        
+        // 功能名称翻译
+        "feature.image_translation": "图片翻译",
+        "feature.marketing_image": "营销图生成",
+        "feature.smart_cutout": "智能抠图",
+        "feature.scene_generation": "场景图生成",
+        "feature.smart_removal": "智能消除",
+        "feature.model_skin_change": "模特换肤",
+        "feature.virtual_try_on": "虚拟试衣",
+        "feature.global_stylization": "全局风格化",
+        "feature.smart_photo_segmentation": "智能照片分割",
+        "feature.text_to_image": "文生图片",
+        "feature.image_upscaling": "图像高清放大",
+        "feature.instruction_editing": "指令编辑",
+        "feature.image_instruction_editing": "图像指令编辑",
+        "feature.smart_expansion": "智能扩图",
+        "feature.blur_to_clear": "模糊图片变清晰",
+        "feature.image_colorization": "图像上色",
+        "feature.padding_image": "垫图",
+        "feature.local_redraw": "局部重绘",
+        "feature.smart_clothing_segmentation": "智能服饰分割"
+    },
+    en: {
+        "text.select_language": "Select Language",
+        "nav.credits_center": "Credits Center",
+        "nav.recharge_center": "Recharge Center",
+        "nav.download_center": "Download Center",
+        "credits_management": "Credits Management",
+        "credits_usage": "Credits Usage",
+        "my_account": "My Account",
+        "logout": "Logout",
+        "login_register": "Login/Register",
+        
+        // 积分管理页面翻译
+        "page.credits_title": "Credits Management - YingHuo AI",
+        "page.credits_management": "Credits Management",
+        "credits.balance": "Credits Balance",
+        "credits.unit": "Credits",
+        "credits.last_recharge": "Last Recharge",
+        "credits.never_recharged": "Never Recharged",
+        "credits.recharge_button": "Recharge Credits",
+        "credits.recharge_title": "Credits Recharge",
+        "credits.recharge_amount": "Recharge Amount",
+        "credits.payment_method": "Payment Method",
+        "credits.confirm_recharge": "Confirm Recharge",
+        "credits.pricing_list": "Feature Pricing List",
+        "credits.free_trial": "Free Trial",
+        "credits.times": "times",
+        "credits.resolution_pricing_note": "Different resolutions have different prices, charged according to actual selection",
+        "currency.yuan": "¥",
+        "payment.alipay": "Alipay",
+        "time.second": "sec",
+        "feature.video_style_repaint": "Video Style Repaint",
+        
+        // 下载中心页面翻译
+        "page.download_center_title": "Download Center - YingHuo AI",
+        "download_center.title": "Download Center",
+        "download_center.search_placeholder": "Search images...",
+        "download_center.warm_tip": "Warm Tip:",
+        "download_center.expiration_notice": "Images and videos in the download center are only saved for 12 hours, please download and save them locally in time.",
+        "download_center.no_images": "No image records",
+        "download_center.all_images": "All Images",
+        "download_center.grid_view": "Grid",
+        "download_center.list_view": "List",
+        "download_center.all": "All",
+        "download_center.view": "View:",
+        
+        // 功能名称翻译
+        "feature.image_translation": "Image Translation",
+        "feature.marketing_image": "Marketing Image Generation",
+        "feature.smart_cutout": "Smart Cutout",
+        "feature.scene_generation": "Scene Generation",
+        "feature.smart_removal": "Smart Removal",
+        "feature.model_skin_change": "Model Skin Change",
+        "feature.virtual_try_on": "Virtual Try-On",
+        "feature.global_stylization": "Global Stylization",
+        "feature.smart_photo_segmentation": "Smart Photo Segmentation",
+        "feature.text_to_image": "Text to Image",
+        "feature.image_upscaling": "Image Upscaling",
+        "feature.instruction_editing": "Instruction Editing",
+        "feature.image_instruction_editing": "Image Instruction Editing",
+        "feature.smart_expansion": "Smart Expansion",
+        "feature.blur_to_clear": "Blur to Clear",
+        "feature.image_colorization": "Image Colorization",
+        "feature.padding_image": "Padding Image",
+        "feature.local_redraw": "Local Redraw",
+        "feature.smart_clothing_segmentation": "Smart Clothing Segmentation"
+    }
+};
+
+// 初始化语言选择器
+function initializeLanguageSelector() {
+    console.log('初始化语言选择器...');
+    
+    const languageOptions = document.querySelectorAll('.language-option');
+    if (languageOptions.length === 0) {
+        console.log('语言选择器选项未找到');
+        return;
+    }
+
+    console.log('语言选择器选项找到:', languageOptions.length, '个');
+    console.log('当前语言:', currentLanguage);
+
+    // 设置初始语言状态
+    languageOptions.forEach(option => {
+        const lang = option.getAttribute('data-lang');
+        if (lang === currentLanguage) {
+            option.classList.add('bg-purple-50', 'text-purple-600');
+        }
+    });
+    
+    // 立即更新页面文本
+    updatePageText(currentLanguage);
+
+    // 为每个语言选项添加点击事件
+    languageOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const selectedLanguage = this.getAttribute('data-lang');
+            console.log('用户选择了新语言:', selectedLanguage);
+            
+            // 移除所有选项的active样式
+            languageOptions.forEach(opt => {
+                opt.classList.remove('bg-purple-50', 'text-purple-600');
+            });
+            
+            // 为当前选项添加active样式
+            this.classList.add('bg-purple-50', 'text-purple-600');
+            
+            currentLanguage = selectedLanguage;
+            
+            // 保存到本地存储
+            localStorage.setItem('language', selectedLanguage);
+            console.log('语言已保存到localStorage:', selectedLanguage);
+            
+            // 更新页面文本
+            updatePageText(selectedLanguage);
+            
+            // 触发语言变化事件，通知其他组件更新
+            const languageChangeEvent = new CustomEvent('languageChanged', {
+                detail: { language: selectedLanguage }
+            });
+            document.dispatchEvent(languageChangeEvent);
+            
+            console.log('语言切换完成:', selectedLanguage === 'zh' ? '中文' : 'English');
+        });
+    });
+    
+    console.log('语言选择器初始化完成');
+}
+
+// 更新页面文本
+function updatePageText(language) {
+    console.log('更新页面文本到:', language);
+    
+    const elements = document.querySelectorAll('[data-translate], [data-i18n]');
+    
+    elements.forEach(element => {
+        // 优先使用 data-translate，然后使用 data-i18n
+        const key = element.getAttribute('data-translate') || element.getAttribute('data-i18n');
+        
+        if (key && translations[language] && translations[language][key]) {
+            element.textContent = translations[language][key];
+        }
+    });
+    
+    console.log('页面文本更新完成，共更新了', elements.length, '个元素');
+}
+
+// 获取当前语言
+function getCurrentLanguage() {
+    return localStorage.getItem('language') || 'zh';
+}
+
+// 获取翻译文本
+function getTranslation(key, language) {
+    language = language || getCurrentLanguage();
+    
+    // 直接查找翻译键
+    if (translations[language] && translations[language][key]) {
+        return translations[language][key];
+    } else {
+        console.warn('翻译键未找到:', key, 'language:', language);
+        return key; // 返回原键作为后备
+    }
 } 

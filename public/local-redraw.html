@@ -3,56 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>局部重绘 - 萤火AI</title>
+    <title data-translate="local_redraw.page_title">局部重绘 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" onerror="this.onerror=null;this.href='data:text/css;base64,'">
     <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/local-redraw.css" rel="stylesheet">
+    <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/local-redraw-history.js"></script>
+    <script src="/translations.js"></script>
+    <script>
+        // 检测 Remixicon 是否加载成功
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查 Remixicon 字体是否加载成功
+            setTimeout(function() {
+                const testIcon = document.createElement('i');
+                testIcon.className = 'ri-upload-line';
+                testIcon.style.position = 'absolute';
+                testIcon.style.left = '-9999px';
+                testIcon.style.fontSize = '16px';
+                document.body.appendChild(testIcon);
+                
+                const computedStyle = window.getComputedStyle(testIcon);
+                const fontFamily = computedStyle.getPropertyValue('font-family');
+                
+                // 如果字体加载失败，添加备用类
+                if (!fontFamily.includes('remixicon') || fontFamily.includes('serif')) {
+                    document.body.classList.add('remixicon-failed');
+                    console.log('Remixicon 字体加载失败，使用备用图标');
+                }
+                
+                document.body.removeChild(testIcon);
+            }, 1000);
+        });
+    </script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
-        .upload-area {
-            border: 2px dashed #cbd5e0;
-            border-radius: 8px;
-            cursor: pointer;
+        
+        /* 备用图标样式，当 Remixicon 加载失败时使用 */
+        .icon-fallback {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            background-color: currentColor;
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+        }
+        
+        .icon-upload::before {
+            content: "📁";
+        }
+        
+        .icon-download::before {
+            content: "⬇️";
+        }
+        
+        .icon-refresh::before {
+            content: "🔄";
+        }
+        
+        .icon-close::before {
+            content: "✕";
+        }
+        
+        /* 当 Remixicon 加载失败时的备用样式 */
+        body.remixicon-failed .ri-upload-line::before {
+            content: "📁";
+        }
+        
+        body.remixicon-failed .ri-download-line::before {
+            content: "⬇️";
+        }
+        
+        body.remixicon-failed .ri-refresh-line::before {
+            content: "🔄";
+        }
+        
+        body.remixicon-failed .ri-close-line::before {
+            content: "✕";
+        }
+        
+        body.remixicon-failed .ri-image-line::before {
+            content: "🖼️";
+        }
+        
+        body.remixicon-failed .ri-settings-line::before {
+            content: "⚙️";
+        }
+        .card {
             transition: all 0.3s ease;
         }
-        .upload-area:hover {
-            border-color: #6366f1;
-            background-color: #f9fafb;
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        .result-section {
-            border-left: 1px solid #e5e7eb;
-        }
-        /* 使用Tailwind自带的animate-spin替代自定义spinner */
-        .prompt-input {
-            resize: none;
-            min-height: 120px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        .prompt-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
-        .instructions {
-            font-size: 0.875rem;
-            color: #4b5563;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
-        .preview-area {
-            background-color: #f9fafb;
+        .feature-card {
+            background-color: white;
             border-radius: 0.5rem;
-            min-height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
+        }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+        .image-preview {
+            aspect-ratio: 16/9;
+            background-color: #f3f4f6;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: rgba(99, 102, 241, 1);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .redraw-task {
+            transition: all 0.3s ease;
+        }
+        .active-option {
+            background-color: #ede9fe;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+        
+        .history-card {
+            transition: all 0.3s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .history-thumbnail {
+            transition: transform 0.3s ease;
+        }
+        
+        .history-card:hover .history-thumbnail {
+            transform: scale(1.05);
+        }
+        
+        .history-card .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .history-card .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
+        
+        #history-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
         }
         /* 滑块样式自定义 */
         input[type="range"] {
@@ -109,125 +237,221 @@
             position: relative;
             overflow: hidden;
         }
+        #drawing-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            z-index: 10;
+        }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/auth-check.js"></script>
-    <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
 </head>
-<body class="min-h-screen bg-white">
+<body class="bg-gray-100 min-h-screen">
     <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
-        <div class="flex flex-col lg:flex-row bg-white h-full w-full">
-            <!-- 左侧：输入提示词 -->
-            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-3">局部重绘</h2>
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="local_redraw.main_title">局部重绘</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 图片上传和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4" data-translate="local_redraw.settings_title">局部重绘设置</h2>
                 
-                <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
-                    <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2">此个功能可以通过上传图片，使用鼠标在图片上涂抹来指定需要重绘的区域。</p>
-                        <p class="mb-2">白色涂抹区域表示需要重绘的部分，其他区域保持不变。</p>
-                        <p class="mb-2">可写"添加"或"移除"等操作描述，效果更好。</p>
-                        <p class="mb-2">先试用简单指令，如"给图片中的人物添加一个黄色口罩"</p>
-                        <p class="mb-2">图片上传尺寸最小为512×512px，最大不超过4000px</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="local_redraw.image_upload">图片上传</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="local_redraw.upload_description">上传需要重绘的图片</span>
                     </div>
+                    <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
+                        <input type="file" id="image-upload" class="hidden" accept="image/*">
+                        <div id="upload-placeholder">
+                            <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500"><span data-translate="local_redraw.drag_drop_text">拖放图片到此处或</span> <span class="text-indigo-600 font-medium" data-translate="local_redraw.click_upload">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="local_redraw.supported_formats">支持 JPG, PNG, WEBP, GIF, BMP 格式</p>
+                        </div>
+                        <div id="preview-container" class="hidden">
+                            <img id="image-preview" class="max-h-48 mx-auto mb-3">
+                            <p id="image-info" class="text-sm text-gray-500"></p>
+                            <button type="button" id="remove-image" class="mt-2 text-sm text-red-500 hover:text-red-700" data-translate="local_redraw.remove_image">
+                                移除图片
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="local_redraw.size_requirements">图片尺寸最小为512×512px，最大不超过4000px</p>
                 </div>
-
-                <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
-                    <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
-                    <input type="file" id="image-upload" class="hidden" accept="image/*">
-                </div>
-                <p class="text-xs text-gray-500 mb-4">上传图像</p>
-
-                <div class="mb-4">
-                    <label for="brush-size" class="block text-sm font-medium text-gray-700 mb-1">调整画笔粗细:</label>
+                
+                <div class="mb-6">
+                    <label for="brush-size" class="block text-sm font-medium text-gray-700 mb-1" data-translate="local_redraw.brush_size">画笔粗细</label>
                     <input type="range" id="brush-size" min="5" max="50" value="15" class="w-full" />
                     <div class="flex justify-between mt-1">
-                        <span class="text-xs text-gray-500">细</span>
-                        <span class="text-xs text-gray-500">粗</span>
+                        <span class="text-xs text-gray-500" data-translate="local_redraw.brush_thin">细</span>
+                        <span class="text-xs text-gray-500" data-translate="local_redraw.brush_thick">粗</span>
                     </div>
-                </div>
-
-                <div class="flex-grow mb-4">
-                    <div class="mb-2">
-                        <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">输入指令:</label>
-                    </div>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="请输入提示词，如: 给图片中的人物添加一个黄色口罩"></textarea>
+                    <p class="text-xs text-gray-500 mt-1" data-translate="local_redraw.brush_tip">调整画笔大小来精确涂抹需要重绘的区域</p>
                 </div>
                 
-                <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
-                    <i class="ri-magic-line mr-2"></i>
-                    立即生成
-                </button>
+                <div class="mb-6">
+                    <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1" data-translate="local_redraw.prompt_label">重绘提示词</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="local_redraw.prompt_description">描述重绘内容</span>
+                    </div>
+                    <textarea id="prompt-input" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate="local_redraw.prompt_placeholder" placeholder="请输入提示词，如: 给图片中的人物添加一个黄色口罩"></textarea>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="local_redraw.prompt_tip">详细描述重绘内容可以获得更好的效果</p>
+                </div>
+                
+                <div class="pt-4">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ri-magic-line mr-2"></i>
+                        <span data-translate="local_redraw.start_redraw">开始重绘</span>
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500" data-translate="local_redraw.time_cost_info">
+                        局部重绘需要5-10秒，消耗7积分
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium" data-translate="local_redraw.compliance_warning">
+                        请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                    </p>
+                </div>
             </div>
             
-            <!-- 右侧：效果展示 -->
-            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
+            <!-- 右侧面板: 预览和历史记录 -->
+            <div class="lg:col-span-3">
+                <!-- 绘图区域 -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="local_redraw.drawing_area">绘图区域</h2>
+                    <div id="original-image-container" class="image-preview flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative drawing-area">
+                        <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片" draggable="false">
+                        <canvas id="drawing-canvas" class="absolute top-0 left-0 hidden"></canvas>
+                        <div id="brush-cursor" class="brush-cursor"></div>
+                        <div id="original-image-placeholder" class="text-center p-6">
+                            <i class="ri-image-line text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500" data-translate="local_redraw.image_display_placeholder">您上传的图片将在这里显示</p>
+                        </div>
+                        </div>
+                    <!-- 涂抹提示 - 移到图片容器外部，在图片下方 -->
+                    <div id="drawing-instructions" class="mt-2 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-md p-3 hidden">
+                        <div class="flex items-start">
+                            <i class="ri-information-line text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <p class="font-medium text-blue-800 mb-1" data-translate="local_redraw.usage_instructions">使用说明：</p>
+                                <p data-translate="local_redraw.drawing_instructions">请用鼠标在需要重绘的区域上涂抹 - 这些区域将被重新生成</p>
+                                <p class="text-xs text-blue-600 mt-1" data-translate="local_redraw.refresh_tip">如果无法涂抹，请刷新页面后重试</p>
+                    </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex justify-end">
+                        <button id="clear-mask-btn" class="hidden text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
+                            <i class="ri-eraser-line mr-1"></i>
+                            <span data-translate="local_redraw.clear_mask">清除涂抹</span>
+                        </button>
+                    </div>
+                </div>
                 
-                <div class="flex flex-col md:flex-row gap-6 flex-grow">
-                    <div class="w-full md:w-1/2">
-                        <h3 class="text-base font-medium mb-3 text-center">绘图区域:</h3>
-                        <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden relative drawing-area">
-                            <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片" draggable="false">
-                            <canvas id="drawing-canvas" class="absolute top-0 left-0 hidden"></canvas>
-                            <div id="brush-cursor" class="brush-cursor"></div>
-                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
-                            <div id="drawing-instructions" class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs p-2 hidden">
-                                请用鼠标在需要重绘的区域上涂抹 - 这些区域将被重新生成
+                <!-- 处理结果区域 -->
+                <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="local_redraw.processing_result">处理结果</h2>
+                    
+                    <div class="flex flex-col md:flex-row gap-6 mb-6">
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-700 mb-2" data-translate="local_redraw.original_image">原始图片</h3>
+                            <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                <img id="result-original-image" class="max-w-full max-h-64 mx-auto">
+                                <p id="result-original-info" class="text-sm text-gray-500 mt-2 text-center"></p>
                             </div>
                         </div>
-                        <div class="mt-2 flex justify-end">
-                            <button id="clear-mask-btn" class="hidden text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
-                                <i class="ri-eraser-line mr-1"></i>
-                                清除涂抹
-                            </button>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-700 mb-2" data-translate="local_redraw.redrawn_image">重绘后图片</h3>
+                            <div id="result-image-wrapper" class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                <img id="result-image" class="max-w-full max-h-64 mx-auto hidden">
+                                <div id="result-image-placeholder" class="text-center p-6">
+                                    <i class="ri-image-line text-4xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-500 text-sm" data-translate="local_redraw.result_placeholder">重绘结果将在这里显示</p>
+                                </div>
+                                <p id="result-image-info" class="text-sm text-gray-500 mt-2 text-center"></p>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="w-full md:w-1/2">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-medium text-center">生成结果</h3>
-                            <button id="save-to-downloads-btn" class="hidden text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
-                                <i class="ri-save-line mr-1"></i>
-                                保存到下载中心
-                            </button>
-                        </div>
-                        <div id="result-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                            <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="生成的图片">
-                            <p id="result-image-placeholder" class="text-gray-500 text-center px-4">生成结果将在这里显示</p>
-                        </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="download-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-download-2-line mr-1"></i>
+                            <span data-translate="local_redraw.download_image">下载图片</span>
+                        </button>
+                        <button type="button" id="save-to-downloads-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-save-line mr-1"></i>
+                            <span data-translate="local_redraw.save">保存</span>
+                        </button>
+                        <button type="button" id="new-redraw-btn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-add-line mr-1"></i>
+                            <span data-translate="local_redraw.upload_new_image">上传新图片</span>
+                        </button>
                     </div>
                 </div>
-
-                <div class="mt-4 flex justify-center">
-                    <button id="download-btn" class="hidden bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
-                        <i class="ri-download-line mr-2"></i>
-                        下载结果
-                    </button>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" data-translate="local_redraw.generation_history">生成历史</h2>
+                        <div class="flex space-x-2">
+                            <button id="clear-history-btn" class="text-gray-500 hover:text-red-600" data-translate="local_redraw.clear_history" title="清空历史记录">
+                                <i class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800" data-translate="local_redraw.refresh_history" title="刷新历史记录">
+                                <i class="ri-refresh-line text-xl"></i>
+                        </button>
+                    </div>
+                        </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 历史记录将通过JavaScript动态添加到这里 -->
+                        <p class="text-gray-500 col-span-full text-center py-4" data-translate="local_redraw.no_history">暂无历史记录</p>
+                    </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="local_redraw.history_time_limit">仅显示24小时内的历史记录</p>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- 加载中遮罩 -->
-    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <div class="flex flex-col items-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                <p id="loading-message" class="text-gray-700 text-center">处理中，请耐心等待...</p>
-            <p class="text-sm text-gray-500 mt-2">处理时间约为5-10秒</p>
-            </div>
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
+            <div class="loading-spinner mb-4"></div>
+            <p id="loading-message" class="text-lg font-medium" data-translate="local_redraw.processing_message">局部重绘中，请耐心等待...</p>
+            <p class="text-sm text-gray-500 mt-2" data-translate="local_redraw.processing_time">局部重绘需要5-10秒</p>
         </div>
     </div>
 
     <!-- 引用外部Javascript文件 -->
     <script>
+        // 全局变量 - 需要在DOM加载前定义
+        let history = [];
+        
+        // 翻译函数 - 使用全局的translate函数
+        function t(key) {
+            // 如果translate函数存在，使用它；否则使用备用方案
+            if (typeof translate === 'function') {
+                return translate(key);
+            }
+            const lang = localStorage.getItem('language') || 'zh';
+            return translations[lang] && translations[lang][key] ? translations[lang][key] : key;
+        }
+        let pollingIntervals = {};
+        let historyContainer = null;
+        
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            console.error('全局错误:', e.error);
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('未处理的Promise拒绝:', e.reason);
+        });
+        
         document.addEventListener('DOMContentLoaded', function() {
             // DOM元素
             const uploadArea = document.getElementById('upload-area');
@@ -250,6 +474,14 @@
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
             const brushSizeSlider = document.getElementById('brush-size');
             const brushCursor = document.getElementById('brush-cursor');
+            const newRedrawBtn = document.getElementById('new-redraw-btn');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultOriginalImage = document.getElementById('result-original-image');
+            const resultOriginalInfo = document.getElementById('result-original-info');
+            const resultImageInfo = document.getElementById('result-image-info');
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            historyContainer = document.getElementById('history-container'); // 赋值给全局变量
             
             // 绘图变量
             let isDrawing = false;
@@ -297,6 +529,49 @@
             
             // 检查用户登录状态
             initializeUserUI();
+            
+            // 初始化历史记录功能
+            initializeHistoryFeatures();
+            
+            // 延迟加载历史记录，确保页面完全加载
+            setTimeout(() => {
+                loadHistory();
+            }, 1000);
+            
+            // 页面加载时应用当前语言设置
+            setTimeout(() => {
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+            }, 500);
+            
+            // 监听语言变化事件，跟随home页面的语言选择
+            document.addEventListener('languageChanged', function(event) {
+                console.log('视频风格重绘页面：检测到语言变化', event.detail);
+                // 更新页面文本
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+                // 重新加载历史记录（因为历史记录中的文本也需要更新）
+                setTimeout(() => {
+                    loadHistory();
+                }, 100);
+            });
+            
+            // 监听storage事件（处理跨标签页语言切换）
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'language') {
+                    console.log('视频风格重绘页面：检测到localStorage语言变化', e.newValue);
+                    // 更新页面文本
+                    if (typeof updatePageText === 'function') {
+                        updatePageText();
+                    }
+                    // 重新加载历史记录
+                    setTimeout(() => {
+                        loadHistory();
+                    }, 100);
+                }
+            });
             
             // 设置画笔大小和光标显示
             brushSizeSlider.addEventListener('input', (e) => {
@@ -348,6 +623,8 @@
                 // 设置画布的大小和位置
                 drawingCanvas.width = imageWidth;
                 drawingCanvas.height = imageHeight;
+                drawingCanvas.style.width = `${imageWidth}px`;
+                drawingCanvas.style.height = `${imageHeight}px`;
                 drawingCanvas.style.left = `${canvasOffsetX}px`;
                 drawingCanvas.style.top = `${canvasOffsetY}px`;
                 canvasWidth = imageWidth;
@@ -397,14 +674,21 @@
                 }
             });
             
-            // 绘图相关事件
+            // 绘图相关事件 - 统一绑定到画布上
             drawingCanvas.addEventListener('mousedown', startDrawing);
-            originalImageContainer.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', endDrawing);
+            drawingCanvas.addEventListener('mousemove', handleMouseMove);
+            drawingCanvas.addEventListener('mouseup', endDrawing);
+            drawingCanvas.addEventListener('mouseleave', endDrawing);
             
             function startDrawing(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                
+                // 确保画布已初始化
+                if (!drawingCanvas.width || !drawingCanvas.height) {
+                    console.warn('画布未初始化，无法开始绘制');
+                    return;
+                }
                 
                 isDrawing = true;
                 
@@ -417,10 +701,16 @@
                 startX = Math.max(0, Math.min(startX, canvasWidth));
                 startY = Math.max(0, Math.min(startY, canvasHeight));
                 
+                // 设置绘制样式
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = brushSize;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
                 // 绘制起始点
                 ctx.beginPath();
                 ctx.arc(startX, startY, brushSize/2, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.fill();
                 
                 // 开始新的路径
@@ -429,6 +719,8 @@
                 
                 // 记录路径
                 maskPaths.push({type: 'start', x: startX, y: startY});
+                
+                console.log('开始绘制，位置:', startX, startY, '画笔大小:', brushSize);
             }
             
             function handleMouseMove(e) {
@@ -438,18 +730,14 @@
                 // 确保画布已初始化
                 if (!drawingCanvas.width || !drawingCanvas.height) return;
                 
-                // 获取相对于容器的坐标
-                const rect = originalImageContainer.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                // 转换为相对于画布的坐标
-                const canvasX = mouseX - canvasOffsetX;
-                const canvasY = mouseY - canvasOffsetY;
+                // 获取相对于画布的坐标
+                const rect = drawingCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
                 
                 // 确保坐标不超出画布范围
-                const x = Math.max(0, Math.min(canvasX, canvasWidth));
-                const y = Math.max(0, Math.min(canvasY, canvasHeight));
+                const clampedX = Math.max(0, Math.min(x, canvasWidth));
+                const clampedY = Math.max(0, Math.min(y, canvasHeight));
                 
                 // 设置绘制样式
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
@@ -458,11 +746,13 @@
                 ctx.lineJoin = 'round';
                 
                 // 绘制线段
-                ctx.lineTo(x, y);
+                ctx.lineTo(clampedX, clampedY);
                 ctx.stroke();
                 
                 // 记录路径点
-                maskPaths.push({type: 'point', x: x, y: y});
+                maskPaths.push({type: 'point', x: clampedX, y: clampedY});
+                
+                console.log('绘制中，位置:', clampedX, clampedY);
             }
             
             function endDrawing() {
@@ -470,6 +760,7 @@
                     isDrawing = false;
                     ctx.closePath();
                     maskPaths.push({type: 'end'});
+                    console.log('结束绘制，路径点数量:', maskPaths.length);
                 }
             }
             
@@ -493,9 +784,11 @@
                 if (file && file.type.startsWith('image/')) {
                     handleImageFile(file);
                 } else {
-                    alert('请上传图片文件！');
+                    alert(t('local_redraw.upload_image_file'));
                 }
             });
+            
+            // 测试涂抹功能已移除
             
             // 清除涂抹按钮点击事件
             clearMaskBtn.addEventListener('click', () => {
@@ -504,6 +797,37 @@
                     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
                     // 重置涂抹路径
                     maskPaths = [];
+                    console.log('已清除所有涂抹内容');
+                }
+            });
+            
+            // 上传新图片按钮
+            newRedrawBtn.addEventListener('click', () => {
+                // 清空当前图片预览和提示词
+                originalImage.src = '';
+                originalImage.classList.add('hidden');
+                
+                // 显示占位符
+                if (originalImagePlaceholder) {
+                    originalImagePlaceholder.classList.remove('hidden');
+                }
+                
+                promptInput.value = '';
+                resultContainer.classList.add('hidden');
+                downloadBtn.classList.add('hidden');
+                saveToDownloadsBtn.classList.add('hidden');
+                newRedrawBtn.classList.add('hidden');
+                
+                // 清除画布
+                if (drawingCanvas.width && drawingCanvas.height) {
+                    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                }
+                maskPaths = [];
+                
+                // 显示上传区域
+                const leftPanel = document.querySelector('.lg\\:col-span-2');
+                if (leftPanel) {
+                    leftPanel.style.display = 'block';
                 }
             });
             
@@ -512,27 +836,27 @@
                 const prompt = promptInput.value.trim();
                 
                 if (!originalImage.src || originalImage.classList.contains('hidden')) {
-                    alert('请先上传图片！');
+                    alert(t('local_redraw.upload_first'));
                     return;
                 }
                 
                 if (!prompt) {
-                    alert('请输入提示词！');
+                    alert(t('local_redraw.enter_prompt'));
                     return;
                 }
                 
                 if (maskPaths.length === 0) {
-                    alert('请在图片上涂抹需要重绘的区域！');
+                    alert(t('local_redraw.paint_area_first'));
                     return;
                 }
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                loadingMessage.textContent = '正在处理图像，请稍候...';
+                loadingMessage.textContent = t('local_redraw.processing_image');
                 
                 try {
                     // 1. 创建蒙版图像 - 需要白色区域表示重绘部分
-                    loadingMessage.textContent = '正在创建蒙版图像...';
+                    loadingMessage.textContent = t('local_redraw.creating_mask');
                     console.log('正在创建蒙版图像...');
                     const maskImageData = createMaskImage();
                     if (!maskImageData) {
@@ -540,7 +864,7 @@
                     }
                     
                     // 2. 上传原图和蒙版图到服务器获取URL
-                    loadingMessage.textContent = '正在上传图片...';
+                    loadingMessage.textContent = t('local_redraw.uploading_image');
                     console.log('正在上传原图和蒙版图...');
                     let baseImageUrl, maskImageUrl;
                     
@@ -563,7 +887,7 @@
                     console.log('- 蒙版URL:', maskImageUrl);
                     
                     // 3. 调用通义万相API创建局部重绘任务
-                    loadingMessage.textContent = '正在创建局部重绘任务...';
+                    loadingMessage.textContent = t('local_redraw.creating_task');
                     console.log('正在创建局部重绘任务...');
                     
                     let taskId;
@@ -580,8 +904,11 @@
                     
                     console.log('创建任务成功，任务ID:', taskId);
                     
+                    // 设置当前任务ID，用于后续结果显示
+                    window.currentTaskId = taskId;
+                    
                     // 4. 轮询任务状态
-                    loadingMessage.textContent = '处理中，请耐心等待...';
+                    loadingMessage.textContent = t('local_redraw.processing_wait');
                     console.log('开始轮询任务状态...');
                     
                     let resultImageUrl;
@@ -599,25 +926,46 @@
                     console.log('获取任务结果成功，图像URL:', resultImageUrl);
                     
                     // 5. 显示结果图像
-                    loadingMessage.textContent = '正在加载结果图像...';
+                    loadingMessage.textContent = t('local_redraw.loading_result');
                     
                     resultImage.onload = () => {
                         loadingOverlay.classList.add('hidden');
+                        
+                        // 设置原始图片
+                        resultOriginalImage.src = originalImage.src;
+                        
+                        // 设置图片信息
+                        resultOriginalInfo.textContent = `${t('local_redraw.original_image_info')} (${originalImage.naturalWidth}×${originalImage.naturalHeight} px)`;
+                        resultImageInfo.textContent = `${t('local_redraw.redrawn_image_info')} (${resultImage.naturalWidth}x${resultImage.naturalHeight})`;
+                        
+                        // 显示结果容器
+                        resultContainer.classList.remove('hidden');
                     };
                     
                     resultImage.onerror = () => {
                         loadingOverlay.classList.add('hidden');
-                        alert('加载结果图像失败，请稍后重试');
+                        alert(t('local_redraw.load_result_failed'));
                     };
                     
                     resultImage.src = resultImageUrl;
                     resultImage.classList.remove('hidden');
+                    if (resultImagePlaceholder) {
                     resultImagePlaceholder.classList.add('hidden');
+                    }
                     downloadBtn.classList.remove('hidden');
                     saveToDownloadsBtn.classList.remove('hidden');
+                    
+                    // 添加到历史记录
+                    const promptText = promptInput.value.trim() || '局部重绘';
+                    addToHistory(originalImage.src, resultImage.src, promptText);
                 } catch (error) {
                     console.error('处理失败:', error);
-                    alert('处理失败: ' + error.message);
+                    // 优化错误提示文本
+                    let errorMessage = error.message;
+                    if (errorMessage.includes('您的免费试用次数已用完，积分不足')) {
+                        errorMessage = errorMessage.replace('您的免费试用次数已用完，积分不足', '您的积分余额不足');
+                    }
+                    alert(t('local_redraw.processing_failed') + ': ' + errorMessage);
                 } finally {
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
@@ -794,7 +1142,7 @@
                         }
                         
                         attempts++;
-                        loadingMessage.textContent = `处理中，请耐心等待... (${attempts}/${maxAttempts})`;
+                        loadingMessage.textContent = `${t('local_redraw.processing_wait')} (${attempts}/${maxAttempts})`;
                         
                         try {
                             const response = await fetch(`/api/image-edit/task-status/${taskId}`, {
@@ -867,6 +1215,7 @@
                                         }
                                         
                                         // 显示失败提示
+                                        if (resultImagePlaceholder) {
                                         resultImagePlaceholder.innerHTML = `
                                             <div class="text-center p-4 bg-red-50 rounded-lg">
                                                 <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -877,6 +1226,7 @@
                                                 <p class="text-green-600">系统已自动退还您使用的积分</p>
                                             </div>
                                         `;
+                                        }
                                         
                                         reject(new Error(`生成失败: ${failedResults[0]?.message || '未知错误'}`));
                                         return;
@@ -893,6 +1243,7 @@
                                     }
                                     
                                     // 显示失败提示
+                                    if (resultImagePlaceholder) {
                                     resultImagePlaceholder.innerHTML = `
                                         <div class="text-center p-4 bg-red-50 rounded-lg">
                                             <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -903,6 +1254,7 @@
                                             <p class="text-green-600">系统已自动退还您使用的积分</p>
                                         </div>
                                     `;
+                                    }
                                     
                                     reject(new Error('任务成功但未找到结果'));
                                     return;
@@ -924,6 +1276,7 @@
                                 }
                                 
                                 // 显示失败提示
+                                if (resultImagePlaceholder) {
                                 resultImagePlaceholder.innerHTML = `
                                     <div class="text-center p-4 bg-red-50 rounded-lg">
                                         <svg class="w-12 h-12 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -934,6 +1287,7 @@
                                         <p class="text-green-600">系统已自动退还您使用的积分</p>
                                     </div>
                                 `;
+                                }
                                 
                                 reject(new Error(`任务执行失败: ${errorCode} - ${errorMsg}`));
                                 return;
@@ -951,6 +1305,7 @@
                                 }
                                 
                                 // 显示取消提示
+                                if (resultImagePlaceholder) {
                                 resultImagePlaceholder.innerHTML = `
                                     <div class="text-center p-4 bg-yellow-50 rounded-lg">
                                         <svg class="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -960,6 +1315,7 @@
                                         <p class="text-green-600">系统已自动退还您使用的积分</p>
                                     </div>
                                 `;
+                                }
                                 
                                 reject(new Error('任务已被取消'));
                                 return;
@@ -977,6 +1333,7 @@
                                 }
                                 
                                 // 显示未知状态提示
+                                if (resultImagePlaceholder) {
                                 resultImagePlaceholder.innerHTML = `
                                     <div class="text-center p-4 bg-gray-50 rounded-lg">
                                         <svg class="w-12 h-12 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -987,6 +1344,7 @@
                                         <p class="text-green-600">系统已自动退还您使用的积分</p>
                                     </div>
                                 `;
+                                }
                                 
                                 reject(new Error('任务状态未知，请重试'));
                                 return;
@@ -1034,7 +1392,7 @@
                 try {
                     // 显示加载中
                     loadingOverlay.classList.remove('hidden');
-                    loadingMessage.textContent = '正在保存到下载中心...';
+                    loadingMessage.textContent = t('local_redraw.saving_to_downloads');
                     
                     // 获取提示文本
                     const promptText = promptInput.value.trim() || '局部重绘';
@@ -1066,13 +1424,13 @@
                     }
                     
                     if (data.success) {
-                        alert('图片已成功保存到下载中心！');
+                        alert(t('local_redraw.save_success'));
                     } else {
                         throw new Error(data.message || '保存失败');
                     }
                 } catch (error) {
                     console.error('保存到下载中心失败:', error);
-                    alert('保存到下载中心失败: ' + error.message);
+                    alert(t('local_redraw.save_failed') + ': ' + error.message);
                 } finally {
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
@@ -1082,7 +1440,7 @@
             // 辅助函数
             function handleImageFile(file) {
                 if (file.size > 10 * 1024 * 1024) { // 10MB 限制
-                    alert('图片大小不能超过10MB！');
+                    alert(t('local_redraw.file_too_large'));
                     return;
                 }
                 
@@ -1091,7 +1449,11 @@
                     // 显示原始图片
                     originalImage.src = event.target.result;
                     originalImage.classList.remove('hidden');
+                    
+                    // 安全地隐藏占位符
+                    if (originalImagePlaceholder) {
                     originalImagePlaceholder.classList.add('hidden');
+                    }
                     
                     // 当图片加载完成后设置绘图画布
                     originalImage.onload = () => {
@@ -1100,16 +1462,20 @@
                         const height = originalImage.naturalHeight;
                         
                         if (width < 512 || height < 512) {
-                            alert('图片尺寸太小，最小需要 512×512 像素');
+                            alert(t('local_redraw.image_too_small'));
                             originalImage.classList.add('hidden');
+                            if (originalImagePlaceholder) {
                             originalImagePlaceholder.classList.remove('hidden');
+                            }
                             return;
                         }
                         
                         if (width > 4000 || height > 4000) {
-                            alert('图片尺寸太大，最大不能超过 4000×4000 像素');
+                            alert(t('local_redraw.image_too_large'));
                             originalImage.classList.add('hidden');
+                            if (originalImagePlaceholder) {
                             originalImagePlaceholder.classList.remove('hidden');
+                            }
                             return;
                         }
                         
@@ -1122,13 +1488,34 @@
                         clearMaskBtn.classList.remove('hidden');
                         
                         // 清除画布和涂抹路径
+                        if (drawingCanvas.width && drawingCanvas.height) {
                         ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                        }
                         maskPaths = [];
+                        
+                        console.log('图片加载完成，画布已初始化:', {
+                            canvasWidth: drawingCanvas.width,
+                            canvasHeight: drawingCanvas.height,
+                            imageWidth: originalImage.naturalWidth,
+                            imageHeight: originalImage.naturalHeight,
+                            canvasStyle: {
+                                left: drawingCanvas.style.left,
+                                top: drawingCanvas.style.top,
+                                width: drawingCanvas.style.width,
+                                height: drawingCanvas.style.height
+                            }
+                        });
+                        
+                        // 添加调试边框，让用户能看到画布区域
+                        drawingCanvas.style.border = '2px solid rgba(255, 0, 0, 0.3)';
+                        drawingCanvas.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
                     };
                     
                     // 重置结果区域
                     resultImage.classList.add('hidden');
+                    if (resultImagePlaceholder) {
                     resultImagePlaceholder.classList.remove('hidden');
+                    }
                     downloadBtn.classList.add('hidden');
                     saveToDownloadsBtn.classList.add('hidden');
                 };
@@ -1174,7 +1561,7 @@
                         .then(data => {
                             const creditsElement = document.getElementById('user-credits');
                             if (creditsElement) {
-                                creditsElement.textContent = `积分: ${data.credits || 0}`;
+                                creditsElement.textContent = `${t('nav.credits')}: ${data.credits || 0}`;
                             }
                         })
                         .catch(err => {
@@ -1195,6 +1582,468 @@
             window.addEventListener('resize', updateImageAndCanvasState);
         });
 
+        // 历史记录相关函数
+        // 添加到历史记录
+        async function addToHistory(originalImage, resultImage, prompt) {
+            try {
+                // 检查localStorage是否可用
+                if (!isLocalStorageAvailable()) {
+                    console.warn('localStorage不可用，无法保存历史记录');
+                    return;
+                }
+                
+                console.log('添加历史记录 - 开始');
+                
+                // 压缩图片数据，避免localStorage超出限制
+                const compressedOriginalImage = await compressImageDataIfNeeded(originalImage);
+                const compressedResultImage = await compressImageDataIfNeeded(resultImage);
+                
+                console.log('添加历史记录 - 原始图片(压缩后):', compressedOriginalImage.substring(0, 50) + '...');
+                console.log('添加历史记录 - 结果图片(压缩后):', compressedResultImage.substring(0, 50) + '...');
+                console.log('添加历史记录 - 提示词:', prompt);
+                
+                const historyItem = {
+                    originalImage: compressedOriginalImage,
+                    resultImage: compressedResultImage,
+                    prompt: prompt,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // 保存到OSS存储
+                try {
+                    // 使用OSS历史记录模块保存
+                    const historyData = {
+                        originalImage: compressedOriginalImage,
+                        resultImage: compressedResultImage,
+                        prompt: prompt,
+                        maskImage: null, // 局部重绘暂时没有蒙版图片
+                        metadata: {
+                            feature: 'local-redraw',
+                            timestamp: new Date().toISOString()
+                        }
+                    };
+                    
+                    console.log('添加历史记录 - 准备保存到OSS:', historyData);
+                    
+                    // 调用OSS保存接口
+                    if (window.LocalRedrawHistory) {
+                        await window.LocalRedrawHistory.save(historyData);
+                        console.log('添加历史记录 - OSS保存成功');
+                    } else {
+                        console.error('LocalRedrawHistory模块未加载，无法保存到OSS');
+                        // 降级到localStorage
+                        await saveToLocalStorage(historyItem);
+                    }
+                } catch (error) {
+                    console.error('保存历史记录到OSS失败:', error);
+                    // 降级到localStorage
+                    try {
+                        await saveToLocalStorage(historyItem);
+                        console.log('添加历史记录 - 降级到localStorage保存成功');
+                    } catch (localError) {
+                        console.error('降级到localStorage也失败:', localError);
+                    }
+                }
+                
+                // 刷新历史记录显示
+                console.log('添加历史记录 - 调用loadHistory()刷新显示');
+                loadHistory();
+                console.log('添加历史记录 - 完成');
+            } catch (error) {
+                console.error('添加历史记录失败:', error);
+            }
+        }
+        
+        // localStorage降级保存函数
+        async function saveToLocalStorage(historyItem) {
+            let history = [];
+            try {
+                const historyData = localStorage.getItem('localRedrawHistory');
+                if (historyData) {
+                    history = JSON.parse(historyData);
+                }
+            } catch (e) {
+                console.error('解析历史记录失败，重置历史记录', e);
+                history = [];
+            }
+            
+            // 添加新记录到开头
+            history.unshift(historyItem);
+            
+            // 只保留最新的3条记录
+            history = history.slice(0, 3);
+            
+            // 保存到localStorage
+            const historyString = JSON.stringify(history);
+            console.log('添加历史记录 - 准备保存到localStorage的数据大小:', historyString.length, '字节');
+            
+            // 检查数据大小，避免超出配额
+            if (historyString.length > 3500000) { // 约3.5MB限制
+                console.warn('历史记录过大，清理旧记录');
+                // 如果数据太大，尝试只保留最新的2条记录
+                history = history.slice(0, 2);
+                const reducedHistoryString = JSON.stringify(history);
+                
+                if (reducedHistoryString.length > 3500000) {
+                    // 如果仍然太大，只保留最新的记录
+                    history = [history[0]];
+                    localStorage.setItem('localRedrawHistory', JSON.stringify(history));
+                    console.log('添加历史记录 - 数据过大，仅保存最新一条');
+                } else {
+                    localStorage.setItem('localRedrawHistory', reducedHistoryString);
+                    console.log('添加历史记录 - 数据过大，保存最新两条');
+                }
+            } else {
+                localStorage.setItem('localRedrawHistory', historyString);
+                console.log('添加历史记录 - localStorage保存成功，共', history.length, '条记录');
+            }
+            
+            // 验证保存是否成功
+            const savedData = localStorage.getItem('localRedrawHistory');
+            if (savedData) {
+                const savedHistory = JSON.parse(savedData);
+                console.log('添加历史记录 - 验证localStorage保存结果:', savedHistory.length, '条记录');
+            }
+        }
+        
+        // 压缩图片数据以适应localStorage限制
+        function compressImageDataIfNeeded(imageData) {
+            return new Promise((resolve) => {
+                try {
+                    // 如果不是base64数据，直接返回
+                    if (!imageData || !imageData.startsWith('data:image')) {
+                        resolve(imageData);
+                        return;
+                    }
+                    
+                    // 如果数据大小已经小于500KB，不需要压缩
+                    if (imageData.length < 500000) {
+                        resolve(imageData);
+                        return;
+                    }
+                    
+                    console.log('压缩图片 - 原始大小:', imageData.length, '字节');
+                    
+                    // 创建一个临时的canvas和Image对象
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        // 创建一个canvas元素
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 设置合适的尺寸，保持宽高比
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 如果图片太大，按比例缩小
+                        const MAX_SIZE = 800;
+                        if (width > height && width > MAX_SIZE) {
+                            height = Math.round((height * MAX_SIZE) / width);
+                            width = MAX_SIZE;
+                        } else if (height > MAX_SIZE) {
+                            width = Math.round((width * MAX_SIZE) / height);
+                            height = MAX_SIZE;
+                        }
+                        
+                        // 设置canvas尺寸
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // 绘制图片到canvas
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 将canvas转换为压缩后的base64数据
+                        // 使用较低的质量值来减小文件大小
+                        const compressedData = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        console.log('压缩图片 - 压缩后大小:', compressedData.length, '字节');
+                        console.log('压缩图片 - 压缩率:', Math.round((compressedData.length / imageData.length) * 100) + '%');
+                        
+                        resolve(compressedData);
+                    };
+                    
+                    img.onerror = () => {
+                        console.error('压缩图片失败: 图片加载错误');
+                        resolve(imageData); // 如果加载失败，返回原始数据
+                    };
+                    
+                    img.src = imageData;
+                } catch (error) {
+                    console.error('压缩图片失败:', error);
+                    // 如果压缩失败，返回原始数据
+                    resolve(imageData);
+                }
+            });
+        }
+        
+        // 检查localStorage是否可用
+        function isLocalStorageAvailable() {
+            try {
+                const test = '__test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // 加载历史记录
+        async function loadHistory() {
+            console.log('loadHistory函数被调用');
+            try {
+                const historyContainer = document.getElementById('history-container');
+                if (!historyContainer) {
+                    console.error('未找到历史记录容器元素');
+                    return;
+                }
+                console.log('找到历史记录容器元素');
+                
+                // 优先使用OSS存储
+                if (window.LocalRedrawHistory) {
+                    try {
+                        console.log('开始从OSS加载历史记录');
+                        const records = await window.LocalRedrawHistory.fetch();
+                        console.log('从OSS获取到历史记录:', records.length, '条');
+                        
+                        // 使用OSS历史记录模块显示
+                        window.LocalRedrawHistory.display(records, 'history-container');
+                        return;
+                    } catch (error) {
+                        console.error('从OSS加载历史记录失败:', error);
+                        
+                        // 检查是否是认证问题
+                        if (error.response && error.response.status === 401) {
+                            console.log('用户未登录，显示登录提示');
+                            historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${t('local_redraw.login_required')}</p>`;
+                            return;
+                        }
+                        
+                        // 降级到localStorage
+                        console.log('降级到localStorage加载历史记录');
+                    }
+                }
+                
+                // 降级到localStorage
+                if (!isLocalStorageAvailable()) {
+                    console.warn('localStorage不可用，无法加载历史记录');
+                    historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${t('local_redraw.history_unavailable')}</p>`;
+                    return;
+                }
+                
+                let history = [];
+                try {
+                    console.log('开始从localStorage加载历史记录');
+                    const historyData = localStorage.getItem('localRedrawHistory');
+                    console.log('从localStorage获取的历史记录数据:', historyData);
+                    
+                    if (historyData) {
+                        history = JSON.parse(historyData);
+                        console.log('解析后的历史记录:', history);
+                        console.log('历史记录数量:', history.length);
+                    } else {
+                        console.log('localStorage中没有历史记录数据');
+                    }
+                } catch (e) {
+                    console.error('解析历史记录失败', e);
+                    history = [];
+                }
+                
+                // 过滤24小时内的记录
+                const now = new Date();
+                const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                
+                const recentHistory = history.filter(item => {
+                    if (!item.createdAt) {
+                        console.warn('历史记录缺少创建时间，跳过:', item);
+                        return false;
+                    }
+                    
+                    const itemDate = new Date(item.createdAt);
+                    const isRecent = itemDate >= twentyFourHoursAgo;
+                    
+                    if (!isRecent) {
+                        console.log('过滤掉超过24小时的记录:', {
+                            记录时间: itemDate.toLocaleString(),
+                            当前时间: now.toLocaleString(),
+                            提示词: item.prompt
+                        });
+                    }
+                    
+                    return isRecent;
+                });
+                
+                console.log('24小时过滤结果:', {
+                    原始记录数: history.length,
+                    过滤后记录数: recentHistory.length,
+                    过滤时间范围: `${twentyFourHoursAgo.toLocaleString()} 至 ${now.toLocaleString()}`
+                });
+                
+                // 确保显示最新的3条记录
+                const limitedHistory = recentHistory.slice(0, 3);
+                console.log('将显示的历史记录数量:', limitedHistory.length);
+            
+                if (limitedHistory.length === 0) {
+                    historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${t('local_redraw.no_history')}</p>`;
+                    return;
+                }
+                
+                // 清空历史记录容器
+                historyContainer.innerHTML = '';
+                
+                // 遍历历史记录并创建卡片
+                limitedHistory.forEach((item, index) => {
+                    console.log(`处理第${index+1}条历史记录:`, item.prompt);
+                    
+                    // 创建历史记录卡片
+                    const historyCard = document.createElement('div');
+                    historyCard.className = 'history-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all';
+                
+                    const originalImage = item.originalImage;
+                    const resultImage = item.resultImage;
+                    const prompt = item.prompt || '局部重绘';
+                    const createdAt = new Date(item.createdAt).toLocaleString();
+                    
+                    // 设置卡片内容
+                    historyCard.innerHTML = `
+                        <div class="relative">
+                            <img src="${resultImage}" alt="结果图" class="history-thumbnail w-full h-32 object-cover" loading="lazy">
+                        </div>
+                        <div class="p-3">
+                            <p class="text-sm text-gray-700 truncate" title="${prompt}">${prompt}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs text-gray-500">${createdAt}</span>
+                                <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 下载按钮点击事件
+                    const downloadHistoryBtn = historyCard.querySelector('.download-history-btn');
+                    downloadHistoryBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // 防止触发卡片点击事件
+                        downloadImage(resultImage, `局部重绘_${Date.now()}.png`);
+                    });
+                    
+                    // 将卡片添加到容器
+                    historyContainer.appendChild(historyCard);
+                });
+                
+                console.log('历史记录加载完成');
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                const historyContainer = document.getElementById('history-container');
+                if (historyContainer) {
+                    historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${t('local_redraw.load_history_failed')}</p>`;
+                }
+            }
+        }
+        
+        // 清空历史记录
+        async function clearHistory() {
+            if (confirm(t('local_redraw.confirm_clear_history'))) {
+                try {
+                    // 优先使用OSS存储
+                    if (window.LocalRedrawHistory) {
+                        try {
+                            console.log('开始清空OSS历史记录');
+                            // 使用正确的API端点清空所有记录
+                            const response = await fetch('/api/local-redraw-history/clear', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                const result = await response.json();
+                                console.log('OSS历史记录已清空:', result);
+                                alert(t('local_redraw.history_cleared'));
+                                loadHistory(); // 重新加载历史记录显示
+                                return;
+                            } else {
+                                throw new Error(`清空失败: ${response.status}`);
+                            }
+                        } catch (error) {
+                            console.error('清空OSS历史记录失败:', error);
+                            // 降级到localStorage
+                            console.log('降级到localStorage清空历史记录');
+                        }
+                    }
+                    
+                    // 降级到localStorage
+                    localStorage.removeItem('localRedrawHistory');
+                    console.log('localStorage历史记录已清空');
+                    loadHistory(); // 重新加载历史记录显示
+                    alert(t('local_redraw.history_cleared'));
+                } catch (error) {
+                    console.error('清空历史记录失败:', error);
+                    alert(t('local_redraw.clear_history_failed'));
+                }
+            }
+        }
+        
+        // 初始化历史记录功能
+        function initializeHistoryFeatures() {
+            // 绑定清空历史记录按钮
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            if (clearHistoryBtn) {
+                clearHistoryBtn.addEventListener('click', clearHistory);
+            }
+            
+            // 绑定刷新历史记录按钮
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            if (refreshHistoryBtn) {
+                refreshHistoryBtn.addEventListener('click', function() {
+                    console.log('刷新历史记录按钮被点击');
+                    // 添加视觉反馈
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                    loadHistory();
+                                });
+                            } else {
+                console.error('未找到刷新历史记录按钮元素');
+            }
+        }
+        
+        // 下载图片函数
+        function downloadImage(imageUrl, fileName) {
+            try {
+                // 创建一个临时的a标签来触发下载
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = fileName || 'image.png';
+                
+                // 添加到DOM中
+                document.body.appendChild(link);
+                
+                // 触发点击事件
+                link.click();
+                
+                // 清理DOM
+                document.body.removeChild(link);
+                } catch (error) {
+                console.error('下载图片失败:', error);
+                alert(t('local_redraw.download_failed'));
+            }
+        }
+        
+        // 确保DOM完全加载后初始化
+        setTimeout(() => {
+            if (historyContainer) {
+                console.log('DOM初始化完成，historyContainer已就绪');
+            } else {
+                console.error('DOM初始化失败，historyContainer未找到');
+            }
+        }, 100);
+        
+
+
         // 加载导航栏组件
         document.addEventListener('DOMContentLoaded', async function() {
             try {
@@ -1212,4 +2061,5 @@
         });
     </script>
 </body>
+</html> 
 </html> 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>亚马逊品牌起名 - 萤火AI</title>
+    <title data-translate="brand_naming.page_title">亚马逊品牌起名 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
@@ -182,6 +182,7 @@
     <link rel="stylesheet" href="/components/styles.css">
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
+    <script src="/translations.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏容器 -->
@@ -212,10 +213,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">亚马逊品牌起名</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="brand_naming.main_title">亚马逊品牌起名</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="brand-naming" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入产品信息，AI将为您生成有创意且符合产品特性的亚马逊品牌名称，帮助您在市场中脱颖而出。</p>
+                    <p class="text-gray-600 mb-4" data-translate="brand_naming.description">输入产品信息，AI将为您生成有创意且符合产品特性的亚马逊品牌名称，帮助您在市场中脱颖而出。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -223,12 +224,12 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="brand_naming.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>详细描述您的产品特性、功能和目标受众</li>
-                                    <li>提及产品的独特之处和核心价值</li>
-                                    <li>描述产品使用场景和理想顾客</li>
-                                    <li>选择您期望的品牌名称语言（中文或英文）</li>
+                                    <li data-translate="brand_naming.tip1">详细描述您的产品特性、功能和目标受众</li>
+                                    <li data-translate="brand_naming.tip2">提及产品的独特之处和核心价值</li>
+                                    <li data-translate="brand_naming.tip3">描述产品使用场景和理想顾客</li>
+                                    <li data-translate="brand_naming.tip4">选择您期望的品牌名称语言（中文或英文）</li>
                                 </ul>
                             </div>
                         </div>
@@ -236,20 +237,20 @@
                     
                     <form id="brandNamingForm">
                         <div class="mb-5">
-                            <label for="productDescription" class="block text-gray-700 font-medium mb-2">产品描述 <span class="text-red-500">*</span></label>
-                            <textarea id="productDescription" name="productDescription" rows="10" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="请详细描述您的产品信息，包括产品特性、功能、目标客户群体、产品的独特之处、使用场景等..."></textarea>
+                            <label for="productDescription" class="block text-gray-700 font-medium mb-2"><span data-translate="brand_naming.product_description_label">产品描述</span> <span class="text-red-500">*</span></label>
+                            <textarea id="productDescription" name="productDescription" rows="10" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required data-translate-placeholder="brand_naming.product_description_placeholder" placeholder="请详细描述您的产品信息，包括产品特性、功能、目标客户群体、产品的独特之处、使用场景等..."></textarea>
                         </div>
                         
                         <div class="mb-5">
-                            <label for="outputLanguage" class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label for="outputLanguage" class="block text-gray-700 font-medium mb-2" data-translate="brand_naming.output_language_label">输出语言</label>
                             <div class="flex items-center space-x-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="form-radio h-5 w-5 text-indigo-600" checked>
-                                    <span class="ml-2 text-gray-700">中文</span>
+                                    <span class="ml-2 text-gray-700" data-translate="brand_naming.chinese">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="form-radio h-5 w-5 text-indigo-600">
-                                    <span class="ml-2 text-gray-700">英文</span>
+                                    <span class="ml-2 text-gray-700" data-translate="brand_naming.english">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -257,7 +258,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateBrandButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-price-tag-3-line mr-2"></i>
-                                生成品牌名称
+                                <span data-translate="brand_naming.generate_brand_name">生成品牌名称</span>
                             </button>
                         </div>
                     </form>
@@ -268,7 +269,7 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">推荐的品牌名称</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2" data-translate="brand_naming.recommended_brand_name">推荐的品牌名称</h2>
                 
                 <div id="brandContainer" class="space-y-4">
                     <!-- 品牌名称将在这里动态生成 -->
@@ -277,11 +278,11 @@
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制品牌名称
+                        <span data-translate="brand_naming.copy_brand_name">复制品牌名称</span>
                     </button>
                     <button type="button" id="newBrandButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        生成新品牌名
+                        <span data-translate="brand_naming.generate_new_brand">生成新品牌名</span>
                     </button>
                 </div>
             </div>
@@ -291,8 +292,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-price-tag-3-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">您的品牌名称将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"生成品牌名称"按钮开始创建</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="brand_naming.result_placeholder_title">您的品牌名称将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="brand_naming.result_placeholder_desc">填写左侧表单并点击"生成品牌名称"按钮开始创建</p>
                 </div>
             </div>
         </div>
@@ -300,13 +301,21 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在生成品牌名称，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="brand_naming.processing">正在生成品牌名称，请稍候...</p>
             </div>
         </div>
     </div>
 
     <script>
+        // 监听语言变化
+        window.addEventListener('languageChanged', function() {
+            updatePageText();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            // 初始化翻译系统
+            updatePageText();
+            
             // 品牌名称生成表单提交
             const brandNamingForm = document.getElementById('brandNamingForm');
             const generateBrandButton = document.getElementById('generateBrandButton');
@@ -317,35 +326,6 @@
             const processingText = document.getElementById('processingText');
             const copyButton = document.getElementById('copyButton');
             const newBrandButton = document.getElementById('newBrandButton');
-            
-            // 语言切换处理
-            function updateUILanguage() {
-                const isEnglish = document.querySelector('input[name="outputLanguage"]:checked').value === 'en';
-                
-                // 更新按钮文本
-                generateBrandButton.innerHTML = `<i class="ri-price-tag-3-line mr-2"></i>${isEnglish ? 'Generate Brand Name' : '生成品牌名称'}`;
-                copyButton.innerHTML = `<i class="ri-file-copy-line mr-1"></i>${isEnglish ? 'Copy Brand Name' : '复制品牌名称'}`;
-                newBrandButton.innerHTML = `<i class="ri-refresh-line mr-1"></i>${isEnglish ? 'Generate New Brand' : '生成新品牌名'}`;
-                
-                // 更新加载提示文本
-                processingText.textContent = isEnglish ? 'Generating brand name, please wait...' : '正在生成品牌名称，请稍候...';
-                
-                // 更新结果标题
-                document.querySelector('#resultContainer h2').textContent = isEnglish ? 'Recommended Brand Name' : '推荐的品牌名称';
-                
-                // 如果有保存的结果，重新加载以应用新语言
-                if (!resultContainer.classList.contains('hidden')) {
-                    loadSavedResults();
-                }
-            }
-            
-            // 监听语言选择变化
-            document.querySelectorAll('input[name="outputLanguage"]').forEach(radio => {
-                radio.addEventListener('change', updateUILanguage);
-            });
-            
-            // 初始化语言
-            updateUILanguage();
             
             // 结果保持功能：检查是否有保存的结果
             function loadSavedResults() {
@@ -377,7 +357,7 @@
                             // 添加解释/理由
                             const reasonTitle = document.createElement('h4');
                             reasonTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                            reasonTitle.textContent = isEnglish ? 'Naming Rationale' : '命名理由';
+                            reasonTitle.textContent = translate('brand_naming.naming_rationale');
                             
                             const reasonElement = document.createElement('p');
                             reasonElement.className = 'text-gray-600 mb-4';
@@ -386,7 +366,7 @@
                             // 添加完美日子场景
                             const perfectDayTitle = document.createElement('h4');
                             perfectDayTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                            perfectDayTitle.textContent = isEnglish ? 'Perfect Scenario' : '完美场景';
+                            perfectDayTitle.textContent = translate('brand_naming.perfect_scenario');
                             
                             const perfectDayElement = document.createElement('p');
                             perfectDayElement.className = 'text-gray-600 mb-4';
@@ -395,7 +375,7 @@
                             // 添加价值观
                             const valuesTitle = document.createElement('h4');
                             valuesTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                            valuesTitle.textContent = isEnglish ? 'Brand Values' : '代表价值观';
+                            valuesTitle.textContent = translate('brand_naming.brand_values');
                             
                             const valuesElement = document.createElement('p');
                             valuesElement.className = 'text-gray-600 mb-4';
@@ -463,7 +443,7 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = isEnglish ? 'Generating brand name, please wait...' : '正在生成品牌名称，请稍候...';
+                processingText.textContent = translate('brand_naming.processing_detailed');
                 
                 try {
                     // 获取表单数据
@@ -485,7 +465,7 @@
                     const result = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(result.error || '生成品牌名称失败');
+                        throw new Error(result.error || translate('brand_naming.error.generation_failed'));
                     }
                     
                     // 清空品牌容器
@@ -509,7 +489,7 @@
                         // 添加解释/理由
                         const reasonTitle = document.createElement('h4');
                         reasonTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                        reasonTitle.textContent = isEnglish ? 'Naming Rationale' : '命名理由';
+                        reasonTitle.textContent = translate('brand_naming.naming_rationale');
                         
                         const reasonElement = document.createElement('p');
                         reasonElement.className = 'text-gray-600 mb-4';
@@ -518,7 +498,7 @@
                         // 添加完美日子场景
                         const perfectDayTitle = document.createElement('h4');
                         perfectDayTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                        perfectDayTitle.textContent = isEnglish ? 'Perfect Scenario' : '完美场景';
+                        perfectDayTitle.textContent = translate('brand_naming.perfect_scenario');
                         
                         const perfectDayElement = document.createElement('p');
                         perfectDayElement.className = 'text-gray-600 mb-4';
@@ -527,7 +507,7 @@
                         // 添加价值观
                         const valuesTitle = document.createElement('h4');
                         valuesTitle.className = 'font-semibold text-gray-700 mt-4 mb-2';
-                        valuesTitle.textContent = isEnglish ? 'Brand Values' : '代表价值观';
+                        valuesTitle.textContent = translate('brand_naming.brand_values');
                         
                         const valuesElement = document.createElement('p');
                         valuesElement.className = 'text-gray-600 mb-4';
@@ -547,7 +527,7 @@
                         // 如果没有品牌名称，显示提示信息
                         const noBrandsMsg = document.createElement('p');
                         noBrandsMsg.className = 'text-gray-600 text-center py-4';
-                        noBrandsMsg.textContent = '未能生成品牌名称，请尝试提供更详细的产品信息。';
+                        noBrandsMsg.textContent = translate('brand_naming.no_brand_generated');
                         brandContainer.appendChild(noBrandsMsg);
                     }
                     
@@ -568,16 +548,13 @@
                     
                 } catch (error) {
                     console.error('生成品牌名称出错:', error);
-                    alert(`生成失败: ${error.message}`);
+                    alert(`${translate('brand_naming.error.generation_failed')}: ${error.message}`);
                     loadingOverlay.classList.add('hidden');
                 }
             });
             
             // 复制按钮功能
             copyButton.addEventListener('click', () => {
-                // 获取当前选择的语言
-                const isEnglish = document.querySelector('input[name="outputLanguage"]:checked').value === 'en';
-                
                 // 创建一个临时容器来保存品牌名内容
                 const tempContainer = document.createElement('div');
                 tempContainer.style.position = 'absolute';
@@ -591,13 +568,14 @@
                     const name = brandCard.querySelector('h3').textContent;
                     const paragraphs = brandCard.querySelectorAll('p');
                     
-                    let brandText = isEnglish ? `Brand Name: ${name}\n\n` : `品牌名称: ${name}\n\n`;
+                    const brandNameLabel = translate('brand_naming.brand_name_label');
+                    let brandText = `${brandNameLabel}: ${name}\n\n`;
                     
                     // 添加各个部分的内容
                     const titles = [
-                        isEnglish ? 'Naming Rationale' : '命名理由',
-                        isEnglish ? 'Perfect Scenario' : '完美场景',
-                        isEnglish ? 'Brand Values' : '代表价值观'
+                        translate('brand_naming.naming_rationale'),
+                        translate('brand_naming.perfect_scenario'),
+                        translate('brand_naming.brand_values')
                     ];
                     
                     // 添加各个部分的内容
@@ -621,7 +599,8 @@
                         
                         // 显示复制成功提示
                         const originalText = copyButton.innerHTML;
-                        copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                        const copiedText = translate('brand_naming.copied');
+                        copyButton.innerHTML = `<i class="ri-check-line mr-1"></i>${copiedText}`;
                         copyButton.classList.add('bg-green-500', 'text-white');
                         copyButton.classList.remove('text-indigo-600', 'bg-white');
                         
@@ -632,7 +611,7 @@
                         }, 2000);
                     } catch (err) {
                         console.error('复制失败:', err);
-                        alert('复制失败，请手动选择内容复制');
+                        alert(translate('brand_naming.copy_failed'));
                     }
                     
                     // 清除选择

@@ -8,7 +8,7 @@ const { FeatureUsage } = require('../models/FeatureUsage');
 const PaymentOrder = require('../models/PaymentOrder');
 const ImageHistory = require('../models/ImageHistory');
 const VideoResult = require('../models/VideoResult');
-const { protect, checkAdmin, invalidateAllSessions } = require('../middleware/auth');
+const { protect, checkAdmin } = require('../middleware/auth');
 const { FEATURES } = require('../middleware/featureAccess');
 const { Op } = require('sequelize');
 const { generateToken, JWT_EXPIRE } = require('../utils/jwt');
@@ -448,7 +448,7 @@ router.get('/statistics', protect, checkAdmin, async (req, res) => {
       'IMAGE_EDIT': '指令编辑',
       'LOCAL_REDRAW': '局部重绘',
       'IMAGE_COLORIZATION': '图像上色',
-      'IMAGE_EXPANSION': '智能扩图',
+      'image-expansion': '智能扩图',
       'VIRTUAL_SHOE_MODEL': '鞋靴虚拟试穿',
       'TEXT_TO_IMAGE': '文生图片',
       'IMAGE_SHARPENING': '模糊图片变清晰',
@@ -756,7 +756,7 @@ router.get('/feature-usage', protect, checkAdmin, async (req, res) => {
       'IMAGE_EDIT': '指令编辑',
       'LOCAL_REDRAW': '局部重绘',
       'IMAGE_COLORIZATION': '图像上色',
-      'IMAGE_EXPANSION': '智能扩图',
+      'image-expansion': '智能扩图',
       'VIRTUAL_SHOE_MODEL': '鞋靴虚拟试穿',
       'TEXT_TO_IMAGE': '文生图片',
       'IMAGE_SHARPENING': '模糊图片变清晰',
@@ -784,7 +784,10 @@ router.get('/feature-usage', protect, checkAdmin, async (req, res) => {
       'amazon_keyword_recommender': '亚马逊关键词推荐',
       'amazon_case_creator': '亚马逊客服case内容',
       'virtual-model': '虚拟模特',
-      'DIANTU': '垫图'
+      'DIANTU': '垫图',
+      'IMAGE_CROP': '图像裁剪',
+      'IMAGE_RESIZE': '图片改尺寸',
+      'QWEN_IMAGE_EDIT': '图像编辑'
     };
     
     const responseData = {
@@ -1062,13 +1065,14 @@ router.post('/delete-user-usage', protect, checkAdmin, async (req, res) => {
  */
 router.post('/users', protect, checkAdmin, async (req, res) => {
   try {
-    const { username, password, phone, credits, isAdmin, isInternal, isCustomerService } = req.body;
+    const { username, password, phone, credits, isAdmin, isInternal, isCustomerService, remark } = req.body;
     
     // 添加调试日志，查看传入的用户类型字段
     console.log('创建用户请求参数:', {
       username,
       phone,
       credits,
+      remark,
       isAdmin,
       isInternal,
       isCustomerService,
@@ -1112,14 +1116,44 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
     }
     
     // 创建新用户
+    console.log('创建用户数据:', {
+      username,
+      phone,
+      credits,
+      remark,
+      isAdmin,
+      isInternal,
+      isCustomerService,
+      isAdminType: typeof isAdmin,
+      isInternalType: typeof isInternal,
+      isCustomerServiceType: typeof isCustomerService
+    });
+    
+    // 确保用户类型字段是布尔值
+    const userTypeFields = {
+      isAdmin: false,
+      isInternal: false,
+      isCustomerService: false
+    };
+    
+    // 根据前端传递的用户类型设置对应的字段为true
+    if (isAdmin === true || isAdmin === 'true' || isAdmin === 1 || isAdmin === '1') {
+      userTypeFields.isAdmin = true;
+    } else if (isInternal === true || isInternal === 'true' || isInternal === 1 || isInternal === '1') {
+      userTypeFields.isInternal = true;
+    } else if (isCustomerService === true || isCustomerService === 'true' || isCustomerService === 1 || isCustomerService === '1') {
+      userTypeFields.isCustomerService = true;
+    }
+    
+    console.log('处理后的用户类型:', userTypeFields);
+    
     const user = await User.create({
       username,
       password,
       phone: phone || null,
       credits: credits ? parseInt(credits) : 0,
-      isAdmin: isAdmin === true || isAdmin === 'true',
-      isInternal: isInternal === true || isInternal === 'true',
-      isCustomerService: isCustomerService === true || isCustomerService === 'true'
+      remark: remark || null,
+      ...userTypeFields
     });
     
     // 添加调试日志，查看创建后的用户对象
@@ -1129,6 +1163,7 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
       isAdmin: user.isAdmin,
       isInternal: user.isInternal,
       isCustomerService: user.isCustomerService,
+      remark: user.remark,
       rawIsAdmin: isAdmin,
       rawIsInternal: isInternal,
       rawIsCustomerService: isCustomerService,
@@ -1145,6 +1180,7 @@ router.post('/users', protect, checkAdmin, async (req, res) => {
         username: user.username,
         phone: user.phone,
         credits: user.credits,
+        remark: user.remark,
         isAdmin: user.isAdmin,
         isInternal: user.isInternal,
         isCustomerService: user.isCustomerService,

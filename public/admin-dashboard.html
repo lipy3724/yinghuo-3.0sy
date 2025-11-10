@@ -73,6 +73,7 @@
     </style>
 
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
+    <script src="/js/logout-handler.js"></script>
 </head>
 <body class="min-h-screen bg-gray-100">
     <!-- 移动端导航栏 -->
@@ -264,7 +265,11 @@
             // 退出登录
             document.getElementById('logout-btn').addEventListener('click', function(e) {
                 e.preventDefault();
-                logout();
+                if (typeof adminLogout === 'function') {
+                    adminLogout();
+                } else {
+                    logout();
+                }
             });
             
             // 设置日期选择器默认为今天
@@ -335,6 +340,12 @@
                 });
                 
                 if (!statsResponse.ok) {
+                    if (statsResponse.status === 401 || statsResponse.status === 403) {
+                        localStorage.removeItem('adminAuthToken');
+                        localStorage.removeItem('adminUser');
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
                     throw new Error('获取统计数据失败');
                 }
                 
@@ -356,6 +367,12 @@
                 });
                 
                 if (!paymentsResponse.ok) {
+                    if (paymentsResponse.status === 401 || paymentsResponse.status === 403) {
+                        localStorage.removeItem('adminAuthToken');
+                        localStorage.removeItem('adminUser');
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
                     throw new Error('获取充值数据失败');
                 }
                 
@@ -374,6 +391,12 @@
                 });
                 
                 if (!usersResponse.ok) {
+                    if (usersResponse.status === 401 || usersResponse.status === 403) {
+                        localStorage.removeItem('adminAuthToken');
+                        localStorage.removeItem('adminUser');
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
                     throw new Error('获取用户数据失败');
                 }
                 
@@ -385,6 +408,13 @@
                 }
             } catch (error) {
                 console.error('加载仪表盘数据出错:', error);
+                // 容错：若因网络异常未拿到status，也进行一次登录状态验证
+                const t = localStorage.getItem('adminAuthToken');
+                const u = localStorage.getItem('adminUser');
+                if (!t || !u) {
+                    window.location.href = '/admin-login.html';
+                    return;
+                }
                 alert('加载数据失败，请刷新页面重试');
             }
         }

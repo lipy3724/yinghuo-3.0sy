@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>亚马逊客户邮件回复 - 萤火AI</title>
+    <title data-translate="amazon_customer_email.page_title">亚马逊客户邮件回复 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
@@ -172,6 +172,7 @@
     <link rel="stylesheet" href="/components/styles.css">
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
+    <script src="/js/translations.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏容器 -->
@@ -202,10 +203,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">亚马逊客户邮件回复</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="amazon_customer_email.main_title">亚马逊客户邮件回复</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="customer-email" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入客户邮件内容和其他相关信息，AI将为您生成专业、友好的回复邮件。</p>
+                    <p class="text-gray-600 mb-4" data-translate="amazon_customer_email.description">输入客户邮件内容和其他相关信息，AI将为您生成专业、友好的回复邮件。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -213,12 +214,12 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="amazon_customer_email.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>输入客户邮件的完整内容，包括问题、投诉或咨询</li>
-                                    <li>可以提供您想要回复的大致内容，AI会据此生成更有针对性的回复</li>
-                                    <li>添加客户名字和客服名字可以使回复更加个性化</li>
-                                    <li>系统会自动分析客户情绪，并生成适合的回复语气和内容</li>
+                                    <li data-translate="amazon_customer_email.tip1">输入客户邮件的完整内容，包括问题、投诉或咨询</li>
+                                    <li data-translate="amazon_customer_email.tip2">可以提供您想要回复的大致内容，AI会据此生成更有针对性的回复</li>
+                                    <li data-translate="amazon_customer_email.tip3">添加客户名字和客服名字可以使回复更加个性化</li>
+                                    <li data-translate="amazon_customer_email.tip4">系统会自动分析客户情绪，并生成适合的回复语气和内容</li>
                                 </ul>
                             </div>
                         </div>
@@ -226,37 +227,37 @@
                     
                     <form id="customerEmailForm">
                         <div class="mb-5">
-                            <label for="customerEmail" class="block text-gray-700 font-medium mb-2">客户邮件内容 <span class="text-red-500">*</span></label>
-                            <textarea id="customerEmail" name="customerEmail" rows="6" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入客户邮件的完整内容..." required></textarea>
+                            <label for="customerEmail" class="block text-gray-700 font-medium mb-2"><span data-translate="amazon_customer_email.customer_email">客户邮件内容</span> <span class="text-red-500">*</span></label>
+                            <textarea id="customerEmail" name="customerEmail" rows="6" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_customer_email.customer_email_placeholder" placeholder="请输入客户邮件的完整内容..." required></textarea>
                         </div>
                         
                         <div class="mb-5">
-                            <label for="replyContent" class="block text-gray-700 font-medium mb-2">需要回复的大概内容 <span class="text-gray-500">(选填)</span></label>
-                            <textarea id="replyContent" name="replyContent" rows="4" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入您想要回复的大致内容，例如：解释退款政策、提供产品使用建议等..."></textarea>
+                            <label for="replyContent" class="block text-gray-700 font-medium mb-2"><span data-translate="amazon_customer_email.reply_content">需要回复的大概内容</span> <span class="text-gray-500" data-translate="amazon_customer_email.reply_content_optional">(选填)</span></label>
+                            <textarea id="replyContent" name="replyContent" rows="4" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_customer_email.reply_content_placeholder" placeholder="请输入您想要回复的大致内容，例如：解释退款政策、提供产品使用建议等..."></textarea>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                             <div>
-                                <label for="customerName" class="block text-gray-700 font-medium mb-2">客户名字 <span class="text-gray-500">(选填)</span></label>
-                                <input type="text" id="customerName" name="customerName" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入客户名字...">
+                                <label for="customerName" class="block text-gray-700 font-medium mb-2"><span data-translate="amazon_customer_email.customer_name">客户名字</span> <span class="text-gray-500" data-translate="amazon_customer_email.reply_content_optional">(选填)</span></label>
+                                <input type="text" id="customerName" name="customerName" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_customer_email.customer_name_placeholder" placeholder="请输入客户名字...">
                             </div>
                             
                             <div>
-                                <label for="serviceName" class="block text-gray-700 font-medium mb-2">客服名字 <span class="text-gray-500">(选填)</span></label>
-                                <input type="text" id="serviceName" name="serviceName" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入客服名字...">
+                                <label for="serviceName" class="block text-gray-700 font-medium mb-2"><span data-translate="amazon_customer_email.service_name">客服名字</span> <span class="text-gray-500" data-translate="amazon_customer_email.reply_content_optional">(选填)</span></label>
+                                <input type="text" id="serviceName" name="serviceName" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_customer_email.service_name_placeholder" placeholder="请输入客服名字...">
                             </div>
                         </div>
                         
                         <div class="mb-5">
-                            <label class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label class="block text-gray-700 font-medium mb-2" data-translate="amazon_customer_email.output_language">输出语言</label>
                             <div class="flex gap-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="text-indigo-600 focus:ring-indigo-500" checked>
-                                    <span class="ml-2">中文</span>
+                                    <span class="ml-2" data-translate="amazon_customer_email.chinese">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="ml-2">英文</span>
+                                    <span class="ml-2" data-translate="amazon_customer_email.english">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -264,7 +265,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateEmailButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-mail-send-line mr-2"></i>
-                                生成回复邮件
+                                <span data-translate="amazon_customer_email.generate_reply">生成回复邮件</span>
                             </button>
                         </div>
                     </form>
@@ -275,11 +276,11 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">邮件回复结果</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2" data-translate="amazon_customer_email.reply_results">邮件回复结果</h2>
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-emotion-line mr-2 text-indigo-500"></i>客户情绪分析
+                        <i class="ri-emotion-line mr-2 text-indigo-500"></i><span data-translate="amazon_customer_email.customer_emotion">客户情绪分析</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <div id="customerEmotionResult" class="text-gray-800"></div>
@@ -288,7 +289,7 @@
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-mail-open-line mr-2 text-indigo-500"></i>邮件回复内容
+                        <i class="ri-mail-open-line mr-2 text-indigo-500"></i><span data-translate="amazon_customer_email.email_reply">邮件回复内容</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <div id="emailReplyResult" class="text-gray-800 whitespace-pre-line"></div>
@@ -297,7 +298,7 @@
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-lightbulb-line mr-2 text-indigo-500"></i>处理建议
+                        <i class="ri-lightbulb-line mr-2 text-indigo-500"></i><span data-translate="amazon_customer_email.suggestion">处理建议</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <div id="suggestionResult" class="text-gray-800"></div>
@@ -307,11 +308,11 @@
                 <div class="flex justify-end gap-3">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制回复内容
+                        <span data-translate="amazon_customer_email.copy_reply">复制回复内容</span>
                     </button>
                     <button type="button" id="newEmailButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        撰写新回复
+                        <span data-translate="amazon_customer_email.new_reply">撰写新回复</span>
                     </button>
                 </div>
             </div>
@@ -321,8 +322,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-mail-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">您的邮件回复将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"生成回复邮件"按钮开始创建</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="amazon_customer_email.result_placeholder_title">您的邮件回复将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="amazon_customer_email.result_placeholder_desc">填写左侧表单并点击"生成回复邮件"按钮开始创建</p>
                 </div>
             </div>
         </div>
@@ -330,13 +331,56 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在生成回复，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="amazon_customer_email.processing">正在生成回复，请稍候...</p>
             </div>
         </div>
     </div>
 
     <script>
+        // 翻译系统支持
+        function getTranslation(key) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+        }
+
+        // 更新页面语言
+        function updatePageLanguage() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 更新页面标题
+            document.title = getTranslation('amazon_customer_email.page_title');
+            
+            // 更新所有带有 data-translate 属性的元素
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                
+                if (element.tagName === 'TITLE') {
+                    element.textContent = translation;
+                } else if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                    element.placeholder = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            });
+            
+            // 更新所有带有 data-translate-placeholder 属性的元素
+            document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                const translation = getTranslation(key);
+                element.placeholder = translation;
+            });
+        }
+
+        // 监听语言变化
+        window.addEventListener('languageChanged', function() {
+            updatePageLanguage();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            // 初始化翻译系统
+            updatePageLanguage();
+            
             // 客户邮件回复表单提交
             const customerEmailForm = document.getElementById('customerEmailForm');
             const generateEmailButton = document.getElementById('generateEmailButton');
@@ -396,7 +440,7 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在分析客户邮件并生成回复，请稍候...';
+                processingText.textContent = getTranslation('amazon_customer_email.processing_detailed');
                 
                 try {// 获取表单数据
                     const formData = {
@@ -420,7 +464,7 @@
                     const result = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(result.error || '生成邮件回复失败');
+                        throw new Error(result.error || getTranslation('amazon_customer_email.error.generation_failed'));
                     }
                     
                     // 更新结果
@@ -445,7 +489,7 @@
                     
                 } catch (error) {
                     console.error('生成邮件回复出错:', error);
-                    alert(`生成失败: ${error.message}`);
+                    alert(`${getTranslation('amazon_customer_email.error.generation_failed')}: ${error.message}`);
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -458,7 +502,8 @@
                 navigator.clipboard.writeText(emailReply).then(() => {
                     // 显示复制成功提示
                     const originalText = copyButton.innerHTML;
-                    copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                    const copiedText = getTranslation('amazon_customer_email.copied');
+                    copyButton.innerHTML = `<i class="ri-check-line mr-1"></i>${copiedText}`;
                     copyButton.classList.add('bg-green-500', 'text-white');
                     copyButton.classList.remove('text-indigo-600', 'bg-white');
                     

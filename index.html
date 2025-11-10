@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>萤火AI - 专业级AI智能创作平台</title>
+    <title>萤火AI - 专业级电商ai工具平台</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -50,7 +50,7 @@
         
         /* 背景 */
         .hero-gradient {
-            background: white;
+            background: #f8f5ff;
         }
         
         /* 动态效果 */
@@ -1240,8 +1240,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-                <div class="flex items-center -ml-36">
-                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-32 w-32 mr-1 mt-4 object-contain">
+                <div class="flex items-center ml-0 md:-ml-36">
+                    <img src="/images/logo/logo.png" alt="萤火AI" class="h-20 sm:h-24 md:h-28 mr-1 mt-2 object-contain">
                 </div>
                 
                 <!-- 桌面导航菜单 -->
@@ -1249,7 +1249,7 @@
                     <!-- 功能特色下拉菜单 -->
                     <div class="relative group">
                         <a href="#features" class="text-gray-600 hover:text-indigo-600 transition-colors flex items-center group-hover:text-indigo-600 font-medium">
-                            功能特色
+                            <span data-i18n="nav_features">功能特色</span>
                             <i class="ri-arrow-down-s-line ml-1 transition-transform duration-300 group-hover:rotate-180"></i>
                         </a>
                         <!-- 下拉菜单 -->
@@ -1258,31 +1258,44 @@
                             <div class="py-3">
                                 <a href="#image-processing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
                                     <i class="ri-image-line"></i>
-                                    <span>AI图像处理</span>
+                                    <span data-i18n="nav_ai_image">AI图像处理</span>
                                 </a>
                                 <a href="#video-creation" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
                                     <i class="ri-video-line"></i>
-                                    <span>AI视频创作</span>
+                                    <span data-i18n="nav_ai_video">AI视频创作</span>
                                 </a>
                                 <a href="#model-dressing" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
                                     <i class="ri-user-3-line"></i>
-                                    <span>AI模特换装</span>
+                                    <span data-i18n="nav_ai_model">AI模特换装</span>
                                 </a>
                                 <a href="#amazon-assistant" class="flex items-center text-sm text-gray-700 hover:text-indigo-600 dropdown-item">
                                     <i class="ri-store-line"></i>
-                                    <span>亚马逊助手</span>
+                                    <span data-i18n="nav_amazon_assistant">亚马逊助手</span>
                                 </a>
                             </div>
                         </div>
                     </div>
-                    <a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors">使用教程</a>
-                    <a href="https://blog.yinghuo.ai" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors">公告</a>
-                    <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors">关于我们</a>
+                    <a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors" data-i18n="nav_tutorial">使用教程</a>
+                    <a href="https://blog.yinghuo.ai" target="_blank" class="text-gray-600 hover:text-indigo-600 transition-colors" data-i18n="nav_news">公告</a>
+                    <a href="#about" class="text-gray-600 hover:text-indigo-600 transition-colors" data-i18n="nav_about">关于我们</a>
                 </div>
                 
                 <!-- 用户操作按钮 -->
                 <div class="flex items-center space-x-4">
-                    <button onclick="handleStartUsing()" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:scale-105">立即使用</button>
+                    <!-- 语言选择器 -->
+                    <div class="relative">
+                        <select id="languageSelector" class="appearance-none bg-white border border-gray-300 rounded-full px-4 py-2 pr-8 text-sm font-medium text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all cursor-pointer">
+                            <option value="zh" data-text="中文">中文</option>
+                            <option value="en" data-text="English">English</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <button onclick="handleStartUsing()" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:scale-105" data-i18n="nav_start_using">立即使用</button>
                     
                     <!-- 移动端菜单按钮 -->
                     <button class="mobile-menu-button md:hidden text-gray-500 hover:text-gray-600 focus:outline-none" aria-label="打开菜单">
@@ -1317,10 +1330,10 @@
                 </div>
                 
                 <div class="mobile-submenu mt-2 ml-4 hidden">
-                    <a href="#image-processing" class="block py-2 text-gray-700">AI图像处理</a>
-                    <a href="#video-creation" class="block py-2 text-gray-700">AI视频创作</a>
-                    <a href="#model-dressing" class="block py-2 text-gray-700">AI模特换装</a>
-                    <a href="#amazon-assistant" class="block py-2 text-gray-700">亚马逊助手</a>
+                    <a href="#image-processing" class="block py-2 text-gray-700" data-i18n="nav_ai_image">AI图像处理</a>
+                    <a href="#video-creation" class="block py-2 text-gray-700" data-i18n="nav_ai_video">AI视频创作</a>
+                    <a href="#model-dressing" class="block py-2 text-gray-700" data-i18n="nav_ai_model">AI模特换装</a>
+                    <a href="#amazon-assistant" class="block py-2 text-gray-700" data-i18n="nav_amazon_assistant">亚马逊助手</a>
                 </div>
             </div>
             
@@ -1329,7 +1342,7 @@
             <a href="#about" class="mobile-nav-item block text-lg font-medium">关于我们</a>
             
             <div class="mt-6">
-                <button onclick="handleStartUsing()" class="block w-full px-6 py-3 text-center text-sm font-medium rounded-full text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105">立即使用</button>
+                <button onclick="handleStartUsing()" class="block w-full px-6 py-3 text-center text-sm font-medium rounded-full text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105" data-i18n="btn_start_now">立即使用</button>
             </div>
         </div>
     </div>
@@ -1342,41 +1355,42 @@
                 <!-- 内容 -->
                 <div class="hero-content max-w-3xl text-center">
                     <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight hero-title opacity-0">
-                        <span class="text-gray-900">专业级AI智能创作</span>
-                        <span class="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mt-2 hero-subtitle opacity-0">轻松出图创视频</span>
+                        <span class="text-gray-900" data-i18n="hero_title_1">专业级电商ai工具</span>
+                        <span class="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mt-2 hero-subtitle opacity-0" data-i18n="hero_title_2">服务电商人</span>
                     </h1>
                     <p class="text-xl mb-8 text-gray-700 leading-relaxed hero-description opacity-0">
-                        每天有数万创作者用萤火AI生成<br>
-                        高质量图片和视频内容，提升创作效率10倍
+                        <span data-i18n="hero_description_1">每天有数万创作者用萤火AI生成</span><br>
+                        <span data-i18n="hero_description_2">高质量图片和视频内容，提升创作效率10倍</span>
                     </p>
                     
                     <!-- CTA按钮 -->
-                    <div class="flex justify-center mb-12 hero-buttons opacity-0">
+                    <div class="flex justify-center items-center mb-12 hero-buttons opacity-0">
+                        <!-- 开始使用按钮 -->
                         <button onclick="handleStartUsing()" class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white px-12 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 text-center hover:shadow-xl hover:shadow-indigo-200/30 relative overflow-hidden group">
                             <span class="relative z-10 flex items-center justify-center">
-                                开始使用
+                                <span data-i18n="start_using">开始使用</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
                             </span>
                             <span class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-800 opacity-0 group-hover:opacity-100 transition-opacity"></span>
                         </button>
-                </div>
+                    </div>
                     
                     <!-- 统计数据 -->
                     <div class="grid grid-cols-3 gap-8 text-center hero-stats opacity-0">
                         <div class="bg-gradient-to-br from-white to-indigo-50 p-5 rounded-xl hero-stat-item shadow-md border border-gray-100" data-delay="0">
-                            <div class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent" id="stat1">50,000+</div>
-                            <div class="text-gray-700 text-sm mt-1 font-medium">日活用户</div>
-                    </div>
+                            <div class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent" id="stat1">50K+</div>
+                            <div class="text-gray-700 text-sm mt-1 font-medium" data-i18n="stat_daily_users">日活用户</div>
+                        </div>
                         <div class="bg-gradient-to-br from-white to-indigo-50 p-5 rounded-xl hero-stat-item shadow-md border border-gray-100" data-delay="200">
-                            <div class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent" id="stat2">1,000,000+</div>
-                            <div class="text-gray-700 text-sm mt-1 font-medium">生成作品</div>
-                </div>
+                            <div class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent" id="stat2">1.0M+</div>
+                            <div class="text-gray-700 text-sm mt-1 font-medium" data-i18n="stat_generated_works">生成作品</div>
+                        </div>
                         <div class="bg-gradient-to-br from-white to-indigo-50 p-5 rounded-xl hero-stat-item shadow-md border border-gray-100" data-delay="400">
                             <div class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent" id="stat3">98%</div>
-                            <div class="text-gray-700 text-sm mt-1 font-medium">满意度</div>
-        </div>
+                            <div class="text-gray-700 text-sm mt-1 font-medium" data-i18n="stat_satisfaction">满意度</div>
+                        </div>
                     </div>
                 </div>
                     </div>
@@ -1392,9 +1406,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <!-- 标题 -->
             <div class="text-center mb-20">
-                <span class="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent text-lg font-semibold mb-3 inline-block">核心能力</span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">四大核心功能</h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">专业级AI工具，满足您的所有创作需求</p>
+                <span class="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent text-lg font-semibold mb-3 inline-block" data-i18n="features_core">核心能力</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6" data-i18n="features_title">四大核心功能</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto" data-i18n="features_subtitle">专业级AI工具，满足您的所有创作需求</p>
                 </div>
                 
             <!-- 功能卡片 - 网格布局 -->
@@ -1406,28 +1420,28 @@
                         <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 rotate-hover">
                         <i class="ri-image-line text-2xl text-white"></i>
                     </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">AI图像处理</h3>
-                    <p class="text-gray-600 mb-6">智能扩图、图像智能消除、图像上色、背景移除等专业功能</p>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4" data-i18n="feature_image_title">AI图像处理</h3>
+                    <p class="text-gray-600 mb-6" data-i18n="feature_image_desc">智能扩图、图像智能消除、图像上色、背景移除等专业功能</p>
                         <ul class="text-sm text-gray-500 space-y-3">
                             <li class="flex items-start">
                                 <span class="text-blue-500 mr-2">✓</span>
-                                <span>智能扩图放大</span>
+                                <span data-i18n="feature_smart_expansion">智能扩图放大</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-blue-500 mr-2">✓</span>
-                                <span>图像智能消除</span>
+                                <span data-i18n="feature_smart_removal">图像智能消除</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-blue-500 mr-2">✓</span>
-                                <span>黑白照片上色</span>
+                                <span data-i18n="feature_photo_colorization">黑白照片上色</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-blue-500 mr-2">✓</span>
-                                <span>背景一键移除</span>
+                                <span data-i18n="feature_background_removal">背景一键移除</span>
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105" data-i18n="btn_start_now">立即使用</a>
                         </div>
                     </div>
                 </div>
@@ -1439,28 +1453,28 @@
                         <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 rotate-hover">
                         <i class="ri-video-line text-2xl text-white"></i>
                     </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">AI视频创作</h3>
-                    <p class="text-gray-600 mb-6">文生视频、图生视频、视频字幕移除等创新功能</p>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4" data-i18n="feature_video_title">AI视频创作</h3>
+                    <p class="text-gray-600 mb-6" data-i18n="feature_video_desc">文生视频、图生视频、视频字幕移除等创新功能</p>
                         <ul class="text-sm text-gray-500 space-y-3">
                             <li class="flex items-start">
                                 <span class="text-green-500 mr-2">✓</span>
-                                <span>文本生成视频</span>
+                                <span data-i18n="feature_text_to_video">文本生成视频</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-green-500 mr-2">✓</span>
-                                <span>图片生成视频</span>
+                                <span data-i18n="feature_image_to_video">图片生成视频</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-green-500 mr-2">✓</span>
-                                <span>视频字幕移除</span>
+                                <span data-i18n="feature_subtitle_removal">视频字幕移除</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-green-500 mr-2">✓</span>
-                                <span>视频风格重绘</span>
+                                <span data-i18n="feature_video_style_repaint">视频风格重绘</span>
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105" data-i18n="btn_start_now">立即使用</a>
                         </div>
                     </div>
                 </div>
@@ -1472,28 +1486,28 @@
                         <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 rotate-hover">
                         <i class="ri-user-3-line text-2xl text-white"></i>
                     </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">AI模特换装</h3>
-                    <p class="text-gray-600 mb-6">虚拟试衣、模特换装、服装展示等电商必备工具</p>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4" data-i18n="feature_model_title">AI模特换装</h3>
+                    <p class="text-gray-600 mb-6" data-i18n="feature_model_desc">虚拟试衣、模特换装、服装展示等电商必备工具</p>
                         <ul class="text-sm text-gray-500 space-y-3">
                             <li class="flex items-start">
                                 <span class="text-purple-500 mr-2">✓</span>
-                                <span>虚拟模特试衣</span>
+                                <span data-i18n="feature_virtual_try_on">虚拟模特试衣</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-purple-500 mr-2">✓</span>
-                                <span>服装款式替换</span>
+                                <span data-i18n="feature_clothing_swap">服装款式替换</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-purple-500 mr-2">✓</span>
-                                <span>模特肤色调整</span>
+                                <span data-i18n="feature_skin_tone_adjustment">模特肤色调整</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-purple-500 mr-2">✓</span>
-                                <span>产品展示优化</span>
+                                <span data-i18n="feature_product_optimization">产品展示优化</span>
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105" data-i18n="btn_start_now">立即使用</a>
                         </div>
                     </div>
                 </div>
@@ -1505,28 +1519,28 @@
                         <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center mx-auto mb-6 transform transition-transform duration-300 rotate-hover">
                         <i class="ri-store-line text-2xl text-white"></i>
                     </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">亚马逊助手</h3>
-                    <p class="text-gray-600 mb-6">16个专业工具助力亚马逊卖家提升销量</p>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4" data-i18n="feature_amazon_title">亚马逊助手</h3>
+                    <p class="text-gray-600 mb-6" data-i18n="feature_amazon_desc">16个专业工具助力亚马逊卖家提升销量</p>
                         <ul class="text-sm text-gray-500 space-y-3">
                             <li class="flex items-start">
                                 <span class="text-orange-500 mr-2">✓</span>
-                                <span>Listing标题优化</span>
+                                <span data-i18n="feature_listing_optimization">Listing标题优化</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-orange-500 mr-2">✓</span>
-                                <span>关键词研究分析</span>
+                                <span data-i18n="feature_keyword_research">关键词研究分析</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-orange-500 mr-2">✓</span>
-                                <span>产品对比分析</span>
+                                <span data-i18n="feature_product_comparison">产品对比分析</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-orange-500 mr-2">✓</span>
-                                <span>竞品监控报告</span>
+                                <span data-i18n="feature_competitor_monitoring">竞品监控报告</span>
                             </li>
                     </ul>
                         <div class="mt-8 text-center">
-                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105">立即使用</a>
+                            <a href="javascript:void(0)" onclick="handleStartUsing()" class="inline-block px-6 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105" data-i18n="btn_start_now">立即使用</a>
                         </div>
                     </div>
                             </div>
@@ -1543,52 +1557,52 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <!-- 标题 -->
             <div class="text-center mb-20">
-                <span class="bg-gradient-to-r from-green-500 to-teal-600 bg-clip-text text-transparent text-lg font-semibold mb-3 inline-block">客户案例</span>
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">案例展示</h2>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">看看其他创作者如何用萤火AI提升工作效率</p>
+                <span class="bg-gradient-to-r from-green-500 to-teal-600 bg-clip-text text-transparent text-lg font-semibold mb-3 inline-block" data-i18n="cases_category">客户案例</span>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6" data-i18n="cases_title">案例展示</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto" data-i18n="cases_subtitle">看看其他创作者如何用萤火AI提升工作效率</p>
                 </div>
                 
             <div class="cases-filter mb-16 flex justify-center">
                 <div class="bg-gray-100 p-1.5 rounded-full inline-flex">
-                    <button class="filter-btn active px-6 py-2 rounded-full text-sm font-medium transition-all duration-300" data-filter="all">全部案例</button>
-                    <button class="filter-btn px-6 py-2 rounded-full text-sm font-medium transition-all duration-300" data-filter="image">图像处理</button>
-                    <button class="filter-btn px-6 py-2 rounded-full text-sm font-medium transition-all duration-300" data-filter="video">视频创作</button>
+                    <button class="filter-btn active px-6 py-2 rounded-full text-sm font-medium transition-all duration-300" data-filter="all" data-i18n="filter_all">全部案例</button>
+                    <button class="filter-btn px-6 py-2 rounded-full text-sm font-medium transition-all duration-300" data-filter="image" data-i18n="filter_image">图像处理</button>
+                    <button class="filter-btn px-6 py-2 rounded-full text-sm font-medium transition-all duration-300" data-filter="video" data-i18n="filter_video">视频创作</button>
                     </div>
                 </div>
                 
             <!-- 场景图生成案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">高品质素材</div>
-                    <h3 class="product-title">电商产品图优化</h3>
+                    <div class="product-tag" data-i18n="case_ecommerce_tag">高品质素材</div>
+                    <h3 class="product-title" data-i18n="case_ecommerce_title">电商产品图优化</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>某服装品牌使用AI模特换装功能，节省拍摄成本80%</span>
+                            <span data-i18n="case_desc_1">某服装品牌使用AI模特换装功能，节省拍摄成本80%</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>只需简单几步，AI就能替换背景，提高产品展示效果</span>
+                            <span data-i18n="case_desc_2">只需简单几步，AI就能替换背景，提高产品展示效果</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>提升销量150%，节省成本¥50,000/月</span>
+                            <span data-i18n="case_desc_3">提升销量150%，节省成本¥50,000/月</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                     </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_scene_before.jpg" alt="场景图生成前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                 </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </div>
                         <div class="after-image">
                             <img src="/images/cases/case_scene_after.jpg" alt="场景图生成后">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                 </div>
                     </div>
                 </div>
@@ -1597,29 +1611,29 @@
             <!-- 图生视频案例 -->
             <div class="case-row" data-category="video">
                 <div class="product-info">
-                    <div class="product-tag">视频创作</div>
-                    <h3 class="product-title">图生视频</h3>
+                    <div class="product-tag" data-i18n="case_video_tag">视频创作</div>
+                    <h3 class="product-title" data-i18n="case_video_title">图生视频</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>自媒体博主使用图生视频功能，每日产出10+条优质视频内容</span>
+                            <span data-i18n="case_video_desc_1">自媒体博主使用图生视频功能，每日产出10+条优质视频内容</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>只需上传图片，AI自动生成流畅视频，无需专业技能</span>
+                            <span data-i18n="case_video_desc_2">只需上传图片，AI自动生成流畅视频，无需专业技能</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>效率提升1000%，大幅节省创作时间</span>
+                            <span data-i18n="case_video_desc_3">效率提升1000%，大幅节省创作时间</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                 </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_img2video_before.jpg" alt="图生视频前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                         </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -1629,7 +1643,7 @@
                                 <source src="/images/cases/case_img2video_after.mp4" type="video/mp4">
                                 您的浏览器不支持视频标签
                             </video>
-                            <span class="image-label">生成视频</span>
+                            <span class="image-label" data-i18n="image_label_video">生成视频</span>
                         </div>
                     </div>
                 </div>
@@ -1639,36 +1653,36 @@
             <!-- AI模特换装案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">服饰展示</div>
-                    <h3 class="product-title">AI模特试换装</h3>
+                    <div class="product-tag" data-i18n="case_model_tag">服饰展示</div>
+                    <h3 class="product-title" data-i18n="case_model_title">AI模特试换装</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>服装品牌使用AI模特试换装功能，商品展示效率提升200%</span>
+                            <span data-i18n="case_model_desc_1">服装品牌使用AI模特试换装功能，商品展示效率提升200%</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>AI智能匹配模特体型与服装风格，打造完美展示效果</span>
+                            <span data-i18n="case_model_desc_2">AI智能匹配模特体型与服装风格，打造完美展示效果</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>一键生成多角度展示，节省90%模特拍摄成本</span>
+                            <span data-i18n="case_model_desc_3">一键生成多角度展示，节省90%模特拍摄成本</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                 </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_model_before.jpg" alt="模特换装前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                         </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
                             <img src="/images/cases/case_model_after.jpg" alt="模特换装后">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                         </div>
                     </div>
                 </div>
@@ -1677,36 +1691,36 @@
             <!-- 智能扩图案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">图像处理</div>
-                    <h3 class="product-title">智能扩图</h3>
+                    <div class="product-tag" data-i18n="case_expansion_tag">图像处理</div>
+                    <h3 class="product-title" data-i18n="case_expansion_title">智能扩图</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>电商摄影师使用智能扩图功能，素材利用率提升200%</span>
+                            <span data-i18n="case_expansion_desc_1">电商摄影师使用智能扩图功能，素材利用率提升200%</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>AI智能分析图像内容，自然延展画面边界</span>
+                            <span data-i18n="case_expansion_desc_2">AI智能分析图像内容，自然延展画面边界</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>一键操作，轻松解决构图和尺寸问题</span>
+                            <span data-i18n="case_expansion_desc_3">一键操作，轻松解决构图和尺寸问题</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                     </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_expand_before.jpg" alt="智能扩图前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                             </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
                             <img src="/images/cases/case_expand_after.jpg" alt="智能扩图后">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                         </div>
                     </div>
                     </div>
@@ -1715,36 +1729,36 @@
             <!-- 局部重绘案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">图像编辑</div>
-                    <h3 class="product-title">局部精准重绘</h3>
+                    <div class="product-tag" data-i18n="case_redraw_tag">图像编辑</div>
+                    <h3 class="product-title" data-i18n="case_redraw_title">局部精准重绘</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>摄影师使用局部重绘功能，精准修复照片瑕疵，后期效率提升200%</span>
+                            <span data-i18n="case_redraw_desc_1">摄影师使用局部重绘功能，精准修复照片瑕疵，后期效率提升200%</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>AI智能理解图像上下文，生成自然无痕的修复效果</span>
+                            <span data-i18n="case_redraw_desc_2">AI智能理解图像上下文，生成自然无痕的修复效果</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>一键操作，无需专业PS技能，节省90%修图时间</span>
+                            <span data-i18n="case_redraw_desc_3">一键操作，无需专业PS技能，节省90%修图时间</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                 </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_redraw_before.jpg" alt="局部重绘前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                         </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
                             <img src="/images/cases/case_redraw_after.jpg" alt="局部重绘后">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                         </div>
                     </div>
                 </div>
@@ -1753,36 +1767,36 @@
             <!-- 智能消除案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">图像净化</div>
-                    <h3 class="product-title">智能物体消除</h3>
+                    <div class="product-tag" data-i18n="case_removal_tag">图像净化</div>
+                    <h3 class="product-title" data-i18n="case_removal_title">智能物体消除</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>旅游摄影师使用智能消除功能，轻松移除照片中的干扰元素</span>
+                            <span data-i18n="case_removal_desc_1">旅游摄影师使用智能消除功能，轻松移除照片中的干扰元素</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>AI精准识别目标物体，智能填充背景，保持画面自然连贯</span>
+                            <span data-i18n="case_removal_desc_2">AI精准识别目标物体，智能填充背景，保持画面自然连贯</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>批量处理功能，效率提升500%，客户满意度显著提高</span>
+                            <span data-i18n="case_removal_desc_3">批量处理功能，效率提升500%，客户满意度显著提高</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                 </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_removal_before.jpg" alt="智能消除前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                         </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
                             <img src="/images/cases/case_removal_after.jpg" alt="智能消除后">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                         </div>
                     </div>
                     </div>
@@ -1791,36 +1805,36 @@
             <!-- 全局风格化案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">艺术创作</div>
-                    <h3 class="product-title">全局风格化转换</h3>
+                    <div class="product-tag" data-i18n="case_style_tag">艺术创作</div>
+                    <h3 class="product-title" data-i18n="case_style_title">全局风格化转换</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>艺术家使用风格化功能，将普通照片转换为独特艺术风格作品</span>
+                            <span data-i18n="case_style_desc_1">艺术家使用风格化功能，将普通照片转换为独特艺术风格作品</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>支持多种艺术风格，如法国绘本，金箔艺术等</span>
+                            <span data-i18n="case_style_desc_2">支持多种艺术风格，如法国绘本，金箔艺术等</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>创意工作室月产出增加300%，大幅提升创意效率</span>
+                            <span data-i18n="case_style_desc_3">创意工作室月产出增加300%，大幅提升创意效率</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                 </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_style_before.jpg" alt="全局风格化前">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                         </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
                             <img src="/images/cases/case_style_after.jpg" alt="全局风格化后">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                         </div>
                     </div>
                 </div>
@@ -1829,36 +1843,36 @@
             <!-- 指令编辑案例 -->
             <div class="case-row" data-category="image">
                 <div class="product-info">
-                    <div class="product-tag">精准创作</div>
-                    <h3 class="product-title">AI指令编辑</h3>
+                    <div class="product-tag" data-i18n="case_prompt_tag">精准创作</div>
+                    <h3 class="product-title" data-i18n="case_prompt_title">AI指令编辑</h3>
                     <ul class="feature-list">
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>内容创作者通过精确提示词，实现创意作品的精准控制</span>
+                            <span data-i18n="case_prompt_desc_1">内容创作者通过精确提示词，实现创意作品的精准控制</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>智能分析指令意图，自动优化生成效果</span>
+                            <span data-i18n="case_prompt_desc_2">智能分析指令意图，自动优化生成效果</span>
                         </li>
                         <li class="flex items-start">
                             <span class="text-indigo-500 mr-2 text-lg">•</span>
-                            <span>降低创作门槛，满意度提升85%，创作效率提升400%</span>
+                            <span data-i18n="case_prompt_desc_3">降低创作门槛，满意度提升85%，创作效率提升400%</span>
                         </li>
                     </ul>
-                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn">立即使用</a>
+                    <a href="javascript:void(0)" onclick="handleStartUsing()" class="action-btn" data-i18n="try_now">立即使用</a>
                             </div>
                 <div class="product-showcase">
                     <div class="comparison-container">
                         <div class="before-image">
                             <img src="/images/cases/case_prompt_edit_before.jpg" alt="指令编辑前" id="prompt-edit-before-img">
-                            <span class="image-label">原始图片</span>
+                            <span class="image-label" data-i18n="image_label_original">原始图片</span>
                         </div>
                         <div class="arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                         <div class="after-image">
                             <img src="/images/cases/case_prompt_edit_after.jpg" alt="指令编辑后" id="prompt-edit-after-img">
-                            <span class="image-label">生成结果</span>
+                            <span class="image-label" data-i18n="image_label_result">生成结果</span>
                         </div>
                     </div>
                 </div>
@@ -1875,8 +1889,8 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <!-- 左侧内容 -->
                 <div>
-                    <h2 class="text-4xl font-bold text-gray-900 mb-6">为什么选择萤火AI？</h2>
-                    <p class="text-xl text-gray-600 mb-8">
+                    <h2 class="text-4xl font-bold text-gray-900 mb-6" data-i18n="why_choose_title">为什么选择萤火AI？</h2>
+                    <p class="text-xl text-gray-600 mb-8" data-i18n="why_choose_subtitle">
                         我们致力于为全球创作者提供最先进的AI工具，让每个人都能轻松创作出专业级的内容。
                     </p>
                     
@@ -1886,8 +1900,8 @@
                                 <i class="ri-rocket-line text-white text-sm"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-2">技术领先</h3>
-                                <p class="text-gray-600">采用最新的AI算法和深度学习技术，确保输出质量始终处于行业领先水平</p>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2" data-i18n="advantage_tech_title">技术领先</h3>
+                                <p class="text-gray-600" data-i18n="advantage_tech_desc">采用最新的AI算法和深度学习技术，确保输出质量始终处于行业领先水平</p>
                     </div>
                 </div>
                 
@@ -1896,8 +1910,8 @@
                                 <i class="ri-shield-check-line text-white text-sm"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-2">安全可靠</h3>
-                                <p class="text-gray-600">企业级安全保障，数据加密传输，严格保护用户隐私和作品版权</p>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2" data-i18n="advantage_security_title">安全可靠</h3>
+                                <p class="text-gray-600" data-i18n="advantage_security_desc">企业级安全保障，数据加密传输，严格保护用户隐私和作品版权</p>
                     </div>
                 </div>
                 
@@ -1906,14 +1920,14 @@
                                 <i class="ri-customer-service-line text-white text-sm"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-2">专业服务</h3>
-                                <p class="text-gray-600">7×24小时技术支持，专业团队随时为您解答问题，确保使用体验</p>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2" data-i18n="advantage_service_title">专业服务</h3>
+                                <p class="text-gray-600" data-i18n="advantage_service_desc">7×24小时技术支持，专业团队随时为您解答问题，确保使用体验</p>
                         </div>
                     </div>
                 </div>
                 
                     <div class="mt-10">
-                        <button onclick="handleStartUsing()" class="btn-primary text-white px-8 py-4 rounded-full font-semibold text-lg inline-block">
+                        <button onclick="handleStartUsing()" class="btn-primary text-white px-8 py-4 rounded-full font-semibold text-lg inline-block" data-i18n="get_started">
                             开始使用
                         </button>
                     </div>
@@ -1922,20 +1936,20 @@
                 <!-- 右侧统计 -->
                 <div class="grid grid-cols-2 gap-8">
                     <div class="text-center p-8 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
-                        <div class="text-4xl font-bold text-indigo-600 mb-2">50万+</div>
-                        <div class="text-gray-600">注册用户</div>
+                        <div class="text-4xl font-bold text-indigo-600 mb-2" data-i18n="stat_users_number">50万+</div>
+                        <div class="text-gray-600" data-i18n="stat_users_label">注册用户</div>
                             </div>
                     <div class="text-center p-8 bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl">
-                        <div class="text-4xl font-bold text-green-600 mb-2">1000万+</div>
-                        <div class="text-gray-600">生成作品</div>
+                        <div class="text-4xl font-bold text-green-600 mb-2" data-i18n="stat_works_number">1000万+</div>
+                        <div class="text-gray-600" data-i18n="stat_works_label">生成作品</div>
                         </div>
                     <div class="text-center p-8 bg-gradient-to-br from-purple-50 to-violet-100 rounded-2xl">
-                        <div class="text-4xl font-bold text-purple-600 mb-2">99.9%</div>
-                        <div class="text-gray-600">服务可用性</div>
+                        <div class="text-4xl font-bold text-purple-600 mb-2" data-i18n="stat_uptime_number">99.9%</div>
+                        <div class="text-gray-600" data-i18n="stat_uptime_label">服务可用性</div>
                     </div>
                     <div class="text-center p-8 bg-gradient-to-br from-orange-50 to-red-100 rounded-2xl">
-                        <div class="text-4xl font-bold text-orange-600 mb-2">24/7</div>
-                        <div class="text-gray-600">技术支持</div>
+                        <div class="text-4xl font-bold text-orange-600 mb-2" data-i18n="stat_support_number">24/7</div>
+                        <div class="text-gray-600" data-i18n="stat_support_label">技术支持</div>
                 </div>
                             </div>
                         </div>
@@ -1950,10 +1964,10 @@
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center mb-4">
                         <img src="/images/favicon.png" alt="萤火AI" class="h-8 w-8 mr-3">
-                        <span class="text-xl font-bold">萤火AI</span>
+                        <span class="text-xl font-bold" data-i18n="footer_brand_name">萤火AI</span>
                             </div>
-                    <p class="text-gray-400 mb-6">
-                        专业级AI智能创作平台，为全球创作者提供最先进的AI工具和服务。
+                    <p class="text-gray-400 mb-6" data-i18n="footer_description">
+                        专业级电商ai工具平台，为电商从业者提供最先进的AI工具和服务。
                     </p>
                     <div class="flex space-x-4">
                         <a href="#" class="text-gray-400 hover:text-white transition-colors">
@@ -1970,29 +1984,27 @@
 
                 <!-- 产品链接 -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">产品功能</h3>
+                    <h3 class="text-lg font-semibold mb-4" data-i18n="footer_products_title">产品功能</h3>
                     <ul class="space-y-2">
-                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors">AI图像处理</a></li>
-                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors">AI视频创作</a></li>
-                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors">AI模特换装</a></li>
-                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors">亚马逊助手</a></li>
+                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors" data-i18n="footer_ai_image">AI图像处理</a></li>
+                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors" data-i18n="footer_ai_video">AI视频创作</a></li>
+                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors" data-i18n="footer_ai_model">AI模特换装</a></li>
+                        <li><a href="/home.html" class="text-gray-400 hover:text-white transition-colors" data-i18n="footer_amazon_assistant">亚马逊助手</a></li>
                     </ul>
                 </div>
                 
                 <!-- 支持链接 -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">支持与帮助</h3>
+                    <h3 class="text-lg font-semibold mb-4" data-i18n="footer_support_title">支持与帮助</h3>
                     <ul class="space-y-2">
-                        <li><a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-400 hover:text-white transition-colors">使用教程</a></li>
-                        <li><a href="https://blog.yinghuo.ai" target="_blank" class="text-gray-400 hover:text-white transition-colors">公告</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">常见问题</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">联系客服</a></li>
+                        <li><a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-400 hover:text-white transition-colors" data-i18n="footer_tutorial">使用教程</a></li>
+                        <li><a href="https://blog.yinghuo.ai" target="_blank" class="text-gray-400 hover:text-white transition-colors" data-i18n="footer_news">公告</a></li>
                     </ul>
                     </div>
                 </div>
                 
             <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-                <p>&copy; 2024 萤火AI. 保留所有权利。</p>
+                <p data-i18n="footer_copyright">&copy; 2024 萤火AI. 保留所有权利。</p>
                     </div>
                 </div>
     </footer>
@@ -2755,6 +2767,403 @@
                 loadCustomerServiceForIndex();
             }, 1000); // 延长等待时间，确保components.js已加载
         }
+    </script>
+
+    <script>
+        // 当点击登录或任何导航到home.html的链接时，清除广告条的缓存状态
+        document.addEventListener('DOMContentLoaded', function() {
+            // 立即清除localStorage中的广告条状态
+            localStorage.removeItem('promoBannerClosed');
+            
+            // 处理所有链接到home.html的元素
+            const homeLinks = document.querySelectorAll('a[href*="home.html"]');
+            
+            homeLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    localStorage.removeItem('promoBannerClosed');
+                });
+            });
+            
+            // 处理登录表单
+            const loginForm = document.querySelector('form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function() {
+                    localStorage.removeItem('promoBannerClosed');
+                });
+            }
+        });
+    </script>
+
+    <!-- 语言切换系统 -->
+    <script>
+        // 翻译数据
+        const translations = {
+            zh: {
+                // 导航栏
+                nav_features: "功能特色",
+                nav_tutorial: "使用教程",
+                nav_news: "公告",
+                nav_about: "关于我们",
+                nav_start_using: "立即使用",
+                nav_ai_image: "AI图像处理",
+                nav_ai_video: "AI视频创作", 
+                nav_ai_model: "AI模特换装",
+                nav_amazon_assistant: "亚马逊助手",
+                btn_start_now: "立即使用",
+                
+                // 英雄区域
+                hero_title_1: "专业级电商ai工具",
+                hero_title_2: "服务电商人",
+                hero_description_1: "每天有数万创作者用萤火AI生成",
+                hero_description_2: "高质量图片和视频内容，提升创作效率10倍",
+                start_using: "开始使用",
+                
+                // 统计数据
+                stat_daily_users: "日活用户",
+                stat_generated_works: "生成作品",
+                stat_satisfaction: "满意度",
+                
+                // 功能区域
+                features_core: "核心能力",
+                features_title: "四大核心功能",
+                features_subtitle: "专业级AI工具，满足您的所有创作需求",
+                
+                // 功能卡片
+                feature_image_title: "AI图像处理",
+                feature_image_desc: "智能扩图、图像智能消除、图像上色、背景移除等专业功能",
+                feature_video_title: "AI视频创作", 
+                feature_video_desc: "文生视频、图生视频、视频字幕移除等创新功能",
+                feature_model_title: "AI模特换装",
+                feature_model_desc: "虚拟试衣、模特换装、服装展示等电商必备工具",
+                feature_amazon_title: "亚马逊助手",
+                feature_amazon_desc: "16个专业工具助力亚马逊卖家提升销量",
+                
+                // 按钮
+                try_now: "立即体验",
+                learn_more: "了解更多",
+                
+                // 案例展示区域
+                cases_category: "客户案例",
+                cases_title: "案例展示", 
+                cases_subtitle: "看看其他创作者如何用萤火AI提升工作效率",
+                
+                // 筛选按钮
+                filter_all: "全部案例",
+                filter_image: "图像处理",
+                filter_video: "视频创作",
+                
+                // 案例标签和标题
+                case_ecommerce_tag: "高品质素材",
+                case_ecommerce_title: "电商产品图优化",
+                case_video_tag: "视频创作",
+                case_video_title: "图生视频",
+                case_model_tag: "服饰展示",
+                case_model_title: "AI模特试换装",
+                case_expansion_tag: "图像处理",
+                case_expansion_title: "智能扩图",
+                case_redraw_tag: "图像编辑",
+                case_redraw_title: "局部精准重绘",
+                case_removal_tag: "图像净化",
+                case_removal_title: "智能物体消除",
+                case_style_tag: "艺术创作",
+                case_style_title: "全局风格化转换",
+                case_prompt_tag: "精准创作",
+                case_prompt_title: "AI指令编辑",
+                
+                // 图片标签
+                image_label_original: "原始图片",
+                image_label_result: "生成结果",
+                image_label_video: "生成视频",
+                
+                // 功能详细列表
+                feature_smart_expansion: "智能扩图放大",
+                feature_smart_removal: "图像智能消除",
+                feature_photo_colorization: "黑白照片上色",
+                feature_background_removal: "背景一键移除",
+                feature_text_to_video: "文本生成视频",
+                feature_image_to_video: "图片生成视频",
+                feature_subtitle_removal: "视频字幕移除",
+                feature_video_style_repaint: "视频风格重绘",
+                feature_virtual_try_on: "虚拟模特试衣",
+                feature_clothing_swap: "服装款式替换",
+                feature_skin_tone_adjustment: "模特肤色调整",
+                feature_product_optimization: "产品展示优化",
+                feature_listing_optimization: "Listing标题优化",
+                feature_keyword_research: "关键词研究分析",
+                feature_product_comparison: "产品对比分析",
+                feature_competitor_monitoring: "竞品监控报告",
+                
+                // 为什么选择萤火AI区域
+                why_choose_title: "为什么选择萤火AI？",
+                why_choose_subtitle: "我们致力于为全球创作者提供最先进的AI工具，让每个人都能轻松创作出专业级的内容。",
+                advantage_tech_title: "技术领先",
+                advantage_tech_desc: "采用最新的AI算法和深度学习技术，确保输出质量始终处于行业领先水平",
+                advantage_security_title: "安全可靠",
+                advantage_security_desc: "企业级安全保障，数据加密传输，严格保护用户隐私和作品版权",
+                advantage_service_title: "专业服务",
+                advantage_service_desc: "7×24小时技术支持，专业团队随时为您解答问题，确保使用体验",
+                get_started: "开始使用",
+                
+                // 统计数据
+                stat_users_number: "50万+",
+                stat_users_label: "注册用户",
+                stat_works_number: "1000万+",
+                stat_works_label: "生成作品",
+                stat_uptime_number: "99.9%",
+                stat_uptime_label: "服务可用性",
+                stat_support_number: "24/7",
+                stat_support_label: "技术支持",
+                
+                // 案例描述
+                case_desc_1: "某服装品牌使用AI模特换装功能，节省拍摄成本80%",
+                case_desc_2: "只需简单几步，AI就能替换背景，提高产品展示效果",
+                case_desc_3: "提升销量150%，节省成本¥50,000/月",
+                
+                // 页脚
+                footer_brand_name: "萤火AI",
+                footer_description: "专业级电商ai工具平台，为电商从业者提供最先进的AI工具和服务。",
+                footer_products_title: "产品功能",
+                footer_ai_image: "AI图像处理",
+                footer_ai_video: "AI视频创作",
+                footer_ai_model: "AI模特换装",
+                footer_amazon_assistant: "亚马逊助手",
+                footer_support_title: "支持与帮助",
+                footer_tutorial: "使用教程",
+                footer_news: "公告",
+                footer_copyright: "© 2024 萤火AI. 保留所有权利。",
+                
+                // 案例详细描述
+                case_video_desc_1: "自媒体博主使用图生视频功能，每日产出10+条优质视频内容",
+                case_video_desc_2: "只需上传图片，AI自动生成流畅视频，无需专业技能",
+                case_video_desc_3: "效率提升1000%，大幅节省创作时间",
+                case_model_desc_1: "服装品牌使用AI模特试换装功能，商品展示效率提升200%",
+                case_model_desc_2: "AI智能匹配模特体型与服装风格，打造完美展示效果",
+                case_model_desc_3: "一键生成多角度展示，节省90%模特拍摄成本",
+                case_expansion_desc_1: "电商摄影师使用智能扩图功能，素材利用率提升200%",
+                case_expansion_desc_2: "AI智能分析图像内容，自然延展画面边界",
+                case_expansion_desc_3: "一键操作，轻松解决构图和尺寸问题",
+                case_redraw_desc_1: "摄影师使用局部重绘功能，精准修复照片瑕疵，后期效率提升200%",
+                case_redraw_desc_2: "AI智能理解图像上下文，生成自然无痕的修复效果",
+                case_redraw_desc_3: "一键操作，无需专业PS技能，节省90%修图时间",
+                case_removal_desc_1: "旅游摄影师使用智能消除功能，轻松移除照片中的干扰元素",
+                case_removal_desc_2: "AI精准识别目标物体，智能填充背景，保持画面自然连贯",
+                case_removal_desc_3: "批量处理功能，效率提升500%，客户满意度显著提高",
+                case_style_desc_1: "艺术家使用风格化功能，将普通照片转换为独特艺术风格作品",
+                case_style_desc_2: "支持多种艺术风格，如法国绘本，金箔艺术等",
+                case_style_desc_3: "创意工作室月产出增加300%，大幅提升创意效率",
+                case_prompt_desc_1: "内容创作者通过精确提示词，实现创意作品的精准控制",
+                case_prompt_desc_2: "智能分析指令意图，自动优化生成效果",
+                case_prompt_desc_3: "降低创作门槛，满意度提升85%，创作效率提升400%"
+            },
+            en: {
+                // Navigation
+                nav_features: "Features",
+                nav_tutorial: "Tutorial",
+                nav_news: "News",
+                nav_about: "About Us",
+                nav_start_using: "Get Started",
+                nav_ai_image: "AI Image Processing",
+                nav_ai_video: "AI Video Creation",
+                nav_ai_model: "AI Model Dressing", 
+                nav_amazon_assistant: "Amazon Assistant",
+                btn_start_now: "Get Started",
+                
+                // Hero section
+                hero_title_1: "Professional E-commerce AI Tools",
+                hero_title_2: "Serving E-commerce Professionals",
+                hero_description_1: "Tens of thousands of creators use YingHuo AI daily to generate",
+                hero_description_2: "High-quality images and videos, boosting creative efficiency by 10x",
+                start_using: "Get Started",
+                
+                // Statistics
+                stat_daily_users: "Daily Users",
+                stat_generated_works: "Generated Works",
+                stat_satisfaction: "Satisfaction",
+                
+                // Features section
+                features_core: "Core Capabilities",
+                features_title: "Four Core Functions",
+                features_subtitle: "Professional AI tools to meet all your creative needs",
+                
+                // Feature cards
+                feature_image_title: "AI Image Processing",
+                feature_image_desc: "Smart expansion, intelligent removal, image coloring, background removal and other professional features",
+                feature_video_title: "AI Video Creation",
+                feature_video_desc: "Text-to-video, image-to-video, video subtitle removal and other innovative features",
+                feature_model_title: "AI Model Dressing",
+                feature_model_desc: "Virtual try-on, model dressing, clothing display and other e-commerce essential tools",
+                feature_amazon_title: "Amazon Assistant",
+                feature_amazon_desc: "16 professional tools to help Amazon sellers boost sales",
+                
+                // Buttons
+                try_now: "Try Now",
+                learn_more: "Learn More",
+                
+                // Cases showcase section
+                cases_category: "Customer Cases",
+                cases_title: "Case Studies",
+                cases_subtitle: "See how other creators boost their productivity with YingHuo AI",
+                
+                // Filter buttons
+                filter_all: "All Cases",
+                filter_image: "Image Processing",
+                filter_video: "Video Creation",
+                
+                // Case tags and titles
+                case_ecommerce_tag: "High Quality Materials",
+                case_ecommerce_title: "E-commerce Product Image Optimization",
+                case_video_tag: "Video Creation",
+                case_video_title: "Image to Video",
+                case_model_tag: "Fashion Display",
+                case_model_title: "AI Model Try-On",
+                case_expansion_tag: "Image Processing",
+                case_expansion_title: "Smart Image Expansion",
+                case_redraw_tag: "Image Editing",
+                case_redraw_title: "Precise Local Redrawing",
+                case_removal_tag: "Image Purification",
+                case_removal_title: "Smart Object Removal",
+                case_style_tag: "Artistic Creation",
+                case_style_title: "Global Style Transfer",
+                case_prompt_tag: "Precise Creation",
+                case_prompt_title: "AI Prompt Editing",
+                
+                // Image labels
+                image_label_original: "Original Image",
+                image_label_result: "Generated Result",
+                image_label_video: "Generated Video",
+                
+                // Feature detailed list
+                feature_smart_expansion: "Smart Image Expansion",
+                feature_smart_removal: "Intelligent Object Removal",
+                feature_photo_colorization: "Black & White Photo Colorization",
+                feature_background_removal: "One-Click Background Removal",
+                feature_text_to_video: "Text to Video Generation",
+                feature_image_to_video: "Image to Video Generation",
+                feature_subtitle_removal: "Video Subtitle Removal",
+                feature_video_style_repaint: "Video Style Transfer",
+                feature_virtual_try_on: "Virtual Model Try-On",
+                feature_clothing_swap: "Clothing Style Replacement",
+                feature_skin_tone_adjustment: "Model Skin Tone Adjustment",
+                feature_product_optimization: "Product Display Optimization",
+                feature_listing_optimization: "Listing Title Optimization",
+                feature_keyword_research: "Keyword Research & Analysis",
+                feature_product_comparison: "Product Comparison Analysis",
+                feature_competitor_monitoring: "Competitor Monitoring Reports",
+                
+                // Why choose YingHuo AI section
+                why_choose_title: "Why Choose YingHuo AI?",
+                why_choose_subtitle: "We are committed to providing creators worldwide with the most advanced AI tools, enabling everyone to easily create professional-grade content.",
+                advantage_tech_title: "Technology Leadership",
+                advantage_tech_desc: "Utilizing the latest AI algorithms and deep learning technologies to ensure output quality remains at industry-leading levels",
+                advantage_security_title: "Security & Reliability",
+                advantage_security_desc: "Enterprise-grade security protection, encrypted data transmission, strict protection of user privacy and copyright",
+                advantage_service_title: "Professional Service",
+                advantage_service_desc: "24/7 technical support, professional team ready to answer your questions and ensure user experience",
+                get_started: "Get Started",
+                
+                // Statistics
+                stat_users_number: "500K+",
+                stat_users_label: "Registered Users",
+                stat_works_number: "10M+",
+                stat_works_label: "Generated Works",
+                stat_uptime_number: "99.9%",
+                stat_uptime_label: "Service Uptime",
+                stat_support_number: "24/7",
+                stat_support_label: "Technical Support",
+                
+                // Case descriptions
+                case_desc_1: "A fashion brand used AI model try-on feature, saving 80% of shooting costs",
+                case_desc_2: "Just a few simple steps, AI can replace backgrounds and improve product display",
+                case_desc_3: "Increased sales by 150%, saved costs ¥50,000/month",
+                
+                // Footer
+                footer_brand_name: "YingHuo AI",
+                footer_description: "Professional e-commerce AI tools platform, providing the most advanced AI tools and services for e-commerce practitioners.",
+                footer_products_title: "Product Features",
+                footer_ai_image: "AI Image Processing",
+                footer_ai_video: "AI Video Creation",
+                footer_ai_model: "AI Model Dressing",
+                footer_amazon_assistant: "Amazon Assistant",
+                footer_support_title: "Support & Help",
+                footer_tutorial: "Tutorial",
+                footer_news: "News",
+                footer_copyright: "© 2024 YingHuo AI. All rights reserved.",
+                
+                // Case detailed descriptions
+                case_video_desc_1: "Content creators use image-to-video feature to produce 10+ high-quality videos daily",
+                case_video_desc_2: "Simply upload images, AI automatically generates smooth videos, no professional skills required",
+                case_video_desc_3: "1000% efficiency improvement, significantly saving creation time",
+                case_model_desc_1: "Fashion brands use AI model try-on feature, product display efficiency increased by 200%",
+                case_model_desc_2: "AI intelligently matches model body types with clothing styles, creating perfect display effects",
+                case_model_desc_3: "One-click multi-angle display generation, saving 90% model shooting costs",
+                case_expansion_desc_1: "E-commerce photographers use smart expansion feature, material utilization increased by 200%",
+                case_expansion_desc_2: "AI intelligently analyzes image content, naturally extends image boundaries",
+                case_expansion_desc_3: "One-click operation, easily solve composition and size issues",
+                case_redraw_desc_1: "Photographers use local redraw feature for precise photo flaw repair, post-processing efficiency increased by 200%",
+                case_redraw_desc_2: "AI intelligently understands image context, generates natural seamless repair effects",
+                case_redraw_desc_3: "One-click operation, no professional PS skills required, saving 90% retouching time",
+                case_removal_desc_1: "Travel photographers use smart removal feature to easily remove interfering elements from photos",
+                case_removal_desc_2: "AI precisely identifies target objects, intelligently fills backgrounds, maintaining natural image continuity",
+                case_removal_desc_3: "Batch processing feature, 500% efficiency improvement, significantly enhanced customer satisfaction",
+                case_style_desc_1: "Artists use stylization feature to transform ordinary photos into unique artistic style works",
+                case_style_desc_2: "Supports multiple artistic styles, such as French illustration, gold foil art, etc.",
+                case_style_desc_3: "Creative studio monthly output increased by 300%, significantly improving creative efficiency",
+                case_prompt_desc_1: "Content creators achieve precise control of creative works through accurate prompts",
+                case_prompt_desc_2: "Intelligently analyzes command intent, automatically optimizes generation effects",
+                case_prompt_desc_3: "Lower creative barriers, 85% satisfaction improvement, 400% creative efficiency boost"
+            }
+        };
+
+        // 当前语言
+        let currentLanguage = localStorage.getItem('language') || 'zh';
+
+        // 更新页面文本
+        function updatePageText(language) {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[language] && translations[language][key]) {
+                    element.textContent = translations[language][key];
+                }
+            });
+
+            // 更新页面标题
+            if (language === 'en') {
+                document.title = 'YingHuo AI - Professional E-commerce AI Tools Platform';
+                document.documentElement.lang = 'en';
+            } else {
+                document.title = '萤火AI - 专业级电商ai工具平台';
+                document.documentElement.lang = 'zh-CN';
+            }
+        }
+
+        // 语言切换处理
+        function handleLanguageChange() {
+            const languageSelector = document.getElementById('languageSelector');
+            if (!languageSelector) return;
+
+            languageSelector.addEventListener('change', function() {
+                const selectedLanguage = this.value;
+                currentLanguage = selectedLanguage;
+                
+                // 保存到本地存储
+                localStorage.setItem('language', selectedLanguage);
+                
+                // 更新页面文本
+                updatePageText(selectedLanguage);
+                
+                console.log('语言已切换到:', selectedLanguage === 'zh' ? '中文' : 'English');
+            });
+
+            // 设置初始语言
+            languageSelector.value = currentLanguage;
+            updatePageText(currentLanguage);
+        }
+
+        // 页面加载完成后初始化语言系统
+        document.addEventListener('DOMContentLoaded', function() {
+            handleLanguageChange();
+        });
     </script>
 </body>
 </html>

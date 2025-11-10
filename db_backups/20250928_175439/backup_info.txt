@@ -1,0 +1,27 @@
+数据库备份信息
+=====================================
+
+备份时间: 2025-09-28 17:54:39
+备份目录: db_backups/20250928_175439
+原数据库: /Users/houkai/Documents/Yinghuo1/模糊图片变清晰/yinghuo.db
+数据库大小: 40K
+
+备份文件:
+- 数据库文件: yinghuo.db (40K)
+- SQL导出文件: yinghuo_20250928_175439.sql (2.5K)
+
+恢复命令:
+---------
+# 从SQL文件恢复:
+sqlite3 yinghuo.db < db_backups/20250928_175439/yinghuo_20250928_175439.sql
+
+# 从数据库文件恢复:
+cp db_backups/20250928_175439/yinghuo.db ./yinghuo.db
+
+备份完成状态: 成功
+
+数据表统计:
+============
+- feature_usages: 0 条记录
+- image_histories: 0 条记录
+- users: 3 条记录

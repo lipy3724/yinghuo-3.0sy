@@ -147,6 +147,91 @@
         // 添加错误提示状态标记，防止重复提示
         let hasShownErrorAlert = false;
         
+        // 添加语言切换相关变量
+        let currentLanguage = 'zh-cn'; // 默认语言
+        
+        // 获取语言参数的函数
+        function getLanguageFromParams() {
+            try {
+                // 1. 首先从URL参数获取
+                const urlParams = new URLSearchParams(window.location.search);
+                let langParam = urlParams.get('lang');
+                
+                if (langParam) {
+                    console.log('从URL参数获取语言:', langParam);
+                    // 转换语言格式：zh/en -> zh-cn/en-us
+                    if (langParam === 'zh') {
+                        langParam = 'zh-cn';
+                    } else if (langParam === 'en') {
+                        langParam = 'en-us';
+                    }
+                    currentLanguage = langParam;
+                    // 保存到localStorage
+                    localStorage.setItem('preferred_language', langParam);
+                    return langParam;
+                }
+                
+                // 2. 从localStorage获取
+                const savedLang = localStorage.getItem('preferred_language');
+                if (savedLang) {
+                    console.log('从localStorage获取语言:', savedLang);
+                    currentLanguage = savedLang;
+                    return savedLang;
+                }
+                
+                // 3. 使用默认语言
+                console.log('使用默认语言:', currentLanguage);
+                return currentLanguage;
+            } catch (error) {
+                console.error('获取语言参数失败:', error);
+                return 'zh-cn';
+            }
+        }
+        
+        // 监听来自父页面的语言切换消息
+        window.addEventListener('message', function(event) {
+            try {
+                if (event.data && event.data.type === 'changeLanguage') {
+                    const newLanguage = event.data.language;
+                    console.log('收到语言切换消息:', newLanguage);
+                    
+                    if (newLanguage && newLanguage !== currentLanguage) {
+                        currentLanguage = newLanguage;
+                        localStorage.setItem('preferred_language', newLanguage);
+                        
+                        // 向编辑器发送语言切换消息
+                        changeEditorLanguage(newLanguage);
+                        
+                        // 向父页面发送确认消息
+                        if (event.source) {
+                            event.source.postMessage({
+                                type: 'languageChanged',
+                                language: newLanguage,
+                                success: true
+                            }, '*');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('处理语言切换消息失败:', error);
+            }
+        });
+        
+        // 向编辑器发送语言切换消息
+        function changeEditorLanguage(language) {
+            try {
+                if (iframeEle && iframeEle.contentWindow) {
+                    const message = {
+                        lang: language
+                    };
+                    console.log('向编辑器发送语言切换消息:', message);
+                    iframeEle.contentWindow.postMessage(message, '*');
+                }
+            } catch (error) {
+                console.error('向编辑器发送语言切换消息失败:', error);
+            }
+        }
+        
         // 构建编辑器URL并加载
         async function initializeEditor() {
             // 不再记录功能使用 - 移除初始化时扣除次数
@@ -154,12 +239,16 @@
             //     return; // 如果不能继续（如积分不足），则不加载编辑器
             // }
             
+            // 获取当前语言设置
+            const language = getLanguageFromParams();
+            console.log('初始化编辑器，使用语言:', language);
+            
             // 严格按照API文档构建参数
             const eliminationParam = {
                 apiHost: 'aibcn',
                 appKey: window.INTL_OP_FRAME_SDK_CONFIG.appKey, // 从配置中获取appKey
                 trial: true,
-                lang: 'zh-cn',
+                lang: language, // 使用动态语言参数
                 charge: true // 开启生产拦截
                 // 可选的imageUrl参数，如果需要可以添加
                 // imageUrl: 'https://next-ubanner.oss-cn-beijing.aliyuncs.com/ALIWOOD_TEMPLATE/2020-06-03/test/test1.jpg'
@@ -353,6 +442,14 @@
                             // 保存当前任务ID到全局变量，用于后续退款
                             currentTaskId = result.taskId;
                             console.log(`保存当前任务ID: ${currentTaskId}`);
+                            
+                            // 在localStorage中保存当前任务ID，防止页面刷新后丢失
+                            try {
+                                localStorage.setItem('current_image_removal_task_id', currentTaskId);
+                                console.log('任务ID已保存到localStorage');
+                            } catch (e) {
+                                console.error('保存任务ID到localStorage失败:', e);
+                            }
                         }
                         
                         // 回复编辑器，确保正确处理返回值
@@ -533,6 +630,17 @@
             // 先获取API配置，再初始化编辑器
             try {
                 await fetchApiConfig();
+                // 在页面加载时尝试恢复任务ID
+                try {
+                    // 尝试从localStorage恢复任务ID
+                    const savedTaskId = localStorage.getItem('current_image_removal_task_id');
+                    if (savedTaskId) {
+                        currentTaskId = savedTaskId;
+                        console.log(`从localStorage恢复任务ID: ${currentTaskId}`);
+                    }
+                } catch (e) {
+                    console.error('从localStorage恢复任务ID失败:', e);
+                }
                 initializeEditor();
             } catch (error) {
                 console.error("初始化过程出错:", error);
@@ -540,57 +648,57 @@
             }
         });
 
-        // 添加退款请求函数
+        // 请求退款
         async function requestRefund(taskId, reason) {
+            if (!taskId) {
+                console.error('请求退款失败: 没有有效的任务ID');
+                return false;
+            }
+            
+            if (hasRequestedRefund) {
+                console.log('已经请求过退款，不重复请求');
+                return false;
+            }
+            
             try {
-                // 检查是否已经请求过退款
-                if (hasRequestedRefund) {
-                    console.log(`已经为任务 ${taskId} 请求过退款，避免重复退款`);
-                    return true;
-                }
-                
                 console.log(`请求退款: 任务ID=${taskId}, 原因=${reason}`);
-                
-                const authToken = localStorage.getItem('authToken');
-                if (!authToken) {
-                    console.error('用户未登录，无法请求退款');
-                    return false;
-                }
+                hasRequestedRefund = true;
                 
                 const response = await fetch('/api/refund/image-removal', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : ''
                     },
                     body: JSON.stringify({ taskId, reason })
                 });
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error(`退款请求失败: ${response.status}, ${errorText}`);
+                    console.error('退款请求失败:', response.status, errorText);
                     return false;
                 }
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    console.log('退款请求成功:', result);
-                    // 标记已请求退款，防止重复退款
-                    hasRequestedRefund = true;
+                    console.log('退款成功:', result);
                     
-                    // 只有在用户尚未看到错误提示时才显示退款成功提示
-                    if (!hasShownErrorAlert) {
-                        alert('任务处理失败，系统已自动申请退款，积分将很快退还到您的账户。');
-                        hasShownErrorAlert = true;
+                    // 清除当前任务ID和localStorage中的记录
+                    currentTaskId = null;
+                    try {
+                        localStorage.removeItem('current_image_removal_task_id');
+                    } catch (e) {
+                        console.error('清除localStorage中的任务ID失败:', e);
                     }
+                    
                     return true;
                 } else {
-                    console.error('退款请求被拒绝:', result.message);
+                    console.error('退款失败:', result.message);
                     return false;
                 }
             } catch (error) {
-                console.error('退款请求出错:', error);
+                console.error('退款过程出错:', error);
                 return false;
             }
         }

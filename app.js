@@ -1,37 +1,21 @@
-// 加载环境变量
-require('dotenv').config();
-
+// 在app.js中添加新的路由
 const express = require('express');
-const path = require('path');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-
-// 导入中间件
-const mobileGuardMiddleware = require('./middleware/mobileGuard');
-
-// 导入路由
-const authRoutes = require('./routes/auth');
-// 其他路由导入...
-const clothingSegmentationRoutes = require('./routes/clothingSegmentation');
-
 const app = express();
 
-// 中间件
-app.use(cors());
-app.use(bodyParser.json());
-// 使用移动端拦截中间件（必须在静态文件中间件之前）
-app.use(mobileGuardMiddleware);
-app.use(express.static(path.join(__dirname, 'public')));
+// 添加垫图历史记录路由
+const diantuHistoryRouter = require('./routes/diantu-history');
+app.use('/api/diantu/history', diantuHistoryRouter);
 
-// 路由
-app.use('/api/auth', authRoutes);
-// 其他路由...
-app.use('/api/cloth-segmentation', clothingSegmentationRoutes);
+// 添加垫图功能API路由
+const diantuRouter = require('./routes/diantu');
+app.use('/api/diantu', diantuRouter);
 
-// 配置端口
-const PORT = process.env.PORT || 3000;
+// 注释掉这里的文生图片历史记录路由，避免与server.js中的路由冲突
+// const textToImageHistoryRouter = require('./routes/text-to-image-history');
+// app.use('/api/text-to-image/history', textToImageHistoryRouter);
 
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`服务器已启动，监听端口: ${PORT}`);
-}); 
+// 添加上传到OSS的路由
+const uploadToOssRouter = require('./routes/upload-to-oss');
+app.use('/api/upload-to-oss', uploadToOssRouter);
+
+module.exports = app;

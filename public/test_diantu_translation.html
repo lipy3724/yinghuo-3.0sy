@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>垫图翻译测试</title>
+    <script src="translations.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-item { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .language-switch { margin: 20px 0; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>垫图页面翻译测试</h1>
+    
+    <div class="language-switch">
+        <button onclick="switchLanguage('zh')">中文</button>
+        <button onclick="switchLanguage('en')">English</button>
+    </div>
+    
+    <div class="test-item">
+        <strong>页面标题:</strong> <span data-translate="page.diantu_title">垫图 - 萤火AI</span>
+    </div>
+    
+    <div class="test-item">
+        <strong>垫图标题:</strong> <span data-translate="diantu.title">垫图</span>
+    </div>
+    
+    <div class="test-item">
+        <strong>上传说明:</strong> <span data-translate="diantu.upload_instruction">上传需要垫图的图片</span>
+    </div>
+    
+    <div class="test-item">
+        <strong>提示词输入:</strong> <span data-translate="diantu.prompt_input">提示词输入</span>
+    </div>
+    
+    <div class="test-item">
+        <strong>开始生成:</strong> <span data-translate="diantu.start_generation">开始垫图</span>
+    </div>
+    
+    <div class="test-item">
+        <strong>处理时间:</strong> <span data-translate="diantu.generation_time">垫图需要5-10秒，消耗7积分</span>
+    </div>
+    
+    <div class="test-item">
+        <strong>历史记录:</strong> <span data-translate="diantu.history_records">生成历史</span>
+    </div>
+
+    <script>
+        // 获取当前语言设置
+        function getCurrentLanguage() {
+            return localStorage.getItem('language') || 'zh';
+        }
+
+        // 获取翻译文本的函数
+        function getTranslation(key, fallback = key) {
+            const currentLang = getCurrentLanguage();
+            return translations[currentLang]?.[key] || translations['zh']?.[key] || fallback;
+        }
+
+        // 切换语言
+        function switchLanguage(lang) {
+            localStorage.setItem('language', lang);
+            updateTranslations();
+        }
+
+        // 更新页面翻译
+        function updateTranslations() {
+            const elements = document.querySelectorAll('[data-translate]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                element.textContent = translation;
+            });
+            
+            // 更新页面标题
+            const titleElement = document.querySelector('title');
+            if (titleElement) {
+                titleElement.textContent = getTranslation('page.diantu_title', '垫图翻译测试');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTranslations();
+            
+            // 显示当前语言
+            console.log('当前语言:', getCurrentLanguage());
+            console.log('翻译数据可用:', typeof translations !== 'undefined');
+            
+            // 测试几个关键翻译
+            console.log('测试翻译:');
+            console.log('diantu.title:', getTranslation('diantu.title'));
+            console.log('diantu.start_generation:', getTranslation('diantu.start_generation'));
+            console.log('diantu.history_records:', getTranslation('diantu.history_records'));
+        });
+    </script>
+</body>
+</html>
+

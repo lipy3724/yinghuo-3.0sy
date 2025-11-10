@@ -243,7 +243,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <h3 class="font-semibold">视频风格重绘</h3>
-                            <p class="text-sm text-gray-500">免费试用: 1次</p>
+                            <p class="text-sm text-gray-500">免费试用: 0次</p>
                         </div>
                         <div class="text-right">
                             <p class="text-indigo-600 font-bold">540P：3积分/秒</p>
@@ -254,7 +254,6 @@
                 </div>
             </div>
 
-            <!-- 已移除我的使用记录组件 -->
         </div>
     </div>
 
@@ -409,7 +408,7 @@
                 'IMAGE_EDIT': '指令编辑',
                 'LOCAL_REDRAW': '局部重绘',
                 'IMAGE_COLORIZATION': '图像上色',
-                'IMAGE_EXPANSION': '智能扩图',
+                'image-expansion': '智能扩图',
                 'VIRTUAL_SHOE_MODEL': '鞋靴虚拟试穿',
                 'TEXT_TO_IMAGE': '文生图片',
                 'IMAGE_SHARPENING': '模糊图片变清晰',
@@ -421,6 +420,8 @@
                 'DIGITAL_HUMAN_VIDEO': '视频数字人',
                 'VIDEO_STYLE_REPAINT': '视频风格重绘',
                 'DIANTU': '垫图',
+                'IMAGE_RESIZE': '图片改尺寸',
+                 'IMAGE_CROP': '图像裁剪',
                 'amazon_video_script': '亚马逊广告视频脚本生成',
                 'product_improvement_analysis': '选品的改款分析和建议',
                 'amazon_brand_info': '品牌信息收集和总结',
@@ -436,7 +437,10 @@
                 'product_comparison': '产品对比',
                 'amazon_post_creator': '创建亚马逊Post',
                 'amazon_keyword_recommender': '亚马逊关键词推荐',
-                'amazon_case_creator': '亚马逊客服case内容'
+                'amazon_case_creator': '亚马逊客服case内容',
+                'QWEN_IMAGE_EDIT': '图像编辑',
+                'VIDEO_FACE_SWAP': '视频换人',
+                'VIDEO_LOGO_REMOVAL': '视频去水印/logo'
             };
             
             return featureNames[name] || name;
@@ -454,7 +458,7 @@
             pricingList.innerHTML = '';
             
             featurePricing.forEach(feature => {
-                // 跳过 VIDEO_STYLE_REPAINT
+                // 跳过 VIDEO_STYLE_REPAINT（单独处理）
                 if (feature.name === 'VIDEO_STYLE_REPAINT') return;
                 // 功能名称本地化
                 const localName = formatFeatureName(feature.name);
@@ -468,10 +472,23 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">免费试用: ${feature.freeUsage}次</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-indigo-600 font-bold">30 积分/30秒</p>
+                                <p class="text-xs text-gray-500">不满30秒按30秒计算</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (feature.name === 'VIDEO_LOGO_REMOVAL') {
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">${localName}</h3>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-indigo-600 font-bold">5 积分/30秒</p>
                                 <p class="text-xs text-gray-500">不满30秒按30秒计算</p>
                             </div>
                         </div>
@@ -481,7 +498,7 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">免费试用: ${feature.freeUsage}次</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-indigo-600 font-bold">9 积分/秒</p>
@@ -493,7 +510,7 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">免费试用: ${feature.freeUsage}次</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-indigo-600 font-bold">模型vton1.0/40积分</p>
@@ -506,10 +523,38 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">免费试用: ${feature.freeUsage}次</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-indigo-600 font-bold">66 积分/次</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (feature.name === 'QWEN_IMAGE_EDIT') {
+                    // 🆕 特殊处理QWEN_IMAGE_EDIT功能的积分显示
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">${localName}</h3>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-indigo-600 font-bold">7 积分/张</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (feature.name === 'VIDEO_FACE_SWAP') {
+                    // 🆕 特殊处理视频换人功能的积分显示
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">${localName}</h3>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-indigo-600 font-bold">标准模式：8积分/秒</p>
+                                <p class="text-indigo-600 font-bold">专业模式：10积分/秒</p>
+                                <p class="text-xs text-gray-500">按视频时长计费，向上取整</p>
                             </div>
                         </div>
                     `;
@@ -518,7 +563,7 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">免费试用: ${feature.freeUsage}次</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-indigo-600 font-bold">${feature.creditCost} 积分/次</p>
@@ -536,7 +581,7 @@
                 <div class="flex justify-between items-center">
                     <div>
                         <h3 class="font-semibold">视频风格重绘</h3>
-                        <p class="text-sm text-gray-500">免费试用: 1次</p>
+                        <p class="text-sm text-gray-500">免费试用: 0次</p>
                     </div>
                     <div class="text-right">
                         <p class="text-indigo-600 font-bold">540P：3积分/秒</p>
@@ -552,6 +597,8 @@
         const shouldShowRechargeForm = new URLSearchParams(window.location.search).get('openRecharge') === 'true';
         
         // 页面加载完成后执行
+        
+
         document.addEventListener('DOMContentLoaded', function() {
             // 检查用户是否已登录
             if (!checkAuth()) return;
@@ -561,6 +608,7 @@
             
             // 加载功能价格列表
             loadPricing();
+            
             
             // 初始化充值表单
             initRechargeForm();
@@ -639,7 +687,9 @@
             });
             
             // 每30秒自动刷新一次积分信息
-            setInterval(loadCreditsInfo, 30000);
+            setInterval(() => {
+                loadCreditsInfo();
+            }, 30000);
         });
         
         // 初始化充值表单

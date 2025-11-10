@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频去除字幕 - 萤火.AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/video-subtitle-remover.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+    <style>
+        .history-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-thumbnail {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        
+        /* 状态标签动画 */
+        .status-processing .ri-loader-4-line {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 状态按钮悬停效果 */
+        .check-status-btn:hover {
+            transform: scale(1.1);
+            transition: transform 0.2s;
+        }
+        
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #6366f1;
+            background-color: #f8fafc;
+        }
+        
+        .upload-area.dragover {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+    </style>
+
+    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 简化版导航栏 -->
+    <div id="navbar-simple"></div>
+
+        <!-- 主内容区域 -->
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8">字幕去除效果</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 上传视频和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">上传视频</h2>
+                
+                <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-2 bg-gray-50">
+                            <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
+                    <p class="text-gray-500 text-center text-sm px-2">点击或者拖动视频文件到这区域来上传</p>
+                            <input type="file" id="video-upload" class="hidden" accept="video/mp4">
+                        </div>
+                <p class="text-xs text-gray-500 mb-2">支持MP4格式，大小不超过200MB</p>
+                <p class="text-xs text-red-500 font-medium mb-4">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        
+                        <!-- 添加视频时长和积分消耗信息 -->
+                        <div id="video-duration-info" class="hidden p-3 bg-blue-50 text-blue-700 rounded-md mb-4 text-sm">
+                            视频时长: 计算中...
+                        </div>
+
+                        <!-- 添加积分扣除说明 -->
+                        <div class="p-3 bg-green-50 text-green-700 rounded-md mb-4 text-sm">
+                            <i class="ri-information-line mr-1"></i>
+                            <strong>积分将在任务成功完成后才扣除</strong>，请耐心等待处理结果。任务失败不会扣除积分。
+                        </div>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-3">使用说明</h3>
+                    <div class="text-gray-600 text-sm">
+                        <p class="mb-2">1. 上传一个包含字幕的视频文件（支持MP4格式）</p>
+                        <p class="mb-2">2. 点击"开始处理"按钮，等待AI处理（处理时间与视频长度成正比）</p>
+                        <p class="mb-2">3. 处理完成后，您可以预览并下载无字幕的视频</p>
+                    </div>
+                        </div>
+                        
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-3">注意事项</h3>
+                    <div class="text-gray-600 text-sm">
+                        <p class="mb-1">- 硬字幕（内嵌字幕）去除效果比软字幕更好</p>
+                        <p class="mb-1">- 成功率与视频清晰度、字幕类型和背景复杂度有关</p>
+                        <p class="mb-1">- 支持常规中文/英文字幕，比如纯色电影字幕</p>
+                        <p class="mb-1">- 不支持复杂的花体字幕，字体笔画过于纤细的字幕</p>
+                    </div>
+                </div>
+                
+                <button id="process-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
+                    <i class="ri-film-line mr-2"></i>
+                                开始处理
+                            </button>
+                <p class="mt-2 text-center text-sm text-gray-500">
+                    处理时间与视频长度成正比
+                </p>
+                <p class="mt-1 text-center text-sm text-orange-600 font-medium">
+                    30 积分/30秒（不满30秒按30秒计算）
+                </p>
+                    </div>
+                    
+            <!-- 右侧面板: 视频预览和历史记录 -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- 视频预览部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">视频预览</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                            <h3 class="text-lg font-medium mb-3">原视频:</h3>
+                            <div class="video-preview mb-4">
+                                    <div id="original-video-wrapper" class="video-wrapper hidden w-full h-full relative">
+                                        <video id="original-video" class="w-full h-full object-contain" controls></video>
+                                    </div>
+                                    <p id="original-video-placeholder" class="text-gray-500 text-center px-4">上传视频后将在这里显示</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                            <h3 class="text-lg font-medium mb-3">处理后视频:</h3>
+                            <div class="video-preview mb-4">
+                                    <div id="output-video-wrapper" class="video-wrapper hidden w-full h-full relative">
+                                        <video id="output-video" class="w-full h-full object-contain" controls></video>
+                                    </div>
+                                    <p id="output-video-placeholder" class="text-gray-500 text-center px-4">处理完成后将在这里显示</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    <div id="generation-status" class="mt-4 hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">处理进度</span>
+                            <span id="status-text" class="text-sm text-indigo-600">正在处理...</span>
+                            </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 justify-end hidden" id="video-actions">
+                        <button id="download-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm flex items-center">
+                            <i class="ri-download-line mr-1"></i> 下载视频
+                        </button>
+                        <button id="save-to-downloads-btn" class="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-md text-sm flex items-center">
+                            <i class="ri-save-line mr-1"></i> 保存到下载中心
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">任务列表</h2>
+                        <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800" title="刷新任务列表">
+                            <i class="ri-refresh-line text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 任务记录将通过JavaScript动态添加到这里 -->
+                        <p class="text-gray-500 col-span-full text-center py-4">暂无任务记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载中遮罩 -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="text-xl mb-2">正在处理视频...</p>
+        <p class="text-sm">这可能需要几分钟时间，请耐心等待</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载导航栏组件
+            try {
+                const navbarResponse = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await navbarResponse.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件JavaScript
+                const componentsScript = document.createElement('script');
+                componentsScript.src = '/components/components.js';
+                document.head.appendChild(componentsScript);
+            } catch (error) {
+                console.error('加载导航栏组件失败:', error);
+            }
+            
+            // 检查用户登录状态
+            if (typeof window.checkAuth === 'function') {
+                try {
+                    const isAuthenticated = await window.checkAuth(true);
+                    if (!isAuthenticated) {
+                        return; // checkAuth会自动处理重定向
+                    }
+                } catch (error) {
+                    console.error('认证检查出错:', error);
+                }
+            }
+            
+            // DOM元素
+            const uploadArea = document.getElementById('upload-area');
+            const videoUpload = document.getElementById('video-upload');
+            const originalVideo = document.getElementById('original-video');
+            const originalVideoWrapper = document.getElementById('original-video-wrapper');
+            const originalVideoPlaceholder = document.getElementById('original-video-placeholder');
+            const outputVideo = document.getElementById('output-video');
+            const outputVideoWrapper = document.getElementById('output-video-wrapper');
+            const outputVideoPlaceholder = document.getElementById('output-video-placeholder');
+            const processBtn = document.getElementById('process-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
+            const videoActions = document.getElementById('video-actions');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const videoDurationInfo = document.getElementById('video-duration-info');
+            const generationStatus = document.getElementById('generation-status');
+            const progressBar = document.getElementById('progress-bar');
+            const statusText = document.getElementById('status-text');
+            const historyContainer = document.getElementById('history-container');
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            
+            // 初始化页面
+            loadHistory();
+            
+            // 上传区域点击事件
+            uploadArea.addEventListener('click', function() {
+                videoUpload.click();
+            });
+            
+            // 文件上传事件
+            videoUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 200 * 1024 * 1024) {
+                        alert('视频大小不能超过200MB');
+                        return;
+                    }
+                    
+                    const url = URL.createObjectURL(file);
+                    
+                    // 显示原始视频
+                    originalVideo.src = url;
+                    originalVideo.onloadeddata = function() {
+                    originalVideoWrapper.classList.remove('hidden');
+                        originalVideoPlaceholder.classList.add('hidden');
+                        
+                        // 显示视频时长信息
+                        const duration = Math.round(originalVideo.duration);
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = duration % 60;
+                        
+                        videoDurationInfo.innerHTML = `
+                            <div class="flex justify-between">
+                                <span>视频时长: ${minutes}分${seconds}秒</span>
+                                <span>预计积分消耗: ${Math.ceil(duration / 60) * 10}</span>
+                            </div>
+                        `;
+                            videoDurationInfo.classList.remove('hidden');
+                    };
+                }
+            });
+            
+            // 拖拽事件
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('border-indigo-500', 'bg-indigo-50');
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('border-indigo-500', 'bg-indigo-50');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('border-indigo-500', 'bg-indigo-50');
+                
+                const file = e.dataTransfer.files[0];
+                if (file) {
+                    if (file.type.startsWith('video/')) {
+                    if (file.size > 200 * 1024 * 1024) {
+                            alert('视频大小不能超过200MB');
+                        return;
+                    }
+                        
+                        const url = URL.createObjectURL(file);
+                        
+                        // 显示原始视频
+                        originalVideo.src = url;
+                        originalVideo.onloadeddata = function() {
+                            originalVideoWrapper.classList.remove('hidden');
+                            originalVideoPlaceholder.classList.add('hidden');
+                            
+                            // 显示视频时长信息
+                            const duration = Math.round(originalVideo.duration);
+                            const minutes = Math.floor(duration / 60);
+                            const seconds = duration % 60;
+                            
+                            videoDurationInfo.innerHTML = `
+                                <div class="flex justify-between">
+                                    <span>视频时长: ${minutes}分${seconds}秒</span>
+                                    <span>预计积分消耗: ${Math.ceil(duration / 60) * 10}</span>
+                            </div>
+                        `;
+                            videoDurationInfo.classList.remove('hidden');
+                        };
+                        
+                        // 将文件设置到文件输入框
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        videoUpload.files = dataTransfer.files;
+                    } else {
+                        alert('请上传视频文件');
+                    }
+                }
+            });
+            
+            // 处理按钮点击事件
+            processBtn.addEventListener('click', async function() {
+                if (!videoUpload.files[0]) {
+                    alert('请先上传视频');
+                    return;
+                }
+                
+                await processVideo();
+            });
+            
+            // 下载按钮点击事件
+            downloadBtn.addEventListener('click', function() {
+                if (outputVideo.src) {
+                    const a = document.createElement('a');
+                    a.href = outputVideo.src;
+                    a.download = '无字幕视频_' + new Date().getTime() + '.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            });
+            
+            // 保存到下载中心按钮点击事件
+            saveToDownloadsBtn.addEventListener('click', async function() {
+                if (outputVideo.src) {
+                    try {
+                loadingOverlay.classList.remove('hidden');
+                
+                        const response = await fetch('/api/downloads/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({
+                                url: outputVideo.src,
+                                type: 'video',
+                                name: '无字幕视频_' + new Date().getTime()
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            alert('视频已保存到下载中心');
+                        } else {
+                            alert('保存失败: ' + (data.message || '未知错误'));
+                        }
+                    } catch (error) {
+                        console.error('保存到下载中心出错:', error);
+                        alert('保存失败: ' + error.message);
+                    } finally {
+                        loadingOverlay.classList.add('hidden');
+                    }
+                }
+            });
+            
+            // 刷新历史按钮点击事件
+            refreshHistoryBtn.addEventListener('click', function() {
+                loadHistory();
+            });
+            
+            // 处理视频
+            async function processVideo() {
+                try {
+                    loadingOverlay.classList.remove('hidden');
+                    generationStatus.classList.remove('hidden');
+                    progressBar.style.width = '0%';
+                    statusText.textContent = '正在上传视频...';
+                    
+                    // 准备表单数据
+                    const formData = new FormData();
+                    formData.append('video', videoUpload.files[0]);
+                    
+                    // 发送请求
+                    const response = await fetch('/api/video-subtitle-removal/create', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || '视频处理请求失败');
+                    }
+                    
+                    // 开始轮询任务状态
+                    const taskId = data.taskId;
+                    
+                    // 立即添加一条"处理中"的任务记录到历史
+                    const processingItem = {
+                        taskId: taskId,
+                        status: 'processing',
+                        videoUrl: null,
+                        thumbnailUrl: '/images/video-thumbnail.png',
+                        originalVideoUrl: originalVideo.src,
+                        createdAt: new Date().toISOString()
+                    };
+                    addToHistory(processingItem);
+                    loadHistory(); // 立即刷新历史记录显示
+                    
+                    pollTaskStatus(taskId);
+                    
+                } catch (error) {
+                    console.error('处理视频出错:', error);
+                    alert('处理视频失败: ' + error.message);
+                    loadingOverlay.classList.add('hidden');
+                    generationStatus.classList.add('hidden');
+                }
+            }
+            
+            // 轮询任务状态
+            function pollTaskStatus(taskId) {
+                let progress = 0;
+                let retryCount = 0;
+                const maxRetries = 3;
+                
+                const interval = setInterval(async function() {
+                    try {
+                        const response = await fetch(`/api/tasks/${taskId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(data.message || '检查任务状态失败');
+                        }
+                        
+                        // 重置重试计数
+                        retryCount = 0;
+                        
+                        // 获取任务状态 - 支持多种响应格式
+                        let taskStatus = 'processing';
+                        
+                        if (data.data && data.data.status) {
+                            taskStatus = data.data.status;
+                        } else if (data.status) {
+                            taskStatus = data.status;
+                        } else if (data.output && data.output.task_status) {
+                            // 映射阿里云API状态到前端状态
+                            const aliStatus = data.output.task_status;
+                            switch (aliStatus) {
+                                case 'SUCCEEDED':
+                                    taskStatus = 'completed';
+                                    break;
+                                case 'FAILED':
+                                    taskStatus = 'failed';
+                                    break;
+                                case 'RUNNING':
+                                case 'PENDING':
+                                    taskStatus = 'processing';
+                                    break;
+                                default:
+                                    taskStatus = 'processing'; // 默认为处理中，避免显示"未知状态"
+                            }
+                        }
+                        
+                        console.log('任务状态查询结果:', { taskId, taskStatus, rawData: data });
+                        
+                        // 根据任务状态处理
+                        switch (taskStatus) {
+                            case 'completed':
+                                clearInterval(interval);
+                                loadingOverlay.classList.add('hidden');
+                                generationStatus.classList.add('hidden');
+                                
+                                // 获取视频URL
+                                let videoUrl = null;
+                                if (data.data && data.data.resultUrl) {
+                                    videoUrl = data.data.resultUrl;
+                                } else if (data.result && data.result.videoUrl) {
+                                    videoUrl = data.result.videoUrl;
+                                } else if (data.output && data.output.result_url) {
+                                    videoUrl = data.output.result_url;
+                                }
+                                
+                                if (videoUrl) {
+                                    displayVideo(videoUrl);
+                                    
+                                    // 更新历史记录为完成状态
+                                    const completedItem = {
+                                        taskId: taskId,
+                                        status: 'completed',
+                                        videoUrl: videoUrl,
+                                        thumbnailUrl: '/images/video-thumbnail.png',
+                                        originalVideoUrl: originalVideo.src,
+                                        createdAt: new Date().toISOString()
+                                    };
+                                    addToHistory(completedItem);
+                                    loadHistory(); // 刷新历史记录
+                                } else {
+                                    console.error('任务完成但未找到视频URL');
+                                    alert('任务完成但获取视频失败，请稍后重试');
+                                }
+                                break;
+                                
+                            case 'failed':
+                                clearInterval(interval);
+                                loadingOverlay.classList.add('hidden');
+                                generationStatus.classList.add('hidden');
+                                
+                                const errorMessage = (data.data && data.data.message) || 
+                                                   (data.message) || 
+                                                   (data.output && data.output.message) || 
+                                                   '未知错误';
+                                alert('视频处理失败: ' + errorMessage);
+                                
+                                // 更新历史记录为失败状态
+                                const failedItem = {
+                                    taskId: taskId,
+                                    status: 'failed',
+                                    videoUrl: null,
+                                    thumbnailUrl: '/images/video-thumbnail.png',
+                                    originalVideoUrl: originalVideo.src,
+                                    createdAt: new Date().toISOString(),
+                                    error: errorMessage
+                                };
+                                addToHistory(failedItem);
+                                loadHistory(); // 刷新历史记录
+                                break;
+                                
+                            case 'processing':
+                            default:
+                                // 更新进度条
+                                if (data.data && data.data.progress) {
+                                    progress = data.data.progress;
+                                } else {
+                                    progress += 2; // 每5秒增加2%
+                                    if (progress > 95) progress = 95; // 最多到95%
+                                }
+                                
+                                progressBar.style.width = `${progress}%`;
+                                statusText.textContent = '正在处理...';
+                                break;
+                        }
+                        
+                    } catch (error) {
+                        console.error('检查任务状态出错:', error);
+                        retryCount++;
+                        
+                        if (retryCount >= maxRetries) {
+                            console.error(`任务状态查询失败，已重试${maxRetries}次`);
+                            clearInterval(interval);
+                            loadingOverlay.classList.add('hidden');
+                            generationStatus.classList.add('hidden');
+                            alert('任务状态查询失败，请刷新页面重试');
+                        } else {
+                            console.log(`任务状态查询失败，将进行第${retryCount}次重试`);
+                        }
+                    }
+                }, 5000);
+            });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(data.message || '检查任务状态失败');
+                        }
+                        
+                        // 根据任务状态处理
+                        switch (data.status) {
+                            case 'completed':
+                                clearInterval(interval);
+                                loadingOverlay.classList.add('hidden');
+                                generationStatus.classList.add('hidden');
+                                displayVideo(data.result.videoUrl);
+                                
+                                // 更新历史记录为完成状态
+                                const completedItem = {
+                                    ...data.result,
+                                    taskId: taskId,
+                                    status: 'completed',
+                                    originalVideoUrl: originalVideo.src,
+                                    createdAt: new Date().toISOString()
+                                };
+                                addToHistory(completedItem);
+                                loadHistory(); // 刷新历史记录
+                                break;
+                                
+                            case 'failed':
+                                clearInterval(interval);
+                                loadingOverlay.classList.add('hidden');
+                                generationStatus.classList.add('hidden');
+                                alert('视频处理失败: ' + (data.error || '未知错误'));
+                                
+                                // 更新历史记录为失败状态
+                                const failedItem = {
+                                    taskId: taskId,
+                                    status: 'failed',
+                                    videoUrl: null,
+                                    thumbnailUrl: '/images/video-thumbnail.png',
+                                    originalVideoUrl: originalVideo.src,
+                                    createdAt: new Date().toISOString(),
+                                    error: data.error || '未知错误'
+                                };
+                                addToHistory(failedItem);
+                                loadHistory(); // 刷新历史记录
+                                break;
+                                
+                            case 'processing':
+                                // 更新进度条
+                                progress += 2; // 每5秒增加2%
+                                if (progress > 95) progress = 95; // 最多到95%
+                                progressBar.style.width = `${progress}%`;
+                                statusText.textContent = '正在处理...';
+                                break;
+                                
+                            default:
+                                console.warn('未知任务状态:', data.status);
+                        }
+                        
+                    } catch (error) {
+                        console.error('检查任务状态出错:', error);
+                        // 出错时不停止轮询，继续尝试
+                    }
+                }, 5000);
+            }
+            
+            // 显示视频
+            function displayVideo(videoUrl) {
+                outputVideo.src = videoUrl;
+                outputVideoPlaceholder.classList.add('hidden');
+                outputVideoWrapper.classList.remove('hidden');
+                videoActions.classList.remove('hidden');
+            }
+            
+            // 添加到历史记录
+            function addToHistory(result) {
+                // 创建历史记录项，支持不同状态的任务
+                const historyItem = {
+                    taskId: result.taskId || null,
+                    status: result.status || 'completed',
+                    videoUrl: result.videoUrl || null,
+                    thumbnailUrl: result.thumbnailUrl || '/images/video-thumbnail.png',
+                    originalVideoUrl: result.originalVideoUrl || originalVideo.src,
+                    createdAt: result.createdAt || new Date().toISOString()
+                };
+                
+                // 获取现有历史记录
+                let history = [];
+                try {
+                    const existingHistory = localStorage.getItem('videoSubtitleRemovalHistory');
+                    if (existingHistory) {
+                        history = JSON.parse(existingHistory);
+                    }
+                } catch (error) {
+                    console.error('解析历史记录失败:', error);
+                    history = [];
+                }
+                
+                // 如果是处理中的任务，添加到历史记录
+                if (result.status === 'processing') {
+                    history.unshift(historyItem); // 添加到开头
+                } else {
+                    // 如果是完成的任务，更新对应的记录或添加新记录
+                    const existingIndex = history.findIndex(item => 
+                        item.taskId === result.taskId || 
+                        (item.status === 'processing' && result.taskId)
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        // 更新现有记录
+                        history[existingIndex] = historyItem;
+                    } else {
+                        // 添加新记录到开头
+                        history.unshift(historyItem);
+                    }
+                }
+                
+                // 限制历史记录数量（保留最新10条）
+                if (history.length > 10) {
+                    history = history.slice(0, 10);
+                }
+                
+                localStorage.setItem('videoSubtitleRemovalHistory', JSON.stringify(history));
+            }
+            
+            // 加载历史记录
+            async function loadHistory() {
+                try {
+                    // 检查用户是否已登录
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.log('用户未登录，从localStorage加载历史记录');
+                        loadHistoryFromLocalStorage();
+                        return;
+                    }
+                    
+                    console.log('从服务器加载视频去字幕历史记录...');
+                    
+                    // 从后端API获取历史记录
+                    const response = await fetch('/api/video-subtitle-remover/history', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`服务器返回错误: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.error || '获取历史记录失败');
+                    }
+                    
+                    const history = data.tasks || [];
+                    console.log(`从服务器获取到 ${history.length} 条历史记录`);
+                    
+                    renderHistory(history);
+                    
+                } catch (error) {
+                    console.error('从服务器加载历史记录失败:', error);
+                    console.log('回退到localStorage加载历史记录');
+                    loadHistoryFromLocalStorage();
+                }
+            }
+            
+            // 从localStorage加载历史记录（回退方案）
+            function loadHistoryFromLocalStorage() {
+                const history = JSON.parse(localStorage.getItem('videoSubtitleRemovalHistory') || '[]');
+                
+                // 过滤24小时内的记录
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                const recentHistory = history.filter(item => {
+                    const itemDate = new Date(item.createdAt);
+                    return itemDate >= twentyFourHoursAgo;
+                });
+                
+                // 只保留最新1条记录
+                const limitedHistory = recentHistory.slice(0, 1);
+                
+                console.log(`从localStorage获取到 ${history.length} 条历史记录，过滤后显示 ${limitedHistory.length} 条`);
+                renderHistory(limitedHistory);
+            }
+            
+            // 渲染历史记录
+            function renderHistory(history) {
+                if (history.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">暂无任务记录</p>';
+                    return;
+                }
+                                
+                historyContainer.innerHTML = '';
+                
+                history.forEach((item, index) => {
+                    const historyCard = document.createElement('div');
+                    historyCard.className = 'history-card';
+                    
+                    // 适配不同的数据源格式
+                    const thumbnailUrl = item.thumbnailUrl || (item.videoUrl ? item.videoUrl + '#t=1' : '');
+                    const videoUrl = item.videoUrl;
+                    const originalVideoUrl = item.originalVideoUrl;
+                    const createdAt = new Date(item.createdAt).toLocaleString();
+                    const taskStatus = item.status || 'completed'; // 默认为已完成
+                    const taskId = item.taskId || item.id;
+                    
+                    // 获取状态显示信息
+                    const getStatusInfo = (status) => {
+                        switch (status) {
+                            case 'processing':
+                                return { text: '处理中', color: 'text-blue-600', bgColor: 'bg-blue-100', icon: 'ri-loader-4-line' };
+                            case 'completed':
+                                return { text: '已完成', color: 'text-green-600', bgColor: 'bg-green-100', icon: 'ri-check-line' };
+                            case 'failed':
+                                return { text: '失败', color: 'text-red-600', bgColor: 'bg-red-100', icon: 'ri-close-line' };
+                            case 'pending':
+                                return { text: '等待中', color: 'text-yellow-600', bgColor: 'bg-yellow-100', icon: 'ri-time-line' };
+                            default:
+                                return { text: '已完成', color: 'text-green-600', bgColor: 'bg-green-100', icon: 'ri-check-line' };
+                        }
+                    };
+                    
+                    const statusInfo = getStatusInfo(taskStatus);
+                    
+                    // 如果没有缩略图URL，使用视频第一帧作为缩略图
+                    const thumbnailDisplay = thumbnailUrl ? 
+                        `<img src="${thumbnailUrl}" alt="缩略图" class="history-thumbnail">` :
+                        `<div class="history-thumbnail bg-gray-200 flex items-center justify-center">
+                            <i class="ri-video-line text-2xl text-gray-400"></i>
+                        </div>`;
+                    
+                    historyCard.innerHTML = `
+                        <div class="relative">
+                            ${thumbnailDisplay}
+                            <!-- 状态标签 -->
+                            <div class="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color} ${taskStatus === 'processing' ? 'status-processing' : ''}">
+                                <i class="${statusInfo.icon} mr-1"></i>
+                                ${statusInfo.text}
+                            </div>
+                            ${taskStatus === 'completed' ? `
+                            <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity">
+                                <button class="play-btn bg-white rounded-full p-2">
+                                    <i class="ri-play-fill text-xl text-indigo-600"></i>
+                                </button>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="p-3">
+                            <p class="text-sm text-gray-700 truncate">视频去除字幕</p>
+                            ${taskId ? `<p class="text-xs text-gray-400 truncate">任务ID: ${taskId}</p>` : ''}
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs text-gray-500">${createdAt}</span>
+                                ${taskStatus === 'completed' ? `
+                                <button class="download-history-btn text-indigo-600">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                                ` : taskStatus === 'processing' ? `
+                                <button class="check-status-btn text-blue-600" data-task-id="${taskId}">
+                                    <i class="ri-refresh-line"></i>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 播放按钮点击事件（仅对已完成的任务）
+                    const playBtn = historyCard.querySelector('.play-btn');
+                    if (playBtn) {
+                        playBtn.addEventListener('click', function() {
+                            // 显示原始视频
+                            if (originalVideoUrl) {
+                                originalVideo.src = originalVideoUrl;
+                                originalVideoWrapper.classList.remove('hidden');
+                                originalVideoPlaceholder.classList.add('hidden');
+                            }
+                            
+                            // 显示结果视频
+                            displayVideo(videoUrl);
+                            
+                            // 滚动到视频预览区域
+                            document.querySelector('.video-preview').scrollIntoView({ behavior: 'smooth' });
+                        });
+                    }
+                    
+                    // 下载按钮点击事件（仅对已完成的任务）
+                    const downloadHistoryBtn = historyCard.querySelector('.download-history-btn');
+                    if (downloadHistoryBtn) {
+                        downloadHistoryBtn.addEventListener('click', function() {
+                            const a = document.createElement('a');
+                            a.href = videoUrl;
+                            a.download = '无字幕视频_' + new Date(item.createdAt).getTime() + '.mp4';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        });
+                    }
+                    
+                    // 检查状态按钮点击事件（对处理中的任务）
+                    const checkStatusBtn = historyCard.querySelector('.check-status-btn');
+                    if (checkStatusBtn) {
+                        checkStatusBtn.addEventListener('click', async function() {
+                            const taskId = this.dataset.taskId;
+                            if (taskId) {
+                                try {
+                                    const response = await fetch(`/api/tasks/${taskId}`, {
+                                        headers: {
+                                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                        }
+                                    });
+                                    
+                                    const data = await response.json();
+                                    
+                                    if (response.ok) {
+                                        // 刷新任务列表以显示最新状态
+                                        loadHistory();
+                                        
+                                        // 如果任务已完成，显示结果
+                                        if (data.status === 'completed' && data.result && data.result.videoUrl) {
+                                            displayVideo(data.result.videoUrl);
+                                        }
+                                    } else {
+                                        console.error('检查任务状态失败:', data.message);
+                                    }
+                                } catch (error) {
+                                    console.error('检查任务状态出错:', error);
+                                }
+                            }
+                        });
+                    }
+                    
+                    historyContainer.appendChild(historyCard);
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

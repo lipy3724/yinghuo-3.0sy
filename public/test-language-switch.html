@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语言切换测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3730a3;
+        }
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        .log {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>语言切换功能测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 语言切换控制</h2>
+        <p>点击下面的按钮来测试语言切换功能：</p>
+        <button onclick="switchLanguage('zh-cn')">切换到中文</button>
+        <button onclick="switchLanguage('en-us')">切换到英文</button>
+        <p>当前语言: <span id="currentLang">zh-cn</span></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 商品换背景编辑器</h2>
+        <p>下面的iframe加载商品换背景页面，语言应该跟随上面的设置：</p>
+        <iframe id="cutoutFrame" src="/cutout.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 场景图生成编辑器</h2>
+        <p>下面的iframe加载场景图生成页面，语言应该跟随上面的设置：</p>
+        <iframe id="sceneFrame" src="/scene-generator.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 图像智能消除编辑器</h2>
+        <p>下面的iframe加载图像智能消除页面，语言应该跟随上面的设置：</p>
+        <iframe id="imageRemovalFrame" src="/image-removal.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. 模特换肤编辑器</h2>
+        <p>下面的iframe加载模特换肤页面，语言应该跟随上面的设置：</p>
+        <iframe id="modelSkinFrame" src="/model-skin-changer.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>6. 模拟试衣编辑器</h2>
+        <p>下面的iframe加载模拟试衣页面，语言应该跟随上面的设置：</p>
+        <iframe id="clothingSimulationFrame" src="/clothing-simulation.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>7. 智能虚拟模特试穿</h2>
+        <p>下面的iframe加载智能虚拟模特试穿页面，语言应该跟随上面的设置：</p>
+        <iframe id="virtualModelFrame" src="/virtual-model-redirect.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>8. 鞋靴虚拟试穿</h2>
+        <p>下面的iframe加载鞋靴虚拟试穿页面，语言应该跟随上面的设置：</p>
+        <iframe id="virtualShoesFrame" src="/virtual-model-shoes.html?lang=zh-cn"></iframe>
+    </div>
+    
+    <div class="test-section">
+        <h2>9. 测试日志</h2>
+        <div id="testLog" class="log">
+            <div>页面加载完成，开始测试...</div>
+        </div>
+        <button onclick="clearLog()">清空日志</button>
+    </div>
+
+    <script>
+        let currentLanguage = 'zh-cn';
+        
+        function log(message) {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            document.getElementById('currentLang').textContent = lang;
+            
+            // 更新商品换背景iframe
+            const cutoutFrame = document.getElementById('cutoutFrame');
+            const cutoutSrc = `/cutout.html?lang=${lang}`;
+            cutoutFrame.src = cutoutSrc;
+            
+            // 更新场景图生成iframe
+            const sceneFrame = document.getElementById('sceneFrame');
+            const sceneSrc = `/scene-generator.html?lang=${lang}`;
+            sceneFrame.src = sceneSrc;
+            
+            // 更新图像智能消除iframe
+            const imageRemovalFrame = document.getElementById('imageRemovalFrame');
+            const imageRemovalSrc = `/image-removal.html?lang=${lang}`;
+            imageRemovalFrame.src = imageRemovalSrc;
+            
+            // 更新模特换肤iframe
+            const modelSkinFrame = document.getElementById('modelSkinFrame');
+            const modelSkinSrc = `/model-skin-changer.html?lang=${lang}`;
+            modelSkinFrame.src = modelSkinSrc;
+            
+            // 更新模拟试衣iframe
+            const clothingSimulationFrame = document.getElementById('clothingSimulationFrame');
+            const clothingSimulationSrc = `/clothing-simulation.html?lang=${lang}`;
+            clothingSimulationFrame.src = clothingSimulationSrc;
+            
+            // 更新智能虚拟模特试穿iframe
+            const virtualModelFrame = document.getElementById('virtualModelFrame');
+            const virtualModelSrc = `/virtual-model-redirect.html?lang=${lang}`;
+            virtualModelFrame.src = virtualModelSrc;
+            
+            // 更新鞋靴虚拟试穿iframe
+            const virtualShoesFrame = document.getElementById('virtualShoesFrame');
+            const virtualShoesSrc = `/virtual-model-shoes.html?lang=${lang}`;
+            virtualShoesFrame.src = virtualShoesSrc;
+            
+            log(`切换语言到: ${lang}`);
+            log(`更新商品换背景URL: ${cutoutSrc}`);
+            log(`更新场景图生成URL: ${sceneSrc}`);
+            log(`更新图像智能消除URL: ${imageRemovalSrc}`);
+            log(`更新模特换肤URL: ${modelSkinSrc}`);
+            log(`更新模拟试衣URL: ${clothingSimulationSrc}`);
+            log(`更新智能虚拟模特试穿URL: ${virtualModelSrc}`);
+            log(`更新鞋靴虚拟试穿URL: ${virtualShoesSrc}`);
+            
+            // 如果iframe已经加载，尝试通过postMessage发送语言切换消息
+            setTimeout(() => {
+                try {
+                    const message = {
+                        type: 'changeLanguage',
+                        language: lang
+                    };
+                    
+                    // 向商品换背景页面发送消息
+                    cutoutFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到商品换背景: ${JSON.stringify(message)}`);
+                    
+                    // 向场景图生成页面发送消息
+                    sceneFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到场景图生成: ${JSON.stringify(message)}`);
+                    
+                    // 向图像智能消除页面发送消息
+                    imageRemovalFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到图像智能消除: ${JSON.stringify(message)}`);
+                    
+                    // 向模特换肤页面发送消息
+                    modelSkinFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到模特换肤: ${JSON.stringify(message)}`);
+                    
+                    // 向模拟试衣页面发送消息
+                    clothingSimulationFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到模拟试衣: ${JSON.stringify(message)}`);
+                    
+                    // 向智能虚拟模特试穿页面发送消息
+                    virtualModelFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到智能虚拟模特试穿: ${JSON.stringify(message)}`);
+                    
+                    // 向鞋靴虚拟试穿页面发送消息
+                    virtualShoesFrame.contentWindow.postMessage(message, '*');
+                    log(`发送postMessage到鞋靴虚拟试穿: ${JSON.stringify(message)}`);
+                } catch (error) {
+                    log(`发送postMessage失败: ${error.message}`);
+                }
+            }, 1000);
+        }
+        
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '<div>日志已清空...</div>';
+        }
+        
+        // 监听来自iframe的消息
+        window.addEventListener('message', function(event) {
+            log(`收到来自iframe的消息: ${JSON.stringify(event.data)}`);
+        });
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('测试页面初始化完成');
+            log('当前语言设置: ' + currentLanguage);
+        });
+    </script>
+</body>
+</html>

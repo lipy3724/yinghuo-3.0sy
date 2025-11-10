@@ -27,17 +27,29 @@ const FEATURES = {
       return 0;
     }, 
     freeUsage: 1 
-  }, // 图生视频功能，任务完成后扣除66积分 // 图生视频功能
-  'IMAGE_EDIT': { creditCost: 7, freeUsage: 1 }, // 图像指令编辑功能
+  }, // 图生视频功能，任务完成后扣除66积分
+  'IMAGE_EDIT': { 
+    creditCost: 7, // 🔧 修改：指令编辑功能固定7积分/次，不再按图片数量计费
+    freeUsage: 1 
+  }, // 图像指令编辑功能 - 首次免费，后续7积分/次
   'LOCAL_REDRAW': { creditCost: 7, freeUsage: 1 }, // 图像局部重绘功能
   'IMAGE_COLORIZATION': { creditCost: 7, freeUsage: 1 }, // 图像上色功能
-  'IMAGE_EXPANSION': { creditCost: 7, freeUsage: 1 }, // 智能扩图功能
+  'image-expansion': { creditCost: 7, freeUsage: 1 }, // 智能扩图功能
   'VIRTUAL_SHOE_MODEL': { creditCost: 25, freeUsage: 1 }, // 鞋靴虚拟试穿功能
   'TEXT_TO_IMAGE': { creditCost: 7, freeUsage: 1 }, // 文生图片功能
   'IMAGE_SHARPENING': { creditCost: 7, freeUsage: 1 }, // 模糊图片变清晰功能
   'CLOTH_SEGMENTATION': { creditCost: 2, freeUsage: 1 }, // 智能服饰分割功能
   'GLOBAL_STYLE': { creditCost: 7, freeUsage: 1 }, // 全局风格化功能
   'DIANTU': { creditCost: 7, freeUsage: 1 }, // 垫图功能
+  'IMAGE_CROP': { creditCost: 0, freeUsage: 999999 }, // 图像裁剪功能（免费）
+  'IMAGE_RESIZE': { creditCost: 0, freeUsage: 999999 }, // 图片改尺寸功能（免费）
+  'QWEN_IMAGE_EDIT': { 
+    creditCost: (payload) => {
+      // 创建阶段不扣费，任务完成后再扣费
+      return 0;
+    },
+    freeUsage: 1 
+  }, // 通义千问图像编辑功能 - 首次免费，后续按图片数量计费（7积分/张），任务完成时扣费
   
   // 亚马逊功能
   'amazon_video_script': { creditCost: 1, freeUsage: 0 }, // 亚马逊广告视频脚本生成
@@ -63,9 +75,10 @@ const FEATURES = {
     creditCost: (duration) => {
       // 计算视频时长应消耗的积分
       // 默认每30秒30积分，不足30秒按30秒计算
-      return Math.ceil(duration / 30) * 30;
+      // 返回0，创建阶段不预扣积分，任务完成后再扣费
+      return 0; // 修改为0，确保创建任务阶段不扣除积分
     }, 
-    freeUsage: 1 
+    freeUsage: 0  // 🔧 修改：视频去除字幕功能无免费次数，所有使用都收费
   }, // 视频去除字幕 30积分/30秒
   'MULTI_IMAGE_TO_VIDEO': { 
     creditCost: (payload) => {
@@ -77,16 +90,17 @@ const FEATURES = {
       */
       return 0; // 创建阶段不扣费
     }, 
-    freeUsage: 1 
+    freeUsage: 0  // 🔧 修改：多图转视频功能无免费次数，所有使用都收费
   }, // 多图转视频 30积分/30秒，任务完成后扣费
   'DIGITAL_HUMAN_VIDEO': { 
-    creditCost: (duration) => {
-      // 计算视频时长应消耗的积分
-      // 默认每秒9积分
-      return Math.ceil(duration) * 9;
+    creditCost: (payload) => {
+      // 视频数字人功能，在任务完成后根据实际生成视频时长计费
+      // 创建阶段不预扣积分，返回0
+      console.log(`视频数字人功能创建任务 - 跳过积分预扣，将在任务完成后扣除`);
+      return 0;
     }, 
-    freeUsage: 1 
-  },  // 视频数字人 9积分/秒
+    freeUsage: 0  // 🔧 修改：视频数字人功能无免费次数，所有使用都收费
+  },  // 视频数字人 9积分/秒，任务完成后扣费
   'VIDEO_STYLE_REPAINT': { 
     creditCost: (payload) => {
       /*
@@ -96,8 +110,33 @@ const FEATURES = {
       */
       return 0;
     }, 
-    freeUsage: 1 
-  }, // 视频风格重绘功能（按实际时长+分辨率计费，创建阶段不扣费）
+    freeUsage: 0 
+  }, // 视频风格重绘功能（按实际时长+分辨率计费，创建阶段不扣费，无免费次数）
+  'VIDEO_FACE_SWAP': {
+    creditCost: (payload) => {
+      // 根据服务模式和视频时长计算积分消耗
+      // wan-std (标准模式): 8积分/秒
+      // wan-pro (专业模式): 10积分/秒
+      const serviceMode = payload && payload.serviceMode ? payload.serviceMode : 'wan-std';
+      const videoDuration = payload && payload.videoDuration ? parseFloat(payload.videoDuration) : 1; // 默认1秒
+      const ratePerSecond = serviceMode === 'wan-pro' ? 10 : 8;
+      
+      // 先将视频时长向上取整，再乘以费率
+      const totalCredits = Math.ceil(videoDuration) * ratePerSecond;
+      console.log(`视频换人积分计算: 模式=${serviceMode}, 时长=${videoDuration}秒, 向上取整=${Math.ceil(videoDuration)}秒, 费率=${ratePerSecond}积分/秒, 总积分=${totalCredits}`);
+      
+      return totalCredits;
+    },
+    freeUsage: 0 // 🔧 修改：视频换人功能无免费次数，所有使用都收费
+  }, // 视频换人功能 - 标准模式8积分/秒，专业模式10积分/秒
+  'VIDEO_LOGO_REMOVAL': { 
+    creditCost: (payload) => {
+      // 视频去水印/logo功能，在任务完成后根据实际视频时长计费
+      // 创建阶段不预扣积分，返回0，任务完成后再根据实际时长扣费
+      return 0; // 修改为0，确保创建任务阶段不扣除积分
+    }, 
+    freeUsage: 0  // 🔧 视频去水印功能无免费次数，所有使用都收费
+  }, // 视频去水印/logo功能，任务完成后根据实际时长扣费
   // 可以添加更多功能和对应的积分消耗
 };
 
@@ -140,6 +179,11 @@ const checkFeatureAccess = (featureName) => {
         // 在免费使用次数内，允许使用
         console.log(`用户ID ${userId} 使用 ${featureName} 功能的免费次数 ${usage.usageCount + 1}/${featureConfig.freeUsage}`);
         
+        // 更新使用次数
+        usage.usageCount += 1;
+        usage.lastUsedAt = new Date();
+        await usage.save();
+        
         // 获取用户信息，以便正确设置remainingCredits
         const user = await User.findByPk(userId);
         
@@ -149,7 +193,8 @@ const checkFeatureAccess = (featureName) => {
           creditCost: 0,
           isFree: true,
           remainingCredits: user.credits,
-          shouldUseTrackUsage: true // 标记应该使用track-usage API
+          shouldUseTrackUsage: true, // 标记应该使用track-usage API
+          usage: usage // 传递usage对象，方便后续保存任务详情
         };
         
         next();
@@ -167,6 +212,10 @@ const checkFeatureAccess = (featureName) => {
           // 这里仅做权限检查，不预先扣除积分
           console.log(`数字人视频功能权限检查，积分将在任务完成后根据实际生成视频时长扣除`);
           creditCost = 20; // 仅检查用户是否有至少20积分，实际不会扣除
+          
+          // 添加动态积分计算函数到请求对象，供后续使用
+          req.featureUsage = req.featureUsage || {};
+          req.featureUsage.getDynamicCredits = (videoDuration) => Math.ceil(videoDuration) * 9;
         }
         else if (featureName === 'VIDEO_STYLE_REPAINT') {
           // 视频风格重绘功能，不预先扣除积分，而是在任务完成后扣除
@@ -177,12 +226,12 @@ const checkFeatureAccess = (featureName) => {
         else if (featureName === 'text-to-video') {
           // 文生视频功能，在任务完成后扣除积分
           console.log(`文生视频功能权限检查 - 跳过积分扣除`);
-          creditCost = 20; // 仅检查用户是否有至少20积分，实际不会扣除
+          creditCost = 66; // 检查用户是否有足够的积分（66积分）
         }
         else if (featureName === 'image-to-video') {
           // 图生视频功能，在任务完成后扣除积分
           console.log(`图生视频功能权限检查 - 跳过积分扣除`);
-          creditCost = 20; // 仅检查用户是否有至少20积分，实际不会扣除
+          creditCost = 66; // 检查用户是否有足够的积分（66积分）
         }
         else if (featureName === 'MULTI_IMAGE_TO_VIDEO') {
           // 多图转视频功能，在任务完成后根据实际时长扣除积分
@@ -206,11 +255,24 @@ const checkFeatureAccess = (featureName) => {
       const user = await User.findByPk(userId);
       
       if (user.credits < creditCost) {
+        // 获取功能的实际所需积分
+        let actualCreditCost = creditCost;
+        
+        // 对于特殊功能，显示实际需要的积分
+        if (featureName === 'text-to-video' || featureName === 'image-to-video') {
+          actualCreditCost = 66; // 文生视频和图生视频固定需要66积分
+        } else if (featureName === 'DIGITAL_HUMAN_VIDEO') {
+          actualCreditCost = '9积分/秒'; // 数字人视频按时长计费
+        } else if (featureName === 'MULTI_IMAGE_TO_VIDEO' || featureName === 'VIDEO_SUBTITLE_REMOVER') {
+          actualCreditCost = '30积分/30秒'; // 多图转视频和视频去字幕按时长计费
+        }
+        
         return res.status(402).json({
           success: false,
-          message: '您的免费试用次数已用完，积分不足',
+          message: `您的免费试用次数已用完，积分不足。此功能需要${actualCreditCost}积分，您当前有${user.credits}积分。`,
           data: {
             requiredCredits: creditCost,
+            actualRequiredCredits: actualCreditCost,
             currentCredits: user.credits,
             freeUsageLimit: featureConfig.freeUsage,
             freeUsageUsed: usage.usageCount
@@ -219,13 +281,19 @@ const checkFeatureAccess = (featureName) => {
       }
       
       // 积分足够，允许使用功能
+      // 更新使用次数
+      usage.usageCount += 1;
+      usage.lastUsedAt = new Date();
+      await usage.save();
+      
       // 不在这里扣除积分，而是标记需要使用track-usage API
       req.featureUsage = {
         usageType: 'paid',
         creditCost: creditCost,
         isFree: false,
         remainingCredits: user.credits,
-        shouldUseTrackUsage: true // 标记应该使用track-usage API
+        shouldUseTrackUsage: true, // 标记应该使用track-usage API
+        usage: usage // 传递usage对象，方便后续保存任务详情
       };
       
       console.log(`用户ID ${userId} 使用 ${featureName} 功能权限检查通过，需要消耗 ${creditCost} 积分`);

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频风格重绘调试工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">视频风格重绘调试工具</h1>
+        
+        <!-- 调试面板 -->
+        <div class="max-w-4xl mx-auto">
+            <!-- 状态检查 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">🔍 系统状态检查</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-medium text-gray-700 mb-2">认证状态</h3>
+                        <div id="authStatus" class="text-sm">检查中...</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-medium text-gray-700 mb-2">本地存储</h3>
+                        <div id="localStorageStatus" class="text-sm">检查中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API测试 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">🚀 API测试</h2>
+                <div class="space-y-4">
+                    <button id="testTasksAPI" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                        测试任务列表API
+                    </button>
+                    <button id="testTaskStatus" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded ml-2">
+                        测试任务状态API
+                    </button>
+                    <div id="apiResults" class="mt-4 p-4 bg-gray-50 rounded max-h-96 overflow-y-auto">
+                        <p class="text-gray-500">API测试结果将显示在这里...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务数据展示 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">📋 任务数据</h2>
+                <div class="space-y-4">
+                    <button id="loadTaskData" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                        加载任务数据
+                    </button>
+                    <div id="taskDataDisplay" class="mt-4 p-4 bg-gray-50 rounded max-h-96 overflow-y-auto">
+                        <p class="text-gray-500">任务数据将显示在这里...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作工具 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">🛠️ 操作工具</h2>
+                <div class="space-y-4">
+                    <button id="clearLocalStorage" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                        清除本地存储
+                    </button>
+                    <button id="simulateTask" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded ml-2">
+                        模拟创建任务
+                    </button>
+                    <button id="refreshPage" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded ml-2">
+                        刷新页面
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 工具函数
+        function logToResults(message, containerId = 'apiResults') {
+            const container = document.getElementById(containerId);
+            const timestamp = new Date().toLocaleTimeString();
+            container.innerHTML += `<div class="text-xs text-gray-500 mb-1">[${timestamp}]</div>`;
+            container.innerHTML += `<div class="mb-2">${message}</div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function formatJSON(obj) {
+            return `<pre class="text-xs bg-gray-100 p-2 rounded overflow-x-auto">${JSON.stringify(obj, null, 2)}</pre>`;
+        }
+
+        // 检查认证状态
+        function checkAuthStatus() {
+            const authToken = localStorage.getItem('authToken');
+            const authStatus = document.getElementById('authStatus');
+            
+            if (authToken) {
+                authStatus.innerHTML = `
+                    <span class="text-green-600">✅ 已认证</span>
+                    <div class="text-xs text-gray-500 mt-1">Token: ${authToken.substring(0, 20)}...</div>
+                `;
+            } else {
+                authStatus.innerHTML = `<span class="text-red-600">❌ 未认证</span>`;
+            }
+        }
+
+        // 检查本地存储
+        function checkLocalStorage() {
+            const localStorageStatus = document.getElementById('localStorageStatus');
+            const tasks = localStorage.getItem('videoStyleRepaintTasks');
+            
+            if (tasks) {
+                try {
+                    const parsedTasks = JSON.parse(tasks);
+                    localStorageStatus.innerHTML = `
+                        <span class="text-green-600">✅ 有数据</span>
+                        <div class="text-xs text-gray-500 mt-1">${parsedTasks.length} 个任务</div>
+                    `;
+                } catch (e) {
+                    localStorageStatus.innerHTML = `<span class="text-red-600">❌ 数据格式错误</span>`;
+                }
+            } else {
+                localStorageStatus.innerHTML = `<span class="text-yellow-600">⚠️ 无数据</span>`;
+            }
+        }
+
+        // 测试任务列表API
+        async function testTasksAPI() {
+            logToResults('🔄 测试任务列表API...');
+            
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                logToResults('<span class="text-red-600">❌ 未找到认证token</span>');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/video-style-repaint/tasks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                logToResults(`📡 响应状态: ${response.status} ${response.statusText}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    logToResults('✅ API调用成功');
+                    logToResults(formatJSON(data));
+                } else {
+                    const errorText = await response.text();
+                    logToResults(`❌ API调用失败: ${errorText}`);
+                }
+            } catch (error) {
+                logToResults(`❌ 网络错误: ${error.message}`);
+            }
+        }
+
+        // 测试任务状态API
+        async function testTaskStatus() {
+            logToResults('🔄 测试任务状态API...');
+            
+            const tasks = localStorage.getItem('videoStyleRepaintTasks');
+            if (!tasks) {
+                logToResults('<span class="text-yellow-600">⚠️ 本地没有任务数据，无法测试状态API</span>');
+                return;
+            }
+
+            try {
+                const parsedTasks = JSON.parse(tasks);
+                if (parsedTasks.length === 0) {
+                    logToResults('<span class="text-yellow-600">⚠️ 任务列表为空</span>');
+                    return;
+                }
+
+                const taskId = parsedTasks[0].taskId;
+                logToResults(`📋 测试任务ID: ${taskId}`);
+
+                const authToken = localStorage.getItem('authToken');
+                const response = await fetch(`/api/video-style-repaint/status/${taskId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                logToResults(`📡 响应状态: ${response.status} ${response.statusText}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    logToResults('✅ 状态API调用成功');
+                    logToResults(formatJSON(data));
+                } else {
+                    const errorText = await response.text();
+                    logToResults(`❌ 状态API调用失败: ${errorText}`);
+                }
+            } catch (error) {
+                logToResults(`❌ 错误: ${error.message}`);
+            }
+        }
+
+        // 加载任务数据
+        function loadTaskData() {
+            const container = document.getElementById('taskDataDisplay');
+            container.innerHTML = '';
+
+            // 本地存储数据
+            const localTasks = localStorage.getItem('videoStyleRepaintTasks');
+            if (localTasks) {
+                try {
+                    const parsedTasks = JSON.parse(localTasks);
+                    container.innerHTML += '<h3 class="font-medium text-green-600 mb-2">📱 本地存储数据:</h3>';
+                    container.innerHTML += formatJSON(parsedTasks);
+                } catch (e) {
+                    container.innerHTML += '<h3 class="font-medium text-red-600 mb-2">📱 本地存储数据 (格式错误):</h3>';
+                    container.innerHTML += `<div class="text-red-600">${e.message}</div>`;
+                }
+            } else {
+                container.innerHTML += '<h3 class="font-medium text-gray-600 mb-2">📱 本地存储:</h3>';
+                container.innerHTML += '<div class="text-gray-500">无数据</div>';
+            }
+
+            // 其他存储项
+            container.innerHTML += '<h3 class="font-medium text-blue-600 mb-2 mt-4">🔑 认证信息:</h3>';
+            const authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                container.innerHTML += `<div class="text-xs bg-gray-100 p-2 rounded">Token: ${authToken}</div>`;
+            } else {
+                container.innerHTML += '<div class="text-gray-500">无认证Token</div>';
+            }
+        }
+
+        // 清除本地存储
+        function clearLocalStorage() {
+            if (confirm('确定要清除所有本地存储数据吗？')) {
+                localStorage.removeItem('videoStyleRepaintTasks');
+                localStorage.removeItem('authToken');
+                alert('本地存储已清除');
+                checkAuthStatus();
+                checkLocalStorage();
+            }
+        }
+
+        // 模拟创建任务
+        function simulateTask() {
+            const mockTask = {
+                taskId: `test_${Date.now()}`,
+                prompt: "测试提示词",
+                videoUrl: "https://example.com/test.mp4",
+                status: "SUCCESS",
+                resultUrl: "https://example.com/result.mp4",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            const existingTasks = localStorage.getItem('videoStyleRepaintTasks');
+            let tasks = [];
+            if (existingTasks) {
+                try {
+                    tasks = JSON.parse(existingTasks);
+                } catch (e) {
+                    tasks = [];
+                }
+            }
+
+            tasks.unshift(mockTask);
+            localStorage.setItem('videoStyleRepaintTasks', JSON.stringify(tasks));
+            
+            alert('模拟任务已创建');
+            checkLocalStorage();
+        }
+
+        // 刷新页面
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            checkLocalStorage();
+
+            // 绑定事件
+            document.getElementById('testTasksAPI').addEventListener('click', testTasksAPI);
+            document.getElementById('testTaskStatus').addEventListener('click', testTaskStatus);
+            document.getElementById('loadTaskData').addEventListener('click', loadTaskData);
+            document.getElementById('clearLocalStorage').addEventListener('click', clearLocalStorage);
+            document.getElementById('simulateTask').addEventListener('click', simulateTask);
+            document.getElementById('refreshPage').addEventListener('click', refreshPage);
+        });
+    </script>
+</body>
+</html>

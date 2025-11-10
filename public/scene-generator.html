@@ -48,6 +48,9 @@
         // 添加错误提示状态标记，防止重复提示
         let hasShownErrorAlert = false;
         
+        // 语言设置变量
+        let currentLanguage = 'zh-cn'; // 默认中文
+        
         // 从API获取配置信息
         async function fetchConfig() {
             try {
@@ -109,6 +112,48 @@
             }
         }
         
+        // 从URL参数或localStorage获取语言设置
+        function getLanguageFromParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            
+            if (langParam) {
+                // 从URL参数获取语言
+                currentLanguage = langParam === 'en' || langParam === 'en-us' ? 'en-us' : 'zh-cn';
+                console.log('从URL参数获取语言:', currentLanguage);
+            } else {
+                // 从localStorage获取语言
+                const storedLang = localStorage.getItem('language');
+                if (storedLang) {
+                    currentLanguage = storedLang === 'en' ? 'en-us' : 'zh-cn';
+                    console.log('从localStorage获取语言:', currentLanguage);
+                } else {
+                    console.log('使用默认语言:', currentLanguage);
+                }
+            }
+            
+            return currentLanguage;
+        }
+        
+        // 动态切换编辑器语言
+        function changeEditorLanguage(newLanguage) {
+            currentLanguage = newLanguage;
+            console.log('切换编辑器语言到:', currentLanguage);
+            
+            // 向编辑器发送语言切换消息
+            if (iframeEle && iframeEle.contentWindow) {
+                try {
+                    const message = {
+                        lang: currentLanguage
+                    };
+                    iframeEle.contentWindow.postMessage(message, '*');
+                    console.log('已向编辑器发送语言切换消息:', message);
+                } catch (error) {
+                    console.error('发送语言切换消息失败:', error);
+                }
+            }
+        }
+
         // 构建编辑器URL并加载
         async function initializeEditor() {
             // 首先获取配置
@@ -117,12 +162,16 @@
                 return; // 如果配置获取失败，不继续初始化
             }
             
+            // 获取当前语言设置
+            const currentLang = getLanguageFromParams();
+            console.log('当前语言设置:', currentLang);
+            
             // 构建基本参数
             const params = {
                 apiHost: 'aibcn', // 使用aibcn服务节点
                 appKey: window.INTL_OP_FRAME_SDK_CONFIG.appKey,
                 trial: true,
-                lang: 'zh-cn',
+                lang: currentLang,
                 charge: true // 开启生产拦截
                 // 可选: imageUrl参数可以在这里添加
                 // imageUrl: "https://example.com/image.jpg"
@@ -291,6 +340,31 @@
                 return false;
             }
         }
+        
+        // 监听来自父页面的语言切换消息
+        window.addEventListener("message", (event) => {
+            // 处理来自父页面的语言切换消息
+            if (event.data && event.data.type === 'changeLanguage') {
+                const newLanguage = event.data.language;
+                console.log('收到语言切换消息:', newLanguage);
+                
+                if (newLanguage && (newLanguage === 'zh-cn' || newLanguage === 'en-us')) {
+                    changeEditorLanguage(newLanguage);
+                    
+                    // 可选：向父页面发送确认消息
+                    if (event.source) {
+                        event.source.postMessage({
+                            type: 'languageChanged',
+                            language: newLanguage,
+                            success: true
+                        }, '*');
+                    }
+                } else {
+                    console.error('无效的语言参数:', newLanguage);
+                }
+                return; // 处理完语言切换消息后返回，不继续处理编辑器消息
+            }
+        });
         
         // 监听编辑器消息
         window.addEventListener("message", (ev) => {

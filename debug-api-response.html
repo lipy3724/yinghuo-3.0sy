@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API响应调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .json-display {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>API响应调试工具</h1>
+    
+    <div class="section">
+        <h2>1. 用户认证</h2>
+        <button onclick="testLogin()">测试登录</button>
+        <div id="loginStatus" class="status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. 视频上传</h2>
+        <input type="file" id="videoFile" accept="video/*">
+        <button onclick="testVideoUpload()">测试视频上传</button>
+        <div id="uploadStatus" class="status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. 创建任务并监控</h2>
+        <button onclick="testCreateAndMonitor()">创建任务并监控</button>
+        <div id="taskStatus" class="status"></div>
+        <div id="taskDetails" class="json-display"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. 手动查询任务状态</h2>
+        <input type="text" id="taskIdInput" placeholder="输入任务ID" style="width: 300px;">
+        <button onclick="testTaskQuery()">查询任务状态</button>
+        <div id="queryStatus" class="status"></div>
+        <div id="queryDetails" class="json-display"></div>
+    </div>
+    
+    <div class="section">
+        <h2>调试日志</h2>
+        <button onclick="clearLog()">清空日志</button>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let videoUrl = null;
+        let taskId = null;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        function setStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+        }
+        
+        function displayJson(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        async function testLogin() {
+            try {
+                log('开始测试登录...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        account: 'admin',
+                        password: '123456'
+                    })
+                });
+                
+                const data = await response.json();
+                log(`登录响应: ${JSON.stringify(data)}`);
+                
+                if (data.success) {
+                    authToken = data.token;
+                    setStatus('loginStatus', '登录成功', 'success');
+                    log('登录成功，获取到token');
+                } else {
+                    setStatus('loginStatus', `登录失败: ${data.message}`, 'error');
+                    log(`登录失败: ${data.message}`);
+                }
+            } catch (error) {
+                setStatus('loginStatus', `登录错误: ${error.message}`, 'error');
+                log(`登录错误: ${error.message}`);
+            }
+        }
+        
+        async function testVideoUpload() {
+            if (!authToken) {
+                setStatus('uploadStatus', '请先登录', 'error');
+                return;
+            }
+            
+            const fileInput = document.getElementById('videoFile');
+            if (!fileInput.files[0]) {
+                setStatus('uploadStatus', '请选择视频文件', 'error');
+                return;
+            }
+            
+            try {
+                log('开始测试视频上传...');
+                const formData = new FormData();
+                formData.append('video', fileInput.files[0]);
+                
+                const response = await fetch('/api/video-style-repaint/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                log(`视频上传响应: ${JSON.stringify(data)}`);
+                
+                if (data.success) {
+                    videoUrl = data.videoUrl;
+                    setStatus('uploadStatus', '视频上传成功', 'success');
+                    log(`视频上传成功: ${videoUrl}`);
+                } else {
+                    setStatus('uploadStatus', `视频上传失败: ${data.message}`, 'error');
+                    log(`视频上传失败: ${data.message}`);
+                }
+            } catch (error) {
+                setStatus('uploadStatus', `视频上传错误: ${error.message}`, 'error');
+                log(`视频上传错误: ${error.message}`);
+            }
+        }
+        
+        async function testCreateAndMonitor() {
+            if (!authToken) {
+                setStatus('taskStatus', '请先登录', 'error');
+                return;
+            }
+            
+            if (!videoUrl) {
+                setStatus('taskStatus', '请先上传视频', 'error');
+                return;
+            }
+            
+            try {
+                log('开始创建任务...');
+                const requestData = {
+                    videoUrl: videoUrl,
+                    prompt: '动漫风格',
+                    style: 1,
+                    min_len: 540
+                };
+                
+                const response = await fetch('/api/video-style-repaint/create-task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                log(`创建任务响应: ${JSON.stringify(data)}`);
+                displayJson('taskDetails', data);
+                
+                if (data.output?.task_id) {
+                    taskId = data.output.task_id;
+                    setStatus('taskStatus', '任务创建成功，开始监控...', 'success');
+                    log(`任务创建成功，任务ID: ${taskId}`);
+                    
+                    // 开始监控任务状态
+                    monitorTask();
+                } else {
+                    setStatus('taskStatus', `任务创建失败: ${data.message || '未知错误'}`, 'error');
+                    log(`任务创建失败: ${data.message || '未知错误'}`);
+                }
+            } catch (error) {
+                setStatus('taskStatus', `任务创建错误: ${error.message}`, 'error');
+                log(`任务创建错误: ${error.message}`);
+            }
+        }
+        
+        async function monitorTask() {
+            if (!taskId) return;
+            
+            const interval = setInterval(async () => {
+                try {
+                    log(`查询任务状态: ${taskId}`);
+                    const response = await fetch(`/api/video-style-repaint/task-status?taskId=${taskId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    log(`任务状态响应: ${JSON.stringify(data)}`);
+                    displayJson('taskDetails', data);
+                    
+                    if (response.ok) {
+                        const taskStatus = data.output?.task_status;
+                        log(`当前任务状态: ${taskStatus}`);
+                        
+                        if (taskStatus === 'SUCCEEDED') {
+                            clearInterval(interval);
+                            setStatus('taskStatus', '任务完成！', 'success');
+                            
+                            // 详细分析结果结构
+                            log('=== 任务完成，分析结果结构 ===');
+                            log(`完整输出: ${JSON.stringify(data.output, null, 2)}`);
+                            
+                            // 尝试不同的URL字段
+                            const possibleUrls = [
+                                data.output?.result_url,
+                                data.output?.result_video_url,
+                                data.output?.video_url,
+                                data.output?.output_url,
+                                data.output?.url,
+                                data.output?.result?.url,
+                                data.output?.result?.video_url,
+                                data.output?.video?.url
+                            ];
+                            
+                            log('尝试查找结果URL:');
+                            possibleUrls.forEach((url, index) => {
+                                log(`  字段${index + 1}: ${url || 'undefined'}`);
+                            });
+                            
+                            const foundUrl = possibleUrls.find(url => url && url.trim());
+                            if (foundUrl) {
+                                log(`找到结果URL: ${foundUrl}`);
+                                setStatus('taskStatus', `任务完成！结果URL: ${foundUrl}`, 'success');
+                            } else {
+                                log('未找到结果URL');
+                                setStatus('taskStatus', '任务完成但未找到结果URL', 'error');
+                            }
+                            
+                        } else if (taskStatus === 'FAILED') {
+                            clearInterval(interval);
+                            setStatus('taskStatus', `任务失败: ${data.output?.message || '未知错误'}`, 'error');
+                        } else {
+                            setStatus('taskStatus', `任务进行中，状态: ${taskStatus}`, 'info');
+                        }
+                    } else {
+                        log(`查询失败: ${data.message}`);
+                    }
+                } catch (error) {
+                    log(`查询任务状态出错: ${error.message}`);
+                }
+            }, 5000);
+        }
+        
+        async function testTaskQuery() {
+            if (!authToken) {
+                setStatus('queryStatus', '请先登录', 'error');
+                return;
+            }
+            
+            const inputTaskId = document.getElementById('taskIdInput').value || taskId;
+            if (!inputTaskId) {
+                setStatus('queryStatus', '请输入任务ID', 'error');
+                return;
+            }
+            
+            try {
+                log(`手动查询任务状态: ${inputTaskId}`);
+                const response = await fetch(`/api/video-style-repaint/task-status?taskId=${inputTaskId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                log(`查询响应: ${JSON.stringify(data)}`);
+                displayJson('queryDetails', data);
+                
+                if (response.ok) {
+                    const taskStatus = data.output?.task_status;
+                    setStatus('queryStatus', `任务状态: ${taskStatus}`, 'success');
+                    log(`任务状态: ${taskStatus}`);
+                } else {
+                    setStatus('queryStatus', `查询失败: ${data.message}`, 'error');
+                    log(`查询失败: ${data.message}`);
+                }
+            } catch (error) {
+                setStatus('queryStatus', `查询错误: ${error.message}`, 'error');
+                log(`查询错误: ${error.message}`);
+            }
+        }
+        
+        // 页面加载时自动测试登录
+        window.onload = function() {
+            log('页面加载完成，开始自动测试...');
+            testLogin();
+        };
+    </script>
+</body>
+</html>

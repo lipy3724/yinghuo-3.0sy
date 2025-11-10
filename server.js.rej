@@ -1,0 +1,17 @@
+@@ -23,6 +23,7 @@
+ const textToVideoRoutes = require('./routes/textToVideo');
+ const imageEditRoutes = require('./routes/imageEdit');
+ const globalStyleRoutes = require('./routes/globalStyle');
++const fixDiantuResultRoutes = require('./routes/fix-diantu-result');
+ const upscaleRoutes = require('./routes/upscale');
+ const downloadsRoutes = require('./routes/downloads');
+ const diantuRoutes = require('./routes/diantu');
+@@ -102,6 +103,7 @@
+ app.use('/api/text-to-video', textToVideoRoutes);
+ app.use('/api/image-edit', imageEditRoutes);
+ app.use('/api/global-style', globalStyleRoutes);
++app.use('/api/fix-diantu-result', fixDiantuResultRoutes);
+ app.use('/api/upscale', upscaleRoutes);
+ app.use('/api/downloads', downloadsRoutes);
+ app.use('/api/diantu', diantuRoutes);
+\ No newline at end of line

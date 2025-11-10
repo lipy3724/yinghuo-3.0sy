@@ -5,7 +5,7 @@
 
 // 防抖机制 - 避免短时间内重复验证
 let lastAuthCheck = 0;
-const AUTH_CHECK_DEBOUNCE = 3000; // 3秒内不重复验证
+const AUTH_CHECK_DEBOUNCE = 8000; // 增加到8秒内不重复验证，避免与功能API冲突
 let isAuthChecking = false; // 防止并发验证
 
 // 检查用户认证状态
@@ -99,244 +99,271 @@ async function checkAuth(redirectOnFailure = true) {
                     
                     clearTimeout(timeoutId);
                     
-                    // 获取响应数据以检查是否被强制登出
-                    let responseData = null;
-                    try {
-                        responseData = await response.json();
-                    } catch (e) {
-                        console.error('解析响应数据失败:', e);
-                        // 如果解析失败但状态码是200，可能是网络问题，不要立即重定向
-                        if (response.status === 200) {
-                            console.log('响应状态正常但解析失败，可能是网络问题，暂不重定向');
-                            return true; // 暂时认为验证成功
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            console.log('会话验证成功');
+                            return true;
+                        } else {
+                            console.log('会话验证失败:', result.message);
+                            break;
                         }
+                    } else if (response.status === 401) {
+                        console.log('会话已过期，需要重新登录');
+                        break;
+                    } else {
+                        console.log(`会话验证失败，状态码: ${response.status}`);
+                        break;
                     }
-                    
-                    // 如果会话无效，清除登录信息并重定向
-                    if (response.status === 401 || response.status === 403) {
-                        console.log('服务器确认会话已失效或被管理员终止');
-                        
-                        // 检查是否是被管理员强制登出
-                        const isForceLogout = responseData && 
-                                             responseData.data && 
-                                             responseData.data.userSessionTerminated === true;
-                        
-                        if (isForceLogout) {
-                            console.log('管理员已强制登出此用户的所有设备');
-                            // 显示提示消息
-                            alert('您的账号已被管理员强制下线，请重新登录');
-                        }
-                        
-                        if (redirectOnFailure) {
-                            // 如果存在全局登出函数，使用它
-                            if (typeof window.userLogout === 'function') {
-                                window.userLogout();
-                            } else if (typeof window.logout === 'function') {
-                                window.logout();
-                            } else {
-                                // 否则手动清除并重定向
-                                clearAuthAndRedirect();
-                            }
-                        }
-                        return false;
-                    }
-                    
-                    // 如果状态码是200，认为验证成功
-                    if (response.status === 200) {
-                        return true;
-                    }
-                    
-                    if (response.ok && responseData && responseData.success) {
-                        return true;
-                    }
-                    
-                    // 其他状态码，准备重试
-                    throw new Error(`HTTP ${response.status}`);
-                    
                 } catch (error) {
                     retryCount++;
-                    console.warn(`验证尝试 ${retryCount} 失败:`, error.message);
-                    
-                    if (retryCount <= maxRetries) {
-                        // 等待后重试
-                        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                    if (error.name === 'AbortError') {
+                        console.log('会话验证超时');
+                    } else {
+                        console.log(`会话验证出错 (第${retryCount}次):`, error.message);
                     }
+                    
+                    if (retryCount > maxRetries) {
+                        console.log('会话验证重试次数已用完');
+                        // 如果是网络错误，不强制登出，允许用户继续使用备用接口
+                        if (error.name === 'AbortError' || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                            console.log('网络错误，允许继续使用页面功能');
+                            return true; // 返回true，允许继续使用
+                        }
+                        break;
+                    }
+                    
+                    // 等待后重试
+                    await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
                 }
             }
             
-            // 所有重试都失败了，但本地有token，优先信任本地状态
-            console.log('服务器验证失败，但本地token存在，暂不重定向');
-            return true; // 网络问题时暂时认为验证成功
+            // 验证失败，清除本地存储并重定向
+            console.log('会话验证最终失败，清除本地存储');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            
+            if (redirectOnFailure) {
+                redirectToLogin();
+            }
+            return false;
             
         } catch (error) {
-            console.error('验证会话时出错:', error);
+            console.error('会话验证过程中发生错误:', error);
             
-            // 网络错误不要立即重定向，给用户一些时间
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                console.log('网络请求失败，可能是网络问题，暂不重定向');
-                return true; // 网络问题时暂时认为验证成功
+            // 如果是网络错误，不强制登出
+            if (error.name === 'AbortError' || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                console.log('网络错误，允许继续使用页面功能');
+                return true; // 返回true，允许继续使用
             }
             
-            // 如果是AbortError（超时），也不要立即重定向
-            if (error.name === 'AbortError') {
-                console.log('请求被中止（可能是超时），暂不重定向');
-                return true;
-            }
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
             
-            // 其他错误，根据参数决定是否重定向
             if (redirectOnFailure) {
-                console.log('其他验证错误，将重定向到登录页');
-                clearAuthAndRedirect();
+                redirectToLogin();
             }
             return false;
         }
         
     } finally {
-        // 确保清除检查标志
-        setTimeout(() => {
-            isAuthChecking = false;
-        }, 500);
+        isAuthChecking = false;
     }
 }
 
-// 重定向到登录页面，可选择保存当前URL用于登录后返回
+// 重定向到登录页面
 function redirectToLogin() {
-    const currentUrl = window.location.href;
-    localStorage.setItem('redirectAfterLogin', currentUrl);
-    window.location.href = '/login.html';
-}
-
-// 清除认证信息并重定向到登录页
-function clearAuthAndRedirect() {
+    console.log('重定向到登录页面');
+    
+    // 清除本地存储
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
-    redirectToLogin();
-}
-
-// 检查功能访问权限
-async function checkFeatureAccess(featureName) {
-    // 首先检查基本认证
-    const isAuthenticated = await checkAuth(false);
-    if (!isAuthenticated) {
-        redirectToLogin();
-        return false;
-    }
     
-    // 可以在这里添加功能特定的访问检查逻辑
-    return true;
+    // 获取当前页面路径
+    const currentPath = window.location.pathname;
+    
+    // 如果不是登录页面，则重定向
+    if (!currentPath.includes('login.html') && !currentPath.includes('register.html')) {
+        // 保存当前页面路径，登录成功后可以跳转回来
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+        
+        // 重定向到登录页面
+        window.location.href = '/login.html';
+    }
 }
 
-// 页面加载时自动验证
+// 检查是否为认证页面
+function isAuthPage() {
+    const currentPath = window.location.pathname;
+    return currentPath.includes('login.html') || currentPath.includes('register.html');
+}
+
+// 页面加载时自动检查认证状态
 document.addEventListener('DOMContentLoaded', function() {
-    // 如果页面不是登录页或注册页，执行验证
-    const isAuthPage = window.location.pathname.includes('login.html') || 
-                      window.location.pathname.includes('register.html') ||
-                      window.location.pathname.includes('phone-login.html') ||
-                      window.location.pathname.includes('phone-register.html');
-    
-    if (!isAuthPage && localStorage.getItem('authToken')) {
-        // 添加延迟，避免刚登录成功就被重定向
-        // 特别是从登录页面跳转过来的情况
-        const referrer = document.referrer;
-        const isFromLoginPage = referrer.includes('login.html') || 
-                               referrer.includes('phone-login.html') ||
-                               referrer.includes('register.html') ||
-                               referrer.includes('phone-register.html');
-        
-        // 检查是否是刚刚登录成功（通过检查localStorage的写入时间）
-        const authToken = localStorage.getItem('authToken');
-        const userInfo = localStorage.getItem('user');
-        const isRecentLogin = authToken && userInfo && isFromLoginPage;
-        
-        // 增加更保守的延迟策略，避免误跳转
-        if (isRecentLogin) {
-            // 如果是刚登录成功，延迟更长时间再验证，确保登录状态稳定
-            console.log('检测到刚登录成功，延迟验证以确保状态稳定');
-            setTimeout(() => {
-                // 使用非阻塞的认证检查，失败时不立即跳转
-                checkAuthWithFallback();
-            }, 5000); // 延迟5秒
-        } else if (isFromLoginPage) {
-            // 如果是从登录页面跳转过来但token可能是旧的，延迟验证
-            setTimeout(() => {
-                checkAuthWithFallback();
-            }, 3000); // 延迟3秒
-        } else {
-            // 否则延迟验证，给页面足够时间加载
-            setTimeout(() => {
-                checkAuthWithFallback();
-            }, 2000); // 延迟2秒
-        }
+    // 如果是认证页面，不进行检查
+    if (isAuthPage()) {
+        return;
     }
+    
+    console.log('页面加载完成，开始认证检查');
+    
+    // 延迟检查，确保localStorage已完全加载，并避免与功能API冲突
+    setTimeout(async () => {
+        try {
+            const isAuthenticated = await checkAuth(true);
+            if (isAuthenticated) {
+                console.log('用户认证成功');
+            } else {
+                console.log('用户认证失败，已重定向到登录页面');
+            }
+        } catch (error) {
+            console.error('认证检查过程中发生错误:', error);
+        }
+    }, 1500); // 增加延迟到1.5秒，让页面完全加载
 });
 
-// 带有回退机制的认证检查
-async function checkAuthWithFallback() {
-    try {
-        // 首先进行本地状态检查
-        const authToken = localStorage.getItem('authToken');
-        const userInfo = localStorage.getItem('user');
-        
-        if (!authToken || !userInfo) {
-            console.log('本地没有认证信息，但不立即跳转，让用户手动操作');
-            return false;
+// 防止重复检查
+let lastCheckTime = 0;
+const CHECK_INTERVAL = 5000; // 5秒内不重复检查
+
+/**
+ * 检查用户是否被封禁
+ * 该函数在用户点击功能按钮时调用
+ */
+function checkBanStatus() {
+    // 如果是登录页面，不检查
+    if (isAuthPage()) return;
+    
+    // 防抖动
+    const now = Date.now();
+    if (now - lastCheckTime < CHECK_INTERVAL) return;
+    lastCheckTime = now;
+    
+    // 获取token
+    const token = localStorage.getItem('authToken');
+    if (!token) return; // 未登录不检查
+    
+    // 调用封禁检查API
+    fetch('/api/auth/check', {
+        headers: {
+            'Authorization': `Bearer ${token}`
         }
-        
-        // 验证本地信息格式
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw response;
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 成功，用户未被封禁
+        console.log('用户状态正常');
+    })
+    .catch(async (error) => {
         try {
-            const user = JSON.parse(userInfo);
-            if (!user.id || !user.username) {
-                console.log('本地用户信息格式无效，但不立即跳转');
-                return false;
+            // 尝试解析错误
+            const errorData = await error.json();
+            
+            // 检查是否因为封禁而失败
+            if (error.status === 403 && errorData.data && errorData.data.isBanned) {
+                // 显示封禁提示
+                showBanMessage(errorData.data);
             }
-        } catch (e) {
-            console.log('本地用户信息解析失败，但不立即跳转');
-            return false;
+        } catch (parseError) {
+            console.error('解析错误响应失败:', parseError);
         }
-        
-        // 进行服务器验证，但失败时不强制跳转
-        const isValid = await checkAuth(false); // 不自动重定向
-        
-        if (!isValid) {
-            console.log('服务器认证失败，但保留本地状态，让用户在使用功能时再次验证');
-            // 可以在这里显示一个温和的提示，而不是强制跳转
-            // showAuthWarning();
-        }
-        
-        return isValid;
-    } catch (error) {
-        console.error('认证检查出错，但不影响页面使用:', error);
-        return true; // 出错时不阻止用户使用页面
+    });
+}
+
+/**
+ * 显示封禁消息模态框
+ */
+function showBanMessage(banData) {
+    // 创建模态框
+    const modalContainer = document.createElement('div');
+    modalContainer.style.position = 'fixed';
+    modalContainer.style.top = '0';
+    modalContainer.style.left = '0';
+    modalContainer.style.width = '100%';
+    modalContainer.style.height = '100%';
+    modalContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modalContainer.style.display = 'flex';
+    modalContainer.style.justifyContent = 'center';
+    modalContainer.style.alignItems = 'center';
+    modalContainer.style.zIndex = '9999';
+    
+    // 创建模态框内容
+    const modalContent = document.createElement('div');
+    modalContent.style.backgroundColor = 'white';
+    modalContent.style.padding = '20px';
+    modalContent.style.borderRadius = '8px';
+    modalContent.style.maxWidth = '400px';
+    modalContent.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+    
+    // 添加标题
+    const title = document.createElement('h3');
+    title.textContent = '账号已被封禁';
+    title.style.color = 'red';
+    title.style.marginBottom = '15px';
+    title.style.borderBottom = '1px solid #eee';
+    title.style.paddingBottom = '10px';
+    modalContent.appendChild(title);
+    
+    // 添加封禁原因
+    const reasonDiv = document.createElement('div');
+    reasonDiv.style.marginBottom = '10px';
+    reasonDiv.innerHTML = `<strong>封禁原因:</strong> ${banData.reason || '违反用户协议'}`;
+    modalContent.appendChild(reasonDiv);
+    
+    // 添加封禁时间
+    if (banData.bannedAt) {
+        const timeDiv = document.createElement('div');
+        timeDiv.style.marginBottom = '10px';
+        timeDiv.innerHTML = `<strong>封禁时间:</strong> ${new Date(banData.bannedAt).toLocaleString()}`;
+        modalContent.appendChild(timeDiv);
     }
+    
+    // 添加解封时间（如果有）
+    if (banData.unbannedAt) {
+        const unbanTimeDiv = document.createElement('div');
+        unbanTimeDiv.style.marginBottom = '10px';
+        unbanTimeDiv.innerHTML = `<strong>解封时间:</strong> ${new Date(banData.unbannedAt).toLocaleString()}`;
+        modalContent.appendChild(unbanTimeDiv);
+    }
+    
+    // 添加按钮
+    const buttonDiv = document.createElement('div');
+    buttonDiv.style.textAlign = 'center';
+    buttonDiv.style.marginTop = '20px';
+    
+    const okButton = document.createElement('button');
+    okButton.textContent = '确定';
+    okButton.style.padding = '8px 20px';
+    okButton.style.backgroundColor = '#3B82F6';
+    okButton.style.color = 'white';
+    okButton.style.border = 'none';
+    okButton.style.borderRadius = '4px';
+    okButton.style.cursor = 'pointer';
+    okButton.onclick = () => {
+        document.body.removeChild(modalContainer);
+        // 强制登出
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    };
+    
+    buttonDiv.appendChild(okButton);
+    modalContent.appendChild(buttonDiv);
+    modalContainer.appendChild(modalContent);
+    document.body.appendChild(modalContainer);
 }
 
-// 可选：显示认证警告（不强制跳转）
-function showAuthWarning() {
-    // 可以在页面顶部显示一个温和的提示条
-    const existingWarning = document.getElementById('auth-warning');
-    if (existingWarning) return; // 避免重复显示
-    
-    const warningBar = document.createElement('div');
-    warningBar.id = 'auth-warning';
-    warningBar.className = 'fixed top-0 left-0 right-0 bg-yellow-100 border-b border-yellow-300 text-yellow-800 px-4 py-2 text-sm z-50';
-    warningBar.innerHTML = `
-        <div class="flex items-center justify-between">
-            <span>登录状态可能已过期，如果使用功能时遇到问题，请重新登录</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-yellow-600 hover:text-yellow-800">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-    `;
-    document.body.insertBefore(warningBar, document.body.firstChild);
-    
-    // 10秒后自动消失
-    setTimeout(() => {
-        if (warningBar.parentNode) {
-            warningBar.remove();
-        }
-    }, 10000);
-}
-
-// 暴露给全局作用域
+// 导出函数和变量供其他脚本使用
 window.checkAuth = checkAuth;
-window.checkFeatureAccess = checkFeatureAccess; 
+window.checkBanStatus = checkBanStatus;
+window.isAuthPage = isAuthPage;
+// 将isAuthChecking状态暴露给全局，供其他脚本检查
+Object.defineProperty(window, 'isAuthChecking', {
+    get: function() { return isAuthChecking; },
+    enumerable: true
+}); 

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最终错误修复测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold text-center mb-8 text-indigo-800">🎯 最终错误修复测试</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 测试步骤 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-green-800">✅ 测试步骤</h2>
+                <div class="space-y-4">
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h3 class="font-bold text-blue-800 mb-2">1. 打开测试页面</h3>
+                        <a href="/public/multi-image-to-video.html" target="_blank" 
+                           class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block">
+                            <i class="ri-external-link-line mr-1"></i>打开多图转视频页面
+                        </a>
+                    </div>
+                    
+                    <div class="p-4 bg-yellow-50 rounded-lg">
+                        <h3 class="font-bold text-yellow-800 mb-2">2. 执行测试操作</h3>
+                        <ol class="list-decimal list-inside space-y-2 text-sm">
+                            <li>上传2张图片（任意图片）</li>
+                            <li>选择"滑动"转场风格</li>
+                            <li>点击"立即生成"按钮</li>
+                            <li>等待任务失败（滑动转场会失败）</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <h3 class="font-bold text-green-800 mb-2">3. 观察结果</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center">
+                                <i class="ri-check-line text-green-600 mr-2"></i>
+                                <span>控制台显示详细的错误分析</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="ri-check-line text-green-600 mr-2"></i>
+                                <span>错误弹窗显示具体错误信息</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="ri-check-line text-green-600 mr-2"></i>
+                                <span>不再是"任务处理失败"的通用错误</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 修复详情 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-6 text-purple-800">🔧 修复详情</h2>
+                <div class="space-y-4">
+                    <div class="p-4 bg-red-50 rounded-lg">
+                        <h3 class="font-bold text-red-800 mb-2">修复前的问题</h3>
+                        <div class="text-sm text-red-700 space-y-1">
+                            <div>• result: undefined</div>
+                            <div>• error: undefined</div>
+                            <div>• message: undefined</div>
+                            <div>• 错误弹窗显示"任务处理失败"</div>
+                            <div>• 无法获取具体错误原因</div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <h3 class="font-bold text-green-800 mb-2">修复后的效果</h3>
+                        <div class="text-sm text-green-700 space-y-1">
+                            <div>• result: {error: "具体错误信息", errorCode: "错误代码"}</div>
+                            <div>• message: "具体错误信息"</div>
+                            <div>• error: "具体错误信息"</div>
+                            <div>• 错误弹窗显示具体错误详情</div>
+                            <div>• 可以准确定位问题原因</div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h3 class="font-bold text-blue-800 mb-2">技术实现</h3>
+                        <div class="text-sm text-blue-700 space-y-1">
+                            <div>• 任务失败时重新构建响应数据</div>
+                            <div>• 从多个字段提取错误信息</div>
+                            <div>• 确保所有错误字段都有值</div>
+                            <div>• 增强调试信息输出</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 预期结果 -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6 text-orange-800">🎯 预期结果</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-bold text-gray-800 mb-2">控制台输出</h3>
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <div>• "任务失败，分析错误信息" 详细分析</div>
+                        <div>• "提取的错误信息" 和来源字段</div>
+                        <div>• 完整的错误详情对象</div>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-bold text-gray-800 mb-2">用户界面</h3>
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <div>• 错误弹窗显示具体错误信息</div>
+                        <div>• 不再是通用的"任务处理失败"</div>
+                        <div>• 用户可以了解失败的具体原因</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 测试按钮 -->
+        <div class="mt-8 text-center">
+            <a href="/public/multi-image-to-video.html" target="_blank" 
+               class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 text-lg font-semibold inline-flex items-center">
+                <i class="ri-play-circle-line mr-2"></i>
+                开始测试
+            </a>
+        </div>
+    </div>
+</body>
+</html>

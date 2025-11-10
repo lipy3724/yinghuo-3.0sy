@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能扩图翻译测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .language-switch {
+            margin: 10px 0;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+        }
+        .history-container {
+            min-height: 100px;
+            border: 1px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>智能扩图翻译测试页面</h1>
+    
+    <div class="test-section">
+        <h2>语言切换测试</h2>
+        <div class="language-switch">
+            <button onclick="switchLanguage('zh')">中文</button>
+            <button onclick="switchLanguage('en')">English</button>
+        </div>
+        <p>当前语言: <span id="current-lang">zh</span></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>提示词占位符测试</h2>
+        <label data-translate="image_expansion.prompt_label">提示词</label>
+        <textarea id="prompt-test" data-translate-placeholder="image_expansion.prompt_placeholder"></textarea>
+        <p>占位符应该根据语言切换而变化</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>历史记录翻译测试</h2>
+        <div id="history-test" class="history-container">
+            <p class="text-gray-500 col-span-full text-center py-4" data-translate="image_expansion.no_history">暂无历史记录</p>
+        </div>
+        <button onclick="testHistoryEmpty()">测试空历史记录</button>
+        <button onclick="testHistoryWithData()">测试有历史记录</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>其他翻译测试</h2>
+        <p data-translate="image_expansion.title">智能扩图</p>
+        <p data-translate="image_expansion.settings">扩图设置</p>
+        <p data-translate="image_expansion.upload_image">上传图片</p>
+    </div>
+
+    <!-- 引入翻译文件 -->
+    <script src="/translations.js"></script>
+    
+    <script>
+        // 多语言支持函数
+        function getTranslation(key) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+        }
+        
+        // 将翻译函数暴露到全局
+        window.getTranslation = getTranslation;
+
+        function updatePageLanguage() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            document.getElementById('current-lang').textContent = currentLang;
+            
+            // 更新所有带有 data-translate 属性的元素
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                element.textContent = translation;
+            });
+            
+            // 更新所有带有 data-translate-placeholder 属性的元素
+            document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                const translation = getTranslation(key);
+                element.placeholder = translation;
+            });
+        }
+
+        function switchLanguage(lang) {
+            localStorage.setItem('language', lang);
+            updatePageLanguage();
+        }
+        
+        function testHistoryEmpty() {
+            const container = document.getElementById('history-test');
+            const noHistoryText = getTranslation('image_expansion.no_history');
+            container.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+        }
+        
+        function testHistoryWithData() {
+            const container = document.getElementById('history-test');
+            container.innerHTML = '<div>模拟历史记录卡片1</div><div>模拟历史记录卡片2</div>';
+        }
+
+        // 页面加载时应用语言设置
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePageLanguage();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>垫图结果修复工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+        }
+        .btn-primary {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+        }
+        .result-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        .task-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .task-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
+        .task-item.selected {
+            background-color: #e2e6ea;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="login-container">
+        <h1>登录</h1>
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="email" class="form-label">邮箱</label>
+                    <input type="email" class="form-control" id="email" placeholder="请输入邮箱">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">密码</label>
+                    <input type="password" class="form-control" id="password" placeholder="请输入密码">
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" id="login-btn">登录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="main-container" style="display: none;">
+        <h1>垫图结果修复工具</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                操作说明
+            </div>
+            <div class="card-body">
+                <p>此工具用于修复垫图功能生成的结果图URL。当您的垫图任务完成后，如果在历史记录中看不到结果图，可以使用此工具进行修复。</p>
+                <p>您可以选择以下两种方式进行修复：</p>
+                <ol>
+                    <li>单任务修复：选择一个特定的垫图任务进行修复</li>
+                    <li>批量修复：一次性修复所有没有结果图的垫图任务</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                垫图任务列表
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 mb-3">
+                    <button class="btn btn-primary" id="load-tasks-btn">加载垫图任务列表</button>
+                </div>
+                <div class="loading" id="tasks-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在加载任务列表...</p>
+                </div>
+                <div class="task-list" id="task-list">
+                    <!-- 任务列表将在这里动态生成 -->
+                    <div class="text-center text-muted">
+                        点击"加载垫图任务列表"按钮加载您的垫图任务
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                任务详情
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="task-id" class="form-label">任务ID</label>
+                    <input type="text" class="form-control" id="task-id" readonly>
+                </div>
+                <div class="mb-3">
+                    <label for="task-status" class="form-label">任务状态</label>
+                    <input type="text" class="form-control" id="task-status" readonly>
+                </div>
+                <div class="mb-3">
+                    <label for="image-url" class="form-label">原始图片URL</label>
+                    <input type="text" class="form-control" id="image-url" readonly>
+                </div>
+                <div class="mb-3">
+                    <label for="result-url" class="form-label">结果图片URL</label>
+                    <input type="text" class="form-control" id="result-url" readonly>
+                </div>
+                <div class="text-center">
+                    <img src="" class="image-preview" id="image-preview" alt="图片预览">
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-primary" id="fix-task-btn" disabled>修复选中的任务</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                批量修复
+            </div>
+            <div class="card-body">
+                <p>点击下方按钮一次性修复所有没有结果图的垫图任务。</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-warning" id="batch-fix-btn">批量修复所有任务</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-container" id="result-container">
+            <!-- 操作结果将在这里显示 -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let token = localStorage.getItem('token');
+        let tasks = [];
+        let selectedTaskId = null;
+
+        // DOM元素
+        const loginContainer = document.getElementById('login-container');
+        const mainContainer = document.getElementById('main-container');
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loadTasksBtn = document.getElementById('load-tasks-btn');
+        const tasksLoading = document.getElementById('tasks-loading');
+        const taskList = document.getElementById('task-list');
+        const taskIdInput = document.getElementById('task-id');
+        const taskStatusInput = document.getElementById('task-status');
+        const imageUrlInput = document.getElementById('image-url');
+        const resultUrlInput = document.getElementById('result-url');
+        const imagePreview = document.getElementById('image-preview');
+        const fixTaskBtn = document.getElementById('fix-task-btn');
+        const batchFixBtn = document.getElementById('batch-fix-btn');
+        const resultContainer = document.getElementById('result-container');
+
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
+
+        // 检查登录状态
+        function checkLoginStatus() {
+            if (token) {
+                // 验证token有效性
+                fetch('/api/auth/verify', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Token有效，显示主界面
+                        loginContainer.style.display = 'none';
+                        mainContainer.style.display = 'block';
+                    } else {
+                        // Token无效，显示登录界面
+                        localStorage.removeItem('token');
+                        token = null;
+                        loginContainer.style.display = 'block';
+                        mainContainer.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('验证token失败:', error);
+                    localStorage.removeItem('token');
+                    token = null;
+                    loginContainer.style.display = 'block';
+                    mainContainer.style.display = 'none';
+                });
+            } else {
+                // 没有token，显示登录界面
+                loginContainer.style.display = 'block';
+                mainContainer.style.display = 'none';
+            }
+        }
+
+        // 登录按钮点击事件
+        loginBtn.addEventListener('click', function() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                showResult('请输入邮箱和密码', 'error');
+                return;
+            }
+            
+            // 发送登录请求
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 登录成功，保存token
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    
+                    // 显示主界面
+                    loginContainer.style.display = 'none';
+                    mainContainer.style.display = 'block';
+                } else {
+                    showResult(data.message || '登录失败，请检查邮箱和密码', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('登录失败:', error);
+                showResult('登录请求失败，请稍后重试', 'error');
+            });
+        });
+
+        // 加载垫图任务列表
+        loadTasksBtn.addEventListener('click', function() {
+            if (!token) {
+                showResult('请先登录', 'error');
+                return;
+            }
+            
+            // 显示加载动画
+            tasksLoading.style.display = 'block';
+            taskList.innerHTML = '';
+            
+            // 发送请求获取垫图任务列表
+            fetch('/api/diantu-history', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载动画
+                tasksLoading.style.display = 'none';
+                
+                if (data.success) {
+                    tasks = data.tasks || [];
+                    
+                    if (tasks.length === 0) {
+                        taskList.innerHTML = '<div class="text-center text-muted">没有找到垫图任务记录</div>';
+                        return;
+                    }
+                    
+                    // 渲染任务列表
+                    renderTaskList(tasks);
+                } else {
+                    taskList.innerHTML = `<div class="text-center text-danger">${data.message || '加载任务列表失败'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('加载任务列表失败:', error);
+                tasksLoading.style.display = 'none';
+                taskList.innerHTML = '<div class="text-center text-danger">加载任务列表失败，请稍后重试</div>';
+            });
+        });
+
+        // 渲染任务列表
+        function renderTaskList(tasks) {
+            taskList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const taskItem = document.createElement('div');
+                taskItem.className = 'task-item';
+                taskItem.dataset.taskId = task.taskId;
+                
+                // 任务状态标签
+                let statusBadge = '';
+                if (task.status === 'SUCCEEDED') {
+                    statusBadge = '<span class="badge bg-success">成功</span>';
+                } else if (task.status === 'FAILED') {
+                    statusBadge = '<span class="badge bg-danger">失败</span>';
+                } else if (task.status === 'PENDING') {
+                    statusBadge = '<span class="badge bg-warning">处理中</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-secondary">未知</span>';
+                }
+                
+                // 结果URL状态
+                let resultUrlStatus = '';
+                if (task.resultUrl) {
+                    resultUrlStatus = '<span class="badge bg-info">有结果图</span>';
+                } else {
+                    resultUrlStatus = '<span class="badge bg-danger">无结果图</span>';
+                }
+                
+                // 格式化时间
+                const timestamp = task.timestamp ? new Date(task.timestamp).toLocaleString() : '未知时间';
+                
+                taskItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>任务ID:</strong> ${task.taskId.substring(0, 8)}...
+                            ${statusBadge} ${resultUrlStatus}
+                        </div>
+                        <small>${timestamp}</small>
+                    </div>
+                `;
+                
+                // 点击任务项显示详情
+                taskItem.addEventListener('click', function() {
+                    selectTask(task);
+                });
+                
+                taskList.appendChild(taskItem);
+            });
+        }
+
+        // 选择任务
+        function selectTask(task) {
+            // 更新选中状态
+            document.querySelectorAll('.task-item').forEach(item => {
+                item.classList.remove('selected');
+                if (item.dataset.taskId === task.taskId) {
+                    item.classList.add('selected');
+                }
+            });
+            
+            // 更新任务详情
+            selectedTaskId = task.taskId;
+            taskIdInput.value = task.taskId;
+            taskStatusInput.value = getStatusText(task.status);
+            imageUrlInput.value = task.imageUrl || task.originalUrl || '';
+            resultUrlInput.value = task.resultUrl || '';
+            
+            // 显示图片预览
+            const previewUrl = task.resultUrl || task.imageUrl || task.originalUrl;
+            if (previewUrl) {
+                imagePreview.src = previewUrl;
+                imagePreview.style.display = 'block';
+            } else {
+                imagePreview.style.display = 'none';
+            }
+            
+            // 启用修复按钮
+            fixTaskBtn.disabled = false;
+        }
+
+        // 获取状态文本
+        function getStatusText(status) {
+            switch (status) {
+                case 'SUCCEEDED': return '成功';
+                case 'FAILED': return '失败';
+                case 'PENDING': return '处理中';
+                default: return '未知';
+            }
+        }
+
+        // 修复单个任务
+        fixTaskBtn.addEventListener('click', function() {
+            if (!selectedTaskId) {
+                showResult('请先选择一个任务', 'error');
+                return;
+            }
+            
+            // 显示加载动画
+            showResult('正在修复任务...', 'info');
+            
+            // 发送修复请求
+            fetch('/api/fix-diantu-result', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    taskId: selectedTaskId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult(`任务修复成功！新的结果URL: ${data.task.resultUrl}`, 'success');
+                    
+                    // 更新任务详情
+                    resultUrlInput.value = data.task.resultUrl;
+                    imagePreview.src = data.task.resultUrl;
+                    imagePreview.style.display = 'block';
+                    
+                    // 更新任务列表中的任务
+                    const taskIndex = tasks.findIndex(t => t.taskId === selectedTaskId);
+                    if (taskIndex !== -1) {
+                        tasks[taskIndex].resultUrl = data.task.resultUrl;
+                        tasks[taskIndex].status = data.task.status;
+                        renderTaskList(tasks);
+                    }
+                } else {
+                    showResult(data.message || '修复任务失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('修复任务失败:', error);
+                showResult('修复请求失败，请稍后重试', 'error');
+            });
+        });
+
+        // 批量修复所有任务
+        batchFixBtn.addEventListener('click', function() {
+            if (!token) {
+                showResult('请先登录', 'error');
+                return;
+            }
+            
+            // 确认是否批量修复
+            if (!confirm('确定要批量修复所有没有结果图的垫图任务吗？')) {
+                return;
+            }
+            
+            // 显示加载动画
+            showResult('正在批量修复任务...这可能需要一些时间，请耐心等待', 'info');
+            
+            // 发送批量修复请求
+            fetch('/api/fix-diantu-result/batch', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stats = data.stats;
+                    showResult(`批量修复完成！总共 ${stats.total} 个任务，修复 ${stats.fixed} 个，失败 ${stats.failed} 个，跳过 ${stats.skipped} 个`, 'success');                                                                                                                                    
+                    
+                    // 重新加载任务列表
+                    loadTasksBtn.click();
+                } else {
+                    showResult(data.message || '批量修复失败', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('批量修复失败:', error);
+                showResult('批量修复请求失败，请稍后重试', 'error');
+            });
+        });
+
+        // 显示操作结果
+        function showResult(message, type) {
+            resultContainer.innerHTML = message;
+            resultContainer.style.display = 'block';
+            
+            // 清除所有类
+            resultContainer.classList.remove('success', 'error', 'info');
+            
+            // 添加对应类型的类
+            if (type === 'success') {
+                resultContainer.classList.add('success');
+            } else if (type === 'error') {
+                resultContainer.classList.add('error');
+            } else {
+                resultContainer.style.backgroundColor = '#cce5ff';
+                resultContainer.style.border = '1px solid #b8daff';
+                resultContainer.style.color = '#004085';
+            }
+            
+            // 滚动到结果区域
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

@@ -1421,13 +1421,35 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                 }
                 
                 // 添加翻译处理，但只在中文模式下
-                if (isChinese && typeof processedData.improvementSuggestions === 'string') {
-                    processedData.improvementSuggestions = processedData.improvementSuggestions
-                        .replace(/suggestion/gi, '建议')
-                        .replace(/steps/gi, '步骤')
-                        .replace(/timeline/gi, '时间线')
-                        .replace(/expectedoutcome/gi, '预期结果')
-                        .replace(/months/gi, '个月');
+                if (isChinese && processedData.improvementSuggestions) {
+                    try {
+                        if (typeof processedData.improvementSuggestions === 'string') {
+                            processedData.improvementSuggestions = processedData.improvementSuggestions
+                                .replace(/suggestion/gi, '建议')
+                                .replace(/steps/gi, '步骤')
+                                .replace(/timeline/gi, '时间线')
+                                .replace(/expectedoutcome/gi, '预期结果')
+                                .replace(/months/gi, '个月');
+                        } else {
+                            // 如果不是字符串类型，转换为字符串
+                            console.warn('improvementSuggestions不是字符串类型，尝试转换');
+                            let stringValue = '';
+                            
+                            if (Array.isArray(processedData.improvementSuggestions)) {
+                                stringValue = processedData.improvementSuggestions.join('\n\n');
+                            } else if (processedData.improvementSuggestions !== null && 
+                                       typeof processedData.improvementSuggestions === 'object') {
+                                stringValue = JSON.stringify(processedData.improvementSuggestions);
+                            } else {
+                                stringValue = String(processedData.improvementSuggestions || '');
+                            }
+                            
+                            processedData.improvementSuggestions = stringValue || (isChinese ? '无数据' : 'No data');
+                        }
+                    } catch (error) {
+                        console.error('处理improvementSuggestions时出错:', error);
+                        processedData.improvementSuggestions = isChinese ? '无数据' : 'No data';
+                    }
                 }
             }
             
@@ -1435,13 +1457,25 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
             const fieldsToProcess = ['productAnalysis', 'improvementSuggestions', 'competitionAnalysis'];
             if (isChinese) {
                 fieldsToProcess.forEach(field => {
-                    if (typeof processedData[field] === 'string') {
-                        processedData[field] = processedData[field]
-                            .replace(/suggestion/gi, '建议')
-                            .replace(/steps/gi, '步骤')
-                            .replace(/timeline/gi, '时间线')
-                            .replace(/expectedoutcome/gi, '预期结果')
-                            .replace(/months/gi, '个月');
+                    // 确保字段值存在且是字符串类型
+                    if (processedData[field] && typeof processedData[field] === 'string') {
+                        try {
+                            processedData[field] = processedData[field]
+                                .replace(/suggestion/gi, '建议')
+                                .replace(/steps/gi, '步骤')
+                                .replace(/timeline/gi, '时间线')
+                                .replace(/expectedoutcome/gi, '预期结果')
+                                .replace(/months/gi, '个月');
+                        } catch (error) {
+                            console.warn(`处理字段 ${field} 时出错:`, error);
+                            // 如果出错，确保字段值是有效的字符串
+                            if (!processedData[field] || typeof processedData[field] !== 'string') {
+                                processedData[field] = isChinese ? '无数据' : 'No data';
+                            }
+                        }
+                    } else if (processedData[field] === null || processedData[field] === undefined) {
+                        // 如果字段值不存在，设置默认值
+                        processedData[field] = isChinese ? '无数据' : 'No data';
                     }
                 });
             }
@@ -1449,7 +1483,22 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
             // 使用improvementDirections作为expectedResults的备选值
             if ((!processedData.expectedResults || processedData.expectedResults === '无数据' || processedData.expectedResults === 'No data') && 
                 processedData.improvementDirections) {
-                processedData.expectedResults = processedData.improvementDirections;
+                try {
+                    // 确保转换为字符串类型
+                    if (typeof processedData.improvementDirections === 'string') {
+                        processedData.expectedResults = processedData.improvementDirections;
+                    } else if (Array.isArray(processedData.improvementDirections)) {
+                        processedData.expectedResults = processedData.improvementDirections.join('\n\n');
+                    } else if (processedData.improvementDirections !== null && 
+                               typeof processedData.improvementDirections === 'object') {
+                        processedData.expectedResults = JSON.stringify(processedData.improvementDirections);
+                    } else {
+                        processedData.expectedResults = String(processedData.improvementDirections || '');
+                    }
+                } catch (error) {
+                    console.error('处理expectedResults备选值时出错:', error);
+                    processedData.expectedResults = isChinese ? '无数据' : 'No data';
+                }
             }
             
             return processedData;

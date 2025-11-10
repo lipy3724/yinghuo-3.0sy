@@ -3,13 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图像高清放大 - 萤火AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <title data-translate="image_upscaler.page_title">图像高清放大 - 萤火AI</title>
+    <script src="/js/tailwind.min.js"></script>
     <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/image-upscaler.css" rel="stylesheet">
+    <link href="/css/error-styles.css" rel="stylesheet">
     <script src="/js/logout-handler.js"></script>
     <script src="/js/auth-check.js"></script>
     <script src="/feature-tracker.js"></script>
+    <script src="/js/error-handler.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/auth-helper.js"></script>
+    <script src="/js/image-upscaler-history.js" defer></script>
+    <!-- 多语言支持 -->
+    <script src="/translations.js"></script>
+    <script src="/js/language-switcher.js"></script>
+    <!-- 本地备份的remixicon -->
+    <link href="/css/remixicon.css" rel="stylesheet">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -47,131 +57,216 @@
             position: relative;
             top: -2px;
         }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: rgba(99, 102, 241, 1);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .upscale-task {
+            transition: all 0.3s ease;
+        }
+        .active-option {
+            background-color: #ede9fe;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+        
+        .history-card {
+            transition: all 0.3s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .history-thumbnail {
+            transition: transform 0.3s ease;
+        }
+        
+        .history-card:hover .history-thumbnail {
+            transform: scale(1.05);
+        }
+        
+        .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
+        
+        #history-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
     </style>
 
     <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/mobile-guard.js"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100 min-h-screen">
     <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="container mx-auto p-8 min-h-screen overflow-y-auto" style="margin-top: 60px; max-height: calc(100vh - 60px);">
-        <h1 class="text-2xl font-bold mb-6">图像高清放大</h1>
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="image_upscaler.main_title">图像高清放大</h1>
         
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">上传图片进行高清放大</h2>
-            <p class="text-gray-600 mb-4">上传您的图片，使用AI技术提升分辨率，获得更清晰、更高质量的图像。</p>
-            
-            <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
-                <div class="flex items-start">
-                    <div class="mr-3 mt-1 text-indigo-500">
-                        <i class="ri-information-line text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-medium text-indigo-700">使用提示</h3>
-                        <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                            <li>图片尺寸需大于 100×100 像素，小于 3000×3000 像素</li>
-                            <li>放大后的图片不能超过 3000×3000 像素</li>
-                            <li>支持JPG、PNG、WEBP等常见图片格式</li>
-                            <li>放大倍数范围：2-4倍（推荐2倍效果最佳，4倍效果更明显）</li>
-                        </ul>
-                        <p class="text-red-500 font-medium mt-2">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
-                    </div>
-                </div>
-            </div>
-            
-            <form id="upscalerForm" enctype="multipart/form-data">
+        <!-- 错误信息容器 -->
+        <div id="error-message-container"></div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 图片上传和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4" data-translate="image_upscaler.settings_title">图片放大设置</h2>
+                
                 <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="image_upscaler.image_upload">图片上传</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="image_upscaler.upload_description">上传需要放大的图片</span>
+                    </div>
                     <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer" id="dropZone">
                         <input type="file" id="imageInput" name="image" accept="image/*" class="hidden">
                         <div id="uploadPlaceholder">
                             <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">拖放图片到此处或 <span class="text-indigo-600 font-medium">点击上传</span></p>
-                            <p class="text-sm text-gray-400 mt-1">支持 JPG, PNG, WEBP 格式</p>
+                            <p class="text-gray-500"><span data-translate="image_upscaler.drag_drop_text">拖放图片到此处或</span> <span class="text-indigo-600 font-medium" data-translate="image_upscaler.click_upload">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="image_upscaler.supported_formats">支持 JPG, PNG, WEBP 格式</p>
                         </div>
                         <div id="previewContainer" class="hidden">
                             <img id="imagePreview" class="max-h-48 mx-auto mb-3">
                             <p id="imageInfo" class="text-sm text-gray-500"></p>
-                            <button type="button" id="removeImage" class="mt-2 text-sm text-red-500 hover:text-red-700">
+                            <button type="button" id="removeImage" class="mt-2 text-sm text-red-500 hover:text-red-700" data-translate="image_upscaler.remove_image">
                                 移除图片
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="image_upscaler.size_requirements">图片尺寸需大于 100×100 像素，小于 3000×3000 像素</p>
+                </div>
+                
+                <!-- 放大倍数选择 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="image_upscaler.upscale_factor">放大倍数</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" class="upscale-factor-btn active-option py-3 px-4 border rounded-md text-center font-medium hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-value="2">
+                            <i class="ri-zoom-in-line mr-1"></i>
+                            <span data-translate="image_upscaler.2x">2倍</span>
+                        </button>
+                        <button type="button" class="upscale-factor-btn py-3 px-4 border rounded-md text-center font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-value="3">
+                            <i class="ri-zoom-in-line mr-1"></i>
+                            <span data-translate="image_upscaler.3x">3倍</span>
+                        </button>
+                        <button type="button" class="upscale-factor-btn py-3 px-4 border rounded-md text-center font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-value="4">
+                            <i class="ri-zoom-in-line mr-1"></i>
+                            <span data-translate="image_upscaler.4x">4倍</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="upscaleFactor" name="upscaleFactor" value="2">
+                    <p class="text-xs text-gray-500 mt-2" data-translate="image_upscaler.upscale_note">高倍数放大需要更长的处理时间，但可以获得更大的图像尺寸和更清晰的细节</p>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" id="upscaleButton" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ri-zoom-in-line mr-2"></i>
+                        <span data-translate="image_upscaler.start_upscale">开始放大</span>
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500">
+                        <span data-translate="image_upscaler.processing_info">图片放大需要1-3分钟，消耗10积分</span>
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium">
+                        <span data-translate="image_upscaler.warning_text">请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</span>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 右侧面板: 预览和历史记录 -->
+            <div class="lg:col-span-3">
+                <!-- 处理结果区域 -->
+                <div id="resultContainer" class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="image_upscaler.processing_result">处理结果</h2>
+                    
+                    <!-- 初始状态：提示用户上传图片 -->
+                    <div id="resultInitialState" class="text-center py-8 text-gray-500">
+                        <i class="ri-image-line text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-lg" data-translate="image_upscaler.upload_first">请先上传图片并选择放大倍数</p>
+                        <p class="text-sm mt-1" data-translate="image_upscaler.comparison_hint">上传图片后，这里将显示原始图片和处理后的对比结果</p>
+                    </div>
+                    
+                    <!-- 图片对比结果区域 -->
+                    <div id="resultImages" class="hidden">
+                        <div class="flex flex-col md:flex-row gap-6 mb-6">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-700 mb-2" data-translate="image_upscaler.original_image">原始图片</h3>
+                                <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                    <img id="originalImage" class="max-w-full max-h-64 mx-auto">
+                                    <p id="originalImageInfo" class="text-sm text-gray-500 mt-2 text-center"></p>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-700 mb-2" data-translate="image_upscaler.processed_image">处理后图片</h3>
+                                <div id="resultImageWrapper" class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                    <img id="resultImage" class="max-w-full max-h-64 mx-auto">
+                                    <p id="resultImageInfo" class="text-sm text-gray-500 mt-2 text-center"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end gap-3">
+                            <button type="button" id="downloadButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <i class="ri-download-2-line mr-1"></i>
+                                <span data-translate="image_upscaler.download_image">下载图片</span>
+                            </button>
+                            <button type="button" id="saveToDownloadCenterButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <i class="ri-save-line mr-1"></i>
+                                <span data-translate="image_upscaler.save">保存</span>
+                            </button>
+                            <button type="button" id="newUpscaleButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <i class="ri-add-line mr-1"></i>
+                                <span data-translate="image_upscaler.upload_new">上传新图片</span>
                             </button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-medium mb-2">放大倍数</label>
-                    <div class="flex gap-3">
-                        <button type="button" class="upscale-factor-btn active py-2 px-4 border-2 border-indigo-600 bg-indigo-50 text-indigo-600 rounded-lg font-medium hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1 flex items-center justify-center" data-value="2">
-                            <i class="ri-zoom-in-line mr-1"></i>
-                            2倍
-                        </button>
-                        <button type="button" class="upscale-factor-btn py-2 px-4 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1 flex items-center justify-center" data-value="3">
-                            <i class="ri-zoom-in-line mr-1"></i>
-                            3倍
-                        </button>
-                        <button type="button" class="upscale-factor-btn py-2 px-4 border-2 border-gray-300 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex-1 flex items-center justify-center" data-value="4">
-                            <i class="ri-zoom-in-line mr-1"></i>
-                            4倍
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" data-translate="image_upscaler.generation_history">生成历史</h2>
+                        <div class="flex space-x-2">
+                            <button id="clear-history-btn" class="text-gray-500 hover:text-red-600" data-translate-title="image_upscaler.clear_history_title">
+                                <i class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800" data-translate-title="image_upscaler.refresh_history_title">
+                                <i class="ri-refresh-line text-xl"></i>
                         </button>
                     </div>
-                    <input type="hidden" id="upscaleFactor" name="upscaleFactor" value="2">
-                    <p class="text-xs text-gray-500 mt-2">高倍数放大需要更长的处理时间，但可以获得更大的图像尺寸和更清晰的细节</p>
-                </div>
-                
-                <div class="flex justify-end">
-                    <button type="submit" id="upscaleButton" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="ri-zoom-in-line mr-2"></i>
-                        开始放大
-                    </button>
-                </div>
-            </form>
-        </div>
-        
-        <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4">处理结果</h2>
-            
-            <div class="flex flex-col md:flex-row gap-6 mb-6">
-                <div class="flex-1">
-                    <h3 class="font-medium text-gray-700 mb-2">原始图片</h3>
-                    <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                        <img id="originalImage" class="max-w-full max-h-64 mx-auto">
-                        <p id="originalImageInfo" class="text-sm text-gray-500 mt-2 text-center"></p>
+                        </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 历史记录将通过JavaScript动态添加到这里 -->
                     </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="image_upscaler.history_retention">历史记录仅保存24小时</p>
                 </div>
-                <div class="flex-1">
-                    <h3 class="font-medium text-gray-700 mb-2">处理后图片</h3>
-                    <div id="resultImageWrapper" class="border border-gray-200 rounded-lg p-2 bg-gray-50">
-                        <img id="resultImage" class="max-w-full max-h-64 mx-auto">
-                        <p id="resultImageInfo" class="text-sm text-gray-500 mt-2 text-center"></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex justify-end gap-3">
-                <button type="button" id="downloadButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <i class="ri-download-2-line mr-1"></i>
-                    下载图片
-                </button>
-                <button type="button" id="saveToDownloadCenterButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <i class="ri-save-line mr-1"></i>
-                    保存
-                </button>
-                <button type="button" id="newUpscaleButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <i class="ri-add-line mr-1"></i>
-                    上传新图片
-                </button>
             </div>
         </div>
-        
-        <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                <div class="flex flex-col items-center">
-                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                    <p class="text-gray-700 text-center" id="processingText">处理中，请耐心等待...</p>
-                </div>
-            </div>
+    </div>
+    
+    <!-- 加载中遮罩 -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
+            <div class="loading-spinner mb-4"></div>
+            <p id="processingText" class="text-lg font-medium" data-translate="image_upscaler.processing_wait">图片放大中，请耐心等待...</p>
+            <p class="text-sm text-gray-500 mt-2" data-translate="image_upscaler.processing_time">图片放大需要1-3分钟</p>
         </div>
     </div>
 
@@ -215,8 +310,9 @@
             const upscaleFactor = document.getElementById('upscaleFactor');
             const upscaleFactorValue = document.getElementById('upscaleFactorValue');
             const upscaleButton = document.getElementById('upscaleButton');
-            const upscalerForm = document.getElementById('upscalerForm');
             const resultContainer = document.getElementById('resultContainer');
+            const resultInitialState = document.getElementById('resultInitialState');
+            const resultImages = document.getElementById('resultImages');
             const originalImage = document.getElementById('originalImage');
             const originalImageInfo = document.getElementById('originalImageInfo');
             const resultImage = document.getElementById('resultImage');
@@ -225,11 +321,20 @@
             const newUpscaleButton = document.getElementById('newUpscaleButton');
             const loadingOverlay = document.getElementById('loadingOverlay');
             const processingText = document.getElementById('processingText');
+            const tasksContainer = document.getElementById('history-container');
             
             let selectedFile = null;
+            let tasks = [];
+            let pollingIntervals = {};
+            let history = [];
             
             // 初始化禁用上传按钮
             upscaleButton.disabled = true;
+            
+            // 立即清空历史记录容器，防止闪现
+            if (tasksContainer) {
+                tasksContainer.innerHTML = '';
+            }
             
             // 点击上传区域触发文件选择
             dropZone.addEventListener('click', () => {
@@ -275,13 +380,13 @@
                 btn.addEventListener('click', function() {
                     // 移除所有按钮的active状态
                     upscaleFactorBtns.forEach(b => {
-                        b.classList.remove('active');
+                        b.classList.remove('active-option');
                         b.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-600');
                         b.classList.add('border-gray-300', 'bg-white', 'text-gray-700');
                     });
                     
                     // 添加当前按钮的active状态
-                    this.classList.add('active');
+                    this.classList.add('active-option');
                     this.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
                     this.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-600');
                     
@@ -291,11 +396,11 @@
             });
             
             // 提交表单
-            upscalerForm.addEventListener('submit', async (e) => {
+            upscaleButton.addEventListener('click', async (e) => {
                 e.preventDefault();
                 
                 if (!selectedFile) {
-                    alert('请先选择一张图片');
+                    alert(translate('image_upscaler.select_image_first'));
                     return;
                 }
                 
@@ -303,16 +408,16 @@
                 const upscaleFactor = parseInt(document.getElementById('upscaleFactor').value);
                 
                 // 显示放大倍数提示信息
-                let processingMessage = '正在处理图片';
+                let processingMessage = translate('image_upscaler.processing_image');
                 if (upscaleFactor >= 4) {
-                    processingMessage += '，4倍放大需要较长时间，请耐心等待...';
+                    processingMessage += translate('image_upscaler.4x_processing');
                 } else if (upscaleFactor === 3) {
-                    processingMessage += '，请稍候...';
+                    processingMessage += translate('image_upscaler.3x_processing');
                 } else {
-                    processingMessage += '，这可能需要几秒钟...';
+                    processingMessage += translate('image_upscaler.2x_processing');
                 }
                 
-                showLoadingOverlay('正在上传图片...');
+                showLoadingOverlay(processingMessage);
                 
                 const formData = new FormData();
                 formData.append('image', selectedFile);
@@ -322,7 +427,7 @@
                     // 发送图片进行处理
                     showLoadingOverlay(processingMessage);
                     
-                    const response = await fetch('/api/upscale', {
+                    const response = await fetch('/api/image-upscaler', {
                         method: 'POST',
                         headers: {
                             'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : ''
@@ -336,7 +441,7 @@
                         if (errorData.taskId) {
                             saveTaskId(errorData.taskId);
                         }
-                        throw new Error(errorData.message || '图片处理失败');
+                        throw new Error(errorData.message || translate('image_upscaler.processing_failed'));
                     }
                     
                     const result = await response.json();
@@ -344,25 +449,75 @@
                     // 保存任务ID，如果存在的话，用于后续退款
                     if (result.taskId) {
                         saveTaskId(result.taskId);
+                        
+                        // 如果返回了任务ID，说明是异步处理，需要启动轮询
+                        console.log('收到任务ID，开始轮询任务状态:', result.taskId);
+                        
+                        // 更新加载信息
+                        processingText.textContent = translate('image_upscaler.task_submitted');
+                        
+                        // 启动轮询
+                        startPollingTask(result.taskId);
+                        
+                        return; // 不直接显示结果，等待轮询完成
                     }
                     
+                    // 如果没有任务ID，说明是同步处理，直接显示结果
                     showResults(result);
                 } catch (error) {
                     hideLoadingOverlay();
+                    
+                    // 尝试解析错误响应
+                    let errorResponse = {};
+                    try {
+                        if (error.response && error.response.json) {
+                            errorResponse = await error.response.json();
+                        } else if (typeof error === 'object' && error.message) {
+                            errorResponse = { 
+                                message: error.message,
+                                errorCode: 'UNKNOWN_ERROR'
+                            };
+                        }
+                    } catch (parseError) {
+                        console.error('解析错误响应失败:', parseError);
+                        errorResponse = { 
+                            message: error.message || '未知错误',
+                            errorCode: 'PARSE_ERROR'
+                        };
+                    }
                     
                     // 如果有任务ID，尝试请求退款
                     const taskId = localStorage.getItem('currentUpscalerTaskId');
                     if (taskId) {
                         try {
-                            await requestRefund(taskId, error.message || '任务处理失败');
+                            await requestRefund(taskId, errorResponse.message || '任务处理失败');
                             console.log('已请求退款，任务ID:', taskId);
-                            alert(`错误: ${error.message}，系统已自动申请退款`);
+                            
+                            // 使用错误处理模块显示错误
+                            if (window.ErrorHandler) {
+                                errorResponse.message = translate('image_upscaler.processing_failed_with_refund') + ': ' + errorResponse.message;
+                                window.ErrorHandler.handleApiError(errorResponse);
+                            } else {
+                                alert(translate('image_upscaler.processing_failed_with_refund') + ': ' + errorResponse.message);
+                            }
                         } catch (refundError) {
                             console.error('退款请求失败:', refundError);
-                            alert(`错误: ${error.message}，退款请求失败，请联系客服`);
+                            
+                            // 使用错误处理模块显示错误
+                            if (window.ErrorHandler) {
+                                errorResponse.message = translate('image_upscaler.processing_failed_refund_failed') + ': ' + errorResponse.message;
+                                window.ErrorHandler.handleApiError(errorResponse);
+                            } else {
+                                alert(translate('image_upscaler.processing_failed_refund_failed') + ': ' + errorResponse.message);
+                            }
                         }
                     } else {
-                        alert(`错误: ${error.message}`);
+                        // 使用错误处理模块显示错误
+                        if (window.ErrorHandler) {
+                            window.ErrorHandler.handleApiError(errorResponse);
+                        } else {
+                            alert(translate('image_upscaler.processing_failed') + ': ' + (errorResponse.message || translate('image_upscaler.unknown_error')));
+                        }
                     }
                 }
             });
@@ -371,21 +526,33 @@
             function showResults(result) {
                 hideLoadingOverlay();
                 
-                originalImage.src = URL.createObjectURL(selectedFile);
+                // 如果result包含originalUrl，使用它；否则使用本地文件
+                if (result.originalUrl) {
+                    originalImage.src = result.originalUrl;
+                } else {
+                    originalImage.src = URL.createObjectURL(selectedFile);
+                }
+                
                 resultImage.src = result.imageUrl;
                 
                 const img = new Image();
                 img.onload = () => {
-                    originalImageInfo.textContent = `${selectedFile.name} (原始尺寸: ${imagePreview.naturalWidth}×${imagePreview.naturalHeight} px)`;
+                    if (selectedFile) {
+                        originalImageInfo.textContent = `${selectedFile.name} (原始尺寸: ${imagePreview.naturalWidth}×${imagePreview.naturalHeight} px)`;
+                    } else {
+                        originalImageInfo.textContent = `原始图片 (${img.width}×${img.height} px)`;
+                    }
                     resultImageInfo.textContent = `放大${document.getElementById('upscaleFactor').value}倍 (${img.width}×${img.height} px)`;
-                    
-                    // 移除自动保存结果到下载中心
-                    // saveImageToDownloadCenter(result.originalUrl, result.imageUrl);
                 };
                 img.src = result.imageUrl;
                 
-                upscalerForm.classList.add('hidden');
-                resultContainer.classList.remove('hidden');
+                // 隐藏初始状态，显示图片对比结果
+                resultInitialState.classList.add('hidden');
+                resultImages.classList.remove('hidden');
+                
+                // 添加到历史记录
+                const upscaleFactor = parseInt(document.getElementById('upscaleFactor').value);
+                addToHistory(originalImage.src, result.imageUrl, upscaleFactor);
             }
             
             // 保存到下载中心按钮
@@ -394,7 +561,7 @@
             saveToDownloadCenterButton.addEventListener('click', async () => {
                 if (resultImage.src) {
                     try {
-                        showLoadingOverlay('正在保存到下载中心...');
+                        showLoadingOverlay(translate('image_upscaler.saving_to_download_center'));
                         
                         // 获取原始图片URL和处理后的图片URL
                         const originalUrl = originalImage.src;
@@ -404,10 +571,10 @@
                         await saveImageToDownloadCenter(originalUrl, processedUrl);
                         
                         hideLoadingOverlay();
-                        alert('图片已成功保存到下载中心！');
+                        alert(translate('image_upscaler.save_success'));
                     } catch (error) {
                         hideLoadingOverlay();
-                        alert(`保存失败: ${error.message}`);
+                        alert(translate('image_upscaler.save_failed') + ': ' + error.message);
                     }
                 }
             });
@@ -420,8 +587,8 @@
                         originalImageUrl: originalImageUrl,
                         processedImageUrl: processedImageUrl,
                         processTime: new Date().toISOString(),
-                        processType: '图像高清放大', // 功能类型
-                        description: `图像放大${document.getElementById('upscaleFactor').value}倍结果`
+                        processType: translate('image_upscaler.main_title'), // 功能类型
+                        description: translate('image_upscaler.upscale_factor_label') + document.getElementById('upscaleFactor').value + translate('image_upscaler.2x').replace('2', '') + translate('image_upscaler.processing_result')
                     };
                     
                     // 发送到服务器API
@@ -435,7 +602,7 @@
                     });
                     
                     if (!response.ok) {
-                        throw new Error('保存失败，服务器返回错误');
+                        throw new Error(translate('image_upscaler.save_server_error'));
                     }
                     
                     const result = await response.json();
@@ -466,15 +633,16 @@
             // 新的图片上传按钮
             newUpscaleButton.addEventListener('click', () => {
                 resetImageUpload();
-                resultContainer.classList.add('hidden');
-                upscalerForm.classList.remove('hidden');
+                // 重置到初始状态
+                resultInitialState.classList.remove('hidden');
+                resultImages.classList.add('hidden');
             });
             
             // 处理选择的文件
             function handleSelectedFile(file) {
                 // 检查文件类型
                 if (!file.type.match('image.*')) {
-                    alert('请选择图片文件');
+                    alert(translate('image_upscaler.select_image_file'));
                     return;
                 }
                 
@@ -483,9 +651,12 @@
                 // 显示预览
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    // 更新左侧小预览
                     imagePreview.src = e.target.result;
                     uploadPlaceholder.classList.add('hidden');
                     previewContainer.classList.remove('hidden');
+                    
+                    // 右侧预览已移除，不再需要更新
                     
                     // 检查图片尺寸
                     const img = new Image();
@@ -497,13 +668,13 @@
                         
                         // 检查尺寸限制
                         if (width < 100 || height < 100) {
-                            alert('图片尺寸太小，需要大于100×100像素');
+                            alert(translate('image_upscaler.image_too_small'));
                             resetImageUpload();
                             return;
                         }
                         
                         if (width > 3000 || height > 3000) {
-                            alert('图片尺寸太大，需要小于3000×3000像素');
+                            alert(translate('image_upscaler.image_too_large'));
                             resetImageUpload();
                             return;
                         }
@@ -519,7 +690,7 @@
                         upscaleButton.disabled = false;
 
                         if (maxFactor < 2) {
-                            alert('图片尺寸太大，放大后将超过限制');
+                            alert(translate('image_upscaler.image_size_exceed'));
                             resetImageUpload();
                             return;
                         }
@@ -539,7 +710,7 @@
                         });
                         
                         // 如果当前选中的按钮不可用，则自动选择可用的最大倍数
-                        const activeBtn = document.querySelector('.upscale-factor-btn.active');
+                        const activeBtn = document.querySelector('.upscale-factor-btn.active-option');
                         if (activeBtn && activeBtn.disabled) {
                             // 找到可用的最大倍数按钮
                             const availableBtns = Array.from(upscaleFactorBtns).filter(btn => !btn.disabled);
@@ -571,6 +742,8 @@
                 selectedFile = null;
                 upscaleButton.disabled = true;
                 
+                // 右侧预览已移除，不再需要重置
+                
                 // 重置放大倍数按钮状态
                 upscaleFactorBtns.forEach(btn => {
                     // 启用所有按钮
@@ -579,13 +752,13 @@
                     btn.title = '';
                     
                     // 重置样式
-                    btn.classList.remove('active');
+                    btn.classList.remove('active-option');
                     btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-600');
                     btn.classList.add('border-gray-300', 'bg-white', 'text-gray-700');
                     
                     // 默认选中2倍按钮
                     if (btn.dataset.value === '2') {
-                        btn.classList.add('active');
+                        btn.classList.add('active-option');
                         btn.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
                         btn.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-600');
                     }
@@ -648,7 +821,524 @@
                     throw new Error('退款请求失败: ' + error.message);
                 }
             }
+            
+            // 加载用户任务列表
+            async function loadUserTasks() {
+                try {
+                    console.log('开始加载用户任务列表...');
+                    
+                    // 检查认证令牌
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.error('加载任务列表失败: 未找到认证令牌');
+                            throw new Error(translate('image_upscaler.auth_token_not_found'));
+                    }
+                    
+                    // 验证令牌格式
+                    if (!authToken.includes('.') || authToken.split('.').length !== 3) {
+                        console.error('认证令牌格式不正确，清理并重新登录');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                            throw new Error(translate('image_upscaler.auth_token_invalid'));
+                    }
+                    
+                    // 显示加载状态
+                    if (tasksContainer) {
+                        tasksContainer.innerHTML = `
+                            <div class="col-span-full text-center py-8">
+                                <div class="inline-block loading-spinner mb-3"></div>
+                                <p class="text-gray-500" data-translate="image_upscaler.loading_tasks">正在加载任务列表...</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // 发送API请求
+                    const response = await fetch('/api/image-upscaler/tasks', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    console.log('任务列表API响应状态码:', response.status);
+                    
+                    // 解析响应数据
+                    const data = await response.json();
+                    console.log('任务列表API响应数据:', data);
+                    
+                    // 检查HTTP状态码
+                    if (!response.ok) {
+                        // 处理不同类型的错误
+                        if (response.status === 401) {
+                            // 认证错误 - 清理无效的令牌
+                            console.log('认证失败，清理本地存储的认证信息');
+                            localStorage.removeItem('authToken');
+                            localStorage.removeItem('user');
+                            
+                            if (window.ErrorHandler) {
+                                window.ErrorHandler.handleAuthError(data.message || '认证失败，请重新登录');
+                            } else {
+                                throw new Error(translate('image_upscaler.auth_failed'));
+                            }
+                            return;
+                        } else if (response.status === 404) {
+                            // 资源不存在
+                            throw new Error(data.message || translate('image_upscaler.task_not_found'));
+                        } else {
+                            // 其他错误
+                            throw new Error(data.message || translate('image_upscaler.get_task_list_failed'));
+                        }
+                    }
+                    
+                    // 检查响应格式
+                    if (!data.success) {
+                        throw new Error(data.message || translate('image_upscaler.get_task_list_failed'));
+                    }
+                    
+                    // 检查tasks字段是否存在且为数组
+                    if (!data.tasks || !Array.isArray(data.tasks)) {
+                        console.warn('任务列表API返回的数据格式不正确:', data);
+                        throw new Error(translate('image_upscaler.task_list_format_error'));
+                    }
+                    
+                    // 更新任务列表
+                    tasks = data.tasks || [];
+                    console.log('成功获取任务列表，数量:', tasks.length);
+                    
+                    // 显示任务列表
+                    // displayTasks(); // 已改用OSS历史记录系统
+                    
+                    // 清除之前的错误提示
+                    if (window.ErrorHandler) {
+                        window.ErrorHandler.clearErrors();
+                    }
+                } catch (error) {
+                    console.error('加载任务列表失败:', error);
+                    
+                    // 构造错误对象
+                    const errorObj = {
+                        message: error.message || '获取任务列表失败',
+                        errorCode: error.errorCode || 'TASK_LIST_ERROR',
+                        title: '加载失败'
+                    };
+                    
+                    // 显示错误信息
+                    if (tasksContainer) {
+                        // 使用错误处理模块显示错误
+                        if (window.ErrorHandler) {
+                            window.ErrorHandler.handleApiError(errorObj);
+                        }
+                        
+                        // 在任务列表容器中显示错误信息和重试按钮
+                        tasksContainer.innerHTML = `
+                            <div class="text-center py-8">
+                                <p class="text-red-500 mb-3">${errorObj.message}</p>
+                                <button id="retry-load-tasks" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <i class="ri-refresh-line mr-1"></i>重新加载
+                                </button>
+                            </div>
+                        `;
+                        
+                        // 添加重试按钮事件监听
+                        const retryButton = document.getElementById('retry-load-tasks');
+                        if (retryButton) {
+                            retryButton.addEventListener('click', function() {
+                                // 添加视觉反馈
+                                this.disabled = true;
+                                this.innerHTML = '<i class="ri-loader-2-line animate-spin mr-1"></i>加载中...';
+                                
+                                // 延迟执行，以便用户看到加载状态
+                                setTimeout(() => {
+                                    loadUserTasks();
+                                }, 500);
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // displayTasks函数已移除，现在使用OSS历史记录系统
+            
+            // 获取状态样式类
+            function getStatusClass(status) {
+                switch (status) {
+                    case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+                    case 'RUNNING': return 'bg-blue-100 text-blue-800';
+                    case 'SUCCEEDED': return 'bg-green-100 text-green-800';
+                    case 'FAILED': return 'bg-red-100 text-red-800';
+                    default: return 'bg-gray-100 text-gray-800';
+                }
+            }
+            
+            // 获取状态文本
+            function getStatusText(status) {
+                switch (status) {
+                    case 'PENDING': return translate('image_upscaler.status_pending');
+                    case 'RUNNING': return translate('image_upscaler.status_running');
+                    case 'SUCCEEDED': return translate('image_upscaler.status_succeeded');
+                    case 'FAILED': return translate('image_upscaler.status_failed');
+                    default: return translate('image_upscaler.status_unknown');
+                }
+            }
+            
+            // 下载图片
+            window.downloadImage = function(url, filename) {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+            };
+            
+            // 保存到下载中心
+            window.saveToDownloadCenter = async function(originalUrl, resultUrl, upscaleFactor) {
+                try {
+                    const resultData = {
+                        originalImageUrl: originalUrl,
+                        processedImageUrl: resultUrl,
+                        processTime: new Date().toISOString(),
+                        processType: translate('image_upscaler.main_title'),
+                        description: translate('image_upscaler.upscale_factor_label') + upscaleFactor + translate('image_upscaler.2x').replace('2', '') + translate('image_upscaler.processing_result')
+                    };
+                    
+                    const response = await fetch('/api/save-result', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify(resultData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('保存失败');
+                    }
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(translate('image_upscaler.save_already_success'));
+                    } else {
+                        throw new Error(result.message || '保存失败');
+                    }
+                } catch (error) {
+                    alert(translate('image_upscaler.save_failed') + ': ' + error.message);
+                }
+            };
+            
+            // 刷新历史记录按钮
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            if (refreshHistoryBtn) {
+                refreshHistoryBtn.addEventListener('click', function() {
+                    console.log('刷新历史记录按钮被点击');
+                    // 添加视觉反馈
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                    loadHistory();
+                });
+            } else {
+                console.error('未找到刷新历史记录按钮元素');
+            }
+            
+            // 初始加载任务列表
+            loadUserTasks();
+            
+            // 开始轮询未完成的任务
+            startPollingPendingTasks();
+            
+            // 初始化历史记录功能
+            initializeHistoryFeatures();
+            
+            // 快速加载历史记录
+            setTimeout(() => {
+                loadHistory();
+            }, 100);
+            
+            // 开始轮询未完成的任务
+            function startPollingPendingTasks() {
+                // 清除所有现有的轮询
+                Object.keys(pollingIntervals).forEach(taskId => {
+                    clearInterval(pollingIntervals[taskId]);
+                    delete pollingIntervals[taskId];
+                });
+                
+                // 为每个未完成的任务开始轮询
+                tasks.forEach(task => {
+                    if (task.status === 'PENDING' || task.status === 'RUNNING') {
+                        startPollingTask(task.taskId);
+                    }
+                });
+            }
+            
+            // 开始轮询单个任务
+            function startPollingTask(taskId) {
+                if (pollingIntervals[taskId]) {
+                    clearInterval(pollingIntervals[taskId]);
+                }
+                
+                const pollFunction = async () => {
+                    try {
+                        const response = await fetch(`/api/image-upscaler/task/${taskId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            // 如果是认证错误，清理令牌并停止轮询
+                            if (response.status === 401) {
+                                console.log('轮询任务时认证失败，清理本地存储的认证信息');
+                                localStorage.removeItem('authToken');
+                                localStorage.removeItem('user');
+                                
+                                // 停止所有轮询
+                                Object.keys(pollingIntervals).forEach(id => {
+                                    clearInterval(pollingIntervals[id]);
+                                    delete pollingIntervals[id];
+                                });
+                                
+                                // 显示认证错误
+                                if (window.ErrorHandler) {
+                                    window.ErrorHandler.handleAuthError('认证失败，请重新登录');
+                                }
+                                return;
+                            }
+                            throw new Error('获取任务状态失败');
+                        }
+                        
+                        const data = await response.json();
+                        const task = data.task;
+                        
+                        // 更新任务列表中的任务状态
+                        const taskIndex = tasks.findIndex(t => t.taskId === taskId);
+                        if (taskIndex !== -1) {
+                            tasks[taskIndex] = task;
+                        }
+                        
+                        // 如果任务完成，停止轮询
+                        if (task.status === 'SUCCEEDED' || task.status === 'FAILED') {
+                            clearInterval(pollingIntervals[taskId]);
+                            delete pollingIntervals[taskId];
+                            
+                            // 重新显示任务列表
+                            // displayTasks(); // 已改用OSS历史记录系统
+                            
+                            // 如果是当前任务完成，显示结果
+                            if (taskId === localStorage.getItem('currentUpscalerTaskId')) {
+                                if (task.status === 'SUCCEEDED') {
+                                    showResults({
+                                        imageUrl: task.resultUrl,
+                                        originalUrl: task.originalUrl
+                                    });
+                                } else {
+                                    hideLoadingOverlay();
+                                    alert(`任务处理失败: ${task.errorMessage || '未知错误'}`);
+                                }
+                                localStorage.removeItem('currentUpscalerTaskId');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('轮询任务状态失败:', error);
+                    }
+                };
+                
+                // 立即执行一次，然后每2秒轮询一次
+                pollFunction();
+                pollingIntervals[taskId] = setInterval(pollFunction, 2000);
+            }
+            
+            // 初始化历史记录功能
+            function initializeHistoryFeatures() {
+                // 绑定清空历史记录按钮
+                const clearHistoryBtn = document.getElementById('clear-history-btn');
+                if (clearHistoryBtn) {
+                    clearHistoryBtn.addEventListener('click', clearHistory);
+                }
+                
+                // 初始加载历史记录
+                loadHistory();
+            }
         });
+        
+        // 历史记录相关函数
+        // 添加到历史记录
+        async function addToHistory(originalImage, resultImage, upscaleFactor) {
+            try {
+                console.log('添加历史记录到OSS - 开始');
+                console.log('原始图片URL:', originalImage);
+                console.log('结果图片URL:', resultImage);
+                console.log('放大倍数:', upscaleFactor);
+                
+                // 使用OSS存储保存历史记录
+                const historyData = {
+                    originalImage: originalImage,
+                    resultImage: resultImage,
+                    upscaleFactor: upscaleFactor,
+                    metadata: {
+                        timestamp: new Date().toISOString(),
+                        feature: 'image-upscaler'
+                    }
+                };
+                
+                // 保存到OSS
+                await window.ImageUpscalerHistory.save(historyData);
+                console.log('历史记录已保存到OSS');
+                
+                // 重新加载历史记录显示
+                await loadHistory();
+            } catch (error) {
+                console.error('添加历史记录失败:', error);
+            }
+        }
+        
+        // 压缩图片数据以适应localStorage限制
+        function compressImageDataIfNeeded(imageData) {
+            return new Promise((resolve) => {
+                try {
+                    // 如果不是base64数据，直接返回
+                    if (!imageData || !imageData.startsWith('data:image')) {
+                        resolve(imageData);
+                        return;
+                    }
+                    
+                    // 如果数据大小已经小于500KB，不需要压缩
+                    if (imageData.length < 500000) {
+                        resolve(imageData);
+                        return;
+                    }
+                    
+                    console.log('压缩图片 - 原始大小:', imageData.length, '字节');
+                    
+                    // 创建一个临时的canvas和Image对象
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        // 创建一个canvas元素
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // 设置合适的尺寸，保持宽高比
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 如果图片太大，按比例缩小
+                        const MAX_SIZE = 800;
+                        if (width > height && width > MAX_SIZE) {
+                            height = Math.round((height * MAX_SIZE) / width);
+                            width = MAX_SIZE;
+                        } else if (height > MAX_SIZE) {
+                            width = Math.round((width * MAX_SIZE) / height);
+                            height = MAX_SIZE;
+                        }
+                        
+                        // 设置canvas尺寸
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // 绘制图片到canvas
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 将canvas转换为压缩后的base64数据
+                        // 使用较低的质量值来减小文件大小
+                        const compressedData = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        console.log('压缩图片 - 压缩后大小:', compressedData.length, '字节');
+                        console.log('压缩图片 - 压缩率:', Math.round((compressedData.length / imageData.length) * 100) + '%');
+                        
+                        resolve(compressedData);
+                    };
+                    
+                    img.onerror = () => {
+                        console.error('压缩图片失败: 图片加载错误');
+                        resolve(imageData); // 如果加载失败，返回原始数据
+                    };
+                    
+                    img.src = imageData;
+                } catch (error) {
+                    console.error('压缩图片失败:', error);
+                    // 如果压缩失败，返回原始数据
+                    resolve(imageData);
+                }
+            });
+        }
+        
+        // 检查localStorage是否可用
+        function isLocalStorageAvailable() {
+            try {
+                const test = '__test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // 加载历史记录 - 使用OSS存储
+        async function loadHistory() {
+            console.log('loadHistory函数被调用 - 使用OSS存储');
+            try {
+                const historyContainer = document.getElementById('history-container');
+                if (!historyContainer) {
+                    console.error('未找到历史记录容器');
+                    return;
+                }
+                
+                console.log('开始从OSS加载历史记录');
+                
+                // 从OSS获取历史记录
+                const records = await window.ImageUpscalerHistory.fetch();
+                console.log('从OSS获取到', records.length, '条历史记录');
+                
+                // 使用OSS历史记录模块显示记录
+                window.ImageUpscalerHistory.display(records, 'history-container');
+                
+                console.log('历史记录加载完成');
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                const historyContainer = document.getElementById('history-container');
+                if (historyContainer) {
+                    historyContainer.innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">加载历史记录失败</p>';
+                }
+            }
+        }
+        
+        // 清空历史记录 - 使用OSS存储
+        async function clearHistory() {
+            if (confirm(translate('image_upscaler.confirm_clear_history'))) {
+                try {
+                    // 使用OSS存储清空历史记录
+                    await window.ImageUpscalerHistory.remove('all'); // 清空所有记录
+                    console.log('历史记录已从OSS清空');
+                    await loadHistory(); // 重新加载历史记录显示
+                    alert(translate('image_upscaler.history_cleared'));
+                } catch (error) {
+                    console.error('清空历史记录失败:', error);
+                    alert(translate('image_upscaler.clear_history_failed'));
+                }
+            }
+        }
+        
+        // 下载图片函数
+        function downloadImage(imageUrl, fileName) {
+            try {
+                // 创建一个临时的a标签来触发下载
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = fileName || 'image.png';
+                
+                // 添加到DOM中
+                document.body.appendChild(link);
+                
+                // 触发点击事件
+                link.click();
+                
+                // 清理DOM
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('下载图片失败:', error);
+                alert(translate('image_upscaler.download_failed'));
+            }
+        }
 
         // 加载导航栏组件
         document.addEventListener('DOMContentLoaded', async function() {

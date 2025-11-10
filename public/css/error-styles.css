@@ -1,0 +1,202 @@
+/**
+ * 错误处理样式
+ * 用于统一展示各种错误消息的样式
+ */
+
+/* 错误消息容器 */
+#error-message-container {
+  margin-bottom: 20px;
+}
+
+/* 基础错误消息样式 */
+.error-message {
+  background-color: #fee2e2;
+  border-left: 4px solid #ef4444;
+  color: #b91c1c;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 错误消息标题 */
+.error-message .error-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* 错误图标 */
+.error-message .error-icon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+/* 错误代码样式 */
+.error-message .error-code {
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  margin-left: 8px;
+  color: #991b1b;
+}
+
+/* 错误描述 */
+.error-message .error-description {
+  margin-top: 6px;
+  color: #7f1d1d;
+}
+
+/* 关闭按钮 */
+.error-message .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  cursor: pointer;
+  color: #b91c1c;
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.error-message .close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 警告消息样式 */
+.warning-message {
+  background-color: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  color: #92400e;
+}
+
+.warning-message .error-title {
+  color: #92400e;
+}
+
+.warning-message .error-code {
+  color: #92400e;
+}
+
+.warning-message .error-description {
+  color: #78350f;
+}
+
+.warning-message .close-btn {
+  color: #92400e;
+}
+
+/* 信息消息样式 */
+.info-message {
+  background-color: #e0f2fe;
+  border-left: 4px solid #0ea5e9;
+  color: #0369a1;
+}
+
+.info-message .error-title {
+  color: #0369a1;
+}
+
+.info-message .error-code {
+  color: #0369a1;
+}
+
+.info-message .error-description {
+  color: #075985;
+}
+
+.info-message .close-btn {
+  color: #0369a1;
+}
+
+/* 成功消息样式 */
+.success-message {
+  background-color: #dcfce7;
+  border-left: 4px solid #10b981;
+  color: #047857;
+}
+
+.success-message .error-title {
+  color: #047857;
+}
+
+.success-message .error-code {
+  color: #047857;
+}
+
+.success-message .error-description {
+  color: #065f46;
+}
+
+.success-message .close-btn {
+  color: #047857;
+}
+
+/* 特定错误类型样式 */
+.api-error {
+  border-left-color: #6366f1;
+  background-color: #eef2ff;
+}
+
+.api-error .error-title {
+  color: #4f46e5;
+}
+
+.api-error .error-code {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #4338ca;
+}
+
+.network-error {
+  border-left-color: #f43f5e;
+  background-color: #ffe4e6;
+}
+
+.auth-error {
+  border-left-color: #8b5cf6;
+  background-color: #f3e8ff;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+  .error-message {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .error-message .error-title {
+    font-size: 14px;
+  }
+  
+  .error-message .error-code {
+    font-size: 11px;
+  }
+}

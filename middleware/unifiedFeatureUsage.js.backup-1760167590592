@@ -1,0 +1,493 @@
+const { FeatureUsage } = require('../models/FeatureUsage');
+const User = require('../models/User');
+const { FEATURES } = require('./featureAccess');
+
+/**
+ * 统一的功能使用中间件
+ * 实现免费次数检查→积分扣除→记录生成的完整逻辑
+ * @param {string} featureName - 功能名称
+ * @param {object} options - 可选配置
+ * @param {function} options.calculateCreditCost - 动态计算积分消耗的函数
+ * @returns {function} Express中间件函数
+ */
+const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
+  return async (req, res, next) => {
+    try {
+      if (!req.user || (!req.user.id && !req.user.userId)) {
+        return res.status(401).json({
+          success: false,
+          message: '用户认证信息缺失'
+        });
+      }
+      
+      const userId = req.user.id || req.user.userId;
+      
+      // 验证功能名称
+      if (!featureName || !FEATURES[featureName]) {
+        return res.status(400).json({
+          success: false,
+          message: '无效的功能名称'
+        });
+      }
+
+      // 获取功能配置
+      const featureConfig = FEATURES[featureName];
+      
+      // 获取当天日期，仅用于记录
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 查找或创建该用户对该功能的使用记录
+      let [usage, created] = await FeatureUsage.findOrCreate({
+        where: {
+          userId,
+          featureName
+        },
+        defaults: {
+          usageCount: 0,
+          lastUsedAt: new Date(),
+          resetDate: today
+        }
+      });
+      
+      // 生成或获取任务ID，用于跟踪整个流程
+      const taskId = req.body.taskId || `${featureName}-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+      req.body.taskId = taskId; // 确保后续处理可以使用相同的任务ID
+      
+      // 检查是否已经为此任务扣除过积分
+      let alreadyCharged = false;
+      if (usage.details) {
+        try {
+          const details = JSON.parse(usage.details || '{}');
+          const recordedTaskIds = details.recordedTaskIds || [];
+          alreadyCharged = recordedTaskIds.includes(taskId);
+          
+          if (alreadyCharged) {
+            console.log(`任务ID=${taskId}已扣除过积分，跳过重复扣除`);
+          }
+        } catch (error) {
+          console.error('解析使用记录详情失败:', error);
+        }
+      }
+      
+      // 计算积分消耗
+      let creditCost = 0;
+      if (typeof featureConfig.creditCost === 'function') {
+        // 动态计算积分
+        if (options.calculateCreditCost) {
+          creditCost = options.calculateCreditCost(req, featureConfig);
+        } else {
+          creditCost = featureConfig.creditCost(req.body);
+        }
+      } else {
+        // 固定积分消耗
+        creditCost = featureConfig.creditCost;
+      }
+      
+      // 特殊处理视频去除字幕功能 - 只检查积分是否足够，但不扣除
+      const isVideoSubtitleRemover = featureName === 'VIDEO_SUBTITLE_REMOVER';
+      if (isVideoSubtitleRemover) {
+        // 计算实际所需积分，用于权限检查
+        const duration = parseInt(req.body.videoDuration) || 30;
+        creditCost = Math.ceil(duration / 30) * 30;
+        console.log(`视频去除字幕功能 - 视频时长${duration}秒，需要${creditCost}积分，仅做权限检查`);
+      }
+      
+      // 检查是否在免费使用次数内
+      let usageType = 'free';
+      let finalCreditCost = 0;
+      
+      // 多图转视频功能：首次使用免费，之后收费
+      if (featureName === 'MULTI_IMAGE_TO_VIDEO') {
+        // 检查是否首次使用
+        if (usage.usageCount >= 1) {
+          // 超过免费次数，检查用户积分
+          const user = await User.findByPk(userId);
+          
+          if (user.credits < creditCost) {
+            return res.status(402).json({
+              success: false,
+              message: '您的免费试用次数已用完，积分不足',
+              data: {
+                requiredCredits: creditCost,
+                currentCredits: user.credits,
+                freeUsageLimit: 1,
+                freeUsageUsed: usage.usageCount
+              }
+            });
+          }
+          
+          usageType = 'paid';
+        } else {
+          usageType = 'free';
+        }
+      } else if (usage.usageCount >= featureConfig.freeUsage) {
+        // 超过免费次数，检查用户积分
+        const user = await User.findByPk(userId);
+        
+        if (user.credits < creditCost) {
+          return res.status(402).json({
+            success: false,
+            message: '您的免费试用次数已用完，积分不足',
+            data: {
+              requiredCredits: creditCost,
+              currentCredits: user.credits,
+              freeUsageLimit: featureConfig.freeUsage,
+              freeUsageUsed: usage.usageCount
+            }
+          });
+        }
+        
+        // 只有在未扣除过积分的情况下才扣除
+        if (!alreadyCharged) {
+          // 对于视频去除字幕功能，在任务提交阶段不扣除积分
+          if (!isVideoSubtitleRemover) {
+            // 扣除积分
+            user.credits -= creditCost;
+            await user.save();
+            
+            // 更新使用记录的积分消费
+            usage.credits = (usage.credits || 0) + creditCost;
+            await usage.save();
+            
+            usageType = 'paid';
+            finalCreditCost = creditCost;
+            
+            console.log(`用户ID ${userId} 使用 ${featureName} 功能，扣除 ${creditCost} 积分，剩余 ${user.credits} 积分，功能总消费 ${usage.credits} 积分`);
+          } else {
+            // 视频去除字幕功能 - 不扣除积分，但标记为付费使用
+            usageType = 'paid';
+            finalCreditCost = creditCost; // 记录积分消耗，但实际不扣除
+            console.log(`用户ID ${userId} 使用视频去除字幕功能，需要 ${creditCost} 积分，暂不扣除，任务完成后再扣费`);
+          }
+        } else {
+          usageType = 'paid';
+          finalCreditCost = creditCost; // 记录积分消耗，但不重复扣除
+          console.log(`用户ID ${userId} 使用 ${featureName} 功能，任务ID=${taskId}已扣除过积分，跳过重复扣除`);
+        }
+      } else {
+        if (featureName === 'MULTI_IMAGE_TO_VIDEO') {
+          console.log(`用户ID ${userId} 使用多图转视频功能的免费次数 ${usage.usageCount + 1}/1`);
+        } else {
+          console.log(`用户ID ${userId} 使用 ${featureName} 功能的免费次数 ${usage.usageCount + 1}/${featureConfig.freeUsage}`);
+        }
+      }
+      
+      // 更新使用次数 - 对于视频去除字幕功能，暂不更新使用次数
+      if (!alreadyCharged && !isVideoSubtitleRemover) {
+        usage.usageCount += 1;
+        usage.lastUsedAt = new Date();
+        await usage.save();
+      }
+      
+      // 将使用信息添加到请求对象
+      req.featureUsage = {
+        featureName,
+        usageType,
+        creditCost: finalCreditCost,
+        isFree: usageType === 'free',
+        remainingFreeUsage: Math.max(0, featureConfig.freeUsage - usage.usageCount),
+        usage: usage, // 传递usage对象，方便后续保存任务详情
+        taskId: taskId // 传递任务ID，用于后续处理
+      };
+      
+      console.log(`功能 ${featureName} 使用记录已处理:`, {
+        usageType,
+        creditCost: finalCreditCost,
+        isFree: usageType === 'free',
+        taskId: taskId
+      });
+      
+      next();
+    } catch (error) {
+      console.error(`功能 ${featureName} 使用记录处理错误:`, error);
+      res.status(500).json({
+        success: false,
+        message: '服务器错误，无法验证功能访问权限'
+      });
+    }
+  };
+};
+
+/**
+ * 保存任务详情到功能使用记录中
+ * @param {Object} usage - 功能使用记录对象
+ * @param {Object} taskInfo - 任务信息对象，包含taskId、creditCost、isFree等
+ * @returns {Promise<void>}
+ */
+async function saveTaskDetails(usage, taskInfo) {
+  try {
+    if (!usage) {
+      console.error('保存任务详情失败: usage对象为空');
+      return;
+    }
+
+    // 初始化details字段，如果不存在
+    let details;
+    try {
+      details = usage.details ? JSON.parse(usage.details) : { tasks: [] };
+    } catch (parseError) {
+      console.error('解析details字段失败，重新初始化:', parseError);
+      details = { tasks: [] };
+    }
+
+    // 确保details对象有tasks数组
+    if (!details.tasks) {
+      details.tasks = [];
+    }
+
+    // 检查是否已存在该任务
+    const existingTaskIndex = details.tasks.findIndex(task => task.taskId === taskInfo.taskId);
+    
+    if (existingTaskIndex >= 0) {
+      // 更新现有任务
+      const existingTask = details.tasks[existingTaskIndex];
+      existingTask.creditCost = taskInfo.creditCost || existingTask.creditCost || 0;
+      existingTask.isFree = taskInfo.isFree !== undefined ? taskInfo.isFree : existingTask.isFree || false;
+      
+      // 如果任务完成，更新完成时间
+      if (taskInfo.status === 'completed') {
+        existingTask.completedAt = new Date().toISOString();
+        existingTask.status = 'completed';
+      }
+      
+      // 更新额外数据
+      if (taskInfo.extraData) {
+        existingTask.extraData = { ...existingTask.extraData, ...taskInfo.extraData };
+      }
+      
+      // 更新阿里云RequestId（如果有）
+      if (taskInfo.aliCloudRequestId) {
+        existingTask.aliCloudRequestId = taskInfo.aliCloudRequestId;
+      }
+      
+      // 更新任务状态和错误信息
+      if (taskInfo.status) {
+        existingTask.status = taskInfo.status;
+      }
+      if (taskInfo.error) {
+        existingTask.error = taskInfo.error;
+      }
+      if (taskInfo.errorDetails) {
+        existingTask.errorDetails = taskInfo.errorDetails;
+      }
+      
+      console.log(`更新现有任务: 任务ID=${taskInfo.taskId}, 积分=${existingTask.creditCost}, 是否免费=${existingTask.isFree}`);
+    } else {
+      // 添加新任务
+      const newTask = {
+        taskId: taskInfo.taskId,
+        timestamp: new Date().toISOString(),
+        creditCost: taskInfo.creditCost || 0,
+        isFree: taskInfo.isFree || false
+      };
+
+      // 添加操作描述（如果有）
+      if (taskInfo.operationText) {
+        newTask.operationText = taskInfo.operationText;
+      }
+
+      // 添加元数据（如果有）
+      if (taskInfo.metadata) {
+        newTask.metadata = taskInfo.metadata;
+      }
+
+      // 添加额外数据（如果有）
+      if (taskInfo.extraData) {
+        newTask.extraData = taskInfo.extraData;
+      }
+      
+      // 添加阿里云RequestId（如果有）
+      if (taskInfo.aliCloudRequestId) {
+        newTask.aliCloudRequestId = taskInfo.aliCloudRequestId;
+      }
+      
+      // 添加任务状态和错误信息
+      if (taskInfo.status) {
+        newTask.status = taskInfo.status;
+      }
+      if (taskInfo.error) {
+        newTask.error = taskInfo.error;
+      }
+      if (taskInfo.errorDetails) {
+        newTask.errorDetails = taskInfo.errorDetails;
+      }
+      
+      // 如果任务完成，添加完成时间
+      if (taskInfo.status === 'completed') {
+        newTask.completedAt = new Date().toISOString();
+        newTask.status = 'completed';
+      }
+
+      details.tasks.push(newTask);
+      console.log(`添加新任务: 任务ID=${taskInfo.taskId}, 积分=${taskInfo.creditCost}, 是否免费=${taskInfo.isFree}`);
+    }
+    
+    // 处理任务完成后的积分扣除逻辑
+    if (taskInfo.status === 'completed' && taskInfo.featureName) {
+      await handleTaskCompletion(usage, taskInfo);
+    }
+    
+    // 更新usage对象
+    usage.details = JSON.stringify(details);
+    await usage.save();
+    
+    console.log(`已记录任务详情: 任务ID=${taskInfo.taskId}, 积分=${taskInfo.creditCost}, 是否免费=${taskInfo.isFree}${taskInfo.operationText ? ', 操作=' + taskInfo.operationText : ''}`);
+    return true;
+  } catch (error) {
+    console.error('保存任务详情失败:', error);
+    return false;
+  }
+}
+
+/**
+ * 处理任务完成后的积分扣除逻辑
+ * @param {Object} usage - 功能使用记录对象
+ * @param {Object} taskInfo - 任务信息对象
+ */
+async function handleTaskCompletion(usage, taskInfo) {
+  try {
+    const User = require('../models/User');
+    const { FEATURES } = require('./featureAccess');
+    
+    const userId = usage.userId;
+    const featureName = taskInfo.featureName;
+    const creditCost = taskInfo.creditCost || 0;
+    const isFree = taskInfo.isFree || false;
+    
+    console.log(`处理任务完成扣费: 用户=${userId}, 功能=${featureName}, 积分=${creditCost}, 免费=${isFree}`);
+    
+    // 获取功能配置
+    const featureConfig = FEATURES[featureName];
+    if (!featureConfig) {
+      console.error(`功能配置未找到: ${featureName}`);
+      return;
+    }
+    
+    // 检查是否为免费使用
+    const isFreeUsage = usage.usageCount <= featureConfig.freeUsage;
+    const actualCreditCost = isFreeUsage ? 0 : creditCost;
+    
+    console.log(`积分扣除计算: 使用次数=${usage.usageCount}, 免费次数=${featureConfig.freeUsage}, 是否免费=${isFreeUsage}, 实际扣除=${actualCreditCost}`);
+    
+    // 如果不需要扣除积分，直接返回
+    if (actualCreditCost <= 0) {
+      console.log(`任务免费，无需扣除积分: 任务ID=${taskInfo.taskId}`);
+      return;
+    }
+    
+    // 扣除用户积分
+    const user = await User.findByPk(userId);
+    if (!user) {
+      console.error(`用户不存在: ${userId}`);
+      return;
+    }
+    
+    // 检查用户积分是否足够
+    if (user.credits < actualCreditCost) {
+      console.error(`用户积分不足: 当前=${user.credits}, 需要=${actualCreditCost}`);
+      return;
+    }
+    
+    // 扣除积分
+    user.credits -= actualCreditCost;
+    await user.save();
+    
+    // 更新使用记录的积分字段
+    usage.credits = (usage.credits || 0) + actualCreditCost;
+    await usage.save();
+    
+    console.log(`已扣除积分: 用户=${userId}, 扣除=${actualCreditCost}, 剩余=${user.credits}, 功能总积分=${usage.credits}`);
+    
+  } catch (error) {
+    console.error('处理任务完成扣费失败:', error);
+  }
+}
+
+/**
+ * 创建数字人视频功能中间件 - 预扣积分，任务完成后调整
+ * @param {Function} getDynamicCredits - 动态获取积分消耗的函数
+ * @returns {Function} Express中间件函数
+ */
+const createDigitalHumanMiddleware = (getDynamicCredits) => {
+  return async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const featureName = 'DIGITAL_HUMAN_VIDEO';
+      
+      // 获取功能配置
+      const featureConfig = FEATURES[featureName];
+      if (!featureConfig) {
+        return res.status(500).json({
+          success: false,
+          message: '功能配置未找到'
+        });
+      }
+      
+      // 检查用户是否存在
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: '用户不存在'
+        });
+      }
+      
+      // 获取或创建功能使用记录
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      let usage = await FeatureUsage.findOne({
+        where: { userId, featureName }
+      });
+      
+      if (!usage) {
+        usage = await FeatureUsage.create({
+          userId,
+          featureName,
+          usageCount: 0,
+          credits: 0,
+          lastUsedAt: today,
+          resetDate: todayStr,
+          details: JSON.stringify({ tasks: [] })
+        });
+      }
+      
+      // 不再每日重置 usageCount，确保每个用户终身仅有一次免费机会
+      // 如果仍需要记录最新访问日期，可在此更新 lastUsedAt
+      usage.lastUsedAt = new Date();
+      await usage.save();
+      
+      // 检查是否还有免费次数
+      const isFreeUsage = usage.usageCount < featureConfig.freeUsage;
+      
+      // 对于数字人视频功能，积分检查和扣除将在上传后进行
+      // 这里只记录使用信息，不预先扣除积分或更新使用次数
+      
+      // 将使用信息添加到请求对象
+      req.featureUsage = {
+        usage,
+        featureConfig,
+        usageType: isFreeUsage ? 'free' : 'paid',
+        getDynamicCredits, // 传递动态积分计算函数
+        isFreeUsage: isFreeUsage, // 旧字段，向后兼容
+        isFree: isFreeUsage // 新增字段，供路由逻辑判断
+      };
+      
+      console.log(`数字人视频功能中间件: 用户${userId}, 今日使用${usage.usageCount}/${featureConfig.freeUsage}, 类型: ${req.featureUsage.usageType}`);
+      
+      next();
+    } catch (error) {
+      console.error('数字人视频功能中间件错误:', error);
+      return res.status(500).json({
+        success: false,
+        message: '服务器内部错误'
+      });
+    }
+  };
+};
+
+module.exports = {
+  createUnifiedFeatureMiddleware,
+  createDigitalHumanMiddleware,
+  saveTaskDetails
+}; 

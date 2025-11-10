@@ -1,0 +1,28 @@
+完整数据库备份信息
+=====================================
+
+备份时间: 2025-09-29 17:51:35
+备份目录: db_backups/complete_20250929_175135
+备份文件数: 3
+总大小: 40.0KB
+
+备份详情:
+---------
+- yinghuo.db: 40K
+  └── SQL导出: yinghuo_20250929_175135.sql (2.5K)
+- database.db: 0B
+- database.sqlite: 0B
+
+恢复命令:
+---------
+# 恢复主数据库:
+cp db_backups/complete_20250929_175135/yinghuo.db ./yinghuo.db
+# 或从SQL恢复:
+sqlite3 yinghuo.db < yinghuo_backup_20250929.sql
+
+# 恢复其他数据库:
+cp db_backups/complete_20250929_175135/database.db ./database.db
+cp db_backups/complete_20250929_175135/database.sqlite ./database.sqlite
+
+备份完成状态: 成功
+备份脚本版本: v1.0

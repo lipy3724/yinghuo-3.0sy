@@ -3,57 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全局风格化 - 萤火AI</title>
+    <title data-translate="global_style.page_title">全局风格化 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/global-style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/auth-check.js"></script>
+    <script src="/js/mobile-guard.js"></script>
+    <script src="/js/global-style-history.js"></script>
+    <script src="translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
-        .upload-area {
-            border: 2px dashed #cbd5e0;
-            border-radius: 8px;
-            cursor: pointer;
+        .card {
             transition: all 0.3s ease;
         }
-        .upload-area:hover {
-            border-color: #6366f1;
-            background-color: #f9fafb;
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        .result-section {
-            border-left: 1px solid #e5e7eb;
-        }
-        /* 使用Tailwind自带的animate-spin替代自定义spinner */
-        .prompt-input {
-            resize: none;
-            min-height: 120px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            width: 100%;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        .prompt-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
-        .instructions {
-            font-size: 0.875rem;
-            color: #4b5563;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
-        .preview-area {
-            background-color: #f9fafb;
+        .feature-card {
+            background-color: white;
             border-radius: 0.5rem;
-            min-height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
         }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+        .image-preview {
+            aspect-ratio: 16/9;
+            background-color: #f3f4f6;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: rgba(99, 102, 241, 1);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .style-task {
+            transition: all 0.3s ease;
+        }
+        .active-option {
+            background-color: #ede9fe;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+        
+        .history-card {
+            transition: all 0.3s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .history-thumbnail {
+            transition: transform 0.3s ease;
+        }
+        
+        .history-card:hover .history-thumbnail {
+            transform: scale(1.05);
+        }
+        
+        .history-card .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .history-card .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
+        
+        #history-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
         /* 图片拖动禁用 */
         img {
             -webkit-user-drag: none;
@@ -138,133 +190,190 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/auth-check.js"></script>
-    <script src="/js/mobile-guard.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
 </head>
-<body class="min-h-screen bg-white">
+<body class="bg-gray-100 min-h-screen">
     <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
-        <div class="flex flex-col lg:flex-row bg-white h-full w-full">
-            <!-- 左侧：上传图片和风格控制 -->
-            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-3">全局风格化</h2>
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="global_style.main_title">全局风格化</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 图片上传和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4" data-translate="global_style.settings_title">风格化设置</h2>
                 
-                <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
-                    <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2">此功能可以为整个图像应用艺术风格，创造出全新的视觉效果。</p>
-                        <p class="mb-2">上传图像后，选择您想要应用的风格，系统将自动为整张图片应用该风格。</p>
-                        <p class="mb-2">目前提供两种艺术风格选择：</p>
-                        <p class="mb-2">- 法国绘本风格：柔和的色彩和精致的线条，类似于传统法国儿童绘本的艺术风格。</p>
-                        <p class="mb-2">- 金箔艺术风格：融合金色元素的豪华质感，呈现华丽高贵的艺术效果。</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="global_style.image_upload">图片上传</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700" data-translate="global_style.upload_description">上传需要风格化的图片</span>
                     </div>
+                    <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
+                        <input type="file" id="image-upload" class="hidden" accept="image/*">
+                        <div id="upload-placeholder">
+                            <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500" data-translate="global_style.drag_drop_text">拖放图片到此处或 <span class="text-indigo-600 font-medium" data-translate="global_style.click_upload">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="global_style.supported_formats">支持 JPG, PNG, WEBP, GIF, BMP 格式</p>
+                        </div>
+                        <div id="preview-container" class="hidden">
+                            <img id="image-preview" class="max-h-48 mx-auto mb-3">
+                            <p id="image-info" class="text-sm text-gray-500"></p>
+                            <button type="button" id="remove-image" class="mt-2 text-sm text-red-500 hover:text-red-700" data-translate="global_style.remove_image">
+                                移除图片
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="global_style.upload_note">上传图片后将自动应用选择的艺术风格</p>
                 </div>
-
-                <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
-                    <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
-                    <input type="file" id="image-upload" class="hidden" accept="image/*">
-                </div>
-                <p class="text-xs text-gray-500 mb-4">上传图像</p>
                 
-                <div class="flex-grow mb-4">
-                    <div class="mb-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">风格选择:</label>
-                    </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="global_style.style_selection">风格选择</label>
                     <div class="grid grid-cols-2 gap-3">
                         <button type="button" id="style-option-1" class="style-option group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-style="法国绘本风格">
-                            <div class="text-gray-800 font-medium">法国绘本风格</div>
+                            <div class="text-gray-800 font-medium" data-translate="global_style.style_french_picture_book">法国绘本风格</div>
                             <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                         </button>
                         <button type="button" id="style-option-2" class="style-option group relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-style="金箔艺术风格">
-                            <div class="text-gray-800 font-medium">金箔艺术风格</div>
+                            <div class="text-gray-800 font-medium" data-translate="global_style.style_gold_foil_art">金箔艺术风格</div>
                             <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                         </button>
                     </div>
                     <input type="hidden" id="selected-style" value="">
+                    <p class="text-xs text-gray-500 mt-2" data-translate="global_style.style_tip">选择您想要应用的风格类型</p>
                 </div>
                 
-                <!-- 修改强度滑动控件 -->
-                <div class="mb-4 strength-container">
+                <div class="mb-6 strength-container">
+                    <label for="strength-slider" class="block text-sm font-medium text-gray-700 mb-1" data-translate="global_style.strength_label">修改强度</label>
                     <div class="flex justify-between items-center mb-2">
-                        <label for="strength-slider" class="block text-sm font-medium text-gray-700">修改强度:</label>
+                        <span class="text-sm text-gray-500" data-translate="global_style.strength_description">调整风格化效果的强度</span>
                         <span id="strength-value" class="text-sm font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">0.5</span>
                     </div>
                     <input type="range" id="strength-slider" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" 
                            min="0" max="1" step="0.01" value="0.5">
                     <div class="strength-labels">
-                        <span>轻微修改</span>
-                        <span>中度修改</span>
-                        <span>强烈修改</span>
+                        <span data-translate="global_style.strength_light">轻微修改</span>
+                        <span data-translate="global_style.strength_medium">中度修改</span>
+                        <span data-translate="global_style.strength_strong">强烈修改</span>
                     </div>
                 </div>
                 
-                <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
-                    <i class="ri-magic-line mr-2"></i>
-                    立即生成
-                </button>
+                <div class="pt-4">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="ri-magic-line mr-2"></i>
+                        <span data-translate="global_style.start_stylization">开始风格化</span>
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500" data-translate="global_style.processing_info">
+                        全局风格化需要10-15秒，消耗7积分
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium" data-translate="global_style.warning_text">
+                        请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                    </p>
+                </div>
             </div>
             
-            <!-- 右侧：效果展示 -->
-            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
+            <!-- 右侧面板: 预览和历史记录 -->
+            <div class="lg:col-span-3">
+                <!-- 预览区域 -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="global_style.image_preview">图片预览</h2>
+                    <div class="canvas-container relative mx-auto" style="width: 100%; max-width: 512px; height: 300px;">
+                        <img id="original-image" class="w-full h-full object-contain hidden" alt="上传的图片">
+                        <div id="image-placeholder" class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <i class="ri-image-line text-6xl text-gray-300 mb-4"></i>
+                                <p class="text-gray-500" data-translate="global_style.preview_placeholder">您上传的图片将在这里显示</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
-                <div class="flex flex-col md:flex-row gap-6 flex-grow">
-                    <div class="w-full md:w-1/2">
-                        <h3 class="text-base font-medium mb-3 text-center">原始图像:</h3>
-                        <div class="canvas-container relative mx-auto" style="width: 512px; height: 512px;">
-                            <img id="original-image" class="w-full h-full object-contain hidden" alt="上传的图片">
-                            <p id="image-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-500">请先上传图片</p>
+                <!-- 处理结果区域 -->
+                <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4" data-translate="global_style.processing_result">处理结果</h2>
+                    
+                    <div class="flex flex-col md:flex-row gap-6 mb-6">
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-700 mb-2" data-translate="global_style.original_image">原始图片</h3>
+                            <div class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                <img id="result-original-image" class="max-w-full max-h-64 mx-auto">
+                                <p id="result-original-info" class="text-sm text-gray-500 mt-2 text-center"></p>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-700 mb-2" data-translate="global_style.stylized_image">风格化后图片</h3>
+                            <div id="result-image-wrapper" class="border border-gray-200 rounded-lg p-2 bg-gray-50">
+                                <img id="result-image" class="max-w-full max-h-64 mx-auto">
+                                <p id="result-image-info" class="text-sm text-gray-500 mt-2 text-center"></p>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="w-full md:w-1/2">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-medium text-center">风格化结果:</h3>
-                            <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-1 px-2 rounded-md hover:bg-indigo-700 text-sm flex items-center">
-                                <i class="ri-save-line mr-1"></i>
-                                保存到下载中心
-                            </button>
-                        </div>
-                        <div id="result-image-container" class="canvas-container relative mx-auto" style="width: 512px; height: 512px;">
-                            <img id="result-image" class="w-full h-full object-contain hidden" alt="生成的图片">
-                            <p id="result-image-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-500">风格化结果将在这里显示</p>
-                        </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="download-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-download-2-line mr-1"></i>
+                            <span data-translate="global_style.download_image">下载图片</span>
+                        </button>
+                        <button type="button" id="save-to-downloads-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-save-line mr-1"></i>
+                            <span data-translate="global_style.save">保存</span>
+                        </button>
+
+                        <button type="button" id="new-style-btn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-add-line mr-1"></i>
+                            <span data-translate="global_style.upload_new_image">上传新图片</span>
+                        </button>
                     </div>
                 </div>
-
-                <div class="mt-4 flex justify-center space-x-4">
-                    <button id="download-btn" class="hidden bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
-                        <i class="ri-download-line mr-2"></i>
-                        下载结果
-                    </button>
-                    <button id="retry-btn" class="hidden bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 flex items-center justify-center">
-                        <i class="ri-refresh-line mr-2"></i>
-                        重新调整
-                    </button>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" data-translate="global_style.generation_history">生成历史</h2>
+                        <div class="flex space-x-2">
+                            <button id="clear-history-btn" class="text-gray-500 hover:text-red-600" data-translate-title="global_style.clear_history" title="清空历史记录">
+                                <i class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800" data-translate-title="global_style.refresh_history" title="刷新历史记录">
+                                <i class="ri-refresh-line text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 历史记录将通过JavaScript动态添加到这里 -->
+                        <p class="text-gray-500 col-span-full text-center py-4" data-translate="global_style.no_history">暂无历史记录</p>
+                    </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="global_style.history_retention">历史记录仅保存24小时</p>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- 加载中遮罩 -->
-    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <div class="flex flex-col items-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                <p id="loading-message" class="text-gray-700 text-center">处理中，请耐心等待...</p>
-            <p class="text-sm text-gray-500 mt-2">处理时间约为10-15秒</p>
-            </div>
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
+            <div class="loading-spinner mb-4"></div>
+            <p id="loading-message" class="text-lg font-medium" data-translate="global_style.processing">全局风格化中，请耐心等待...</p>
+            <p class="text-sm text-gray-500 mt-2" data-translate="global_style.processing_time">全局风格化需要10-15秒</p>
         </div>
     </div>
 
     <!-- 引用外部Javascript文件 -->
     <script>
+        // 全局变量
+        let historyRecords = [];
+        let pollingIntervals = {};
+        
         document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化翻译系统
+            if (typeof initializeTranslations === 'function') {
+                initializeTranslations();
+            }
+            
             // 首先检查用户认证状态
             console.log('全局风格化页面：开始检查用户认证状态');
             
@@ -296,10 +405,14 @@
             // DOM元素
             const uploadArea = document.getElementById('upload-area');
             const imageUpload = document.getElementById('image-upload');
+            const imagePreview = document.getElementById('image-preview');
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const previewContainer = document.getElementById('preview-container');
+            const imageInfo = document.getElementById('image-info');
+            const removeImage = document.getElementById('remove-image');
             const originalImage = document.getElementById('original-image');
             const imagePlaceholder = document.getElementById('image-placeholder');
             const resultImage = document.getElementById('result-image');
-            const resultImagePlaceholder = document.getElementById('result-image-placeholder');
             const generateBtn = document.getElementById('generate-btn');
             const styleOptions = document.querySelectorAll('.style-option');
             const selectedStyleInput = document.getElementById('selected-style');
@@ -308,8 +421,16 @@
             const loadingOverlay = document.getElementById('loading-overlay');
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
-            const retryBtn = document.getElementById('retry-btn');
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
+
+            const newStyleBtn = document.getElementById('new-style-btn');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultOriginalImage = document.getElementById('result-original-image');
+            const historyContainer = document.getElementById('history-container');
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            const resultOriginalInfo = document.getElementById('result-original-info');
+            const resultImageInfo = document.getElementById('result-image-info');
             
             // 风格选项点击处理
             styleOptions.forEach(option => {
@@ -342,6 +463,19 @@
                 }
             });
             
+            // 移除图片按钮
+            removeImage.addEventListener('click', () => {
+                imageUpload.value = '';
+                imagePreview.src = '';
+                originalImage.src = '';
+                originalImage.classList.add('hidden');
+                // 重新显示占位符
+                imagePlaceholder.classList.remove('hidden');
+                uploadPlaceholder.classList.remove('hidden');
+                previewContainer.classList.add('hidden');
+                generateBtn.disabled = true;
+            });
+            
             // 拖放上传
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 uploadArea.addEventListener(eventName, preventDefaults, false);
@@ -362,7 +496,7 @@
                 if (file && file.type.startsWith('image/')) {
                     handleImageFile(file);
                 } else {
-                    alert('请上传图片文件！');
+                    alert(translate('global_style.upload_image_file'));
                 }
             });
             
@@ -407,14 +541,17 @@
                 const selectedStyle = selectedStyleInput.value;
                 
                 if (!originalImage.src || originalImage.classList.contains('hidden')) {
-                    alert('请先上传图片！');
+                    alert(translate('global_style.upload_image_first'));
                     return;
                 }
                 
                 if (!selectedStyle) {
-                    alert('请选择一种风格！');
+                    alert(translate('global_style.select_style_first'));
                     return;
                 }
+                
+                // 禁用生成按钮
+                generateBtn.disabled = true;
                 
                 // 声明taskId变量在try块外部，以便在catch块中也能访问
                 let taskId = null;
@@ -422,20 +559,20 @@
                 try {
                     // 显示加载中
                     loadingOverlay.classList.remove('hidden');
-                    loadingMessage.textContent = '正在处理图像，请稍候...';
+                    loadingMessage.textContent = translate('global_style.processing_image');
                     
                     // 1. 准备数据
                     // 获取原始图像数据
                     const originalImageDataUrl = await getImageDataUrl(originalImage);
                     
                     // 2. 上传图像
-                    loadingMessage.textContent = '正在上传图像...';
+                    loadingMessage.textContent = translate('global_style.uploading_image');
                     
                     // 上传原始图像
                     const originalImageUrl = await uploadImageToServer(originalImageDataUrl);
                     
                     // 3. 调用全局风格化API - 创建任务获取task_id
-                    loadingMessage.textContent = '正在创建风格化任务...';
+                    loadingMessage.textContent = translate('global_style.creating_task');
                     
                     const createTaskResponse = await fetch('/api/global-style/create-task', {
                         method: 'POST',
@@ -445,6 +582,7 @@
                         },
                         body: JSON.stringify({
                             imageUrl: originalImageUrl,
+                            originalImageUrl: originalImageUrl, // 添加原始图片URL用于历史记录
                             prompt: selectedStyle,
                             strength: parseFloat(strengthSlider.value)
                         })
@@ -466,23 +604,27 @@
                         createTaskResult = await createTaskResponse.json();
                     } catch (jsonError) {
                         console.error('解析创建任务响应失败:', jsonError);
-                        throw new Error('服务器返回了无效的数据格式');
+                        throw new Error(translate('global_style.invalid_server_response'));
                     }
                     
                     taskId = createTaskResult.output?.task_id;
                     
                     if (!taskId) {
-                        throw new Error('未能获取任务ID');
+                        throw new Error(translate('global_style.failed_to_get_task_id'));
                     }
                     
                     // 4. 轮询任务状态
-                    loadingMessage.textContent = '正在应用风格，这可能需要10-15秒...';
+                    loadingMessage.textContent = translate('global_style.applying_style');
                     
                     let resultImageUrl = null;
-                    let maxRetries = 30; // 最多轮询30次，约15秒
+                    let maxRetries = 60; // 最多轮询60次，约30秒
                     let retryCount = 0;
                     
                     while (retryCount < maxRetries) {
+                        // 更新轮询状态显示
+                        const progress = Math.round((retryCount / maxRetries) * 100);
+                        loadingMessage.textContent = translate('global_style.applying_style_progress', { progress });
+                        
                         // 等待500毫秒再次查询
                         await new Promise(resolve => setTimeout(resolve, 500));
                         
@@ -516,7 +658,7 @@
                         
                         // 任务失败
                         if (taskStatusResult.status === 'FAILED') {
-                            throw new Error(taskStatusResult.message || '风格化任务失败');
+                            throw new Error(taskStatusResult.message || translate('global_style.stylization_task_failed'));
                         }
                         
                         // 继续轮询
@@ -524,22 +666,16 @@
                     }
                     
                     if (!resultImageUrl) {
-                        throw new Error('任务处理超时，请稍后再试');
+                        throw new Error(translate('global_style.task_timeout_contact_support'));
                     }
                     
                     // 5. 显示结果
-                    loadingMessage.textContent = '获取结果图像...';
+                    loadingMessage.textContent = translate('global_style.getting_result');
                     
-                    resultImage.onload = () => {
-                        resultImage.classList.remove('hidden');
-                        resultImagePlaceholder.classList.add('hidden');
-                        downloadBtn.classList.remove('hidden');
-                        retryBtn.classList.remove('hidden');
-                        saveToDownloadsBtn.classList.remove('hidden');
-                        loadingOverlay.classList.add('hidden');
-                    };
-                    
-                    resultImage.src = resultImageUrl;
+                    showResults({
+                        imageUrl: resultImageUrl,
+                        originalUrl: originalImageUrl
+                    });
                 } catch (error) {
                     console.error('处理失败:', error);
                     
@@ -549,16 +685,19 @@
                             console.log(`任务失败，请求退款: ${taskId}`);
                             // 直接调用退款API
                             requestRefund(taskId, error.message || '风格化任务失败');
-                            alert('处理失败: ' + error.message + '\n系统将自动退还您的积分或免费次数。');
+                            alert(translate('global_style.processing_failed_with_refund', { error: error.message }));
                         } catch (refundError) {
                             console.error('退款请求失败:', refundError);
-                            alert('处理失败: ' + error.message + '\n退款请求失败，请联系客服处理。');
+                            alert(translate('global_style.processing_failed_refund_failed', { error: error.message }));
                         }
                     } else {
-                        alert('处理失败: ' + error.message);
+                        alert(translate('global_style.processing_failed', { error: error.message }));
                     }
                     
-                    loadingOverlay.classList.add('hidden');
+                    hideLoadingOverlay();
+                    
+                    // 重新启用生成按钮
+                    generateBtn.disabled = false;
                 }
             });
             
@@ -574,26 +713,47 @@
                 }
             });
             
-            // 重试按钮点击事件
-            retryBtn.addEventListener('click', () => {
-                // 隐藏结果，回到编辑状态
-                resultImage.classList.add('hidden');
-                resultImagePlaceholder.classList.remove('hidden');
-                downloadBtn.classList.add('hidden');
-                retryBtn.classList.add('hidden');
-                saveToDownloadsBtn.classList.add('hidden');
+
+            
+            // 上传新图片按钮
+            newStyleBtn.addEventListener('click', () => {
+                // 清空当前图片预览和设置
+                imageUpload.value = '';
+                imagePreview.src = '';
+                originalImage.src = '';
+                originalImage.classList.add('hidden');
+                // 重新显示占位符
+                imagePlaceholder.classList.remove('hidden');
+                uploadPlaceholder.classList.remove('hidden');
+                previewContainer.classList.add('hidden');
+                selectedStyleInput.value = '';
+                strengthSlider.value = 0.5;
+                strengthValue.textContent = '0.5';
+                updateStrengthStyles(0.5);
+                
+                // 清除风格选择
+                styleOptions.forEach(option => {
+                    option.classList.remove('bg-indigo-50', 'border-indigo-500');
+                    option.classList.add('bg-gray-50', 'border-gray-200');
+                });
+                
+                // 隐藏结果区域
+                resultContainer.classList.add('hidden');
+                
+                // 禁用生成按钮
+                generateBtn.disabled = true;
             });
             
             // 保存到下载中心按钮点击事件
             saveToDownloadsBtn.addEventListener('click', async () => {
                 if (!resultImage.src || resultImage.classList.contains('hidden')) {
-                    alert('没有可保存的结果图像！');
+                    alert(translate('global_style.no_result_to_save'));
                     return;
                 }
                 
                 try {
                     loadingOverlay.classList.remove('hidden');
-                    loadingMessage.textContent = '正在保存到下载中心...';
+                    loadingMessage.textContent = translate('global_style.saving_to_downloads');
                     
                     const response = await fetch('/api/downloads/save', {
                         method: 'POST',
@@ -611,17 +771,61 @@
                     const result = await response.json();
                     
                     if (response.ok) {
-                        alert('已成功保存到下载中心！');
+                        alert(translate('global_style.saved_to_download_center'));
                     } else {
                         throw new Error(result.message || '保存失败');
                     }
                 } catch (error) {
                     console.error('保存到下载中心失败:', error);
-                    alert('保存到下载中心失败: ' + error.message);
+                    alert(translate('global_style.save_to_download_center_failed', { error: error.message }));
                 } finally {
                     loadingOverlay.classList.add('hidden');
                 }
             });
+            
+            // 显示处理结果
+            function showResults(result) {
+                hideLoadingOverlay();
+                
+                // 如果result包含originalUrl，使用它；否则使用本地文件
+                if (result.originalUrl) {
+                    resultOriginalImage.src = result.originalUrl;
+                } else {
+                    resultOriginalImage.src = originalImage.src;
+                }
+                
+                resultImage.src = result.imageUrl;
+                
+                const img = new Image();
+                img.onload = () => {
+                    if (originalImage.src) {
+                        resultOriginalInfo.textContent = `原始图片 (${img.width}×${img.height} px)`;
+                    } else {
+                        resultOriginalInfo.textContent = `原始图片 (${img.width}×${img.height} px)`;
+                    }
+                    resultImageInfo.textContent = `风格化后图片 (尺寸: ${img.width}x${img.height})`;
+                };
+                
+                // 延迟刷新历史记录，确保后端有足够时间保存
+                setTimeout(() => {
+                    loadUserHistory();
+                }, 2000); // 延迟2秒刷新历史记录
+                img.src = result.imageUrl;
+                
+                // 显示结果区域，保持所有面板在原位置
+                resultContainer.classList.remove('hidden');
+            }
+            
+            // 隐藏加载遮罩
+            function hideLoadingOverlay() {
+                loadingOverlay.classList.add('hidden');
+            }
+            
+            // 显示加载遮罩
+            function showLoadingOverlay(message = '处理中，请耐心等待...') {
+                loadingMessage.textContent = message;
+                loadingOverlay.classList.remove('hidden');
+            }
             
             // 辅助函数
             function preventDefaults(e) {
@@ -642,13 +846,13 @@
             // 处理上传的图片文件
             function handleImageFile(file) {
                 if (!file.type.match('image.*')) {
-                    alert('请上传图片文件！');
+                    alert(translate('global_style.upload_image_file'));
                     return;
                 }
                 
                 // 验证图片大小
                 if (file.size > 10 * 1024 * 1024) {
-                    alert('图片大小不能超过10MB！请选择更小的图片或压缩后再上传。');
+                    alert(translate('global_style.image_size_too_large'));
                     return;
                 }
                 
@@ -659,26 +863,29 @@
                     const img = new Image();
                     img.onload = function() {
                         if (img.width < 512 || img.height < 512) {
-                            alert('图片尺寸太小，最小需要512×512像素！');
+                            alert(translate('global_style.image_size_too_small'));
                             return;
                         }
                         
                         if (img.width > 4000 || img.height > 4000) {
-                            alert('图片尺寸太大，最大不超过4000×4000像素！');
+                            alert(translate('global_style.image_size_too_large_max'));
                             return;
                         }
+                        
+                        // 更新预览
+                        imagePreview.src = e.target.result;
+                        imageInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                        uploadPlaceholder.classList.add('hidden');
+                        previewContainer.classList.remove('hidden');
                         
                         // 显示原图
                         originalImage.src = e.target.result;
                         originalImage.classList.remove('hidden');
+                        // 隐藏占位符
                         imagePlaceholder.classList.add('hidden');
                         
-                        // 清除结果区域
-                        resultImage.classList.add('hidden');
-                        resultImagePlaceholder.classList.remove('hidden');
-                        downloadBtn.classList.add('hidden');
-                        retryBtn.classList.add('hidden');
-                        saveToDownloadsBtn.classList.add('hidden');
+                        // 启用生成按钮
+                        generateBtn.disabled = false;
                     };
                     
                     img.src = e.target.result;
@@ -767,20 +974,23 @@
             // 上传图片到服务器
             async function uploadImageToServer(imageData) {
                 try {
+                    console.log('开始处理图片上传...');
+                    
                     // 检查图片数据大小
                     const approximateSize = Math.round((imageData.length - 22) * 3 / 4);
                     console.log(`上传图片估计大小: ${(approximateSize / (1024 * 1024)).toFixed(2)}MB`);
                     
                     if (approximateSize > 10 * 1024 * 1024) {
-                        throw new Error('图片大小超过10MB，请使用更小的图片');
+                        throw new Error(translate('global_style.file_size_exceeded'));
                     }
                     
                     // 将base64转换为Blob
                     const blob = dataURLtoBlob(imageData);
+                    console.log(`转换为Blob成功，大小: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`);
                     
                     // 检查实际Blob大小
                     if (blob.size > 10 * 1024 * 1024) {
-                        throw new Error('图片大小超过10MB，请使用更小的图片');
+                        throw new Error(translate('global_style.file_size_exceeded'));
                     }
                     
                     // 获取正确的文件扩展名
@@ -792,25 +1002,52 @@
                     formData.append('image', blob, fileName);
                     
                     // 发送请求
-                    const response = await fetch('/api/upload-image', {
+                    console.log('开始发送上传请求...');
+                    
+                    let response;
+                    try {
+                        response = await fetch('/api/upload-image', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                         },
                         body: formData
                     });
+                        
+                        console.log('上传请求完成，状态码:', response.status);
                     
                     if (!response.ok) {
-                        throw new Error('图片上传失败');
+                            const errorText = await response.text();
+                            console.error('上传失败，服务器响应:', errorText);
+                            throw new Error(translate('global_style.image_upload_failed_status', { status: response.status, statusText: response.statusText }));
+                    }
+                    } catch (fetchError) {
+                        console.error('上传请求网络错误:', fetchError);
+                        throw new Error(translate('global_style.upload_request_failed', { error: fetchError.message }));
                     }
                     
-                    const data = await response.json();
-                    
-                    if (!data.success || !data.imageUrl) {
-                        throw new Error(data.message || '图片上传失败');
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (jsonError) {
+                        console.error('解析响应JSON失败:', jsonError);
+                        throw new Error(translate('global_style.cannot_parse_server_response'));
                     }
                     
+                    // 检查API返回格式
+                    console.log('上传图片API响应:', data);
+                    
+                    // 处理不同的响应格式
+                    if (data.imageUrl) {
+                        console.log('使用data.imageUrl作为上传结果:', data.imageUrl);
                     return data.imageUrl;
+                    } else if (data.output && data.output.img_url) {
+                        console.log('使用data.output.img_url作为上传结果:', data.output.img_url);
+                        return data.output.img_url;
+                    } else {
+                        console.error('无法从响应中获取图片URL:', data);
+                        throw new Error(data.message || translate('global_style.upload_success_no_url'));
+                    }
                 } catch (error) {
                     console.error('图片上传错误:', error);
                     throw error;
@@ -877,7 +1114,191 @@
                     return false;
                 }
             }
+            
+            // 加载用户任务列表
+            async function loadUserHistory() {
+                try {
+                    // 使用新的历史记录模块
+                    const records = await window.GlobalStyleHistory.fetch();
+                    historyRecords = records || [];
+                    
+                    console.log(`加载到 ${historyRecords.length} 条全局风格化历史记录，将显示最新3条`);
+                    if (historyRecords.length > 0) {
+                        const sortedRecords = historyRecords.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                        const displayCount = Math.min(3, sortedRecords.length);
+                        console.log(`实际显示 ${displayCount} 条记录，时间范围:`, {
+                            oldest: new Date(sortedRecords[displayCount - 1].timestamp).toLocaleString('zh-CN'),
+                            newest: new Date(sortedRecords[0].timestamp).toLocaleString('zh-CN')
+                        });
+                    }
+                    
+                    displayHistory();
+                } catch (error) {
+                    console.error('加载历史记录失败:', error);
+                    historyContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p>${getTranslation('global_style.load_history_failed')}</p></div>`;
+                }
+            }
+            
+            // 显示历史记录
+            function displayHistory() {
+                if (historyRecords.length === 0) {
+                    historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${getTranslation('global_style.no_history')}</p>`;
+                    return;
+                }
+                
+                // 优先显示有结果图的记录，然后按创建时间排序，只取前3条
+                const sortedHistory = historyRecords
+                    .sort((a, b) => {
+                        // 优先显示有结果图的记录
+                        const aHasResult = a.resultImage && a.resultImage.trim() !== '';
+                        const bHasResult = b.resultImage && b.resultImage.trim() !== '';
+                        
+                        if (aHasResult && !bHasResult) return -1;
+                        if (!aHasResult && bHasResult) return 1;
+                        
+                        // 如果都有结果图或都没有结果图，按时间排序
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    })
+                    .slice(0, 3);
+                
+                // 清空历史记录容器
+                historyContainer.innerHTML = '';
+                
+                // 遍历历史记录并创建卡片
+                sortedHistory.forEach((record, index) => {
+                    console.log(`处理第${index+1}条历史记录:`, record.prompt);
+                    
+                    // 创建历史记录卡片
+                    const historyCard = document.createElement('div');
+                    historyCard.className = 'history-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all';
+                
+                    const originalImage = record.originalImage;
+                    const resultImage = record.resultImage;
+                    const prompt = record.prompt || '全局风格化';
+                    const createdAt = new Date(record.timestamp).toLocaleString('zh-CN');
+                    
+                    // 设置卡片内容
+                    historyCard.innerHTML = `
+                        <div class="relative">
+                            <img src="${resultImage}" alt="结果图" class="history-thumbnail w-full h-32 object-cover" loading="lazy">
+                        </div>
+                        <div class="p-3">
+                            <p class="text-sm text-gray-700 truncate" title="${prompt}">${prompt}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs text-gray-500">${createdAt}</span>
+                                <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 下载按钮点击事件
+                    const downloadHistoryBtn = historyCard.querySelector('.download-history-btn');
+                    downloadHistoryBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // 防止触发卡片点击事件
+                        downloadImage(resultImage, `全局风格化_${Date.now()}.png`);
+                    });
+                    
+                    // 将卡片添加到容器
+                    historyContainer.appendChild(historyCard);
+                });
+            }
+            
+            // 清空历史记录
+            async function clearUserHistory() {
+                if (!confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+                    return;
+                }
+                
+                try {
+                    // 使用新的历史记录模块
+                    await window.GlobalStyleHistory.remove('all');
+                    
+                    // 清空本地数据
+                    historyRecords = [];
+                    displayHistory();
+                    
+                    alert(translate('global_style.history_cleared'));
+                } catch (error) {
+                    console.error('清空历史记录失败:', error);
+                    alert(translate('global_style.clear_history_failed', { error: error.message }));
+                }
+            }
+            
+            // 下载图片函数
+            function downloadImage(imageUrl, fileName) {
+                try {
+                    // 创建一个临时的a标签来触发下载
+                    const link = document.createElement('a');
+                    link.href = imageUrl;
+                    link.download = fileName || 'image.png';
+                    
+                    // 添加到DOM中
+                    document.body.appendChild(link);
+                    
+                    // 触发点击事件
+                    link.click();
+                    
+                    // 清理DOM
+                    document.body.removeChild(link);
+                } catch (error) {
+                    console.error('下载图片失败:', error);
+                    alert(translate('global_style.download_image_failed'));
+                }
+            }
+            
+            // 全局下载图片函数（保持兼容性）
+            window.downloadImage = downloadImage;
+            
+            // 保存到下载中心
+            window.saveToDownloadCenter = async function(originalUrl, resultUrl, prompt) {
+                try {
+                    const resultData = {
+                        originalImageUrl: originalUrl,
+                        processedImageUrl: resultUrl,
+                        processTime: new Date().toISOString(),
+                        processType: '全局风格化',
+                        description: `全局风格化结果 - 风格: ${prompt}`
+                    };
+                    
+                    const response = await fetch('/api/save-result', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify(resultData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(translate('global_style.save_failed'));
+                    }
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(translate('global_style.saved_to_download_center'));
+                    } else {
+                        throw new Error(result.message || '保存失败');
+                    }
+                } catch (error) {
+                    alert(translate('global_style.save_failed', { error: error.message }));
+                }
+            };
+            
+            // 刷新历史记录按钮
+            refreshHistoryBtn.addEventListener('click', loadUserHistory);
+            
+            // 清空历史记录按钮
+            clearHistoryBtn.addEventListener('click', clearUserHistory);
+            
+            // 初始加载历史记录
+            loadUserHistory();
+            
+
+
         });
     </script>
+    
 </body>
 </html> 

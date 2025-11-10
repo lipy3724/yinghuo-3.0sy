@@ -7,6 +7,7 @@ const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeature
 const User = require('../models/User');
 const { FeatureUsage } = require('../models/FeatureUsage');
 const { refundGlobalStyleCredits } = require('../utils/refundManager');
+const { saveHistoryToOSS } = require('./global-style-history');
 
 // 通义万相API密钥
 const API_KEY = process.env.DASHSCOPE_API_KEY;
@@ -87,7 +88,8 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('GLOBAL_STYL
       timestamp: new Date(),
       prompt: sanitizedPrompt,
       strength: strengthValue,
-      isFree: isFree // 添加免费使用标记
+      isFree: isFree, // 添加免费使用标记
+      originalUrl: req.body.originalImageUrl || req.body.imageUrl // 保存原始图片URL
     };
     
     console.log(`全局风格化任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCost}, 是否免费=${isFree}`);
@@ -117,9 +119,10 @@ router.post('/create-task', protect, createUnifiedFeatureMiddleware('GLOBAL_STYL
         taskId: taskId,
         creditCost: creditCost, // 积分已在中间件中扣除
         timestamp: new Date(),
-          prompt: sanitizedPrompt,
+        prompt: sanitizedPrompt,
         strength: strengthValue,
-        isFree: isFree // 添加免费使用标记
+        isFree: isFree, // 添加免费使用标记
+        originalUrl: req.body.originalImageUrl || req.body.imageUrl // 保存原始图片URL
       });
       
       // 更新usage记录 - 不再重复累加积分
@@ -174,19 +177,119 @@ router.get('/task-status', protect, async (req, res) => {
     const url = `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`;
     
     try {
-      // 发送查询任务状态请求
-      const response = await axios.get(url, { headers });
+      // 增加超时控制
+      const timeout = 10000; // 10秒超时
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      console.log(`任务状态查询响应: ${response.status}, 任务状态: ${response.data.output?.task_status || '未知'}`);
-      
-      // 这里处理响应，提取出需要的图像URL
-      const taskStatus = response.data.output?.task_status || 'UNKNOWN';
-      
-      // 如果任务成功，返回图像URL
-      if (taskStatus === 'SUCCEEDED') {
+      try {
+        // 发送查询任务状态请求
+        const response = await axios.get(url, { 
+          headers,
+          signal: controller.signal,
+          timeout: timeout
+        });
+        
+        clearTimeout(timeoutId);
+        console.log(`任务状态查询响应: ${response.status}, 任务状态: ${response.data.output?.task_status || '未知'}`);
+        
+        // 这里处理响应，提取出需要的图像URL
+        const taskStatus = response.data.output?.task_status || 'UNKNOWN';
+        
+        // 如果任务成功，返回图像URL
+        if (taskStatus === 'SUCCEEDED') {
         // 从结果中获取图像URL
         const results = response.data.output?.results || [];
         const imageUrl = results.length > 0 ? results[0]?.url : null;
+        
+        // 保存结果URL到数据库和OSS
+        if (imageUrl) {
+          try {
+            const userId = req.user.id;
+            console.log(`保存全局风格化任务结果: 用户ID=${userId}, 任务ID=${taskId}, 结果URL=${imageUrl}`);
+            
+            // 查找用户的FeatureUsage记录
+            const usage = await FeatureUsage.findOne({
+              where: { 
+                userId: userId, 
+                featureName: 'GLOBAL_STYLE' 
+              }
+            });
+            
+            if (usage) {
+              // 解析现有详情
+              const details = JSON.parse(usage.details || '{}');
+              const tasks = details.tasks || [];
+              
+              // 找到对应的任务并更新resultUrl
+              const taskIndex = tasks.findIndex(task => task.taskId === taskId);
+              if (taskIndex !== -1) {
+                tasks[taskIndex].resultUrl = imageUrl;
+                tasks[taskIndex].status = 'SUCCEEDED';
+                tasks[taskIndex].completedAt = new Date();
+                
+                // 更新数据库
+                usage.details = JSON.stringify({
+                  ...details,
+                  tasks: tasks
+                });
+                await usage.save();
+                
+                console.log(`全局风格化任务结果已保存到数据库: 任务ID=${taskId}`);
+                
+                // 保存历史记录到OSS
+                try {
+                  const { saveHistoryToOSS } = require('./global-style-history');
+                  
+                  // 获取任务信息
+                  const taskInfo = tasks[taskIndex];
+                  // 优先从数据库任务信息获取，如果为空则从全局变量获取
+                  let originalImage = taskInfo.originalUrl || taskInfo.imageUrl;
+                  
+                  // 如果数据库中没有原始图片URL，尝试从全局变量获取
+                  if (!originalImage && global.globalStyleTasks && global.globalStyleTasks[taskId]) {
+                    originalImage = global.globalStyleTasks[taskId].originalUrl;
+                    console.log(`从全局变量获取原始图片URL: ${originalImage}`);
+                  }
+                  
+                  if (originalImage) {
+                    // 创建历史记录对象
+                    const historyRecord = {
+                      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+                      userId: userId,
+                      originalImage: originalImage,
+                      resultImage: imageUrl,
+                      prompt: taskInfo.prompt || '',
+                      strength: taskInfo.strength || 0.8,
+                      metadata: {
+                        taskId: taskId,
+                        timestamp: new Date().toISOString(),
+                        feature: 'global-style'
+                      },
+                      timestamp: new Date().toISOString()
+                    };
+                    
+                    // 保存到OSS
+                    await saveHistoryToOSS(userId, historyRecord);
+                    console.log(`全局风格化历史记录已保存到OSS: 任务ID=${taskId}`);
+                  } else {
+                    console.warn(`无法获取原始图片URL，跳过OSS历史记录保存: 任务ID=${taskId}`);
+                  }
+                } catch (ossError) {
+                  console.error('保存历史记录到OSS失败:', ossError);
+                  // 继续响应，不中断流程
+                }
+              } else {
+                console.warn(`未找到对应的任务记录: 任务ID=${taskId}`);
+              }
+            } else {
+              console.warn(`未找到用户的FeatureUsage记录: 用户ID=${userId}`);
+            }
+          } catch (saveError) {
+            console.error('保存任务结果到数据库失败:', saveError);
+            // 继续响应，不中断流程
+          }
+        }
         
         return res.status(200).json({
           status: taskStatus,
@@ -219,11 +322,24 @@ router.get('/task-status', protect, async (req, res) => {
         });
       }
       
-      // 如果任务仍在处理中，返回当前状态
-      return res.status(200).json({
-        status: taskStatus,
-        request_id: response.data.request_id
-      });
+        // 如果任务仍在处理中，返回当前状态
+        return res.status(200).json({
+          status: taskStatus,
+          request_id: response.data.request_id
+        });
+      } catch (requestError) {
+        clearTimeout(timeoutId);
+        if (requestError.name === 'AbortError' || requestError.code === 'ECONNABORTED') {
+          console.error(`任务状态查询请求超时 (${timeout}ms)`);
+          return res.status(408).json({
+            status: 'FAILED',
+            code: "RequestTimeout",
+            message: '任务状态查询超时，请稍后再试',
+            request_id: `req_${Date.now()}`
+          });
+        }
+        throw requestError;
+      }
     } catch (error) {
       // 处理API请求错误
       console.error('查询任务状态失败:', error);
@@ -263,6 +379,8 @@ router.get('/task-status', protect, async (req, res) => {
  */
 async function createTask(requestData) {
   try {
+    console.log('准备发送到通义万相的数据:', JSON.stringify(requestData, null, 2));
+    
     // 准备请求头
     const headers = {
       'Content-Type': 'application/json',
@@ -270,14 +388,42 @@ async function createTask(requestData) {
       'X-DashScope-Async': 'enable' // 启用异步模式
     };
     
-    // 发送创建任务请求
-    const response = await axios.post(API_BASE_URL, requestData, { headers });
+    // 增加超时控制
+    const timeout = 20000; // 20秒超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
     
-    console.log('通义万相API响应:', response.status, JSON.stringify(response.data, null, 2));
-    
-    return { status: response.status, data: response.data };
+    try {
+      // 发送创建任务请求
+      const response = await axios.post(API_BASE_URL, requestData, { 
+        headers,
+        signal: controller.signal,
+        timeout: timeout
+      });
+      
+      clearTimeout(timeoutId);
+      console.log('通义万相API响应:', response.status, JSON.stringify(response.data, null, 2));
+      
+      // 检查响应是否包含错误信息
+      if (response.data.output?.task_status === 'FAILED') {
+        console.error('任务创建失败:', response.data.output);
+        throw new Error(response.data.output.message || '任务创建失败');
+      }
+      
+      return { status: response.status, data: response.data };
+    } catch (requestError) {
+      clearTimeout(timeoutId);
+      if (requestError.name === 'AbortError' || requestError.code === 'ECONNABORTED') {
+        console.error(`任务创建请求超时 (${timeout}ms)`);
+        throw new Error('任务创建请求超时，请稍后再试');
+      }
+      throw requestError;
+    }
   } catch (error) {
     console.error('创建任务失败:', error);
+    if (error.response) {
+      console.error('API错误响应:', error.response.status, error.response.data);
+    }
     throw error;
   }
 }
@@ -325,6 +471,107 @@ function handleApiError(error, res) {
     request_id: `req_${Date.now()}`
   });
 }
+
+/**
+ * @route   GET /api/global-style/history
+ * @desc    获取全局风格化历史记录（从OSS）
+ * @access  私有
+ */
+router.get('/history', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log(`获取全局风格化历史记录: 用户ID=${userId}`);
+    
+    // 从OSS获取历史记录
+    const { loadHistoryFromOSS } = require('./global-style-history');
+    const records = await loadHistoryFromOSS(userId);
+    
+    // 按时间降序排序
+    const sortedRecords = records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    console.log(`找到 ${sortedRecords.length} 条全局风格化历史记录`);
+    
+    res.json({
+      success: true,
+      results: sortedRecords,
+      count: sortedRecords.length
+    });
+  } catch (error) {
+    console.error('获取全局风格化历史记录失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取历史记录失败',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/global-style/history
+ * @desc    清空全局风格化历史记录（从OSS）
+ * @access  私有
+ */
+router.delete('/history', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log(`清空全局风格化历史记录: 用户ID=${userId}`);
+    
+    // 清空OSS中的历史记录
+    const { clearHistoryFromOSS } = require('./global-style-history');
+    await clearHistoryFromOSS(userId);
+    
+    console.log(`全局风格化历史记录已清空: 用户ID=${userId}`);
+    
+    res.json({
+      success: true,
+      message: '历史记录已清空'
+    });
+  } catch (error) {
+    console.error('清空全局风格化历史记录失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '清空历史记录失败',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/global-style/history/:taskId
+ * @desc    删除单个全局风格化历史记录
+ * @access  私有
+ */
+router.delete('/history/:taskId', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const taskId = req.params.taskId;
+    console.log(`删除单个全局风格化历史记录: 用户ID=${userId}, 任务ID=${taskId}`);
+    
+    // 从OSS删除历史记录
+    const { deleteHistoryFromOSS } = require('./global-style-history');
+    const success = await deleteHistoryFromOSS(userId, taskId);
+    
+    if (success) {
+      console.log(`单个全局风格化历史记录已删除: 任务ID=${taskId}`);
+      res.json({
+        success: true,
+        message: '历史记录已删除'
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: '历史记录不存在'
+      });
+    }
+  } catch (error) {
+    console.error('删除单个全局风格化历史记录失败:', error);
+    res.status(500).json({
+      success: false,
+      error: '删除历史记录失败',
+      message: error.message
+    });
+  }
+});
 
 /**
  * 处理字符串以确保它可以安全地作为JSON字符串

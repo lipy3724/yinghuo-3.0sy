@@ -1,0 +1,32 @@
+[
+  {
+    "taskId": "task001",
+    "videoUrl": "https://example.com/videos/sample1.mp4",
+    "prompt": "一只猫在草地上奔跑",
+    "type": "image-to-video",
+    "status": "SUCCEEDED",
+    "userId": "test123",
+    "createdAt": "2025-10-17T00:47:24.065Z",
+    "completedAt": "2025-10-17T01:47:24.065Z"
+  },
+  {
+    "taskId": "task002",
+    "videoUrl": "https://example.com/videos/sample2.mp4",
+    "prompt": "一条狗在海滩上玩耍",
+    "type": "image-to-video",
+    "status": "SUCCEEDED",
+    "userId": "test123",
+    "createdAt": "2025-10-16T23:47:24.065Z",
+    "completedAt": "2025-10-17T00:47:24.065Z"
+  },
+  {
+    "taskId": "task003",
+    "videoUrl": "https://example.com/videos/sample3.mp4",
+    "prompt": "一只鸟在天空飞翔",
+    "type": "image-to-video",
+    "status": "SUCCEEDED",
+    "userId": "test123",
+    "createdAt": "2025-10-16T01:47:24.065Z",
+    "completedAt": "2025-10-16T02:47:24.065Z"
+  }
+]

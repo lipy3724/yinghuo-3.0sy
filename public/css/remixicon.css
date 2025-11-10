@@ -1,0 +1,36 @@
+/*
+* RemixIcon v3.5.0
+* https://remixicon.com
+* https://github.com/Remix-Design/RemixIcon
+*
+* Copyright RemixIcon.com
+* Released under the Apache License Version 2.0
+*/
+
+@font-face {
+    font-family: "remixicon";
+    src: url('https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.woff2') format('woff2'),
+    url('https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.woff') format('woff'),
+    url('https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.ttf') format('truetype');
+    font-display: swap;
+}
+
+[class^="ri-"],
+[class*=" ri-"] {
+    display: inline-flex;
+    font-family: "remixicon" !important;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ri-add-line:before { content: "\ea01"; }
+.ri-upload-cloud-2-line:before { content: "\f0f1"; }
+.ri-image-line:before { content: "\ee8f"; }
+.ri-zoom-in-line:before { content: "\f2f9"; }
+.ri-download-2-line:before { content: "\eca4"; }
+.ri-save-line:before { content: "\f0a6"; }
+.ri-add-line:before { content: "\ea01"; }
+.ri-delete-bin-line:before { content: "\ec1f"; }
+.ri-refresh-line:before { content: "\f05e"; }
+.ri-download-line:before { content: "\eca6"; }

@@ -10,6 +10,7 @@
     <script src="/js/logout-handler.js"></script>
     <script src="/js/auth-check.js"></script>
     <script src="/components/components.js"></script>
+    <!-- <script src="/translations.js"></script> 暂时禁用外部翻译文件，使用内联翻译系统 -->
     
     <!-- 客服组件调试脚本 -->
     <script>
@@ -191,6 +192,12 @@
             background-color: white;
             border-bottom: 1px solid #e5e7eb;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: top 0.3s ease;
+        }
+        
+        /* 广告条存在时的样式 */
+        body.has-banner .navbar {
+            top: 40px; /* 广告条高度 */
         }
         /* 主内容区域样式 - 修改为全宽 */
         .main-content {
@@ -199,6 +206,11 @@
             padding: 2rem;
             height: calc(100vh - 60px); /* 减去导航栏高度 */
             overflow-y: auto;
+        }
+        
+        /* 广告条存在时的主内容区域样式 */
+        body.has-banner .main-content {
+            margin-top: 100px; /* 广告条高度 + 导航栏高度 */
         }
         
         /* 确保下拉箭头图标可见 */
@@ -394,8 +406,13 @@
             border-right: 1px solid #e5e7eb;
             z-index: 40;
             box-shadow: 1px 0 5px rgba(0,0,0,0.05);
-            transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+            transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1), top 0.3s ease;
             will-change: transform; /* 优化性能 */
+        }
+        
+        /* 广告条存在时的侧边栏样式 */
+        body.has-banner .sidebar {
+            top: 100px; /* 广告条高度 + 导航栏高度 */
         }
         
         /* 折叠状态下隐藏侧边栏并让主内容全宽 */
@@ -1007,30 +1024,6 @@
             pointer-events: auto;
         }
         
-        /* 语言选择下拉菜单样式 */
-        #language-dropdown {
-            max-height: 80vh;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 
-                        0 5px 10px rgba(0, 0, 0, 0.04),
-                        0 0 0 1px rgba(0, 0, 0, 0.03);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            padding: 0;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(8px);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-        }
-        
-        #language-dropdown.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
         
         /* CSS 增加旋转动画 */
         #sidebar-toggle-btn i{
@@ -1221,9 +1214,171 @@
                 transform: rotate(180deg);
             }
         }
+        
+        /* 亚马逊助手横屏布局样式 */
+        .amazon-assistant-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2rem;
+        }
+        
+        .amazon-assistant-header {
+            margin-bottom: 1rem;
+        }
+        
+        .amazon-assistant-content {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -10px; /* 抵消父容器的部分内边距 */
+    padding: 0 10px; /* 添加内边距保持视觉一致性 */
+    /* 增强滑动体验 */
+    scroll-behavior: smooth;
+}
+        
+        .amazon-assistant-card {
+            flex: 0 0 300px;
+            margin-right: 1rem;
+            scroll-snap-align: start;
+        }
+        
+        /* 移动端响应式样式 */
+        @media (max-width: 768px) {
+            .amazon-assistant-card {
+                flex: 0 0 85%;
+                margin-right: 0.75rem;
+            }
+            
+            .amazon-assistant-header h2 {
+                font-size: 1.5rem;
+            }
+            
+            .amazon-assistant-content {
+                padding-bottom: 0.5rem;
+            }
+            
+                /* 移动端滚动条已在全局样式中隐藏 */
+            
+            /* 移动端调整内边距 */
+            .amazon-assistant-wrapper {
+                padding: 0 5px; /* 减少内边距 */
+            }
+            
+                /* 移动端滚动指示器样式已移除 */
+        }
+        
+        /* 滚动条美化 */
+        .amazon-assistant-content::-webkit-scrollbar {
+    display: none; /* 隐藏滚动条 */
+}
+
+/* 确保在所有浏览器中都隐藏滚动条 */
+.amazon-assistant-content {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+        
+        /* 滚动指示器样式已移除 */
+        
+        /* 左右滚动按钮 */
+        .amazon-assistant-wrapper {
+            position: relative;
+            padding: 0 20px; /* 添加左右内边距 */
+            overflow: visible; /* 确保按钮可见 */
+        }
+        
+        .scroll-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px; /* 增加按钮尺寸 */
+    height: 44px; /* 增加按钮尺寸 */
+    border-radius: 50%;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); /* 增强阴影效果 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    opacity: 0.9; /* 稍微透明，更美观 */
+}
+        
+        .scroll-button:hover {
+            background-color: #f3f4f6;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* 悬停时增强阴影 */
+            transform: translateY(-50%) scale(1.05); /* 轻微放大效果 */
+        }
+        
+        /* 调整按钮内图标大小 */
+        .scroll-button i {
+            font-size: 1.5rem; /* 增大图标尺寸 */
+            color: #6366f1; /* 使用主题色 */
+        }
+        
+        .scroll-button.left {
+            left: -20px; /* 修改：从-10px改为-20px，向左外移 */
+        }
+        
+        .scroll-button.right {
+            right: -20px; /* 修改：从-10px改为-20px，向右外移 */
+        }
+        
+        /* 在移动设备上隐藏滚动按钮 */
+        @media (max-width: 768px) {
+            .scroll-button {
+                display: none;
+            }
+        }
+        
+        /* 中等尺寸屏幕调整 */
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .scroll-button.left {
+                left: -15px; /* 中等屏幕上按钮位置适当调整 */
+            }
+            
+            .scroll-button.right {
+                right: -15px; /* 中等屏幕上按钮位置适当调整 */
+            }
+            
+            .amazon-assistant-wrapper {
+                padding: 0 15px; /* 中等屏幕上减少内边距 */
+            }
+            
+            .amazon-assistant-card {
+                flex: 0 0 280px; /* 中等屏幕上卡片稍微窄一些 */
+            }
+        }
+        
+        /* 大屏幕调整 */
+        @media (min-width: 1201px) {
+            .scroll-button.left {
+                left: -25px; /* 大屏幕上按钮位置可以更外侧 */
+            }
+            
+            .scroll-button.right {
+                right: -25px; /* 大屏幕上按钮位置可以更外侧 */
+            }
+            
+            .amazon-assistant-card {
+                flex: 0 0 320px; /* 大屏幕上卡片可以更宽 */
+            }
+        }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 has-banner" id="app-body">
+    <!-- 广告条 -->
+    <div id="promo-banner" style="width: 100%; height: 40px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; text-align: center; transition: height 0.3s ease, opacity 0.3s ease; display: none; opacity: 0;">
+        <a href="javascript:void(0)" id="banner-link" style="display: block; cursor: pointer;">
+            <img src="public/banners/promo-banner-double12.png" alt="双12促销" style="width: 100%; height: 100%; object-fit: cover; display: block;" id="promo-banner-img" onerror="hideBanner()">
+        </a>
+        <div id="close-banner" style="position: absolute; top: 8px; right: 10px; width: 20px; height: 20px; background-color: rgba(0,0,0,0.5); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; line-height: 1; z-index: 10;">×</div>
+    </div>
+    
     <!-- 导航栏 -->
     <nav class="navbar flex items-center justify-between px-4">
         <div class="flex items-center">
@@ -1241,21 +1396,21 @@
             <div class="ml-8 flex items-center space-x-6">
                 <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/marketing-images.html')" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="ri-image-line mr-1"></i>
-                    <span class="nav-text">AI营销图</span>
+                    <span class="nav-text" data-translate="nav.ai_marketing">AI营销图</span>
                 </a>
                 <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/translate')" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="ri-translate-2 mr-1"></i>
-                    <span class="nav-text">图片翻译</span>
+                    <span class="nav-text" data-translate="nav.image_translation">图片翻译</span>
                 </a>
                 <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/cutout')" class="text-gray-600 hover:text-gray-900 flex items-center">
                     <i class="ri-image-edit-line mr-1"></i>
-                    <span class="nav-text">商品换背景</span>
+                    <span class="nav-text" data-translate="nav.product_background">智能抠图</span>
                 </a>
                 <!-- 功能中心下拉菜单 -->
                 <div class="relative features-menu-wrapper">
                         <button class="text-gray-600 hover:text-gray-900 flex items-center" id="features-menu-btn">
                             <i class="ri-apps-line mr-1"></i>
-                            <span class="nav-text">功能中心</span>
+                            <span class="nav-text" data-translate="nav.features_center">功能中心</span>
                         <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
                         </button>
                     <div class="features-menu-bridge"></div>
@@ -1263,68 +1418,70 @@
                         <div class="grid grid-cols-4 gap-2 px-4">
                             <!-- 图像处理类 -->
                             <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing">图像处理</h3>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing" data-i18n="category_image_processing">图像处理</h3>
                                 <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">场景图生成</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像智能消除</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能扩图</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模糊图片变清晰</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像高清放大</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像上色</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">局部重绘</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">全局风格化</a></li>
-                                    <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">垫图</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.scene_generator">场景图生成</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_removal">智能消除</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_expansion">智能扩图</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_sharpen">模糊图片变清晰</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_upscaler">图像高清放大</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_colorization">图像上色</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.local_redraw">局部重绘</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.global_style">全局风格化</a></li>
+                                    <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.diantu">垫图</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_resizer">图片改尺寸</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_crop">图像裁剪</a></li>
                                 </ul>
                             </div>
                             <!-- 模特/服饰类 -->
                             <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b model-clothing">模特与服饰</h3>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b model-clothing" data-i18n="category_model_clothing">模特与服饰</h3>
                                 <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模特换肤</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模拟试衣</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能服饰分割</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能虚拟模特试穿</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">鞋靴虚拟试穿</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.model_skin_changer">模特换肤</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.clothing_simulation">模拟试衣</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.clothing_segmentation">智能服饰分割</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.virtual_model_try_on">智能虚拟模特试穿</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.virtual_shoes_try_on">鞋靴虚拟试穿</a></li>
                                 </ul>
                                 
-                                <h3 class="text-sm font-semibold text-gray-900 mt-4 mb-2 pb-1 border-b ai-creation">AI创作</h3>
+                                <h3 class="text-sm font-semibold text-gray-900 mt-4 mb-2 pb-1 border-b ai-creation" data-i18n="category_ai_creation">AI创作</h3>
                                 <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">文生图片</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">指令编辑</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.text_to_image">文生图片</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.prompt_editor">指令编辑</a></li>
                                 </ul>
                             </div>
                             <!-- 视频处理类 -->
                             <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b video-processing">视频处理</h3>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b video-processing" data-i18n="category_video_processing">视频处理</h3>
                                 <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">文生视频</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图生视频</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/multi-image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">多图转视频</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频风格重绘</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频数字人</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频去除字幕</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.text_to_video">文生视频</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_to_video">图生视频</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/multi-image-to-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.multi_image_to_video">多图转视频</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-style-repaint.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.video_style_repaint">视频风格重绘</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.digital_human_video">视频数字人</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.video_subtitle_remover">视频去除字幕</a></li>
                                 </ul>
                             </div>
                             <!-- 亚马逊助手 -->
                             <div>
-                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b amazon-assistant">亚马逊助手</h3>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b amazon-assistant" data-i18n="category_amazon_assistant">亚马逊助手</h3>
                                 <ul class="space-y-1">
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">Listing写作与优化</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">后台搜索词</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">客户评论分析</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">消费者洞察</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-customer-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">客户邮件回复</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">FBA索赔邮件</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">评论生成</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">评论回复</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">品牌起名</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">创建Post</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">广告视频脚本</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">产品对比</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">品牌信息收集和总结</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">选品的改款分析和建议</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">亚马逊关键词推荐</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-case-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">亚马逊客服case内容</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_listing">Listing写作与优化</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_search_term">后台搜索词</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_review_analysis">客户评论分析</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.consumer_insights">消费者洞察</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-customer-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.customer_email_reply">客户邮件回复</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.fba_claim_email">FBA索赔邮件</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_review_generator">评论生成</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_review_response">评论回复</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_brand_naming">品牌起名</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_post_creator">创建Post</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_video_script">广告视频脚本</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.product_comparison">产品对比</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_brand_info">品牌信息收集和总结</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.product_improvement_analysis">选品的改款分析和建议</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_keyword_recommender">亚马逊关键词推荐</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-case-creator.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.amazon_case_creator">亚马逊客服case内容</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -1342,41 +1499,66 @@
             <div class="relative credits-menu-wrapper">
                 <button class="text-gray-600 hover:text-gray-900 flex items-center" id="credits-menu-btn">
                     <i class="ri-coin-line mr-1"></i>
-                    <span class="nav-text">积分中心</span>
+                    <span class="nav-text" data-translate="nav.credits_center">积分中心</span>
                     <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
                 </button>
                 <div id="credits-dropdown" class="hidden absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="/credits-usage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分使用情况</a>
+                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-i18n="credits_management">积分管理</a>
+                    <a href="/credits-usage.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-i18n="credits_usage">积分使用情况</a>
                 </div>
             </div>
             <a href="/credits.html?openRecharge=true" class="text-gray-600 hover:text-gray-900 flex items-center">
                 <i class="ri-recharge-fill mr-1"></i>
-                <span class="nav-text">积分充值中心</span>
+                <span class="nav-text" data-translate="nav.recharge_center">积分充值中心</span>
             </a>
             <a href="/download-center.html" class="text-gray-600 hover:text-gray-900 flex items-center">
                 <i class="ri-download-2-line mr-1"></i>
-                <span class="nav-text">下载中心</span>
+                <span class="nav-text" data-translate="nav.download_center">下载中心</span>
             </a>
             <a href="https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink" target="_blank" class="text-gray-600 hover:text-gray-900 flex items-center">
                 <i class="ri-book-open-line mr-1"></i>
-                <span class="nav-text">使用教程</span>
+                <span class="nav-text" data-translate="nav.tutorial">使用教程</span>
             </a>
+            <!-- 语言选择器 -->
+            <div class="relative group">
+                <!-- 主按钮区域 -->
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-purple-50 transition-all duration-200 cursor-pointer">
+                    <i class="ri-global-line text-gray-600 text-lg"></i>
+                    <span class="nav-text text-gray-700 whitespace-nowrap" data-translate="text.select_language">选择语言</span>
+                    <i class="ri-arrow-down-s-line text-gray-500 text-sm transition-transform duration-200 group-hover:rotate-180"></i>
+                </div>
+                
+                <!-- 隐形桥接区域，连接主按钮和下拉菜单 -->
+                <div class="absolute right-0 top-full w-full h-2 bg-transparent"></div>
+                
+                <!-- 语言下拉菜单 -->
+                <div class="absolute right-0 top-12 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-[140px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div class="language-option px-4 py-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors duration-150" data-lang="zh">
+                        <span class="text-base">🇨🇳</span>
+                        <span class="text-gray-700">中文</span>
+                    </div>
+                    <div class="language-option px-4 py-2 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors duration-150" data-lang="en">
+                        <span class="text-base">🇺🇸</span>
+                        <span class="text-gray-700">English</span>
+                    </div>
+                </div>
+            </div>
+            
             <!-- 用户未登录时显示登录注册按钮 -->
-            <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+            <a href="/login.html" id="login-btn" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700" data-i18n="login_register">
                 登录/注册
             </a>
             <!-- 用户已登录时显示用户信息 -->
             <div id="user-info" class="hidden relative user-menu-wrapper">
                 <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-gray-900">
                     <i class="ri-user-3-line mr-1 text-lg"></i>
-                    <span id="username-display">用户名</span>
+                    <span id="username-display" data-i18n="username_display">用户名</span>
                     <i class="ri-arrow-down-s-line ml-1 arrow-icon"></i>
                 </button>
                 <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">我的账户</a>
-                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">积分管理</a>
-                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</a>
+                    <a href="/account.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-i18n="my_account">我的账户</a>
+                    <a href="/credits.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-i18n="credits_management">积分管理</a>
+                    <a href="#" id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-i18n="logout">退出登录</a>
                 </div>
             </div>
         </div>
@@ -1394,7 +1576,7 @@
                 <li>
                     <button id="quick-access-btn" class="quick-access-btn w-full flex items-center justify-center p-3 text-base font-medium rounded-lg mb-3">
                         <i class="ri-add-line mr-2 text-lg"></i>
-                        <span>添加快捷访问</span>
+                        <span data-translate="sidebar.add_quick_access">添加快捷访问</span>
                     </button>
                 </li>
                 <!-- 快捷访问功能列表容器 -->
@@ -1402,7 +1584,7 @@
                     <!-- 这里将动态添加用户选择的功能 -->
                     <div class="text-center text-gray-400 text-sm py-6 empty-state hidden">
                         <i class="ri-function-line text-3xl mb-2 block"></i>
-                        <p>点击上方按钮添加您常用的功能</p>
+                        <p data-translate="sidebar.empty_message">点击上方按钮添加您常用的功能</p>
                     </div>
                 </div>
             </ul>
@@ -1418,7 +1600,7 @@
     <div id="quick-access-dropdown" class="hidden">
         <div class="dropdown-header">
             <div class="flex items-center">
-                <h3>添加快捷访问</h3>
+                <h3 data-translate="sidebar.add_quick_access">添加快捷访问</h3>
                 <span id="selected-count" class="text-gray-500">(0/10)</span>
             </div>
             <button id="close-dropdown" class="text-gray-400 hover:text-gray-600">
@@ -1432,44 +1614,55 @@
                 <div class="mb-5">
                     <h4 class="flex items-center">
                         <i class="ri-image-edit-line mr-1 text-indigo-500"></i>
-                        图像处理
+                        <span data-i18n="category_image_processing">图像处理</span>
                     </h4>
                     <div class="grid grid-cols-1 gap-1">
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="场景图生成" data-icon="ri-landscape-line" data-bg="bg-emerald-100" data-color="text-emerald-500" data-url="/scene-generator.html">
-                            <span>场景图生成</span>
+                            <span data-i18n="feature.scene_generator">场景图生成</span>
                         </label>
                         <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="图像智能消除" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/image-removal.html">
-                        <span>图像智能消除</span>
+                            <input type="checkbox" data-feature="智能消除" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/image-removal.html">
+                        <span data-i18n="feature.image_removal">智能消除</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="智能扩图" data-icon="ri-crop-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/image-expansion.html">
-                            <span>智能扩图</span>
+                            <span data-i18n="feature.image_expansion">智能扩图</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="模糊图片变清晰" data-icon="ri-image-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/image-sharpen.html">
-                            <span>模糊图片变清晰</span>
+                            <span data-i18n="feature.image_sharpen">模糊图片变清晰</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="图像高清放大" data-icon="ri-zoom-in-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/image-upscaler.html">
-                            <span>图像高清放大</span>
+                            <span data-i18n="feature.image_upscaler">图像高清放大</span>
                         </label>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-1">
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="图像上色" data-icon="ri-paint-brush-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/image-colorization.html">
-                            <span>图像上色</span>
+                            <span data-i18n="feature.image_colorization">图像上色</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="局部重绘" data-icon="ri-brush-3-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/local-redraw.html">
-                            <span>局部重绘</span>
+                            <span data-i18n="feature.local_redraw">局部重绘</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="全局风格化" data-icon="ri-palette-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/global-style.html">
-                            <span>全局风格化</span>
+                            <span data-i18n="feature.global_style">全局风格化</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="垫图" data-icon="ri-collage-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/diantu.html">
-                            <span>垫图</span>
+                            <span data-i18n="feature.diantu">垫图</span>
+                        </label>
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="图片改尺寸" data-icon="ri-aspect-ratio-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/image-resizer.html">
+                            <span data-i18n="feature.image_resizer">图片改尺寸</span>
+                        </label>
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="图像裁剪" data-icon="ri-crop-line" data-bg="bg-teal-100" data-color="text-teal-500" data-url="/image-crop.html">
+                            <span data-i18n="feature.image_crop">图像裁剪</span>
                         </label>
                     </div>
                 </div>
@@ -1478,28 +1671,28 @@
                 <div class="mb-5">
                     <h4 class="flex items-center">
                         <i class="ri-t-shirt-line mr-1 text-indigo-500"></i>
-                        模特与服饰
+                        <span data-i18n="category_model_clothing">模特与服饰</span>
                     </h4>
                     <div class="grid grid-cols-1 gap-1">
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="模特换肤" data-icon="ri-user-5-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/model-skin-changer.html">
-                        <span>模特换肤</span>
+                        <span data-i18n="feature.model_skin_changer">模特换肤</span>
                         </label>
                         <label class="feature-checkbox-item">
-                            <input type="checkbox" data-feature="模拟试衣" data-icon="ri-t-shirt-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/clothing-simulation.html">
-                        <span>模拟试衣</span>
+                            <input type="checkbox" data-feature="虚拟试衣" data-icon="ri-t-shirt-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/clothing-simulation.html">
+                        <span data-i18n="feature.clothing_simulation">虚拟试衣</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="智能服饰分割" data-icon="ri-scissors-cut-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/clothing-segmentation.html">
-                        <span>智能服饰分割</span>
+                            <span data-i18n="feature.clothing_segmentation">智能服饰分割</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="智能虚拟模特试穿" data-icon="ri-t-shirt-2-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/virtual-model">
-                        <span>智能虚拟模特试穿</span>
+                        <span data-i18n="feature.virtual_model_try_on">智能虚拟模特试穿</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="鞋靴虚拟试穿" data-icon="ri-footprint-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/virtual-model-shoes.html">
-                        <span>鞋靴虚拟试穿</span>
+                        <span data-i18n="feature.virtual_shoes_try_on">鞋靴虚拟试穿</span>
                         </label>
                     </div>
                 </div>
@@ -1508,16 +1701,16 @@
                 <div class="mb-5">
                     <h4 class="flex items-center">
                         <i class="ri-brush-line mr-1 text-indigo-500"></i>
-                        AI创作
+                        <span data-i18n="category_ai_creation">AI创作</span>
                     </h4>
                     <div class="grid grid-cols-1 gap-1">
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="文生图片" data-icon="ri-image-add-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/text-to-image.html">
-                        <span>文生图片</span>
+                        <span data-i18n="feature.text_to_image">文生图片</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="指令编辑" data-icon="ri-edit-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/prompt-editor.html">
-                            <span>指令编辑</span>
+                            <span data-i18n="feature.prompt_editor">指令编辑</span>
                         </label>
                     </div>
                 </div>
@@ -1526,32 +1719,32 @@
                 <div class="mb-5">
                     <h4 class="flex items-center">
                         <i class="ri-movie-line mr-1 text-indigo-500"></i>
-                        视频处理
+                        <span data-i18n="category_video_processing">视频处理</span>
                     </h4>
                     <div class="grid grid-cols-1 gap-1">
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="文生视频" data-icon="ri-movie-2-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/text-to-video.html">
-                        <span>文生视频</span>
+                        <span data-i18n="feature.text_to_video">文生视频</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="图生视频" data-icon="ri-vidicon-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/image-to-video.html">
-                        <span>图生视频</span>
+                        <span data-i18n="feature.image_to_video">图生视频</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="多图转视频" data-icon="ri-film-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/multi-image-to-video.html">
-                        <span>多图转视频</span>
+                        <span data-i18n="feature.multi_image_to_video">多图转视频</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="视频风格重绘" data-icon="ri-paint-brush-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/video-style-repaint.html">
-                        <span>视频风格重绘</span>
+                        <span data-i18n="feature.video_style_transfer">视频风格重绘</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="视频数字人" data-icon="ri-user-voice-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/digital-human-video.html">
-                        <span>视频数字人</span>
+                        <span data-i18n="feature.digital_human_video">视频数字人</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="视频去除字幕" data-icon="ri-eraser-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/video-subtitle-remover.html">
-                        <span>视频去除字幕</span>
+                        <span data-i18n="feature.video_subtitle_remover">视频去除字幕</span>
                         </label>
                     </div>
                 </div>
@@ -1560,72 +1753,72 @@
                 <div class="mb-5">
                     <h4 class="flex items-center">
                         <i class="ri-amazon-line mr-1 text-indigo-500"></i>
-                        亚马逊助手
+                        <span data-i18n="category_amazon_assistant">亚马逊助手</span>
                     </h4>
                     <div class="grid grid-cols-1 gap-1">
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="Listing写作与优化" data-icon="ri-draft-line" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/amazon-listing.html">
-                            <span>Listing写作与优化</span>
+                            <span data-i18n="feature.amazon_listing_optimization">Listing写作与优化</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="后台搜索词" data-icon="ri-search-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-search-term.html">
-                            <span>后台搜索词</span>
+                            <span data-i18n="feature.amazon_search_terms">后台搜索词</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="客户评论分析" data-icon="ri-chat-poll-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/amazon-review-analysis.html">
-                            <span>客户评论分析</span>
+                            <span data-i18n="feature.amazon_review_analysis">客户评论分析</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="消费者洞察" data-icon="ri-spy-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/amazon-consumer-insights.html">
-                            <span>消费者洞察</span>
+                            <span data-i18n="feature.consumer_insights">消费者洞察</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="客户邮件回复" data-icon="ri-mail-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/amazon-customer-email.html">
-                            <span>客户邮件回复</span>
+                            <span data-i18n="feature.customer_email_reply">客户邮件回复</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="FBA索赔邮件" data-icon="ri-mail-star-line" data-bg="bg-amber-100" data-color="text-amber-500" data-url="/fba-claim-email.html">
-                        <span>FBA索赔邮件</span>
+                        <span data-i18n="feature.fba_claim_email">FBA索赔邮件</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="评论生成" data-icon="ri-chat-new-line" data-bg="bg-rose-100" data-color="text-rose-500" data-url="/amazon-review-generator.html">
-                            <span>评论生成</span>
+                            <span data-i18n="feature.review_generator">评论生成</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="评论回复" data-icon="ri-reply-line" data-bg="bg-teal-100" data-color="text-teal-500" data-url="/amazon-review-response.html">
-                            <span>评论回复</span>
+                            <span data-i18n="feature.review_response">评论回复</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="品牌起名" data-icon="ri-price-tag-3-line" data-bg="bg-orange-100" data-color="text-orange-500" data-url="/amazon-brand-naming.html">
-                            <span>品牌起名</span>
+                            <span data-i18n="amazon_brand_naming">品牌起名</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="创建Post" data-icon="ri-article-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-post-creator.html">
-                            <span>创建Post</span>
+                            <span data-i18n="amazon_post_creator">创建Post</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="广告视频脚本" data-icon="ri-video-chat-line" data-bg="bg-red-100" data-color="text-red-500" data-url="/amazon-video-script.html">
-                            <span>广告视频脚本</span>
+                            <span data-i18n="amazon_video_script">广告视频脚本</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="产品对比" data-icon="ri-scales-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/product-comparison.html">
-                            <span>产品对比</span>
+                            <span data-i18n="product_comparison">产品对比</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="品牌信息收集和总结" data-icon="ri-file-info-line" data-bg="bg-blue-100" data-color="text-blue-500" data-url="/amazon-brand-info.html">
-                            <span>品牌信息收集和总结</span>
+                            <span data-i18n="feature.brand_information_collection">品牌信息收集和总结</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="选品的改款分析和建议" data-icon="ri-tools-line" data-bg="bg-green-100" data-color="text-green-500" data-url="/product-improvement-analysis.html">
-                            <span>选品的改款分析和建议</span>
+                            <span data-i18n="feature.product_improvement_analysis">选品的改款分析和建议</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="亚马逊关键词推荐" data-icon="ri-hashtag" data-bg="bg-yellow-100" data-color="text-yellow-500" data-url="/amazon-keyword-recommender.html">
-                            <span>亚马逊关键词推荐</span>
+                            <span data-i18n="feature.amazon_keyword_recommendation">亚马逊关键词推荐</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="亚马逊客服case内容" data-icon="ri-customer-service-2-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/amazon-case-creator.html">
-                            <span>亚马逊客服case内容</span>
+                            <span data-i18n="feature.amazon_customer_service_case">亚马逊客服case内容</span>
                         </label>
                     </div>
                 </div>
@@ -1637,37 +1830,37 @@
     <div class="main-content">
         <!-- 热门作图部分 -->
         <div class="mb-10">
-            <h2 class="text-2xl font-bold mb-6">热门功能</h2>
+            <h2 class="text-2xl font-bold mb-6" data-translate="title.hot_features">热门功能</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                <!-- 模特试衣 -->
+                <!-- 虚拟试衣 -->
                 <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/clothing-simulation.html')">
                     <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/before-after-model.jpg" onerror="this.src='https://picsum.photos/400/300?random=1'; console.log('请将图片放置到 /public/images/clothing/before-after-model.jpg 路径');" class="h-full w-full object-cover" alt="模特试衣">
+                        <img src="/public/images/clothing/before-after-model.jpg" onerror="this.src='https://picsum.photos/400/300?random=1'; console.log('请将图片放置到 /public/images/clothing/before-after-model.jpg 路径');" class="h-full w-full object-cover" alt="虚拟试衣">
                     </div>
                     <div class="p-4">
                         <div class="flex items-center justify-center mb-2">
                             <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-lg mr-2">
                                 <i class="ri-t-shirt-line text-lg text-indigo-500"></i>
                             </div>
-                            <h3 class="font-semibold">模特试衣</h3>
+                            <h3 class="font-semibold" data-translate="feature.model_fitting">虚拟试衣</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">智能试衣，平铺图秒变上身效果，让你的服装瞬间焕发魅力！</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.model_fitting">智能试衣，平铺图秒变上身效果，让你的服装瞬间焕发魅力！</p>
                     </div>
                 </div>
                 
                 <!-- 图像智能消除 -->
                 <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/image-removal.html')">
                     <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/Intelligent elimination.png" class="h-full w-full object-cover" alt="图像智能消除">
+                        <img src="/public/images/clothing/Intelligent elimination.png" class="h-full w-full object-cover" alt="智能消除">
                     </div>
                     <div class="p-4">
                         <div class="flex items-center justify-center mb-2">
                             <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-lg mr-2">
                                 <i class="ri-eraser-line text-lg text-purple-500"></i>
                             </div>
-                            <h3 class="font-semibold">图像智能消除</h3>
+                            <h3 class="font-semibold" data-translate="feature.image_removal">智能消除</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">智能去除图片中不需要的元素，完美修复画面</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.image_removal">智能去除图片中不需要的元素，完美修复画面</p>
                     </div>
                 </div>
                 
@@ -1681,9 +1874,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg mr-2">
                                 <i class="ri-user-5-line text-lg text-blue-500"></i>
                             </div>
-                            <h3 class="font-semibold">AI换模特</h3>
+                            <h3 class="font-semibold" data-translate="feature.ai_model_change">AI换模特</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">上传人台图/真人试穿图，一键换模特，降低商拍成本</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.ai_model_change">上传人台图/真人试穿图，一键换模特，降低商拍成本</p>
                     </div>
                 </div>
                 
@@ -1697,25 +1890,73 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-green-100 rounded-lg mr-2">
                                 <i class="ri-layout-grid-line text-lg text-green-500"></i>
                             </div>
-                            <h3 class="font-semibold">AI营销图</h3>
+                            <h3 class="font-semibold" data-translate="feature_ai_marketing">AI营销图</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">上传商品图，AI生成打造您的专属商品图</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="feature_ai_marketing_desc">上传商品图，AI生成打造您的专属商品图</p>
+                    </div>
+                </div>
+                
+                <!-- 视频去除字幕 -->
+                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')">
+                    <div class="h-48 bg-gray-50 flex items-center justify-center">
+                        <img src="/public/images/clothing/video-subtitle-removal.png" onerror="this.src='https://picsum.photos/400/300?random=4'; console.log('请将图片放置到 /public/images/clothing/video-subtitle-removal.png 路径');" class="h-full w-full object-cover" alt="视频去除字幕">
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-center mb-2">
+                            <div class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg mr-2">
+                                <i class="ri-movie-line text-lg text-red-500"></i>
+                            </div>
+                            <h3 class="font-semibold" data-translate="feature.video_subtitle_remover">视频去除字幕</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.video_subtitle_remover">一键去除视频中的硬字幕，让视频更加清爽专业</p>
+                    </div>
+                </div>
+                
+                <!-- 视频风格重绘 -->
+                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/video-style-repaint.html')">
+                    <div class="h-48 bg-gray-50 flex items-center justify-center">
+                        <img src="/public/images/clothing/video-style-transfer.png" onerror="this.src='https://picsum.photos/400/300?random=6'; console.log('请将图片放置到 /public/images/clothing/video-style-transfer.png 路径');" class="h-full w-full object-cover" alt="视频风格重绘">
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-center mb-2">
+                            <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-lg mr-2">
+                                <i class="ri-paint-brush-line text-lg text-purple-500"></i>
+                            </div>
+                            <h3 class="font-semibold" data-translate="feature.video_style_repaint">视频风格重绘</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.video_style_repaint">将普通视频转换为艺术风格，打造独特视觉效果</p>
+                    </div>
+                </div>
+                
+                <!-- 图生视频 -->
+                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/image-to-video.html')">
+                    <div class="h-48 bg-gray-50 flex items-center justify-center">
+                        <img src="/public/images/clothing/image-to-video.png" onerror="this.src='https://picsum.photos/400/300?random=7'; console.log('请将图片放置到 /public/images/clothing/image-to-video.png 路径');" class="h-full w-full object-cover" alt="图生视频">
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-center mb-2">
+                            <div class="w-8 h-8 flex items-center justify-center bg-teal-100 rounded-lg mr-2">
+                                <i class="ri-film-line text-lg text-teal-500"></i>
+                            </div>
+                            <h3 class="font-semibold" data-translate="feature.image_to_video">图生视频</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.image_to_video">一键将静态图片转换为动态视频，赋予照片生命力</p>
                     </div>
                 </div>
                 
                 <!-- 图片翻译 -->
                 <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/translate')">
                     <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/Image translation.png" onerror="this.src='https://picsum.photos/400/300?random=4'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="图片翻译">
+                        <img src="/public/images/clothing/Image translation.png" onerror="this.src='https://picsum.photos/400/300?random=5'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="图片翻译">
                     </div>
                     <div class="p-4">
                         <div class="flex items-center justify-center mb-2">
                             <div class="w-8 h-8 flex items-center justify-center bg-orange-100 rounded-lg mr-2">
                                 <i class="ri-translate-2 text-lg text-orange-500"></i>
                             </div>
-                            <h3 class="font-semibold">图片翻译</h3>
+                            <h3 class="font-semibold" data-translate="feature.image_translation">图片翻译</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">上传图片，AI自动识别并翻译内容，支持多语言互译</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.image_translation">上传图片，AI自动识别并翻译内容，支持多语言互译</p>
                     </div>
                 </div>
                 
@@ -1729,9 +1970,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg mr-2">
                                 <i class="ri-image-add-line text-lg text-blue-500"></i>
                             </div>
-                            <h3 class="font-semibold">文生图片</h3>
+                            <h3 class="font-semibold" data-translate="feature.text_to_image">文生图片</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">输入文本描述，AI自动生成精美图片内容</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.text_to_image">输入文本描述，AI自动生成精美图片内容</p>
                     </div>
                 </div>
                 
@@ -1745,9 +1986,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-red-100 rounded-lg mr-2">
                                 <i class="ri-crop-line text-lg text-red-500"></i>
                             </div>
-                            <h3 class="font-semibold">智能扩图</h3>
+                            <h3 class="font-semibold" data-translate="feature.image_expansion">智能扩图</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">无缝扩展图像边界，保持自然过渡和高质量效果</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.image_expansion">无缝扩展图像边界，保持自然过渡和高质量效果</p>
                     </div>
                 </div>
                 
@@ -1761,9 +2002,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-pink-100 rounded-lg mr-2">
                                 <i class="ri-brush-3-line text-lg text-pink-500"></i>
                             </div>
-                            <h3 class="font-semibold">局部重绘</h3>
+                            <h3 class="font-semibold" data-translate="feature.local_redraw">局部重绘</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">精确选择区域重绘，AI智能填充，自然融合</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.local_redraw">精确选择区域重绘，AI智能填充，自然融合</p>
                     </div>
                 </div>
                 
@@ -1777,25 +2018,25 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg mr-2">
                                 <i class="ri-palette-line text-lg text-blue-500"></i>
                             </div>
-                            <h3 class="font-semibold">全局风格化</h3>
+                            <h3 class="font-semibold" data-translate="feature.global_style">全局风格化</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">一键转换图像风格，多种艺术效果可选</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.global_style">一键转换图像风格，多种艺术效果可选</p>
                     </div>
                 </div>
                 
-                <!-- 商品换背景 -->
+                <!-- 智能抠图 -->
                 <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/cutout')">
                     <div class="h-48 bg-gray-50 flex items-center justify-center">
-                        <img src="/public/images/clothing/huanbeijing.png" onerror="this.src='https://picsum.photos/400/300?random=13'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="商品换背景">
+                        <img src="/public/images/clothing/huanbeijing.png" onerror="this.src='https://picsum.photos/400/300?random=13'; console.log('图片加载失败');" class="h-full w-full object-cover" alt="智能抠图">
                     </div>
                     <div class="p-4">
                         <div class="flex items-center justify-center mb-2">
                             <div class="w-8 h-8 flex items-center justify-center bg-orange-100 rounded-lg mr-2">
                                 <i class="ri-image-edit-line text-lg text-orange-500"></i>
                             </div>
-                            <h3 class="font-semibold">商品换背景</h3>
+                            <h3 class="font-semibold" data-translate="feature.product_background_change">智能抠图</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">智能抠图，一键替换商品背景，突显产品特色</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.product_background_change">智能消除，一键替换商品背景，突显产品特色</p>
                     </div>
                 </div>
                 
@@ -1809,9 +2050,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-lg mr-2">
                                 <i class="ri-scissors-cut-line text-lg text-purple-500"></i>
                             </div>
-                            <h3 class="font-semibold">智能服饰分割</h3>
+                            <h3 class="font-semibold" data-translate="feature.clothing_segmentation">智能服饰分割</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">精准分割服饰元素，自动生成透明背景图</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.clothing_segmentation">精准分割服饰元素，自动生成透明背景图</p>
                     </div>
                 </div>
                 
@@ -1825,9 +2066,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-lg mr-2">
                                 <i class="ri-edit-line text-lg text-indigo-500"></i>
                             </div>
-                            <h3 class="font-semibold">指令编辑</h3>
+                            <h3 class="font-semibold" data-translate="feature.prompt_editor">指令编辑</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">高级AI指令编辑工具，精确控制生成结果</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.prompt_editor">高级AI指令编辑工具，精确控制生成结果</p>
                     </div>
                 </div>
                 
@@ -1841,9 +2082,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-pink-100 rounded-lg mr-2">
                                 <i class="ri-focus-2-line text-lg text-pink-500"></i>
                             </div>
-                            <h3 class="font-semibold">模糊图片变清晰</h3>
+                            <h3 class="font-semibold" data-translate="feature.image_sharpen">模糊图片变清晰</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">模糊图片一键变清晰，提升图像质量</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.image_sharpen">模糊图片一键变清晰，提升图像质量</p>
                     </div>
                 </div>
                 
@@ -1857,9 +2098,9 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-teal-100 rounded-lg mr-2">
                                 <i class="ri-paint-brush-line text-lg text-teal-500"></i>
                             </div>
-                            <h3 class="font-semibold">图像上色</h3>
+                            <h3 class="font-semibold" data-translate="feature.image_colorization">图像上色</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">黑白老照片秒变彩色，AI智能上色技术</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.image_colorization">黑白老照片秒变彩色，AI智能上色技术</p>
                     </div>
                 </div>
                 
@@ -1873,111 +2114,118 @@
                             <div class="w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-lg mr-2">
                                 <i class="ri-movie-2-line text-lg text-indigo-500"></i>
                             </div>
-                            <h3 class="font-semibold">文生视频</h3>
+                            <h3 class="font-semibold" data-translate="feature.text_to_video">文生视频</h3>
                         </div>
-                        <p class="text-sm text-gray-600 text-center">输入文本描述，AI自动生成精美视频内容</p>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.text_to_video">输入文本描述，AI自动生成精美视频内容</p>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- 最流行部分 -->
-        <div>
-            <h2 class="text-2xl font-bold mb-6">亚马逊助手</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <div class="amazon-assistant-container">
+            <div class="amazon-assistant-header">
+                <h2 class="text-2xl font-bold mb-2" data-i18n="amazon_assistant_title">亚马逊助手</h2>
+                <p class="text-gray-600 mb-4" data-i18n="amazon_assistant_subtitle">横向滑动查看更多功能</p>
+            </div>
+            <div class="amazon-assistant-wrapper">
+                <button class="scroll-button left">
+                    <i class="ri-arrow-left-s-line text-xl text-gray-600"></i>
+                </button>
+                <div class="amazon-assistant-content">
                 <!-- 亚马逊搜索词 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-search-term.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-search-term.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
                                 <i class="ri-search-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">亚马逊搜索词</h3>
-                        <p class="text-sm text-gray-600 text-center">生成高质量亚马逊后台搜索词，提高产品搜索排名</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.amazon_search_term">亚马逊搜索词</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.amazon_search_term">生成高质量亚马逊后台搜索词，提高产品搜索排名</p>
                     </div>
                 </div>
                 
                 <!-- 亚马逊Listing优化 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-listing.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-listing.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-purple-100 rounded-md flex items-center justify-center text-purple-600">
                                 <i class="ri-file-list-3-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">亚马逊Listing优化</h3>
-                        <p class="text-sm text-gray-600 text-center">全面优化亚马逊Listing内容，提高转化率</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.amazon_listing_optimization">亚马逊Listing优化</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.amazon_listing_optimization">全面优化亚马逊Listing内容，提高转化率</p>
                     </div>
                 </div>
                 
                 <!-- 亚马逊评论分析 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-analysis.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-red-100 rounded-md flex items-center justify-center text-red-600">
                                 <i class="ri-chat-3-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">亚马逊评论分析</h3>
-                        <p class="text-sm text-gray-600 text-center">深入分析客户评论，提取有价值的产品改进建议</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.amazon_review_analysis">亚马逊评论分析</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.amazon_review_analysis">深入分析客户评论，提取有价值的产品改进建议</p>
                     </div>
                 </div>
                 
                 <!-- 消费者洞察 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-consumer-insights.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-green-100 rounded-md flex items-center justify-center text-green-600">
                                 <i class="ri-spy-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">消费者洞察</h3>
-                        <p class="text-sm text-gray-600 text-center">分析目标客户群体需求和购买行为，挖掘市场机会</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.consumer_insights">消费者洞察</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.consumer_insights">分析目标客户群体需求和购买行为，挖掘市场机会</p>
                     </div>
                 </div>
                 
                 <!-- 客户邮件回复 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-customer-email.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-customer-email.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
                                 <i class="ri-mail-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">客户邮件回复</h3>
-                        <p class="text-sm text-gray-600 text-center">快速生成专业客户邮件回复，提升客户满意度</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.customer_email_reply">客户邮件回复</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.customer_email_reply">快速生成专业客户邮件回复，提升客户满意度</p>
                     </div>
                 </div>
                 
                 <!-- FBA索赔邮件 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/fba-claim-email.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/fba-claim-email.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-amber-100 rounded-md flex items-center justify-center text-amber-600">
                                 <i class="ri-mail-star-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">FBA索赔邮件</h3>
-                        <p class="text-sm text-gray-600 text-center">高效生成FBA仓库损坏、丢失产品的索赔邮件</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.fba_claim_email">FBA索赔邮件</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.fba_claim_email">高效生成FBA仓库损坏、丢失产品的索赔邮件</p>
                     </div>
                 </div>
                 
                 <!-- 评论生成 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-generator.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-generator.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-rose-100 rounded-md flex items-center justify-center text-rose-600">
                                 <i class="ri-chat-new-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">评论生成</h3>
-                        <p class="text-sm text-gray-600 text-center">为产品创建真实、自然的用户评论模板</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="feature.review_generator">评论生成</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="desc.review_generator">为产品创建真实、自然的用户评论模板</p>
                     </div>
                 </div>
                 
                 <!-- 评论回复 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-response.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-review-response.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-teal-100 rounded-md flex items-center justify-center text-teal-600">
@@ -1990,109 +2238,102 @@
                 </div>
                 
                 <!-- 品牌起名 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-orange-100 rounded-md flex items-center justify-center text-orange-600">
                                 <i class="ri-price-tag-3-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">品牌起名</h3>
-                        <p class="text-sm text-gray-600 text-center">生成独特有吸引力的品牌名称，促进品牌识别</p>
+                        <h3 class="font-semibold text-center mb-3" data-i18n="amazon_brand_naming">品牌起名</h3>
+                        <p class="text-sm text-gray-600 text-center" data-i18n="brand_naming_desc">生成独特有吸引力的品牌名称，促进品牌识别</p>
                     </div>
                 </div>
                 
                 <!-- 创建Post -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-post-creator.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-post-creator.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-indigo-100 rounded-md flex items-center justify-center text-indigo-600">
                                 <i class="ri-article-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">创建Post</h3>
-                        <p class="text-sm text-gray-600 text-center">快速创建引人入胜的亚马逊品牌Post内容</p>
+                        <h3 class="font-semibold text-center mb-3" data-i18n="amazon_post_creator">创建Post</h3>
+                        <p class="text-sm text-gray-600 text-center" data-i18n="post_creator_desc">快速创建引人入胜的亚马逊品牌Post内容</p>
                     </div>
                 </div>
                 
                 <!-- 广告视频脚本 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-video-script.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-video-script.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-red-100 rounded-md flex items-center justify-center text-red-600">
                                 <i class="ri-video-chat-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">广告视频脚本</h3>
+                        <h3 class="font-semibold text-center mb-3" data-i18n="amazon_video_script">广告视频脚本</h3>
                         <p class="text-sm text-gray-600 text-center">生成专业产品广告视频脚本，提升转化率</p>
                     </div>
                 </div>
                 
                 <!-- 产品对比 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/product-comparison.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/product-comparison.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-sky-100 rounded-md flex items-center justify-center text-sky-600">
                                 <i class="ri-scales-3-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">产品对比</h3>
-                        <p class="text-sm text-gray-600 text-center">全面对比分析竞品优劣势，找出差异化竞争点</p>
+                        <h3 class="font-semibold text-center mb-3" data-i18n="product_comparison">产品对比</h3>
+                        <p class="text-sm text-gray-600 text-center" data-i18n="product_comparison_desc">全面对比分析竞品优劣势，找出差异化竞争点</p>
                     </div>
                 </div>
                 
                 <!-- 品牌信息收集和总结 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-brand-info.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-brand-info.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-lime-100 rounded-md flex items-center justify-center text-lime-600">
                                 <i class="ri-file-info-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">品牌信息收集</h3>
-                        <p class="text-sm text-gray-600 text-center">快速收集并总结竞争对手品牌信息，洞察市场动态</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="brand_info_collection">品牌信息收集</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="brand_info_collection_desc">快速收集并总结竞争对手品牌信息，洞察市场动态</p>
                     </div>
                 </div>
                 
                 <!-- 选品的改款分析和建议 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-violet-100 rounded-md flex items-center justify-center text-violet-600">
                                 <i class="ri-tools-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">改款分析建议</h3>
-                        <p class="text-sm text-gray-600 text-center">深入分析产品改进方向，提供具体可执行的改款建议</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="product_improvement_analysis">改款分析建议</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="product_improvement_analysis_desc">深入分析产品改进方向，提供具体可执行的改款建议</p>
                     </div>
                 </div>
                 
                 <!-- 亚马逊关键词推荐 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')">
+                    <div class="amazon-assistant-card feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')">
                     <div class="p-6">
                         <div class="flex items-center justify-center h-14 mb-4">
                             <div class="w-12 h-12 bg-cyan-100 rounded-md flex items-center justify-center text-cyan-600">
                                 <i class="ri-key-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">关键词推荐</h3>
-                        <p class="text-sm text-gray-600 text-center">智能推荐高流量、相关性强的亚马逊搜索关键词</p>
+                        <h3 class="font-semibold text-center mb-3" data-translate="keyword_recommendation">关键词推荐</h3>
+                        <p class="text-sm text-gray-600 text-center" data-translate="keyword_recommendation_desc">智能推荐高流量、相关性强的亚马逊搜索关键词</p>
                     </div>
                 </div>
-                
-                <!-- 亚马逊客服case内容 -->
-                <div class="feature-card shadow bg-white overflow-hidden rounded-lg cursor-pointer" onclick="checkAuthAndRedirect('/amazon-case-creator.html')">
-                    <div class="p-6">
-                        <div class="flex items-center justify-center h-14 mb-4">
-                            <div class="w-12 h-12 bg-fuchsia-100 rounded-md flex items-center justify-center text-fuchsia-600">
-                                <i class="ri-customer-service-2-line text-2xl"></i>
                             </div>
+                <button class="scroll-button right">
+                    <i class="ri-arrow-right-s-line text-xl text-gray-600"></i>
+                </button>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">客服Case内容</h3>
-                        <p class="text-sm text-gray-600 text-center">生成专业亚马逊客服案例回复，解决常见售后问题</p>
-                    </div>
-                </div>
-            </div>
+            
+                <!-- 滚动指示器已移除 -->
         </div>
     </div>
 
@@ -2100,7 +2341,7 @@
     <div id="mobile-features-dropdown" class="mobile-features-dropdown">
         <div class="mobile-features-content">
             <div class="mobile-features-header">
-                <h3 class="font-semibold text-gray-900">功能中心</h3>
+                <h3 class="font-semibold text-gray-900" data-i18n="nav_features_center">功能中心</h3>
                 <button id="mobile-features-close" class="text-gray-400 hover:text-gray-600">
                     <i class="ri-close-line text-xl"></i>
                 </button>
@@ -2108,10 +2349,10 @@
             <div class="mobile-features-grid">
                 <!-- 图像处理类 -->
                 <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">图像处理</h4>
+                    <h4 class="mobile-category-title" data-i18n="category_image_processing">图像处理</h4>
                     <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="mobile-feature-item">场景图生成</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="mobile-feature-item">图像智能消除</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="mobile-feature-item" data-i18n="feature.scene_generator">场景图生成</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="mobile-feature-item">智能消除</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="mobile-feature-item">智能扩图</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="mobile-feature-item">模糊图片变清晰</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="mobile-feature-item">图像高清放大</a>
@@ -2119,15 +2360,17 @@
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="mobile-feature-item">局部重绘</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="mobile-feature-item">全局风格化</a>
                         <a onclick="checkAuthAndRedirect('/diantu.html')" class="mobile-feature-item">垫图</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="mobile-feature-item">图片改尺寸</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="mobile-feature-item">图像裁剪</a>
                     </div>
                 </div>
                 
                 <!-- 模特与服饰类 -->
                 <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">模特与服饰</h4>
+                    <h4 class="mobile-category-title" data-i18n="category_model_clothing">模特与服饰</h4>
                     <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="mobile-feature-item">模特换肤</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="mobile-feature-item">模拟试衣</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/model-skin-changer.html')" class="mobile-feature-item" data-i18n="feature.model_skin_changer">模特换肤</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-simulation.html')" class="mobile-feature-item">虚拟试衣</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/clothing-segmentation.html')" class="mobile-feature-item">智能服饰分割</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model')" class="mobile-feature-item">智能虚拟模特试穿</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/virtual-model-shoes.html')" class="mobile-feature-item">鞋靴虚拟试穿</a>
@@ -2136,16 +2379,16 @@
                 
                 <!-- AI创作类 -->
                 <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">AI创作</h4>
+                    <h4 class="mobile-category-title" data-i18n="category_ai_creation">AI创作</h4>
                     <div class="mobile-feature-list">
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="mobile-feature-item">文生图片</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-image.html')" class="mobile-feature-item" data-i18n="feature.text_to_image">文生图片</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/prompt-editor.html')" class="mobile-feature-item">指令编辑</a>
                     </div>
                 </div>
                 
                 <!-- 视频处理类 -->
                 <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">视频处理</h4>
+                    <h4 class="mobile-category-title" data-i18n="category_video_processing">视频处理</h4>
                     <div class="mobile-feature-list">
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/text-to-video.html')" class="mobile-feature-item">文生视频</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-to-video.html')" class="mobile-feature-item">图生视频</a>
@@ -2158,7 +2401,7 @@
                 
                 <!-- 亚马逊助手 -->
                 <div class="mobile-feature-category">
-                    <h4 class="mobile-category-title">亚马逊助手</h4>
+                    <h4 class="mobile-category-title" data-i18n="category_amazon_assistant">亚马逊助手</h4>
                     <div class="mobile-feature-list">
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-listing.html')" class="mobile-feature-item">Listing写作与优化</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-search-term.html')" class="mobile-feature-item">后台搜索词</a>
@@ -2168,10 +2411,10 @@
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/fba-claim-email.html')" class="mobile-feature-item">FBA索赔邮件</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-generator.html')" class="mobile-feature-item">评论生成</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-review-response.html')" class="mobile-feature-item">评论回复</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="mobile-feature-item">品牌起名</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="mobile-feature-item">创建Post</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="mobile-feature-item">广告视频脚本</a>
-                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="mobile-feature-item">产品对比</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-naming.html')" class="mobile-feature-item" data-i18n="amazon_brand_naming">品牌起名</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-post-creator.html')" class="mobile-feature-item" data-i18n="amazon_post_creator">创建Post</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-video-script.html')" class="mobile-feature-item" data-i18n="amazon_video_script">广告视频脚本</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-comparison.html')" class="mobile-feature-item" data-i18n="product_comparison">产品对比</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-brand-info.html')" class="mobile-feature-item">品牌信息收集和总结</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/product-improvement-analysis.html')" class="mobile-feature-item">选品的改款分析和建议</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/amazon-keyword-recommender.html')" class="mobile-feature-item">亚马逊关键词推荐</a>
@@ -2194,6 +2437,87 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 广告条相关功能
+            const banner = document.getElementById('promo-banner');
+            const bannerImg = document.getElementById('promo-banner-img');
+            const bannerLink = document.getElementById('banner-link');
+            const closeBtn = document.getElementById('close-banner');
+            const body = document.body;
+            
+            // 广告点击事件 - 跳转到新的网页
+            if (bannerLink) {
+                bannerLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // 跳转到促销活动页面
+                    window.open('/promo-page.html', '_blank');
+                });
+            }
+            
+            // 检查广告图片是否存在并显示广告条
+            function checkAndShowBanner() {
+                // 创建一个新的Image对象来检查图片是否存在
+                const testImg = new Image();
+                testImg.onload = function() {
+                    // 图片存在，显示广告条
+                    console.log("广告图片加载成功，显示广告条");
+                    banner.style.display = 'block';
+                    
+                    // 添加渐入效果
+                    setTimeout(function() {
+                        banner.style.opacity = '1';
+                        // 添加banner类，使页面布局适应广告条
+                        body.classList.add('has-banner');
+                    }, 10);
+                };
+                
+                testImg.onerror = function() {
+                    // 图片不存在，保持广告条隐藏
+                    console.log("广告图片不存在，隐藏广告条");
+                    hideBanner(true);
+                };
+                
+                // 设置图片源以触发加载
+                testImg.src = bannerImg.src;
+            }
+            
+            // 隐藏广告条函数
+            function hideBanner(immediate = false) {
+                if (immediate) {
+                    // 立即隐藏，不使用动画
+                    banner.style.display = 'none';
+                    body.classList.remove('has-banner');
+                } else {
+                    // 添加过渡效果
+                    banner.style.opacity = '0';
+                    banner.style.height = '0';
+                    
+                    // 移除body上的banner类，让页面恢复正常布局
+                    body.classList.remove('has-banner');
+                    
+                    // 延迟后完全隐藏广告条
+                    setTimeout(function() {
+                        banner.style.display = 'none';
+                        
+                        // 记录关闭时间
+                        localStorage.setItem('promoBannerClosed', new Date().getTime());
+                    }, 300);
+                }
+            }
+            
+            // 将隐藏函数设为全局函数以供img的onerror事件使用
+            window.hideBanner = hideBanner;
+            
+            // 广告条关闭按钮事件
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // 阻止事件冒泡，避免触发广告图片的点击事件
+                    hideBanner();
+                });
+            }
+            
+            // 检查并显示广告条
+            checkAndShowBanner();
+            
             // === 侧边栏折叠/展开逻辑 ===
             const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
             const bodyEl = document.body;
@@ -2735,6 +3059,50 @@
             }
             
             // 渲染侧边栏功能列表
+            // 功能名称到翻译键的映射
+            const featureTranslationMap = {
+                '场景图生成': 'feature.scene_generator',
+                '智能消除': 'feature.image_removal',
+                '智能扩图': 'feature.image_expansion',
+                '模糊图片变清晰': 'feature.image_sharpen',
+                '图像高清放大': 'feature.image_upscaler',
+                '图像上色': 'feature.image_colorization',
+                '局部重绘': 'feature.local_redraw',
+                '全局风格化': 'feature.global_style',
+                '垫图': 'feature.diantu',
+                '图片改尺寸': 'feature.image_resizer',
+                '图像裁剪': 'feature.image_crop',
+                '模特换肤': 'feature.model_skin_changer',
+                '虚拟试衣': 'feature.clothing_simulation',
+                '智能服饰分割': 'feature.clothing_segmentation',
+                '智能虚拟模特试穿': 'feature.virtual_model_try_on',
+                '鞋靴虚拟试穿': 'feature.virtual_shoes_try_on',
+                '文生图片': 'feature.text_to_image',
+                '指令编辑': 'feature.prompt_editor',
+                '文生视频': 'feature.text_to_video',
+                '图生视频': 'feature.image_to_video',
+                '多图转视频': 'feature.multi_image_to_video',
+                '视频风格重绘': 'feature.video_style_transfer',
+                '视频数字人': 'feature.digital_human_video',
+                '视频去除字幕': 'feature.video_subtitle_remover',
+                'Listing写作与优化': 'feature.amazon_listing_optimization',
+                '后台搜索词': 'feature.amazon_search_terms',
+                '客户评论分析': 'feature.amazon_review_analysis',
+                '消费者洞察': 'feature.consumer_insights',
+                '客户邮件回复': 'feature.customer_email_reply',
+                'FBA索赔邮件': 'feature.fba_claim_email',
+                '评论生成': 'feature.review_generator',
+                '评论回复': 'feature.review_response',
+                '品牌信息收集和总结': 'feature.brand_information_collection',
+                '选品的改款分析和建议': 'feature.product_improvement_analysis',
+                '亚马逊关键词推荐': 'feature.amazon_keyword_recommendation',
+                '亚马逊客服case内容': 'feature.amazon_customer_service_case',
+                '品牌起名': 'feature.amazon_brand_naming',
+                '创建Post': 'feature.amazon_post_creator',
+                '广告视频脚本': 'feature.amazon_video_script',
+                '产品对比': 'feature.product_comparison'
+            };
+
             function renderSidebarFeatures() {
                 // 清空容器，但保留空状态提示
                 const emptyState = document.querySelector('#sidebar-features-container .empty-state');
@@ -2747,12 +3115,16 @@
                     featureItem.className = 'sidebar-feature-item';
                     featureItem.setAttribute('data-index', index);
                     
+                    // 获取翻译键
+                    const translationKey = featureTranslationMap[feature.name] || feature.name;
+                    const translatedName = getTranslation(translationKey);
+                    
                     featureItem.innerHTML = `
                         <div class="feature-info">
                             <div class="feature-icon ${feature.bg} ${feature.color}">
                                 <i class="${feature.icon}"></i>
                             </div>
-                            <span>${feature.name}</span>
+                            <span>${translatedName}</span>
                             ${feature.beta ? '<span class="beta-tag">Beta</span>' : ''}
                         </div>
                         <div class="remove-btn" data-feature="${feature.name}">
@@ -2933,6 +3305,26 @@
             
         });
         
+        // 为URL添加语言参数的辅助函数
+        function addLanguageParam(url) {
+            // 获取当前语言设置
+            const currentLang = currentLanguage || localStorage.getItem('language') || 'zh';
+            
+            // 检查URL是否已经包含参数
+            const separator = url.includes('?') ? '&' : '?';
+            
+            // 转换语言格式：zh -> zh-cn, en -> en-us
+            const langParam = currentLang === 'en' ? 'en-us' : 'zh-cn';
+            
+            // 为支持语言切换的页面添加语言参数
+            if (url.includes('/translate') || url.includes('/cutout') || url.includes('/scene-generator') || url.includes('/image-removal') || url.includes('/image-expansion') || url.includes('/model-skin-changer') || url.includes('/clothing-simulation') || url.includes('/virtual-model') || url.includes('/virtual-model-shoes')) {
+                return `${url}${separator}lang=${langParam}`;
+            }
+            
+            // 其他页面暂时不添加参数
+            return url;
+        }
+
         // 检查用户权限并在新窗口中打开
         async function checkAuthAndRedirect(url) {
             console.log('checkAuthAndRedirect 被调用，目标URL:', url);
@@ -2981,8 +3373,9 @@
                         console.log('使用统一的checkAuth函数进行验证');
                         const isAuthenticated = await window.checkAuth(false);
                         if (isAuthenticated) {
-                            console.log('认证成功，在新窗口中打开:', url);
-                            window.open(url, '_blank');
+                            const urlWithLang = addLanguageParam(url);
+                            console.log('认证成功，在新窗口中打开:', urlWithLang);
+                            window.open(urlWithLang, '_blank');
                         } else {
                             console.log('认证失败，跳转到登录页');
                             window.location.href = '/login.html';
@@ -2990,8 +3383,9 @@
                     } catch (error) {
                         console.error('统一认证检查出错:', error);
                         // 出错时优先信任本地存储，直接打开页面
-                        console.log('统一认证出错，但本地有token，直接打开页面');
-                        window.open(url, '_blank');
+                        const urlWithLang = addLanguageParam(url);
+                        console.log('统一认证出错，但本地有token，直接打开页面:', urlWithLang);
+                        window.open(urlWithLang, '_blank');
                     }
                     return;
                 }
@@ -3032,8 +3426,9 @@
                         }
                         
                         if (response.ok) {
-                            console.log('服务器验证成功，在新窗口中打开:', url);
-                            window.open(url, '_blank');
+                            const urlWithLang = addLanguageParam(url);
+                            console.log('服务器验证成功，在新窗口中打开:', urlWithLang);
+                            window.open(urlWithLang, '_blank');
                             return;
                         } else {
                             console.warn(`验证API返回状态 ${response.status}，准备重试`);
@@ -3052,8 +3447,9 @@
                 }
                 
                 // 所有重试都失败了，但本地有有效token，优先信任本地状态
-                console.log('服务器验证失败，但本地token存在，直接打开页面让目标页面处理');
-                window.open(url, '_blank');
+                const urlWithLang = addLanguageParam(url);
+                console.log('服务器验证失败，但本地token存在，直接打开页面让目标页面处理:', urlWithLang);
+                window.open(urlWithLang, '_blank');
                 
             } finally {
                 // 确保清除检查标志
@@ -3062,10 +3458,477 @@
                 }, 500);
             }
         }
+        
+        // 添加亚马逊助手横向滚动效果
+document.addEventListener('DOMContentLoaded', function() {
+    const scrollContent = document.querySelector('.amazon-assistant-content');
+    const leftButton = document.querySelector('.scroll-button.left');
+    const rightButton = document.querySelector('.scroll-button.right');
+    
+    if (scrollContent) {
+        // 左右滚动按钮功能
+        if (leftButton && rightButton) {
+            // 左滚动按钮
+            leftButton.addEventListener('click', function() {
+                // 滚动一个卡片的宽度
+                const cardWidth = document.querySelector('.amazon-assistant-card').offsetWidth + 16; // 卡片宽度 + margin
+                scrollContent.scrollBy({
+                    left: -cardWidth,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // 右滚动按钮
+            rightButton.addEventListener('click', function() {
+                // 滚动一个卡片的宽度
+                const cardWidth = document.querySelector('.amazon-assistant-card').offsetWidth + 16; // 卡片宽度 + margin
+                scrollContent.scrollBy({
+                    left: cardWidth,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+});
     </script>
 
     <!-- 客服组件容器 -->
     <div id="customer-service-component"></div>
+    
+    <!-- 语言切换系统 -->
+    <script>
+        // 翻译数据
+        const translations = {
+            zh: {
+                // 导航栏
+                "nav.ai_marketing": "AI营销图",
+                "nav.image_translation": "图片翻译",
+                "nav.product_background": "智能抠图",
+                "nav.features_center": "功能中心",
+                "nav.credits_center": "积分中心",
+                "nav.recharge_center": "积分充值中心",
+                "nav.download_center": "下载中心",
+                "nav.tutorial": "使用教程",
+                "nav.user_menu": "123",
+                
+                // 侧边栏
+                "sidebar.add_quick_access": "添加快捷访问",
+                "sidebar.empty_message": "点击上方按钮添加您常用的功能",
+                
+                // 标题
+                "title.hot_features": "热门功能",
+                
+                // 分类
+                "category_image_processing": "图像处理",
+                "category_model_clothing": "模特与服饰", 
+                "category_amazon_assistant": "亚马逊助手",
+                "category_video_processing": "视频处理",
+                "category_ai_creation": "AI创作",
+                
+                // 功能名称
+                "feature_ai_marketing": "AI营销图",
+                "feature_ai_marketing_desc": "上传商品图，AI生成打造您的专属商品图",
+                "feature.model_fitting": "虚拟试衣",
+                "feature.image_removal": "智能消除",
+                "feature.ai_model_change": "AI换模特",
+                "feature.image_to_video": "图片转视频",
+                "feature.video_style_repaint": "视频风格重绘",
+                "feature.image_translation": "图片翻译",
+                "feature.text_to_image": "文字生图",
+                "feature.video_subtitle_remover": "视频字幕消除",
+                "feature.image_expansion": "智能扩图",
+                "feature.product_background_change": "智能抠图",
+                "feature.local_redraw": "局部重绘",
+                "feature.text_to_video": "文字生视频",
+                "feature.image_colorization": "图片上色",
+                "feature.image_sharpen": "图片变清晰",
+                "feature.clothing_segmentation": "服装分割",
+                "feature.global_style": "全局风格",
+                "feature.prompt_editor": "提示词编辑器",
+                "feature.amazon_listing_optimization": "亚马逊Listing优化",
+                "feature.amazon_review_analysis": "亚马逊评论分析",
+                "feature.amazon_search_term": "亚马逊搜索词",
+                "feature.consumer_insights": "消费者洞察",
+                "feature.customer_email_reply": "客服邮件回复",
+                "feature.fba_claim_email": "FBA索赔邮件",
+                "feature.review_generator": "评论生成器",
+                "feature.scene_generator": "场景图生成",
+                "feature.image_upscaler": "图像高清放大",
+                "feature.diantu": "垫图",
+                "feature.image_resizer": "图片改尺寸",
+                "feature.image_crop": "图像裁剪",
+                "feature.model_skin_changer": "模特换肤",
+                "feature.clothing_simulation": "虚拟试衣",
+                "feature.virtual_model_try_on": "智能虚拟模特试穿",
+                "feature.virtual_shoes_try_on": "鞋靴虚拟试穿",
+                "feature.text_to_image": "文生图片",
+                "feature.prompt_editor": "指令编辑",
+                "feature.text_to_video": "文生视频",
+                "feature.multi_image_to_video": "多图转视频",
+                "feature.video_style_repaint": "视频风格重绘",
+                "feature.digital_human_video": "视频数字人",
+                "feature.amazon_listing": "Listing写作与优化",
+                "feature.amazon_search_term": "后台搜索词",
+                "feature.consumer_insights": "消费者洞察",
+                "feature.customer_email_reply": "客服邮件回复",
+                "feature.fba_claim_email": "FBA索赔邮件",
+                "feature.review_generator": "评论生成器",
+                "feature.brand_info_collection": "品牌信息收集",
+                "feature.product_improvement_analysis": "产品改进分析",
+                "feature.keyword_recommendation": "关键词推荐",
+                "feature.amazon_review_analysis": "客户评论分析",
+                "feature.amazon_review_generator": "评论生成",
+                "feature.amazon_review_response": "评论回复",
+                "feature.amazon_brand_naming": "品牌起名",
+                "feature.amazon_post_creator": "创建Post",
+                "feature.amazon_video_script": "广告视频脚本",
+                "feature.product_comparison": "产品对比",
+                "feature.amazon_brand_info": "品牌信息收集和总结",
+                "feature.product_improvement_analysis": "选品的改款分析和建议",
+                "feature.amazon_keyword_recommender": "亚马逊关键词推荐",
+                "feature.amazon_case_creator": "亚马逊客服case内容",
+                "feature.review_response": "评论回复",
+                "feature.brand_information_collection": "品牌信息收集和总结",
+                "feature.amazon_customer_service_case": "亚马逊客服case内容",
+                "feature.amazon_keyword_recommendation": "亚马逊关键词推荐",
+                "feature.video_style_transfer": "视频风格重绘",
+                "feature.amazon_search_terms": "后台搜索词",
+                
+                // 不带前缀的翻译键（用于功能选择区域）
+                "amazon_brand_naming": "品牌起名",
+                "amazon_post_creator": "创建Post",
+                "amazon_video_script": "广告视频脚本",
+                "product_comparison": "产品对比",
+                
+                // 用户菜单翻译
+                "username_display": "用户名",
+                "my_account": "我的账户",
+                "credits_management": "积分管理",
+                "credits_usage": "积分使用情况",
+                "logout": "退出登录",
+                
+                // 功能描述
+                "desc.model_fitting": "智能试衣，平铺图秒变上身效果，让你的服装瞬间焕发魅力！",
+                "desc.image_removal": "智能识别并去除图片中不需要的元素，完美背景修复",
+                "desc.ai_model_change": "上传人体/真人穿着图片，一键点击更换模特，减少商业摄影成本",
+                "desc.image_to_video": "将静态图片转换为动态视频，一键点击，照片变视频",
+                "desc.video_style_repaint": "将普通视频转换为艺术风格，创造独特视觉效果",
+                "desc.image_translation": "上传图片，AI智能识别并翻译内容，支持多语言翻译",
+                "desc.text_to_image": "输入文字描述，AI自动生成精美图片内容",
+                "desc.video_subtitle_remover": "智能去除视频中的字幕",
+                "desc.image_expansion": "智能扩展图片边界，保持自然过渡",
+                "desc.product_background_change": "智能消除，一键替换商品背景，突显产品特色",
+                "desc.local_redraw": "精确编辑图片局部区域",
+                "desc.text_to_video": "输入文字描述，AI生成动态视频内容",
+                "desc.image_colorization": "为黑白图片智能上色",
+                "desc.image_sharpen": "提升图片清晰度和细节",
+                "desc.clothing_segmentation": "精确分割服装区域",
+                "desc.global_style": "应用全局艺术风格",
+                "desc.prompt_editor": "优化和编辑AI提示词",
+                "desc.amazon_listing_optimization": "优化亚马逊产品页面",
+                "desc.amazon_review_analysis": "分析产品评论数据",
+                "desc.amazon_search_term": "优化搜索关键词",
+                "desc.consumer_insights": "深度分析消费者行为",
+                "desc.customer_email_reply": "智能生成客服回复",
+                "desc.fba_claim_email": "生成FBA索赔邮件",
+                "desc.review_generator": "智能生成产品评论",
+                
+                // 亚马逊助手功能
+                "brand_info_collection": "品牌信息收集",
+                "brand_info_collection_desc": "收集和整理品牌相关信息",
+                "product_improvement_analysis": "产品改进分析",
+                "product_improvement_analysis_desc": "分析产品改进建议和方向",
+                "keyword_recommendation": "关键词推荐",
+                "keyword_recommendation_desc": "推荐最佳搜索关键词",
+                
+                // 语言选择器
+                "text.select_language": "选择语言"
+            },
+            en: {
+                // 导航栏
+                "nav.ai_marketing": "AI Marketing",
+                "nav.image_translation": "Image Translation",
+                "nav.product_background": "Smart Cutout",
+                "nav.features_center": "Features Center",
+                "nav.credits_center": "Credits Center",
+                "nav.recharge_center": "Recharge Center",
+                "nav.download_center": "Download Center",
+                "nav.tutorial": "Tutorial",
+                "nav.user_menu": "123",
+                
+                // 侧边栏
+                "sidebar.add_quick_access": "Add Quick Access",
+                "sidebar.empty_message": "Click the button above to add your frequently used features",
+                
+                // 标题
+                "title.hot_features": "Hot Features",
+                
+                // 分类
+                "category_image_processing": "Image Processing",
+                "category_model_clothing": "Model & Clothing", 
+                "category_amazon_assistant": "Amazon Assistant",
+                "category_video_processing": "Video Processing",
+                "category_ai_creation": "AI Creation",
+                
+                // 功能名称
+                "feature_ai_marketing": "AI Marketing",
+                "feature_ai_marketing_desc": "Upload product images, AI generates your exclusive product images",
+                "feature.model_fitting": "Virtual Try-On",
+                "feature.image_removal": "Smart Image Removal",
+                "feature.ai_model_change": "AI Model Change",
+                "feature.image_to_video": "Image to Video",
+                "feature.video_style_repaint": "Video Style Transfer",
+                "feature.image_translation": "Image Translation",
+                "feature.text_to_image": "Text to Image",
+                "feature.video_subtitle_remover": "Video Subtitle Remover",
+                "feature.image_expansion": "Image Expansion",
+                "feature.product_background_change": "Smart Cutout",
+                "feature.local_redraw": "Local Redraw",
+                "feature.text_to_video": "Text to Video",
+                "feature.image_colorization": "Image Colorization",
+                "feature.image_sharpen": "Image Sharpen",
+                "feature.clothing_segmentation": "Clothing Segmentation",
+                "feature.global_style": "Global Style",
+                "feature.prompt_editor": "Prompt Editor",
+                "feature.amazon_listing_optimization": "Amazon Listing Optimization",
+                "feature.amazon_review_analysis": "Amazon Review Analysis",
+                "feature.amazon_search_term": "Amazon Search Term",
+                "feature.consumer_insights": "Consumer Insights",
+                "feature.customer_email_reply": "Customer Email Reply",
+                "feature.fba_claim_email": "FBA Claim Email",
+                "feature.review_generator": "Review Generator",
+                "feature.scene_generator": "Scene Generator",
+                "feature.image_upscaler": "Image Upscaler",
+                "feature.diantu": "Base Image",
+                "feature.image_resizer": "Image Resizer",
+                "feature.image_crop": "Image Crop",
+                "feature.model_skin_changer": "Model Skin Changer",
+                "feature.clothing_simulation": "Virtual Try-On",
+                "feature.virtual_model_try_on": "Virtual Model Try-On",
+                "feature.virtual_shoes_try_on": "Virtual Shoes Try-On",
+                "feature.text_to_image": "Text to Image",
+                "feature.prompt_editor": "Prompt Editor",
+                "feature.text_to_video": "Text to Video",
+                "feature.multi_image_to_video": "Multi-Image to Video",
+                "feature.video_style_repaint": "Video Style Transfer",
+                "feature.digital_human_video": "Digital Human Video",
+                "feature.amazon_listing": "Amazon Listing Optimization",
+                "feature.amazon_search_term": "Amazon Search Terms",
+                "feature.consumer_insights": "Consumer Insights",
+                "feature.customer_email_reply": "Customer Email Reply",
+                "feature.fba_claim_email": "FBA Claim Email",
+                "feature.review_generator": "Review Generator",
+                "feature.brand_info_collection": "Brand Information Collection",
+                "feature.product_improvement_analysis": "Product Improvement Analysis",
+                "feature.keyword_recommendation": "Keyword Recommendation",
+                "feature.amazon_review_analysis": "Amazon Review Analysis",
+                "feature.amazon_review_generator": "Review Generator",
+                "feature.amazon_review_response": "Review Response",
+                "feature.amazon_brand_naming": "Brand Naming",
+                "feature.amazon_post_creator": "Post Creator",
+                "feature.amazon_video_script": "Video Script",
+                "feature.product_comparison": "Product Comparison",
+                "feature.amazon_brand_info": "Brand Information Collection",
+                "feature.product_improvement_analysis": "Product Improvement Analysis",
+                "feature.amazon_keyword_recommender": "Amazon Keyword Recommender",
+                "feature.amazon_case_creator": "Amazon Case Creator",
+                "feature.review_response": "Review Response",
+                "feature.brand_information_collection": "Brand Information Collection",
+                "feature.amazon_customer_service_case": "Amazon Customer Service Case",
+                "feature.amazon_keyword_recommendation": "Amazon Keyword Recommendation",
+                "feature.video_style_transfer": "Video Style Transfer",
+                "feature.amazon_search_terms": "Amazon Search Terms",
+                
+                // 不带前缀的翻译键（用于功能选择区域）
+                "amazon_brand_naming": "Brand Naming",
+                "amazon_post_creator": "Post Creator",
+                "amazon_video_script": "Video Script",
+                "product_comparison": "Product Comparison",
+                
+                // 用户菜单翻译
+                "username_display": "Username",
+                "my_account": "My Account",
+                "credits_management": "Credits Management",
+                "credits_usage": "Credits Usage",
+                "logout": "Logout",
+                
+                // 功能描述
+                "desc.model_fitting": "Smart fitting, transform flat images into stunning effects instantly, make your clothing shine!",
+                "desc.image_removal": "Intelligently remove unwanted elements from images, perfect background repair",
+                "desc.ai_model_change": "Upload mannequin/real person wearing images, reduce commercial photography costs",
+                "desc.image_to_video": "Transform static images into dynamic videos with one click, bring photos to life",
+                "desc.video_style_repaint": "Transform ordinary videos into artistic styles, create unique visual effects",
+                "desc.image_translation": "Upload images, AI intelligently recognizes and translates content, supports multilingual translation",
+                "desc.text_to_image": "Enter text description, AI automatically generates beautiful image content",
+                "desc.video_subtitle_remover": "Intelligently remove subtitles from videos",
+                "desc.image_expansion": "Intelligently expand image boundaries while maintaining natural transitions",
+                "desc.product_background_change": "Smart removal, one-click background replacement, highlight product features",
+                "desc.local_redraw": "Precisely edit local areas of images",
+                "desc.text_to_video": "Enter text description, AI generates dynamic video content",
+                "desc.image_colorization": "Intelligently colorize black and white images",
+                "desc.image_sharpen": "Enhance image clarity and details",
+                "desc.clothing_segmentation": "Precisely segment clothing areas",
+                "desc.global_style": "Apply global artistic styles",
+                "desc.prompt_editor": "Optimize and edit AI prompts",
+                "desc.amazon_listing_optimization": "Optimize Amazon product pages",
+                "desc.amazon_review_analysis": "Analyze product review data",
+                "desc.amazon_search_term": "Optimize search keywords",
+                "desc.consumer_insights": "Deep analysis of consumer behavior",
+                "desc.customer_email_reply": "Intelligently generate customer service replies",
+                "desc.fba_claim_email": "Generate FBA claim emails",
+                "desc.review_generator": "Intelligently generate product reviews",
+                
+                // 亚马逊助手功能
+                "brand_info_collection": "Brand Information Collection",
+                "brand_info_collection_desc": "Collect and organize brand-related information",
+                "product_improvement_analysis": "Product Improvement Analysis",
+                "product_improvement_analysis_desc": "Analyze product improvement suggestions and directions",
+                "keyword_recommendation": "Keyword Recommendation",
+                "keyword_recommendation_desc": "Recommend optimal search keywords",
+                
+                // 语言选择器
+                "text.select_language": "Select Language"
+            }
+        };
+
+        // 当前语言
+        let currentLanguage = localStorage.getItem('language') || 'zh';
+
+        // 更新页面文本
+        function updatePageText(language) {
+            console.log('🔄 开始更新页面文本，目标语言:', language);
+            
+            // 处理 data-translate 属性的元素
+            const translateElements = document.querySelectorAll('[data-translate]');
+            console.log('📝 找到 data-translate 元素数量:', translateElements.length);
+            
+            // 处理 data-i18n 属性的元素
+            const i18nElements = document.querySelectorAll('[data-i18n]');
+            console.log('📝 找到 data-i18n 元素数量:', i18nElements.length);
+            
+            let translatedCount = 0;
+            let missingKeys = [];
+            
+            // 处理 data-translate 元素
+            translateElements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[language] && translations[language][key]) {
+                    element.textContent = translations[language][key];
+                    translatedCount++;
+                    console.log(`✅ 翻译成功 (data-translate): ${key} -> "${translations[language][key]}"`);
+                } else {
+                    missingKeys.push(key);
+                    console.log(`❌ 翻译缺失 (data-translate): ${key} (当前文本: "${element.textContent}")`);
+                }
+            });
+            
+            // 处理 data-i18n 元素
+            i18nElements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[language] && translations[language][key]) {
+                    element.textContent = translations[language][key];
+                    translatedCount++;
+                    console.log(`✅ 翻译成功 (data-i18n): ${key} -> "${translations[language][key]}"`);
+                } else {
+                    missingKeys.push(key);
+                    console.log(`❌ 翻译缺失 (data-i18n): ${key} (当前文本: "${element.textContent}")`);
+                }
+            });
+            
+            const totalElements = translateElements.length + i18nElements.length;
+            console.log(`🎯 翻译完成统计: 成功 ${translatedCount}/${totalElements}, 缺失键: ${missingKeys.length}`);
+            if (missingKeys.length > 0) {
+                console.log('🔍 缺失的翻译键:', missingKeys);
+            }
+
+            // 更新页面标题
+            if (language === 'en') {
+                document.title = 'YingHuo AI - Intelligent Image Processing & Creation';
+                document.documentElement.lang = 'en';
+            } else {
+                document.title = '萤火AI - 智能图像处理与创作';
+                document.documentElement.lang = 'zh-CN';
+            }
+            
+            console.log('📄 页面标题和语言属性已更新');
+            
+            // 重新渲染快速访问面板以应用新的语言
+            if (typeof renderSidebarFeatures === 'function') {
+                renderSidebarFeatures();
+                console.log('🔄 快速访问面板已重新渲染');
+            }
+        }
+
+
+        // 语言切换处理
+        function handleLanguageChange() {
+            console.log('🚀 开始初始化语言切换系统...');
+            
+            const languageOptions = document.querySelectorAll('.language-option');
+            if (languageOptions.length === 0) {
+                console.error('❌ 语言选择器选项未找到！');
+                return;
+            }
+
+            console.log('✅ 语言选择器选项找到:', languageOptions.length, '个');
+            console.log('💾 从localStorage读取的语言:', localStorage.getItem('language'));
+            console.log('🎯 当前语言变量值:', currentLanguage);
+
+            // 设置初始语言状态 - 为当前语言选项添加active样式
+            languageOptions.forEach(option => {
+                const lang = option.getAttribute('data-lang');
+                if (lang === currentLanguage) {
+                    option.classList.add('bg-purple-50', 'text-purple-600');
+                    console.log('🔧 当前语言选项已标记:', lang);
+                }
+            });
+            
+            // 立即更新页面文本
+            console.log('📝 开始初始化页面翻译...');
+            updatePageText(currentLanguage);
+
+            // 为每个语言选项添加点击事件
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const selectedLanguage = this.getAttribute('data-lang');
+                    console.log('🔄 用户选择了新语言:', selectedLanguage);
+                    
+                    // 移除所有选项的active样式
+                    languageOptions.forEach(opt => {
+                        opt.classList.remove('bg-purple-50', 'text-purple-600');
+                    });
+                    
+                    // 为当前选项添加active样式
+                    this.classList.add('bg-purple-50', 'text-purple-600');
+                    
+                    currentLanguage = selectedLanguage;
+                    
+                    // 保存到本地存储
+                    localStorage.setItem('language', selectedLanguage);
+                    console.log('💾 语言已保存到localStorage:', selectedLanguage);
+                    
+                    // 更新页面文本
+                    updatePageText(selectedLanguage);
+                    
+                    // 触发语言变化事件，通知其他页面更新
+                    const languageChangeEvent = new CustomEvent('languageChanged', {
+                        detail: { language: selectedLanguage }
+                    });
+                    document.dispatchEvent(languageChangeEvent);
+                    console.log('🔔 已触发语言变化事件:', selectedLanguage);
+                    
+                    console.log('✅ 语言切换完成:', selectedLanguage === 'zh' ? '中文' : 'English');
+                });
+            });
+            
+            console.log('🎉 语言切换系统初始化完成');
+        }
+
+        // 页面加载完成后初始化语言系统
+        document.addEventListener('DOMContentLoaded', function() {
+            handleLanguageChange();
+        });
+    </script>
     
     <script>
         // 客服组件加载函数 - 直接在index.html中定义

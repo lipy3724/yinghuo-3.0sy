@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com; media-src 'self' blob: data: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com https://yinghuo-ai.oss-cn-shanghai.aliyuncs.com; connect-src 'self' https://*.aliyuncs.com;">
+    <title>视频换人 - 萤火AI</title>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- 统一认证检查 -->
+    <script src="/js/auth-check.js"></script>
+    <!-- 导航栏样式 -->
+    <link rel="stylesheet" href="/components/styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-y: auto;
+        }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 0.375rem;
+            background-color: #f9fafb;
+            border: 1px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        .custom-file-upload:hover {
+            background-color: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        .video-preview-container {
+            aspect-ratio: 9/16;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+        .avatar-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .avatar-option.selected {
+            border-color: #6366f1;
+            transform: scale(1.05);
+        }
+        .avatar-option:hover:not(.selected) {
+            transform: scale(1.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .vertical-divider {
+            width: 2px;
+            background-color: #e5e7eb;
+            margin: 0 1rem;
+        }
+        .preview-container {
+            aspect-ratio: 16/9;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            position: relative;
+            border: 1px dashed #d1d5db;
+        }
+        
+        /* 确保视频在容器中完整显示 */
+        .preview-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 保持视频比例，确保完整显示 */
+        }
+        /* 移除固定高度的滚动面板，改为整体页面滚动 */
+        /* 全局滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        .upload-progress {
+            width: 0%;
+            height: 4px;
+            background-color: #6366f1;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            transition: width 0.3s ease;
+        }
+        
+        /* 服务模式选择样式 */
+        .service-mode-option input[type="radio"]:checked + div {
+            color: #4f46e5;
+        }
+        
+        .service-mode-option input[type="radio"]:checked ~ * {
+            border-color: #4f46e5 !important;
+            background-color: #f0f9ff;
+        }
+        
+        .service-mode-option label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-item {
+            transition: all 0.3s ease;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-processing {
+            color: #f59e0b;
+        }
+        
+        .status-completed {
+            color: #10b981;
+        }
+        
+        .status-failed {
+            color: #ef4444;
+        }
+        
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-spinner-large {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <div id="navbar-container"></div>
+
+    <!-- 主要内容 -->
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-6">视频换人</h1>
+        
+        <!-- 功能说明 -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                <div class="space-y-3">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mr-3">
+                            <i class="ri-magic-line text-blue-600 text-lg mt-0.5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-1">核心功能</h3>
+                            <p class="text-gray-700 text-sm leading-relaxed">在不改变原始视频的动作、表情及环境的条件下，将视频中的角色替换为指定图片中的人物。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mr-3">
+                            <i class="ri-movie-2-line text-blue-600 text-lg mt-0.5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-1">适用场景</h3>
+                            <p class="text-gray-700 text-sm leading-relaxed">适用于二次创作、影视后期制作等需要进行角色替换的场景。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <main>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 左侧区域：上传区域和配置 -->
+                <div class="md:col-span-1">
+                    <div class="space-y-6">
+                        <!-- 上传原始视频 -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-semibold mb-4">上传原始视频</h2>
+                            <div class="preview-container flex items-center justify-center mb-4 relative">
+                                <div id="video-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
+                                    <i class="ri-video-upload-line text-5xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-500 text-sm">点击或者拖拽视频文件到这里上传</p>
+                                    <p class="text-gray-400 text-xs mt-2">支持MP4、AVI、MOV格式，≤200MB，2秒＜时长＜30秒</p>
+                                    <input type="file" id="video-input" accept="video/*" class="hidden" />
+                                    <button class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
+                                        上传视频
+                                    </button>
+                                </div>
+                                <div id="video-preview" class="hidden w-full h-full">
+                                    <video id="video-element" class="w-full h-full object-contain" controls></video>
+                                </div>
+                                <div class="upload-progress" id="video-progress"></div>
+                            </div>
+                            <p class="text-xs text-gray-500">视频要求: 尺寸200x200-2048x2048像素，宽高比1:3-3:1，时长2-30秒。</p>
+                        </div>
+
+                        <!-- 上传人物图片 -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-semibold mb-4">上传人物图片</h2>
+                            <div class="preview-container flex items-center justify-center mb-4 relative">
+                                <div id="image-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
+                                    <i class="ri-user-line text-5xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-500 text-sm">点击或者拖拽人物图片到这里上传</p>
+                                    <p class="text-gray-400 text-xs mt-2">支持JPG、PNG、BMP、WEBP格式，≤5MB</p>
+                                    <input type="file" id="image-input" accept="image/*" class="hidden" />
+                                    <button class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
+                                        上传图片
+                                    </button>
+                                </div>
+                                <div id="image-preview" class="hidden w-full h-full">
+                                    <img id="image-element" class="w-full h-full object-contain" alt="目标人物" />
+                                </div>
+                                <div class="upload-progress" id="image-progress"></div>
+                            </div>
+                            <p class="text-xs text-gray-500">图片要求: 尺寸200x200-4096x4096像素，宽高比1:3-3:1。</p>
+                        </div>
+
+                        <!-- 服务模式选择 -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-semibold mb-4">选择服务模式</h2>
+                            <div class="space-y-3">
+                                <!-- 标准模式 -->
+                                <div class="service-mode-option">
+                                    <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-colors">
+                                        <input type="radio" name="serviceMode" value="wan-std" class="mr-3" checked>
+                                        <div class="flex-1">
+                                            <div class="flex items-center mb-1">
+                                                <span class="font-medium text-gray-800">标准模式</span>
+                                                <span class="ml-2 px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">推荐</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-1">生成速度快，满足基础需求，性价比高</p>
+                                            <div class="flex items-center text-sm">
+                                                <i class="ri-coin-line text-yellow-500 mr-1"></i>
+                                                <span class="text-gray-700">消耗积分：8积分/次</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <!-- 专业模式 -->
+                                <div class="service-mode-option">
+                                    <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-300 transition-colors">
+                                        <input type="radio" name="serviceMode" value="wan-pro" class="mr-3">
+                                        <div class="flex-1">
+                                            <div class="flex items-center mb-1">
+                                                <span class="font-medium text-gray-800">专业模式</span>
+                                                <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full">高质量</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mb-1">动画流畅度高，效果更自然逼真</p>
+                                            <div class="flex items-center text-sm">
+                                                <i class="ri-coin-line text-yellow-500 mr-1"></i>
+                                                <span class="text-gray-700">消耗积分：10积分/次</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="process-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                            <i class="ri-magic-line mr-2"></i>开始视频换人
+                        </button>
+                        
+                        <!-- 法律合规提示 -->
+                        <div class="bg-indigo-50 p-4 rounded-lg mt-4">
+                            <div class="flex items-start">
+                                <i class="ri-information-line text-indigo-600 text-xl mr-2 mt-0.5"></i>
+                                <div>
+                                    <p class="text-xs text-red-500 font-medium">
+                                        请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧区域：效果展示和输出视频 -->
+                <div class="md:col-span-2 border-l border-gray-200 pl-6">
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-semibold mb-4">效果展示</h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- 源视频 -->
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-800 mb-3">源视频:</h3>
+                                    <div class="preview-container flex items-center justify-center">
+                                        <div id="source-preview" class="text-center text-gray-500 w-full h-full flex items-center justify-center">
+                                            上传视频后将在这里显示
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 输出视频 -->
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-800 mb-3">输出视频:</h3>
+                                    <div class="preview-container flex items-center justify-center">
+                                        <div id="result-preview" class="hidden w-full h-full">
+                                            <video id="result-video" class="w-full h-full object-cover" controls></video>
+                                        </div>
+                                        <div id="result-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500">
+                                            <i class="ri-video-line text-5xl text-gray-300 mb-2"></i>
+                                            <p>视频生成后将在这里显示</p>
+                                            <p class="text-xs mt-1">处理需要2-5分钟</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="processing-info" class="mt-4 hidden">
+                                <div class="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                                    <!-- 转圈圈动画 -->
+                                    <div class="loading-spinner-large mb-4"></div>
+                                    
+                                    <!-- 状态文本 -->
+                                    <div class="text-center">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-2">正在生成视频</h3>
+                                        <p id="status-text" class="text-sm text-indigo-600 mb-3">正在处理中，请耐心等待...</p>
+                                        <div id="mode-specific-message" class="text-xs text-gray-500">
+                                            <!-- 根据模式显示不同的等待时间 -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 进度条 -->
+                                    <div class="w-full max-w-xs mt-4">
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                        </div>
+                                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                            <span>开始处理</span>
+                                            <span>完成</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="result-actions" class="mt-4 hidden">
+                                <div class="flex space-x-4">
+                                    <button id="download-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none">
+                                        <i class="ri-download-line mr-1"></i> 下载视频
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 任务列表 -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h2 class="text-xl font-semibold">任务列表</h2>
+                                    <p class="text-sm text-gray-500 mt-1">仅显示24小时内的最新1条记录</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button id="clear-all-tasks-btn" class="text-red-600 hover:text-red-800 text-sm px-3 py-1 border border-red-300 rounded-md">
+                                        <i class="ri-delete-bin-line mr-1"></i>清空所有
+                                    </button>
+                                    <button id="refresh-history" class="text-indigo-600 hover:text-indigo-800">
+                                        <i class="ri-refresh-line text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="task-list" class="space-y-4">
+                                <div class="text-center py-8 text-gray-500">
+                                    <p>暂无视频换人记录</p>
+                                    <p class="text-sm mt-2 text-gray-400">仅显示24小时内的最新1条记录</p>
+                                    <p class="text-xs mt-1 text-gray-300">请检查浏览器控制台获取更多调试信息</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h2 class="text-xl font-semibold mb-4">注意事项</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="font-medium text-indigo-700">视频要求：</p>
+                                    <ul class="space-y-1 mt-1">
+                                        <li>• 文件限制：支持MP4、AVI、MOV格式，文件≤200MB，2秒＜时长＜30秒。</li>
+                                        <li>• 尺寸限制：宽高各自在[200,2048]像素内，宽高比在1:3至3:1范围内。</li>
+                                        <li>• 视频内容：视频应包含清晰的人脸，避免大角度侧脸或人脸过小。</li>
+                                    </ul>
+                                </div>
+                                
+                                <div>
+                                    <p class="font-medium text-indigo-700">图片要求：</p>
+                                    <ul class="space-y-1 mt-1">
+                                        <li>• 文件限制：支持JPG、PNG、BMP、WEBP格式，文件≤5MB。</li>
+                                        <li>• 尺寸限制：宽高各自在[200,4096]像素内，宽高比在1:3至3:1范围内。</li>
+                                        <li>• 图片内容：需包含一张清晰的人物正脸，人脸占比适中。</li>
+                                    </ul>
+                                </div>
+                                
+                                <div>
+                                    <p class="font-medium text-indigo-700">服务模式：</p>
+                                    <ul class="space-y-1 mt-1">
+                                        <li>• 标准模式：生成速度快，适合基础需求，消耗8积分/次。</li>
+                                        <li>• 专业模式：效果更自然逼真，动画流畅度更高，消耗10积分/次。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 结果模态框 -->
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800">处理结果</h3>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="modal-content">
+                        <!-- 动态内容 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let uploadedVideo = null;
+        let uploadedImage = null;
+        let uploadedVideoDuration = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let processingTaskId = null;
+        let statusCheckInterval = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 先进行身份验证检查
+            const isAuthenticated = await checkUserAuth();
+            if (!isAuthenticated) {
+                return; // 如果未认证，会自动跳转到登录页
+            }
+            
+            // 认证通过后初始化页面功能
+            initializeUploadAreas();
+            loadTaskHistory();
+        });
+
+        // 检查用户认证 - 与其他页面保持一致
+        async function checkUserAuth() {
+            try {
+                // 优先使用统一的认证检查函数
+                if (typeof window.checkAuth === 'function') {
+                    const isAuthenticated = await window.checkAuth(false); // 不自动重定向
+                    if (!isAuthenticated) {
+                        console.log('视频换人：用户未登录，跳转到登录页');
+                        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                        return false;
+                    }
+                    console.log('视频换人：认证检查通过');
+                    return true;
+                }
+                
+                // 后备的简单检查
+                const authToken = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                
+                if (!authToken || !userInfo) {
+                    console.log('视频换人：用户未登录，跳转到登录页');
+                    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                    return false;
+                }
+                
+                // 验证用户信息格式
+                try {
+                    const user = JSON.parse(userInfo);
+                    if (!user.id || !user.username) {
+                        console.log('视频换人：用户信息格式无效，跳转到登录页');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                        return false;
+                    }
+                } catch (e) {
+                    console.log('视频换人：用户信息解析失败，跳转到登录页');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                    return false;
+                }
+                
+                return true;
+                
+            } catch (error) {
+                console.error('视频换人：认证检查出错:', error);
+                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                return false;
+            }
+        }
+
+        // 初始化上传区域
+        function initializeUploadAreas() {
+            // 视频上传
+            const videoPlaceholder = document.getElementById('video-placeholder');
+            const videoInput = document.getElementById('video-input');
+            
+            videoPlaceholder.addEventListener('click', () => videoInput.click());
+            videoPlaceholder.addEventListener('dragover', handleDragOver);
+            videoPlaceholder.addEventListener('drop', (e) => handleDrop(e, 'video'));
+            videoInput.addEventListener('change', (e) => handleVideoUpload(e.target.files[0]));
+            
+            // 图片上传
+            const imagePlaceholder = document.getElementById('image-placeholder');
+            const imageInput = document.getElementById('image-input');
+            
+            imagePlaceholder.addEventListener('click', () => imageInput.click());
+            imagePlaceholder.addEventListener('dragover', handleDragOver);
+            imagePlaceholder.addEventListener('drop', (e) => handleDrop(e, 'image'));
+            imageInput.addEventListener('change', (e) => handleImageUpload(e.target.files[0]));
+            
+            // 处理按钮
+            const processBtn = document.getElementById('process-btn');
+            if (processBtn) {
+                processBtn.addEventListener('click', startProcessing);
+            }
+            
+            // 刷新按钮
+            const refreshBtn = document.getElementById('refresh-history');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', loadTaskHistory);
+            }
+            
+            // 清空所有任务按钮
+            const clearAllTasksBtn = document.getElementById('clear-all-tasks-btn');
+            if (clearAllTasksBtn) {
+                clearAllTasksBtn.addEventListener('click', clearAllTasks);
+            }
+            
+            // 模态框关闭
+            const closeModalBtn = document.getElementById('close-modal');
+            const resultModal = document.getElementById('result-modal');
+            if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+            if (resultModal) {
+                resultModal.addEventListener('click', (e) => {
+                    if (e.target.id === 'result-modal') closeModal();
+                });
+            }
+        }
+
+        // 拖拽处理
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDrop(e, type) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                if (type === 'video') {
+                    handleVideoUpload(files[0]);
+                } else if (type === 'image') {
+                    handleImageUpload(files[0]);
+                }
+            }
+        }
+
+        // 视频上传处理 - 根据阿里云官方标准
+        function handleVideoUpload(file) {
+            if (!file) return;
+            
+            // 验证文件格式 - 支持MP4, AVI, MOV
+            const allowedVideoTypes = [
+                'video/mp4',           // MP4格式
+                'video/avi',           // AVI格式
+                'video/quicktime',     // MOV格式的正确MIME类型
+                'video/x-msvideo',     // AVI格式的另一种MIME类型
+                'video/x-ms-wmv'       // WMV格式的正确MIME类型
+            ];
+            if (!allowedVideoTypes.includes(file.type)) {
+                showNotification('视频格式不支持，请使用MP4、AVI或MOV格式', 'error');
+                return;
+            }
+            
+            // 验证文件大小 - 阿里云标准：不超过200MB
+            if (file.size > 200 * 1024 * 1024) {
+                showNotification('视频文件大小不能超过200MB', 'error');
+                return;
+            }
+            
+            // 显示上传进度条
+            showProgress(document.getElementById('video-progress'));
+            
+            // 验证视频属性（尺寸、时长、比例）
+            validateVideoProperties(file).then(() => {
+                uploadedVideo = file;
+                
+                // 显示预览
+                const videoPreview = document.getElementById('video-preview');
+                const videoPlaceholder = document.getElementById('video-placeholder');
+                const videoElement = document.getElementById('video-element');
+                
+                const url = URL.createObjectURL(file);
+                videoElement.src = url;
+                
+                videoPreview.classList.remove('hidden');
+                videoPlaceholder.classList.add('hidden');
+                
+                // 更新右侧预览
+                const sourcePreview = document.getElementById('source-preview');
+                if (sourcePreview) {
+                    sourcePreview.innerHTML = `<video src="${url}" class="w-full h-full object-contain" controls></video>`;
+                }
+                
+                hideProgress(document.getElementById('video-progress'));
+                checkProcessButton();
+            }).catch(error => {
+                hideProgress(document.getElementById('video-progress'));
+                showNotification(error.message, 'error');
+            });
+        }
+
+        // 图片上传处理 - 根据阿里云官方标准
+        function handleImageUpload(file) {
+            if (!file) return;
+            
+            // 验证文件格式 - 支持JPG, JPEG, PNG, BMP, WEBP
+            const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp', 'image/webp'];
+            if (!allowedImageTypes.includes(file.type)) {
+                showNotification('图片格式不支持，请使用JPG、PNG、BMP或WEBP格式', 'error');
+                return;
+            }
+            
+            // 验证文件大小 - 阿里云标准：不超过5MB
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('图片文件大小不能超过5MB', 'error');
+                return;
+            }
+            
+            // 显示上传进度条
+            showProgress(document.getElementById('image-progress'));
+            
+            // 验证图片属性（尺寸、比例）
+            validateImageProperties(file).then(() => {
+                uploadedImage = file;
+                
+                // 显示预览
+                const imagePreview = document.getElementById('image-preview');
+                const imagePlaceholder = document.getElementById('image-placeholder');
+                const imageElement = document.getElementById('image-element');
+                
+                const url = URL.createObjectURL(file);
+                imageElement.src = url;
+                
+                imagePreview.classList.remove('hidden');
+                imagePlaceholder.classList.add('hidden');
+                
+                hideProgress(document.getElementById('image-progress'));
+                checkProcessButton();
+            }).catch(error => {
+                hideProgress(document.getElementById('image-progress'));
+                showNotification(error.message, 'error');
+            });
+        }
+
+        // 移除视频
+        function removeVideo() {
+            uploadedVideo = null;
+            uploadedVideoDuration = null;
+            const videoPreview = document.getElementById('video-preview');
+            const videoPlaceholder = document.getElementById('video-placeholder');
+            const videoInput = document.getElementById('video-input');
+            
+            if (videoPreview) videoPreview.classList.add('hidden');
+            if (videoPlaceholder) videoPlaceholder.classList.remove('hidden');
+            if (videoInput) videoInput.value = '';
+            
+            // 清空右侧预览
+            const sourcePreview = document.getElementById('source-preview');
+            if (sourcePreview) {
+                sourcePreview.innerHTML = '<div class="text-center text-gray-500 w-full h-full flex items-center justify-center">上传视频后将在这里显示</div>';
+            }
+            
+            checkProcessButton();
+        }
+
+        // 移除图片
+        function removeImage() {
+            uploadedImage = null;
+            const imagePreview = document.getElementById('image-preview');
+            const imagePlaceholder = document.getElementById('image-placeholder');
+            const imageInput = document.getElementById('image-input');
+            
+            if (imagePreview) imagePreview.classList.add('hidden');
+            if (imagePlaceholder) imagePlaceholder.classList.remove('hidden');
+            if (imageInput) imageInput.value = '';
+            checkProcessButton();
+        }
+        
+        // 显示进度条
+        function showProgress(progressElement) {
+            if (progressElement) {
+                progressElement.style.width = '100%';
+            }
+        }
+        
+        // 隐藏进度条
+        function hideProgress(progressElement) {
+            if (progressElement) {
+                progressElement.style.width = '0%';
+            }
+        }
+
+        // 检查处理按钮状态
+        function checkProcessButton() {
+            const processBtn = document.getElementById('process-btn');
+            if (processBtn) {
+                processBtn.disabled = !(uploadedVideo && uploadedImage);
+            }
+        }
+        
+        // 重置处理UI状态
+        function resetProcessingUI() {
+            const processBtn = document.getElementById('process-btn');
+            const processingInfo = document.getElementById('processing-info');
+            
+            if (processBtn) processBtn.disabled = false;
+            if (processingInfo) processingInfo.classList.add('hidden');
+        }
+
+        // 开始处理
+        async function startProcessing() {
+            if (!uploadedVideo || !uploadedImage) {
+                showNotification('请先上传视频和图片', 'error');
+                return;
+            }
+            
+            const processBtn = document.getElementById('process-btn');
+            const processingInfo = document.getElementById('processing-info');
+            const resultPlaceholder = document.getElementById('result-placeholder');
+            
+            if (processBtn) processBtn.disabled = true;
+            if (processingInfo) processingInfo.classList.remove('hidden');
+            if (resultPlaceholder) resultPlaceholder.classList.add('hidden');
+            
+            try {
+                // 获取选中的服务模式
+                const serviceMode = document.querySelector('input[name="serviceMode"]:checked').value;
+                
+                // 根据模式显示不同的等待时间提示
+                const modeSpecificMessage = document.getElementById('mode-specific-message');
+                if (modeSpecificMessage) {
+                    if (serviceMode === 'wan-std') {
+                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>标准模式：生成视频需要1-3分钟，请耐心等待';
+                    } else if (serviceMode === 'wan-pro') {
+                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>专业模式：生成视频需要3-5分钟，请耐心等待';
+                    }
+                }
+                
+                const formData = new FormData();
+                formData.append('video', uploadedVideo);
+                formData.append('image', uploadedImage);
+                formData.append('serviceMode', serviceMode);
+                
+                // 添加视频时长信息
+                if (uploadedVideoDuration) {
+                    formData.append('videoDuration', uploadedVideoDuration);
+                    console.log('添加视频时长到请求:', uploadedVideoDuration, '秒');
+                }
+                
+                const response = await fetch('/api/video-face-swap/create', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                // 处理后端响应格式
+                if (result.success && result.data && result.data.taskId) {
+                    processingTaskId = result.data.taskId;
+                    showNotification('任务创建成功，正在处理中...', 'success');
+                    
+                    // 初始化进度条
+                    const progressBar = document.getElementById('progress-bar');
+                    if (progressBar) {
+                        progressBar.style.width = '10%';
+                    }
+                    
+                    // 开始轮询任务状态
+                    startStatusPolling(processingTaskId);
+                    
+                    // 刷新历史记录
+                    await loadTaskHistory();
+                } else {
+                    // 处理错误响应
+                    throw new Error(result.message || '任务创建失败');
+                }
+                
+            } catch (error) {
+                console.error('处理失败:', error);
+                console.error('错误详情:', {
+                    message: error.message,
+                    stack: error.stack,
+                    response: error.response
+                });
+                
+                showNotification(error.message || '处理失败，请重试', 'error');
+                
+                if (processBtn) processBtn.disabled = false;
+                if (processingInfo) processingInfo.classList.add('hidden');
+            }
+        }
+
+        // 开始状态轮询
+        function startStatusPolling(taskId) {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            
+            let pollAttempts = 0;
+            const maxPollAttempts = 240; // 最多轮询20分钟（每5秒一次）
+            
+            statusCheckInterval = setInterval(async () => {
+                pollAttempts++;
+                
+                try {
+                    const response = await fetch(`/api/video-face-swap/status/${taskId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    // 处理后端响应格式
+                    if (result.success && result.data) {
+                        const task = result.data;
+                        const taskStatus = result.data.status;
+                        
+                        // 更新进度信息
+                        updateProcessingProgress(task, pollAttempts);
+                        
+                        if (taskStatus === 'completed') {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                            processingTaskId = null;
+                            
+                            // 重置UI
+                            resetProcessingUI();
+                            
+                            // 显示结果
+                            showTaskResult(task);
+                            
+                            // 任务完成后，重新从服务端加载任务列表以获取最新状态
+                            console.log('任务完成，重新加载任务列表...');
+                            await loadTaskHistory();
+                            
+                            showNotification('视频换人完成！', 'success');
+                            
+                        } else if (taskStatus === 'failed') {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                            processingTaskId = null;
+                            
+                            // 重置UI
+                            resetProcessingUI();
+                            
+                            showNotification('处理失败：' + (task.error || '未知错误'), 'error');
+                            
+                            // 刷新历史记录
+                            await loadTaskHistory();
+                            
+                        } else if (taskStatus === 'expired') {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                            processingTaskId = null;
+                            
+                            // 重置UI
+                            resetProcessingUI();
+                            
+                            showNotification('任务已过期（超过24小时），请重新创建任务', 'warning');
+                            
+                            // 刷新历史记录
+                            await loadTaskHistory();
+                        }
+                        
+                        // 检查轮询超时
+                        if (pollAttempts >= maxPollAttempts && taskStatus === 'processing') {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                            
+                            showNotification('轮询超时，请手动刷新查看结果', 'warning');
+                            
+                            // 不重置processingTaskId，允许用户手动查询
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('状态查询失败:', error);
+                    console.error('查询失败详情:', {
+                        taskId,
+                        attempts: pollAttempts,
+                        error: error.message,
+                        response: error.response
+                    });
+                    
+                    // 如果连续失败多次，停止轮询
+                    if (pollAttempts >= 10) {
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                        showNotification('网络连接异常，请手动刷新查看结果', 'error');
+                        
+                        // 重置UI
+                        resetProcessingUI();
+                    }
+                }
+            }, 5000); // 每5秒查询一次
+        }
+        
+        // 更新处理进度信息
+        function updateProcessingProgress(task, attempts) {
+            const statusText = document.getElementById('status-text');
+            const progressBar = document.getElementById('progress-bar');
+            
+            if (statusText) {
+                let text = '正在处理中，请耐心等待...';
+                
+                statusText.textContent = text;
+            }
+            
+            // 根据查询次数更新进度条
+            if (progressBar) {
+                const progress = Math.min(10 + (attempts * 3), 90);
+                progressBar.style.width = progress + '%';
+            }
+        }
+        
+        // 使用服务器端轮询（可选）
+        async function startServerSidePolling(taskId) {
+            try {
+                showNotification('开始自动轮询任务状态...', 'info');
+                
+                const response = await fetch(`/api/video-face-swap/poll/${taskId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        maxAttempts: 120, // 最多尝试120次
+                        interval: 5000    // 每5秒一次
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // 处理阿里云官方响应格式
+                if (result.output && result.output.task_id) {
+                    const task = result.firefly_data;
+                    const taskStatus = result.output.task_status;
+                    
+                    // 重置UI
+                    resetProcessingUI();
+                    processingTaskId = null;
+                    
+                    if (taskStatus === 'SUCCEEDED') {
+                        showTaskResult(task);
+                        showNotification('视频换人完成！', 'success');
+                    } else if (taskStatus === 'FAILED') {
+                        showNotification('处理失败：' + (task.error || '未知错误'), 'error');
+                    } else {
+                        showNotification(task.message || '轮询完成，请手动查询结果', 'info');
+                    }
+                    
+                    // 刷新历史记录
+                    await loadTaskHistory();
+                } else {
+                    throw new Error(result.message || '轮询失败');
+                }
+                
+            } catch (error) {
+                console.error('服务器端轮询失败:', error);
+                showNotification('自动轮询失败，切换到手动轮询模式', 'warning');
+                
+                // 回退到客户端轮询
+                startStatusPolling(taskId);
+            }
+        }
+
+        // 加载任务历史
+        async function loadTaskHistory(page = 1) {
+            try {
+                console.log('🔄 开始从服务端加载视频换人任务列表...');
+                
+                // 检查认证状态
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.warn('⚠️ 未找到认证token，无法加载任务列表');
+                    renderTaskList([]);
+                    return;
+                }
+                
+                console.log('📡 发送请求到 /api/video-face-swap/tasks');
+                
+                const response = await fetch(`/api/video-face-swap/tasks?page=${page}&limit=10`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log(`📥 服务器响应状态: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('📦 服务器返回数据:', result);
+                    
+                    if (result.success && result.data && Array.isArray(result.data.tasks)) {
+                        const tasks = result.data.tasks;
+                        console.log(`✅ 从服务端成功加载了 ${tasks.length} 个任务`);
+                        
+                        // 输出每个任务的详细信息
+                        tasks.forEach((task, index) => {
+                            console.log(`📋 任务 ${index + 1}:`, {
+                                taskId: task.taskId,
+                                status: task.status,
+                                serviceMode: task.serviceMode,
+                                videoUrl: task.ossResultVideoUrl || task.resultVideoUrl,
+                                createdAt: task.createdAt
+                            });
+                        });
+                        
+                        renderTaskList(tasks);
+                        updatePagination(result.data);
+                        
+                        // 同步更新到localStorage作为备份
+                        localStorage.setItem('videoFaceSwapTasks', JSON.stringify(tasks));
+                    } else {
+                        console.warn('⚠️ 服务端返回的任务数据格式异常:', result);
+                        renderTaskList([]);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.warn(`❌ 从服务端加载任务失败: ${response.status} - ${errorText}`);
+                    console.warn('🔄 尝试从本地存储加载备份数据');
+                    
+                    // 服务端失败时，从本地存储加载作为备份
+                    const savedTasks = localStorage.getItem('videoFaceSwapTasks');
+                    if (savedTasks) {
+                        const tasks = JSON.parse(savedTasks);
+                        console.log(`💾 从本地存储加载了 ${tasks.length} 个任务作为备份`);
+                        renderTaskList(tasks);
+                    } else {
+                        console.log('💾 本地存储中也没有任务数据');
+                        renderTaskList([]);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ 加载任务列表出现异常:', error);
+                
+                // 出错时从本地存储加载作为备份
+                try {
+                    const savedTasks = localStorage.getItem('videoFaceSwapTasks');
+                    if (savedTasks) {
+                        const tasks = JSON.parse(savedTasks);
+                        console.log(`💾 异常情况下从本地存储加载了 ${tasks.length} 个任务作为备份`);
+                        renderTaskList(tasks);
+                    } else {
+                        console.log('💾 异常情况下本地存储中也没有任务数据');
+                        renderTaskList([]);
+                    }
+                } catch (localError) {
+                    console.error('❌ 从本地存储加载任务也失败:', localError);
+                    renderTaskList([]);
+                }
+                
+                showNotification('加载历史记录失败', 'error');
+            }
+        }
+
+        // 渲染任务列表
+        function renderTaskList(tasks) {
+            console.log('🎨 开始渲染视频换人任务列表...');
+            
+            const taskList = document.getElementById('task-list');
+            
+            // 检查DOM元素是否存在
+            if (!taskList) {
+                console.error('❌ 找不到任务容器元素！');
+                return;
+            }
+
+            console.log(`📊 当前任务数组长度: ${tasks.length}`);
+            console.log('📊 任务列表详情:', tasks);
+            
+            if (!tasks || tasks.length === 0) {
+                console.log('📝 显示空状态界面');
+                taskList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p>暂无视频换人记录</p>
+                        <p class="text-sm mt-2 text-gray-400">仅显示24小时内的最新1条记录</p>
+                        <p class="text-xs mt-1 text-gray-300">请检查浏览器控制台获取更多调试信息</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 过滤24小时内的任务并按创建时间排序
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            
+            const recentTasks = tasks.filter(task => {
+                if (!task.createdAt) return false;
+                const taskDate = new Date(task.createdAt);
+                return taskDate >= twentyFourHoursAgo;
+            }).sort((a, b) => {
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            
+            console.log('📅 排序后的任务:', recentTasks.map(t => ({
+                taskId: t.taskId,
+                createdAt: t.createdAt,
+                status: t.status
+            })));
+            
+            // 只显示最新的1条记录
+            const displayTasks = recentTasks.slice(0, 1);
+            console.log(`🎯 准备显示 ${displayTasks.length} 个任务`);
+            
+            if (displayTasks.length === 0) {
+                console.log('📝 显示24小时内无任务的空状态界面');
+                taskList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p>暂无24小时内的视频换人任务</p>
+                        <p class="text-sm mt-2 text-gray-400">最近24小时内没有生成过视频任务</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 清空容器
+            taskList.innerHTML = '';
+            
+            // 渲染每个任务
+            displayTasks.forEach((task, index) => {
+                console.log(`🔨 渲染第 ${index + 1} 个任务:`, task);
+                
+                // 创建任务元素
+                const taskElement = createVideoFaceSwapTaskElement(task);
+                taskList.appendChild(taskElement);
+            });
+            
+            console.log('✅ 视频换人任务列表渲染完成');
+        }
+
+        // 创建单个视频换人任务元素
+        function createVideoFaceSwapTaskElement(task) {
+            const taskElement = document.createElement('div');
+            taskElement.className = 'video-task bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4';
+            taskElement.id = `task-${task.taskId}`;
+            
+            // 任务状态标识
+            let statusClass, statusText;
+            
+            switch (task.status) {
+                case 'PENDING':
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = '排队中';
+                    break;
+                case 'RUNNING':
+                    statusClass = 'bg-blue-100 text-blue-800';
+                    statusText = '生成中';
+                    break;
+                case 'SUCCEEDED':
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = '已完成';
+                    break;
+                case 'FAILED':
+                    statusClass = 'bg-red-100 text-red-800';
+                    statusText = '失败';
+                    break;
+                default:
+                    statusClass = 'bg-gray-100 text-gray-800';
+                    statusText = '未知状态';
+            }
+            
+            // 视频预览（仅当任务成功且有视频URL时）
+            let videoPreview = '';
+            if (task.status === 'SUCCEEDED' && (task.ossResultVideoUrl || task.resultVideoUrl)) {
+                const videoUrl = task.ossResultVideoUrl || task.resultVideoUrl;
+                const isOSSVideo = !!task.ossResultVideoUrl;
+                
+                videoPreview = `
+                    <div class="mt-3">
+                        <video controls class="w-full rounded" style="max-height: 180px">
+                            <source src="${videoUrl}" type="video/mp4">
+                            您的浏览器不支持视频标签
+                        </video>
+                        <div class="flex justify-between items-center mt-2">
+                            <div class="text-xs text-gray-500">
+                                ${isOSSVideo ? 
+                                    '<i class="ri-cloud-line mr-1"></i>已保存到云存储' : 
+                                    '<i class="ri-time-line mr-1"></i>临时链接(24小时有效)'
+                                }
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-indigo-600 hover:text-indigo-800 text-sm download-btn" data-url="${videoUrl}" data-task-id="${task.taskId}">
+                                    <i class="ri-download-2-line mr-1"></i>下载
+                                </button>
+                                <button class="text-indigo-600 hover:text-indigo-800 text-sm preview-btn" data-url="${videoUrl}">
+                                    <i class="ri-fullscreen-line mr-1"></i>预览
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 格式化时间戳
+            const createdDate = new Date(task.createdAt);
+            const formattedDate = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}-${String(createdDate.getDate()).padStart(2, '0')} ${String(createdDate.getHours()).padStart(2, '0')}:${String(createdDate.getMinutes()).padStart(2, '0')}`;
+            
+            // 获取服务模式显示名称
+            const getServiceModeDisplayName = (serviceMode) => {
+                const modeNames = {
+                    'wan-std': '标准模式',
+                    'wan-pro': '专业模式'
+                };
+                return modeNames[serviceMode] || '标准模式';
+            };
+            
+            taskElement.innerHTML = `
+                <div class="flex justify-between">
+                    <div class="flex-1 pr-4">
+                        <p class="font-medium">任务 #${task.taskId.substring(0, 8)}</p>
+                        <div class="flex mt-2 text-sm text-gray-500">
+                            <span class="mr-4">${getServiceModeDisplayName(task.serviceMode)}</span>
+                            <span class="mr-4">消耗积分: ${task.creditCost || 8}</span>
+                            <span>${formattedDate}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="px-2 py-1 text-xs rounded-full ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+                ${videoPreview}
+            `;
+            
+            // 添加预览按钮事件
+            const previewBtn = taskElement.querySelector('.preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', () => {
+                    const videoUrl = previewBtn.dataset.url;
+                    previewTask(task.taskId, videoUrl);
+                });
+            }
+            
+            // 添加下载按钮事件
+            const downloadBtn = taskElement.querySelector('.download-btn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', () => {
+                    const videoUrl = downloadBtn.dataset.url;
+                    downloadResult(videoUrl);
+                });
+            }
+            
+            return taskElement;
+        }
+
+        // 更新分页
+        function updatePagination(data) {
+            const pagination = document.getElementById('pagination');
+            const pageInfo = document.getElementById('page-info');
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            
+            // 检查DOM元素是否存在，如果不存在则跳过分页更新
+            if (!pagination || !pageInfo || !prevBtn || !nextBtn) {
+                console.log('分页元素不存在，跳过分页更新');
+                return;
+            }
+            
+            if (data.totalPages <= 1) {
+                pagination.classList.add('hidden');
+                return;
+            }
+            
+            pagination.classList.remove('hidden');
+            pageInfo.textContent = `${data.page} / ${data.totalPages}`;
+            
+            prevBtn.disabled = data.page <= 1;
+            nextBtn.disabled = data.page >= data.totalPages;
+            
+            prevBtn.onclick = () => loadTaskHistory(data.page - 1);
+            nextBtn.onclick = () => loadTaskHistory(data.page + 1);
+            
+            currentPage = data.page;
+            totalPages = data.totalPages;
+        }
+
+        // 显示任务结果
+        function showTaskResult(task) {
+            // 首先在右侧预览区域显示视频
+            const resultPreview = document.getElementById('result-preview');
+            const resultPlaceholder = document.getElementById('result-placeholder');
+            const resultVideo = document.getElementById('result-video');
+            const resultActions = document.getElementById('result-actions');
+            
+            if (task.ossResultVideoUrl || task.resultVideoUrl) {
+                const videoUrl = task.ossResultVideoUrl || task.resultVideoUrl;
+                
+                // 显示在右侧预览区域
+                if (resultPreview && resultVideo) {
+                    resultVideo.src = videoUrl;
+                    resultVideo.setAttribute('data-original-url', videoUrl);
+                    resultPreview.classList.remove('hidden');
+                    if (resultPlaceholder) resultPlaceholder.classList.add('hidden');
+                    
+                    // 显示下载按钮
+                    if (resultActions) {
+                        resultActions.classList.remove('hidden');
+                        
+                        // 更新下载按钮的点击事件
+                        const downloadBtn = document.getElementById('download-btn');
+                        if (downloadBtn) {
+                            downloadBtn.onclick = () => downloadResult(videoUrl);
+                        }
+                    }
+                }
+            }
+            
+            // 然后显示模态框
+            const modalContent = document.getElementById('modal-content');
+            
+            modalContent.innerHTML = `
+                <div class="text-center">
+                    <div class="mb-6">
+                        <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">视频换人完成！</h4>
+                        <p class="text-gray-600">您的视频已成功处理完成</p>
+                    </div>
+                    
+                    ${(task.ossResultVideoUrl || task.resultVideoUrl) ? `
+                        <div class="mb-6">
+                            <video controls class="w-full max-h-64 rounded-lg bg-gray-100">
+                                <source src="${task.ossResultVideoUrl || task.resultVideoUrl}" type="video/mp4">
+                                您的浏览器不支持视频播放
+                            </video>
+                            <div class="text-center mt-2">
+                                <span class="text-xs text-gray-500">
+                                    ${task.ossResultVideoUrl ? 
+                                        '<i class="ri-cloud-line mr-1"></i>已保存到云存储，永久有效' : 
+                                        '<i class="ri-time-line mr-1"></i>临时链接，24小时有效'
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="downloadResult('${task.ossResultVideoUrl || task.resultVideoUrl}')" 
+                                    class="gradient-bg text-white px-6 py-2 rounded-lg hover:opacity-90">
+                                <i class="fas fa-download mr-2"></i>下载视频
+                            </button>
+                            <button onclick="closeModal()" 
+                                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                                关闭
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="text-center">
+                            <p class="text-gray-600 mb-4">处理完成，但未获取到结果视频</p>
+                            <button onclick="closeModal()" 
+                                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
+                                关闭
+                            </button>
+                        </div>
+                    `}
+                </div>
+            `;
+            
+            const resultModal = document.getElementById('result-modal');
+            if (resultModal) resultModal.classList.remove('hidden');
+        }
+
+        // 显示任务详情
+        async function showTaskDetail(taskId) {
+            try {
+                const response = await fetch(`/api/video-face-swap/status/${taskId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                // 处理阿里云官方响应格式
+                if (result.output && result.output.task_id) {
+                    const task = result.firefly_data;
+                    const modalContent = document.getElementById('modal-content');
+                    
+                    modalContent.innerHTML = `
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">任务详情</h4>
+                            
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">任务ID:</span>
+                                    <span class="font-mono">${task.taskId}</span>
+                                </div>
+                                
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">状态:</span>
+                                    <span class="status-${task.status} font-medium">
+                                        <i class="fas ${getStatusIcon(task.status)} mr-1"></i>
+                                        ${getStatusText(task.status)}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">创建时间:</span>
+                                    <span>${formatDateTime(task.createdAt)}</span>
+                                </div>
+                                
+                                ${task.completedAt ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">完成时间:</span>
+                                        <span>${formatDateTime(task.completedAt)}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">积分消耗:</span>
+                                    <span>${task.isFree ? '免费使用' : `${task.creditCost || 50}积分`}</span>
+                                </div>
+                                
+                                ${task.error ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">错误信息:</span>
+                                        <span class="text-red-500">${task.error}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="mt-6 flex justify-end space-x-3">
+                                ${task.status === 'completed' && (task.ossResultVideoUrl || task.resultVideoUrl) ? `
+                                    <button onclick="downloadResult('${task.ossResultVideoUrl || task.resultVideoUrl}')" 
+                                            class="gradient-bg text-white px-4 py-2 rounded hover:opacity-90">
+                                        <i class="fas fa-download mr-1"></i>下载结果
+                                    </button>
+                                ` : ''}
+                                
+                                <button onclick="closeModal()" 
+                                        class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                                    关闭
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const resultModal = document.getElementById('result-modal');
+            if (resultModal) resultModal.classList.remove('hidden');
+                } else {
+                    throw new Error(result.message || '获取任务详情失败');
+                }
+                
+            } catch (error) {
+                console.error('获取任务详情失败:', error);
+                showNotification('获取任务详情失败', 'error');
+            }
+        }
+
+        // 预览任务视频
+        function previewTask(taskId, videoUrl) {
+            console.log('预览任务视频:', taskId, videoUrl);
+            
+            // 在右侧预览区域显示视频
+            const resultPreview = document.getElementById('result-preview');
+            const resultPlaceholder = document.getElementById('result-placeholder');
+            const resultVideo = document.getElementById('result-video');
+            
+            if (resultPreview && resultVideo) {
+                resultVideo.src = videoUrl;
+                resultVideo.setAttribute('data-original-url', videoUrl);
+                resultPreview.classList.remove('hidden');
+                resultPlaceholder.classList.add('hidden');
+                
+                // 显示下载按钮
+                const resultActions = document.getElementById('result-actions');
+                if (resultActions) {
+                    resultActions.classList.remove('hidden');
+                }
+                
+                // 滚动到预览区域
+                resultPreview.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // 清空所有任务
+        async function clearAllTasks() {
+            if (!confirm('确定要清空所有任务吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            try {
+                console.log('开始清空所有视频换人任务...');
+                
+                const response = await fetch('/api/video-face-swap/clear-all-tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('服务端清空成功，清理本地存储...');
+                        
+                        // 清空本地存储
+                        localStorage.removeItem('videoFaceSwapTasks');
+                        
+                        // 重新加载任务列表
+                        await loadTaskHistory();
+                        
+                        showNotification('所有视频换人任务已清空', 'success');
+                    } else {
+                        showNotification('清空任务失败: ' + (data.message || '未知错误'), 'error');
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showNotification('清空任务失败: ' + (errorData.message || '服务器错误'), 'error');
+                }
+            } catch (error) {
+                console.error('清空任务失败:', error);
+                showNotification('清空任务失败: ' + error.message, 'error');
+            }
+        }
+
+        // 删除单个任务
+        function deleteTask(taskId) {
+            if (!confirm('确定要删除这个任务吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showNotification('请先登录', 'error');
+                return;
+            }
+            
+            fetch(`/api/video-face-swap/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(async (data) => {
+                if (data.success) {
+                    console.log('任务删除成功');
+                    await loadTaskHistory(); // 重新加载任务列表
+                    showNotification('任务删除成功', 'success');
+                } else {
+                    showNotification('删除失败: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('删除任务失败:', error);
+                showNotification('删除失败: ' + error.message, 'error');
+            });
+        }
+
+        // 下载结果 - 安全下载实现
+        async function downloadResult(url) {
+            try {
+                // 检查用户是否已登录
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    showNotification('请先登录后再下载文件', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                    }, 2000);
+                    return;
+                }
+                
+                // 显示下载提示
+                showNotification('正在准备下载...', 'info');
+                
+                // 验证URL安全性
+                if (!url || (!url.startsWith('https://') && !url.startsWith('http://'))) {
+                    throw new Error('无效的下载链接');
+                }
+                
+                // 通过服务器代理下载，避免跨域安全问题
+                const proxyUrl = `/api/video-face-swap/download?url=${encodeURIComponent(url)}`;
+                
+                try {
+                    // 尝试通过服务器代理下载
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = `video-face-swap-${Date.now()}.mp4`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(downloadUrl);
+                        showNotification('下载开始！', 'success');
+                        return;
+                    } else if (response.status === 401) {
+                        // 认证失败，提示重新登录
+                        showNotification('登录已过期，请重新登录', 'error');
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('user');
+                        setTimeout(() => {
+                            window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+                        }, 2000);
+                        return;
+                    } else {
+                        // 服务器代理失败，尝试其他方式
+                        const errorData = await response.json().catch(() => ({}));
+                        console.log('代理下载失败:', errorData.message || response.statusText);
+                    }
+                } catch (proxyError) {
+                    console.log('代理下载失败，尝试直接下载:', proxyError);
+                }
+                
+                // 如果代理下载失败，尝试安全的直接下载
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = `video-face-swap-${Date.now()}.mp4`;
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(downloadUrl);
+                        showNotification('下载开始！', 'success');
+                        return;
+                    }
+                } catch (directError) {
+                    console.log('直接下载失败:', directError);
+                }
+                
+                // 最后的备用方案：在新窗口打开
+                const userConfirm = confirm('无法直接下载文件，是否在新窗口中打开视频？您可以右键保存视频。');
+                if (userConfirm) {
+                    const newWindow = window.open(url, '_blank');
+                    if (!newWindow) {
+                        throw new Error('弹窗被阻止，请允许弹窗后重试');
+                    }
+                    showNotification('已在新窗口打开视频，您可以右键保存', 'info');
+                }
+                
+            } catch (error) {
+                console.error('下载失败:', error);
+                showNotification(`下载失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const resultModal = document.getElementById('result-modal');
+            if (resultModal) resultModal.classList.add('hidden');
+        }
+
+        // 工具函数
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'processing': return 'fa-spinner fa-spin';
+                case 'completed': return 'fa-check-circle';
+                case 'failed': return 'fa-times-circle';
+                default: return 'fa-clock';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                // 阿里云官方状态
+                case 'PENDING': return '排队中';
+                case 'RUNNING': return '处理中';
+                case 'SUCCEEDED': return '已完成';
+                case 'FAILED': return '失败';
+                case 'EXPIRED': return '已过期';
+                case 'CANCELED': return '已取消';
+                case 'UNKNOWN': return '未知状态';
+                // 兼容旧状态
+                case 'processing': return '处理中';
+                case 'completed': return '已完成';
+                case 'failed': return '失败';
+                case 'expired': return '已过期';
+                default: return '未知';
+            }
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 验证视频属性 - 根据阿里云官方标准
+        function validateVideoProperties(file) {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                
+                video.onloadedmetadata = function() {
+                    const { duration, videoWidth, videoHeight } = this;
+                    
+                    // 保存视频时长
+                    uploadedVideoDuration = duration;
+                    
+                    // 时长验证：不少于2s且不大于30s
+                    if (duration < 2) {
+                        reject(new Error('视频时长不能少于2秒'));
+                        return;
+                    }
+                    if (duration > 30) {
+                        reject(new Error('视频时长不能超过30秒'));
+                        return;
+                    }
+                    
+                    // 尺寸验证：宽高各自在[200,2048]像素内
+                    if (videoWidth < 200 || videoWidth > 2048) {
+                        reject(new Error('视频宽度必须在200-2048像素之间'));
+                        return;
+                    }
+                    if (videoHeight < 200 || videoHeight > 2048) {
+                        reject(new Error('视频高度必须在200-2048像素之间'));
+                        return;
+                    }
+                    
+                    // 比例验证：宽高比在1:3至3:1范围内
+                    const ratio = videoWidth / videoHeight;
+                    if (ratio < 1/3 || ratio > 3/1) {
+                        reject(new Error('视频宽高比必须在1:3到3:1之间'));
+                        return;
+                    }
+                    
+                    console.log(`视频验证通过 - 尺寸: ${videoWidth}x${videoHeight}, 时长: ${duration.toFixed(1)}s, 比例: ${ratio.toFixed(2)}`);
+                    resolve(true);
+                };
+                
+                video.onerror = function() {
+                    reject(new Error('视频文件损坏或格式不正确'));
+                };
+                
+                video.src = URL.createObjectURL(file);
+            });
+        }
+
+        // 验证图片属性 - 根据阿里云官方标准
+        function validateImageProperties(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                
+                img.onload = function() {
+                    const { width, height } = this;
+                    
+                    // 尺寸验证：宽高各自在[200,4096]像素内
+                    if (width < 200 || width > 4096) {
+                        reject(new Error('图片宽度必须在200-4096像素之间'));
+                        return;
+                    }
+                    if (height < 200 || height > 4096) {
+                        reject(new Error('图片高度必须在200-4096像素之间'));
+                        return;
+                    }
+                    
+                    // 比例验证：宽高比在1:3至3:1范围内
+                    const ratio = width / height;
+                    if (ratio < 1/3 || ratio > 3/1) {
+                        reject(new Error('图片宽高比必须在1:3到3:1之间'));
+                        return;
+                    }
+                    
+                    console.log(`图片验证通过 - 尺寸: ${width}x${height}, 比例: ${ratio.toFixed(2)}`);
+                    resolve(true);
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('图片文件损坏或格式不正确'));
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' :
+                        type === 'error' ? 'fa-times-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' :
+                        'fa-info-circle'
+                    }"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // 检查单个任务状态
+        async function checkTaskStatus(taskId) {
+            try {
+                showNotification('正在查询任务状态...', 'info');
+                
+                const response = await fetch(`/api/video-face-swap/status/${taskId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                // 处理后端返回的响应格式
+                if (result.success && result.data) {
+                    const task = result.data;
+                    const taskStatus = task.status;
+                    
+                    if (taskStatus === 'completed') {
+                        showNotification('任务已完成！', 'success');
+                    } else if (taskStatus === 'failed') {
+                        showNotification('任务失败：' + (task.error || '未知错误'), 'error');
+                    } else if (taskStatus === 'expired') {
+                        showNotification('任务已过期', 'warning');
+                    } else if (taskStatus === 'processing') {
+                        showNotification(`任务正在处理中...`, 'info');
+                    } else {
+                        showNotification(`任务状态：${taskStatus}`, 'info');
+                    }
+                    
+                    // 任务状态已更新
+                } else {
+                    throw new Error(result.message || '查询失败');
+                }
+                
+            } catch (error) {
+                console.error('查询任务状态失败:', error);
+                showNotification('查询失败：' + error.message, 'error');
+            }
+        }
+        
+        // 开始自动轮询
+        function startAutoPolling(taskId) {
+            if (confirm('是否启用服务器端自动轮询？这将在服务器端持续监控任务状态。')) {
+                startServerSidePolling(taskId);
+            } else {
+                startStatusPolling(taskId);
+            }
+        }
+        
+        // 复制任务ID
+        function copyTaskId(taskId) {
+            navigator.clipboard.writeText(taskId).then(() => {
+                showNotification('任务ID已复制到剪贴板', 'success');
+            }).catch(() => {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = taskId;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('任务ID已复制到剪贴板', 'success');
+            });
+        }
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+        });
+    </script>
+
+    <!-- 加载导航栏组件 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await response.text();
+                const navbarContainer = document.getElementById('navbar-container');
+                
+                if (navbarContainer) {
+                    navbarContainer.innerHTML = navbarHtml;
+                    
+                    // 等待DOM更新后再加载组件脚本
+                    setTimeout(() => {
+                        const script = document.createElement('script');
+                        script.src = '/components/components.js';
+                        script.onload = function() {
+                            console.log('组件脚本加载完成');
+                        };
+                        script.onerror = function() {
+                            console.error('组件脚本加载失败');
+                        };
+                        document.head.appendChild(script);
+                    }, 100);
+                } else {
+                    console.error('navbar-container元素不存在');
+                }
+            } catch (error) {
+                console.error('Failed to load navbar component:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE `users` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `username` VARCHAR(50) NOT NULL, `password` VARCHAR(100) NOT NULL, `phone` VARCHAR(20), `smsCode` VARCHAR(10), `smsCodeExpires` DATETIME, `credits` INTEGER NOT NULL DEFAULT 0, `lastRechargeTime` DATETIME DEFAULT NULL, `isAdmin` TINYINT(1) NOT NULL DEFAULT 0, `isInternal` TINYINT(1) NOT NULL DEFAULT 0, `isCustomerService` TINYINT(1) NOT NULL DEFAULT 0, `remark` VARCHAR(200) DEFAULT NULL, `isBanned` TINYINT(1) NOT NULL DEFAULT 0, `banReason` VARCHAR(200) DEFAULT NULL, `banExpireAt` DATETIME DEFAULT NULL, `createdAt` DATETIME, `updatedAt` DATETIME, `lastActiveAt` DATETIME DEFAULT NULL);
+INSERT INTO users VALUES(1,'testuser','$2b$10$w46JAd05KWA5t/IcqEHjD.wjqjvpScsi6SL7xCoksKBxdm0DxBjJm',NULL,NULL,NULL,1000,NULL,0,0,0,NULL,0,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES(20,'testuser20','$2b$10$w46JAd05KWA5t/IcqEHjD.wjqjvpScsi6SL7xCoksKBxdm0DxBjJm',NULL,NULL,NULL,1000,NULL,0,0,0,NULL,0,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES(21,'testadmin','$2b$10$w46JAd05KWA5t/IcqEHjD.wjqjvpScsi6SL7xCoksKBxdm0DxBjJm','13800000000',NULL,NULL,10000,NULL,1,0,0,NULL,0,NULL,NULL,'2025-09-09 01:54:16','2025-09-09 01:54:16',NULL);
+CREATE TABLE `feature_usages` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `userId` INTEGER NOT NULL, `featureName` VARCHAR(100) NOT NULL, `usageCount` INTEGER NOT NULL DEFAULT 0, `lastUsedAt` DATETIME NOT NULL, `resetDate` DATE NOT NULL, `credits` INTEGER DEFAULT 0, `details` TEXT, `createdAt` DATETIME NOT NULL, `updatedAt` DATETIME NOT NULL);
+CREATE TABLE `image_histories` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `userId` INTEGER, `title` VARCHAR(255) NOT NULL DEFAULT '未命名图片', `originalImageUrl` TEXT, `imageUrl` TEXT NOT NULL, `processedImageUrl` TEXT, `type` VARCHAR(50) NOT NULL DEFAULT 'IMAGE_EDIT', `processType` VARCHAR(50) DEFAULT '图片处理', `processTime` DATETIME, `description` TEXT, `metadata` JSON, `createdAt` DATETIME NOT NULL, `updatedAt` DATETIME NOT NULL);
+DELETE FROM sqlite_sequence;
+INSERT INTO sqlite_sequence VALUES('users',21);
+CREATE UNIQUE INDEX `feature_usages_user_feature` ON `feature_usages` (`userId`, `featureName`);
+CREATE INDEX `idx_image_histories_user_id` ON `image_histories` (`userId`);
+CREATE INDEX `idx_image_histories_type` ON `image_histories` (`type`);
+CREATE INDEX `idx_image_histories_process_type` ON `image_histories` (`processType`);
+CREATE INDEX `idx_image_histories_created_at` ON `image_histories` (`createdAt`);
+COMMIT;

@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 
 /**
  * 清除过期的下载中心记录
- * 每小时执行一次，清除12小时前的记录
+ * 每小时执行一次，清除24小时前的记录
  */
 function startCleanupTasks() {
   // 每小时的第0分钟执行清理任务
@@ -13,13 +13,13 @@ function startCleanupTasks() {
     try {
       console.log('开始执行下载中心过期记录清理任务...');
       
-      const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       
       // 清除过期的下载记录（只清理图片记录，不清理视频记录）
       const deletedCount = await ImageHistory.destroy({
         where: {
           createdAt: {
-            [Op.lt]: twelveHoursAgo
+            [Op.lt]: twentyFourHoursAgo
           },
           type: {
             [Op.and]: [
@@ -57,7 +57,7 @@ function startCleanupTasks() {
     }
   });
   
-  console.log('📅 下载中心定时清理任务已启动 (每小时执行一次)');
+  console.log('📅 下载中心定时清理任务已启动 (每小时执行一次，保留最近24小时记录)');
   console.log('📅 客服聊天记录清理任务已启动 (每小时执行一次，保留最近12小时记录)');
 }
 
@@ -114,12 +114,12 @@ async function manualCleanup() {
   try {
     console.log('开始手动清理过期下载记录...');
     
-    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     const deletedCount = await ImageHistory.destroy({
       where: {
         createdAt: {
-          [Op.lt]: twelveHoursAgo
+          [Op.lt]: twentyFourHoursAgo
         },
         type: {
           [Op.and]: [

@@ -1,0 +1,34 @@
+# 萤火AI平台环境变量配置示例
+# 请根据实际情况修改配置值
+
+# 数据库配置
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=yinghuo
+DB_PORT=3306
+
+# 应用配置
+NODE_ENV=production
+PORT=8081
+
+# JWT配置
+JWT_SECRET=your_jwt_secret_key_here
+JWT_EXPIRE=30d
+
+# 阿里云OSS配置
+OSS_REGION=oss-cn-shanghai
+OSS_BUCKET=yinghuo-ai
+OSS_ACCESS_KEY_ID=your_access_key_id
+OSS_ACCESS_KEY_SECRET=your_access_key_secret
+
+# 阿里云API配置
+DASHSCOPE_API_KEY=your_dashscope_api_key
+
+# 支付宝API配置
+ALIPAY_APP_ID=your_alipay_app_id
+ALIPAY_PRIVATE_KEY=your_alipay_private_key
+ALIPAY_PUBLIC_KEY=your_alipay_public_key
+
+# 其他API密钥配置
+# 根据项目需要添加其他API密钥 

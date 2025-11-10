@@ -96,6 +96,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 移除checkAuthStatus()调用，避免重复认证检查冲突
     // checkAuthStatus();
     
+    // 清理可能的残留状态，防止重复提交问题
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+    taskId = null;
+    
+    // 确保生成按钮处于可用状态
+    if (generateBtn) {
+        resetGenerateButton();
+    }
+    
     // 简单初始化用户状态（不进行认证检查和跳转）
     const userInfo = localStorage.getItem('user');
     if (userInfo) {
@@ -145,6 +157,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 生成按钮点击
     generateBtn.addEventListener('click', () => {
+        // 防止重复提交：检查是否已有任务在进行中
+        if (taskId && pollingInterval) {
+            alert('已有任务在进行中，请等待当前任务完成！');
+            return;
+        }
+        
+        // 防止重复提交：检查按钮是否已被禁用
+        if (generateBtn.disabled) {
+            console.log('按钮已禁用，防止重复提交');
+            return;
+        }
+        
         if (!uploadedImage) {
             alert('请先上传图片！');
             return;
@@ -167,6 +191,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         // 读取智能改写开关状态
         const useSmartRewrite = smartRewriteToggle.checked;
         
+        // 禁用生成按钮，防止重复提交
+        generateBtn.disabled = true;
+        generateBtn.textContent = '处理中...';
+        generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        
         // 显示加载中
         loadingOverlay.classList.remove('hidden');
         loadingMessage.textContent = '准备处理，请稍候...';
@@ -182,6 +211,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             })
             .catch(error => {
+                // 恢复按钮状态
+                resetGenerateButton();
                 loadingOverlay.classList.add('hidden');
                 alert('处理失败: ' + error.message);
                 console.error('处理失败:', error);
@@ -194,6 +225,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('prompt-tutorial-modal').style.display = 'block';
         document.body.style.overflow = 'hidden'; // 防止背景滚动
     });
+    
+    // 恢复生成按钮状态的函数
+    function resetGenerateButton() {
+        generateBtn.disabled = false;
+        generateBtn.textContent = '生成视频';
+        generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
     
     // 辅助函数
     function handleImageFile(file) {
@@ -230,15 +268,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         loadingMessage.textContent = '正在上传图片...';
         
         try {
-            // 从Base64中提取实际数据部分
-            const base64Data = base64Image.split(',')[1];
+            // 从Base64中提取实际数据部分和MIME类型
+            const [header, base64Data] = base64Image.split(',');
+            const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
             
             // 创建FormData对象
             const formData = new FormData();
             
-            // 将Base64转换为Blob
-            const blob = base64ToBlob(base64Data);
-            formData.append('image', blob, 'image.jpg');
+            // 将Base64转换为Blob，使用正确的MIME类型
+            const blob = base64ToBlob(base64Data, mimeType);
+            
+            // 根据MIME类型确定文件扩展名
+            const extension = mimeType.includes('png') ? 'png' : 'jpg';
+            formData.append('image', blob, `image.${extension}`);
             
             // 发送请求
             const response = await fetch('/api/upload-image', {
@@ -263,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Base64转Blob
-    function base64ToBlob(base64Data) {
+    function base64ToBlob(base64Data, mimeType = 'image/jpeg') {
         const byteCharacters = atob(base64Data);
         const byteArrays = [];
         
@@ -279,7 +321,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             byteArrays.push(byteArray);
         }
         
-        return new Blob(byteArrays, { type: 'image/jpeg' });
+        return new Blob(byteArrays, { type: mimeType });
     }
     
     // 创建通义万相图生视频任务
@@ -332,6 +374,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } catch (error) {
             console.error('任务创建错误:', error);
+            // 恢复生成按钮状态
+            resetGenerateButton();
             loadingOverlay.classList.add('hidden');
             alert('创建任务失败: ' + error.message);
         }
@@ -389,6 +433,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                         clearInterval(pollingInterval);
                         pollingInterval = null;
                         
+                        // 恢复生成按钮状态
+                        resetGenerateButton();
+                        
                         // 显示视频
                         showGeneratedVideo(videoUrl);
                         
@@ -404,6 +451,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                     // 任务失败
                     clearInterval(pollingInterval);
                     pollingInterval = null;
+                    
+                    // 恢复生成按钮状态
+                    resetGenerateButton();
                     
                     loadingOverlay.classList.add('hidden');
                     alert('视频生成失败，请重试');

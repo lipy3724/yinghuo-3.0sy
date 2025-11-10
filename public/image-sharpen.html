@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>模糊图片变清晰 - 萤火AI</title>
+    <title data-translate="image_sharpen.page_title">模糊图片变清晰 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="/components/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="/components/styles.css">
+    <link href="/css/image-sharpen.css" rel="stylesheet">
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -47,82 +49,185 @@
             -webkit-user-select: none;
             -ms-user-select: none;
         }
+        
+        /* 生成历史样式 */
+        .history-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .view-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .view-btn:hover {
+            transform: scale(1.1);
+            background-color: #f3f4f6 !important;
+        }
+        
+        .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
+        
+        /* 历史记录卡片样式 */
+        .history-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-thumbnail {
+            width: 100%;
+            height: 8rem;
+            object-fit: cover;
+        }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">    <script src="/js/auth-check.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <script src="/js/translations.js"></script>
+    <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
 </head>
-<body class="min-h-screen bg-white">
+<body class="min-h-screen bg-gray-100">
     <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
-        <div class="flex flex-col lg:flex-row bg-white h-full w-full">
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="image_sharpen.title">模糊图片变清晰</h1>
+        
+        <div class="w-full flex flex-col lg:flex-row bg-white" style="min-height: calc(100vh - 200px);">
             <!-- 左侧：上传图片和提示词 -->
             <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-3">模糊图片变清晰</h2>
+                <h2 class="text-xl font-bold mb-3" data-translate="image_sharpen.upload_image">图像增强设置</h2>
                 
                 <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
+                    <p class="text-sm text-gray-600 mb-2" data-translate="image_sharpen.usage_tips">使用提示:</p>
                     <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2">此功能可以将模糊不清的照片变得更加清晰锐利，提升图像质量。</p>
-                        <p class="mb-2">上传模糊、噪点或质量不佳的图像后，系统将自动分析并增强图像细节和清晰度。</p>
-                        <p class="mb-2">您可以在提示框中描述希望增强的具体区域或效果，例如："提高人脸细节清晰度"、"增强文字可读性"等。</p>
-                        <p class="mb-2">图片尺寸要求：最小512×512像素，最大不超过4000×4000像素。</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        <p class="mb-2" data-translate="image_sharpen.tip1">此功能可以将模糊不清的照片变得更加清晰锐利，提升图像质量。</p>
+                        <p class="mb-2" data-translate="image_sharpen.tip2">上传模糊、噪点或质量不佳的图像后，系统将自动分析并增强图像细节和清晰度。</p>
+                        <p class="mb-2" data-translate="image_sharpen.tip3">您可以在提示框中描述希望增强的具体区域或效果，例如："提高人脸细节清晰度"、"增强文字可读性"等。</p>
+                        <p class="mb-2" data-translate="image_sharpen.tip4">图片尺寸要求：最小512×512像素，最大不超过4000×4000像素。</p>
+                        <p class="text-red-500 font-medium" data-translate="image_sharpen.warning">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
                     </div>
                 </div>
 
                 <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
                     <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
+                    <p class="text-gray-500 text-center text-xs px-2" data-translate="image_sharpen.upload_click_or_drag">点击或者拖动文件到这区域来上传</p>
                     <input type="file" id="image-upload" class="hidden" accept="image/*">
                 </div>
-                <p class="text-xs text-gray-500 mb-4">上传图像</p>
+                <p class="text-xs text-gray-500 mb-4" data-translate="image_sharpen.upload_image_label">上传图像</p>
+
+                <!-- 提示词输入框 -->
+                <div class="mb-4">
+                    <label for="enhancement-prompt" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="ri-edit-line mr-1"></i><span data-translate="image_sharpen.enhancement_prompt">增强提示词</span>
+                    </label>
+                    <textarea 
+                        id="enhancement-prompt" 
+                        name="enhancement-prompt"
+                        rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+data-translate-placeholder="image_sharpen.prompt_placeholder"
+                        placeholder="描述希望增强的具体区域或效果，例如：&#10;• 提高人脸细节清晰度&#10;• 增强文字可读性&#10;• 减少噪点，提升整体清晰度&#10;• 增强边缘锐度，突出主体轮廓"
+                    ></textarea>
+                    <div class="flex justify-between items-center mt-1">
+                        <p class="text-xs text-gray-500" data-translate="image_sharpen.prompt_tip">提示：详细的描述有助于生成更好的增强效果</p>
+                        <button type="button" id="clear-prompt-btn" class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline">
+                            <i class="ri-close-line mr-1"></i><span data-translate="image_sharpen.clear">清空</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- 这里添加flex-grow来占用剩余空间，让按钮推到底部 -->
                 <div class="flex-grow"></div>
                 
                 <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center mt-auto">
                     <i class="ri-magic-line mr-2"></i>
-                    立即生成
+                    <span data-translate="image_sharpen.generate_now">立即生成</span>
                 </button>
+                <p class="mt-2 text-center text-sm text-gray-500">
+                    <span data-translate="image_sharpen.generation_info">图像生成需要10-20秒，消耗7积分</span>
+                </p>
             </div>
             
             <!-- 右侧：效果展示 -->
             <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
+                <h2 class="text-xl font-bold mb-4 text-center" data-translate="image_sharpen.effect_display">效果展示</h2>
                 
                 <div class="flex flex-col md:flex-row gap-6 flex-grow">
                     <div class="w-full md:w-1/2">
-                        <h3 class="text-base font-medium mb-3 text-center">原始图像:</h3>
+                        <h3 class="text-base font-medium mb-3 text-center" data-translate="image_sharpen.original_image">原始图像:</h3>
                         <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden relative">
                             <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片" draggable="false">
-                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
+                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4" data-translate="image_sharpen.upload_placeholder">上传图片后将在这里显示</p>
                         </div>
                     </div>
                     
                     <div class="w-full md:w-1/2">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-medium text-center">生成结果:</h3>
-                            <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-1 px-2 rounded-md hover:bg-indigo-700 text-sm flex items-center">
-                                <i class="ri-save-line mr-1"></i>
-                                保存到下载中心
-                            </button>
-                        </div>
+                        <h3 class="text-base font-medium mb-3 text-center" data-translate="image_sharpen.generated_result">生成结果:</h3>
                         <div id="result-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                             <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="生成的图片">
-                            <p id="result-image-placeholder" class="text-gray-500 text-center px-4">生成结果将在这里显示</p>
+                            <p id="result-image-placeholder" class="text-gray-500 text-center px-4" data-translate="image_sharpen.result_placeholder">生成结果将在这里显示</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4 flex justify-center">
+                <div class="mt-4 flex justify-center space-x-4">
                     <button id="download-btn" class="hidden bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
                         <i class="ri-download-line mr-2"></i>
-                        下载结果
+                        <span data-translate="image_sharpen.download_result">下载结果</span>
                     </button>
+                    <button id="save-to-downloads-btn" class="hidden bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 flex items-center justify-center">
+                        <i class="ri-save-line mr-2"></i>
+                        <span data-translate="image_sharpen.save_to_download_center">保存到下载中心</span>
+                    </button>
+                </div>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" data-translate="image_sharpen.generation_history">生成历史</h2>
+                        <div class="flex items-center space-x-2">
+                            <button id="clear-history-btn" class="text-red-600 hover:text-red-800 text-sm" data-translate-title="image_sharpen.clear_history_title" title="清空历史记录">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800">
+                                <i class="ri-refresh-line text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 历史记录将通过JavaScript动态添加到这里 -->
+                        <p class="text-gray-500 col-span-full text-center py-4" data-translate="image_sharpen.no_history">暂无历史记录</p>
+                    </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <div class="mt-4 text-center">
+                        <p class="text-xs text-gray-500">
+                            <i class="ri-time-line mr-1"></i>
+                            <span data-translate="image_sharpen.history_note">仅显示24小时内的历史记录</span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -133,8 +238,8 @@
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
             <div class="flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                <p id="loading-message" class="text-gray-700 text-center">处理中，请耐心等待...</p>
-            <p class="text-sm text-gray-500 mt-2">处理时间约为5-10秒</p>
+                <p id="loading-message" class="text-gray-700 text-center" data-translate="image_sharpen.processing">处理中，请耐心等待...</p>
+            <p class="text-sm text-gray-500 mt-2" data-translate="image_sharpen.processing_time">处理时间约为5-10秒</p>
             </div>
         </div>
     </div>
@@ -142,6 +247,11 @@
     <!-- 引用外部Javascript文件 -->
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化翻译系统
+            if (typeof initializeTranslations === 'function') {
+                initializeTranslations();
+            }
+            
             // 首先检查用户认证状态
             console.log('图片锐化页面：开始检查用户认证状态');
             
@@ -170,6 +280,9 @@
                 }
             }
             
+            // 设置用户状态监听，检测用户切换
+            setupUserStateListener();
+            
             // DOM元素
             const uploadArea = document.getElementById('upload-area');
             const imageUpload = document.getElementById('image-upload');
@@ -183,6 +296,23 @@
             const loadingMessage = document.getElementById('loading-message');
             const downloadBtn = document.getElementById('download-btn');
             const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
+            
+            // 初始化提示框默认值
+            const enhancementPrompt = document.getElementById('enhancement-prompt');
+            if (enhancementPrompt) {
+                enhancementPrompt.value = translate('image_sharpen.default_prompt');
+            }
+            
+            // 清空提示词按钮事件
+            const clearPromptBtn = document.getElementById('clear-prompt-btn');
+            if (clearPromptBtn) {
+                clearPromptBtn.addEventListener('click', () => {
+                    if (enhancementPrompt) {
+                        enhancementPrompt.value = '';
+                        enhancementPrompt.focus();
+                    }
+                });
+            }
             
             // 图片上传处理
             uploadArea.addEventListener('click', () => {
@@ -216,54 +346,58 @@
                 if (file && file.type.startsWith('image/')) {
                     handleImageFile(file);
                 } else {
-                    alert('请上传图片文件！');
+                     alert(translate('image_sharpen.upload_image_file'));
                 }
             });
             
             // 生成按钮点击
             generateBtn.addEventListener('click', async () => {
                 if (!originalImage.src || originalImage.classList.contains('hidden')) {
-                    alert('请先上传图片！');
+                     alert(translate('image_sharpen.upload_first'));
                     return;
                 }
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                loadingMessage.textContent = '正在处理图像，请稍候...';
+                loadingMessage.textContent = translate('image_sharpen.processing_image');
                 
                 try {
                     // 1. 上传原图到服务器获取URL
-                    loadingMessage.textContent = '正在上传图片...';
-                    console.log('正在上传图片...');
+                     loadingMessage.textContent = translate('image_sharpen.uploading');
+                    console.log(translate('image_sharpen.uploading_image'));
                     let imageUrl;
                     
                     try {
                         imageUrl = await uploadImageToServer(originalImage.src);
                     } catch (uploadError) {
                         console.error('图片上传错误:', uploadError);
-                        throw new Error(`图片上传失败: ${uploadError.message}`);
+                        throw new Error(`${translate('image_sharpen.upload_failed')}: ${uploadError.message}`);
                     }
                     
                     if (!imageUrl) {
-                        throw new Error('图片上传失败，未获取到有效URL');
+                        throw new Error(translate('image_sharpen.upload_failed') + '，未获取到有效URL');
                     }
                     
                     console.log('图片上传成功，获取到的URL:', imageUrl);
                     
                     // 2. 调用API创建图像锐化任务
-                    loadingMessage.textContent = '正在创建图像锐化任务...';
-                    console.log('正在创建图像锐化任务...');
+                    loadingMessage.textContent = translate('image_sharpen.creating_task');
+                    console.log(translate('image_sharpen.creating_task'));
+                    
+                    // 获取用户输入的提示词
+                    const enhancementPrompt = document.getElementById('enhancement-prompt').value.trim();
+                    const prompt = enhancementPrompt || translate('image_sharpen.default_prompt');
                     
                     let taskId;
                     try {
-                        taskId = await createSharpenTask("", imageUrl);
+                        taskId = await createSharpenTask(prompt, imageUrl);
                     } catch (taskError) {
                         console.error('创建任务错误:', taskError);
-                        throw new Error(`创建图像锐化任务失败: ${taskError.message}`);
+                        throw new Error(`${translate('image_sharpen.create_task_failed')}: ${taskError.message}`);
                     }
                     
                     if (!taskId) {
-                        throw new Error('创建图像锐化任务失败，未获取到任务ID');
+                        throw new Error(translate('image_sharpen.create_task_failed') + '，未获取到任务ID');
                     }
                     
                     console.log('创建任务成功，任务ID:', taskId);
@@ -272,25 +406,25 @@
                     window.currentSharpenTaskId = taskId;
                     
                     // 3. 轮询任务状态
-                    loadingMessage.textContent = '处理中，请耐心等待...';
-                    console.log('开始轮询任务状态...');
+                     loadingMessage.textContent = translate('image_sharpen.processing');
+                    console.log(translate('image_sharpen.polling_status'));
                     
                     let resultImageUrl;
                     try {
                         resultImageUrl = await pollTaskStatus(taskId);
                     } catch (pollError) {
                         console.error('轮询任务状态错误:', pollError);
-                        throw new Error(`获取任务结果失败: ${pollError.message}`);
+                        throw new Error(`${translate('image_sharpen.get_result_failed')}: ${pollError.message}`);
                     }
                     
                     if (!resultImageUrl) {
-                        throw new Error('获取结果图像失败，未获取到有效URL');
+                        throw new Error(translate('image_sharpen.get_result_failed') + '，未获取到有效URL');
                     }
                     
                     console.log('获取任务结果成功，图像URL:', resultImageUrl);
                     
                     // 4. 显示结果图像
-                    loadingMessage.textContent = '正在加载结果图像...';
+                    loadingMessage.textContent = translate('image_sharpen.loading_result');
                     
                     resultImage.onload = () => {
                         loadingOverlay.classList.add('hidden');
@@ -298,7 +432,7 @@
                     
                     resultImage.onerror = () => {
                         loadingOverlay.classList.add('hidden');
-                        alert('加载结果图像失败，请稍后重试');
+                        alert(translate('image_sharpen.load_result_failed'));
                     };
                     
                     resultImage.src = resultImageUrl;
@@ -306,21 +440,25 @@
                     resultImagePlaceholder.classList.add('hidden');
                     downloadBtn.classList.remove('hidden');
                     saveToDownloadsBtn.classList.remove('hidden');
+                    
+                    // 添加到历史记录
+                    const originalImageSrc = originalImage.src;
+                    addToHistory(originalImageSrc, resultImageUrl, prompt);
                 } catch (error) {
                     console.error('处理失败:', error);
                     
                     // 如果有任务ID，请求退款
                     if (window.currentSharpenTaskId) {
                         try {
-                            await requestRefund(window.currentSharpenTaskId, error.message || '任务处理失败');
+                            await requestRefund(window.currentSharpenTaskId, error.message || translate('image_sharpen.task_processing_failed'));
                             console.log('已请求退款，任务ID:', window.currentSharpenTaskId);
-                            alert('处理失败: ' + error.message + '，系统已自动申请退款');
+                            alert(translate('image_sharpen.processing_failed_with_refund') + ': ' + error.message);
                         } catch (refundError) {
                             console.error('退款请求失败:', refundError);
-                            alert('处理失败: ' + error.message + '，退款请求失败，请联系客服');
+                            alert(translate('image_sharpen.processing_failed_refund_failed') + ': ' + error.message);
                         }
                     } else {
-                        alert('处理失败: ' + error.message);
+                        alert(translate('image_sharpen.processing_failed') + ': ' + error.message);
                     }
                 } finally {
                     // 隐藏加载遮罩
@@ -359,7 +497,7 @@
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(data.message || '图片上传失败');
+                        throw new Error(data.message || translate('image_sharpen.upload_failed'));
                     }
                     
                     const imageUrl = data.output?.img_url || data.imageUrl;
@@ -367,7 +505,7 @@
                     return imageUrl;
                 } catch (error) {
                     console.error('图片上传错误:', error);
-                    throw new Error('图片上传失败: ' + error.message);
+                    throw new Error(translate('image_sharpen.upload_failed') + ': ' + error.message);
                 }
             }
             
@@ -399,7 +537,7 @@
                         model: "wanx2.1-imageedit",
                         input: {
                             function: "super_resolution",
-                            prompt: prompt || "增强图像清晰度，提高细节，去除噪点",
+                            prompt: prompt || translate('image_sharpen.default_prompt'),
                             base_image_url: imageUrl,
                             upscale_factor: 1
                         },
@@ -426,16 +564,16 @@
                     
                     if (!response.ok) {
                         if (data.message && data.message.includes('积分不足')) {
-                            throw new Error('您的积分不足，请充值后再试');
+                            throw new Error(translate('image_sharpen.insufficient_credits'));
                         } else {
-                            throw new Error(data.message || '创建任务失败');
+                            throw new Error(data.message || translate('image_sharpen.create_task_failed'));
                         }
                     }
                     
                     return data.output?.task_id;
                 } catch (error) {
                     console.error('创建任务错误:', error);
-                    throw new Error('创建任务失败: ' + error.message);
+                    throw new Error(translate('image_sharpen.create_task_failed') + ': ' + error.message);
                 }
             }
             
@@ -454,7 +592,7 @@
                     async function checkStatus() {
                         if (attempts >= maxAttempts) {
                             clearTimeout(timeoutId);
-                            reject(new Error('任务处理超时，请稍后重试'));
+                            reject(new Error(translate('image_sharpen.task_timeout')));
                             return;
                         }
                         
@@ -469,7 +607,7 @@
                             });
                             
                             if (!response.ok) {
-                                throw new Error('获取任务状态失败，服务器错误');
+                                throw new Error(translate('image_sharpen.get_result_failed') + '，服务器错误');
                             }
                             
                             const data = await response.json();
@@ -505,7 +643,7 @@
                                             
                                             // 请求退款 - 虽然状态是成功，但没有有效URL
                                             try {
-                                                await requestRefund(taskId, '任务返回空结果，无有效图像URL');
+                                                await requestRefund(taskId, translate('image_sharpen.task_empty_result'));
                                                 console.log('已请求退款，原因：任务返回空结果');
                                             } catch (refundError) {
                                                 console.error('退款请求失败:', refundError);
@@ -528,7 +666,7 @@
                                         
                                         // 请求退款
                                         try {
-                                            await requestRefund(taskId, '任务成功但所有结果都失败');
+                                            await requestRefund(taskId, translate('image_sharpen.task_all_results_failed'));
                                             console.log('已请求退款，原因：任务成功但所有结果都失败');
                                         } catch (refundError) {
                                             console.error('退款请求失败:', refundError);
@@ -651,7 +789,7 @@
                 try {
                     // 显示加载中
                     loadingOverlay.classList.remove('hidden');
-                    loadingMessage.textContent = '正在保存到下载中心...';
+                    loadingMessage.textContent = translate('image_sharpen.saving_to_download_center');
                     
                     console.log('准备保存图片到下载中心:', resultImage.src.substring(0, 50) + '...');
                     
@@ -676,17 +814,17 @@
                     console.log('保存响应数据:', data);
                     
                     if (!response.ok) {
-                        throw new Error(data.message || data.error || '保存失败');
+                        throw new Error(data.message || data.error || translate('image_sharpen.save_failed_generic'));
                     }
                     
                     if (data.success) {
-                        alert('图片已成功保存到下载中心！');
+                        alert(translate('image_sharpen.save_success'));
                     } else {
-                        throw new Error(data.message || '保存失败');
+                        throw new Error(data.message || translate('image_sharpen.save_failed_generic'));
                     }
                 } catch (error) {
                     console.error('保存到下载中心失败:', error);
-                    alert('保存到下载中心失败: ' + error.message);
+                    alert(translate('image_sharpen.save_failed') + ': ' + error.message);
                 } finally {
                     // 隐藏加载遮罩
                     loadingOverlay.classList.add('hidden');
@@ -697,13 +835,13 @@
             function handleImageFile(file) {
                 // 检查文件类型
                 if (!file.type.startsWith('image/')) {
-                    alert('请上传图片文件！支持的格式包括JPG、PNG和WEBP');
+                     alert(translate('image_sharpen.supported_formats'));
                     return;
                 }
                 
                 // 检查文件大小
                 if (file.size > 10 * 1024 * 1024) { // 10MB 限制
-                    alert('图片大小不能超过10MB！');
+                    alert(translate('image_sharpen.file_too_large'));
                     return;
                 }
                 
@@ -714,12 +852,12 @@
                     img.onload = function() {
                         // 检查图片尺寸
                         if (img.width < 512 || img.height < 512) {
-                            alert('图片尺寸太小，请上传最小512×512像素的图片');
+                            alert(translate('image_sharpen.image_too_small'));
                             return;
                         }
                         
                         if (img.width > 4000 || img.height > 4000) {
-                            alert('图片尺寸过大，请上传不超过4000×4000像素的图片');
+                            alert(translate('image_sharpen.image_too_large'));
                             return;
                         }
                         
@@ -737,7 +875,7 @@
                     img.src = event.target.result;
                 };
                 reader.onerror = () => {
-                    alert('读取文件失败，请重新上传');
+                    alert(translate('image_sharpen.read_file_failed'));
                 };
                 reader.readAsDataURL(file);
             }
@@ -782,7 +920,1070 @@
                     throw new Error('退款请求失败: ' + error.message);
                 }
             }
+
+            // 添加到历史记录
+            function addToHistory(originalImage, resultImage, prompt) {
+                console.log('开始保存历史记录:', { 
+                    originalImage: originalImage ? (originalImage.substring(0, 50) + '...') : 'undefined', 
+                    resultImage: resultImage ? (resultImage.substring(0, 50) + '...') : 'undefined', 
+                    prompt 
+                });
+                
+                // 确保两个图片URL都存在
+                if (!originalImage || !resultImage) {
+                    console.error('保存历史记录失败: 原始图片或结果图片URL为空');
+                    return;
+                }
+                
+                const historyItem = {
+                    originalImage: originalImage,
+                    resultImage: resultImage,
+                    prompt: prompt,
+                    createdAt: new Date().toISOString()
+                };
+                
+                console.log('创建历史记录项:', {
+                    originalImage: historyItem.originalImage.substring(0, 50) + '...',
+                    resultImage: historyItem.resultImage.substring(0, 50) + '...',
+                    prompt: historyItem.prompt,
+                    createdAt: historyItem.createdAt
+                });
+                
+                // 历史记录保存策略：优先OSS，失败时使用localStorage备选方案
+                console.log('📝 开始保存历史记录（OSS优先，localStorage备选）');
+                saveHistoryToOSS(historyItem)
+                    .then(() => {
+                        console.log('✅ 历史记录已成功保存到OSS（优先方案）');
+                        // 刷新历史记录显示
+                        loadHistory();
+                    })
+                    .catch(error => {
+                        console.error('❌ OSS保存失败，启用localStorage备选方案:', error);
+                        // 尝试使用localStorage作为备选方案
+                        saveHistoryToLocalStorage(historyItem);
+                        console.log('💾 已启用localStorage备选方案保存历史记录');
+                        // 即使使用备选方案，也要刷新历史记录显示
+                        loadHistory();
+                    });
+            }
+
+            // 保存历史记录到阿里云OSS（优先方案）
+            async function saveHistoryToOSS(historyItem) {
+                try {
+                    // 从localStorage获取认证令牌
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.warn('未找到认证令牌，无法保存到OSS');
+                        throw new Error('未找到认证令牌');
+                    }
+                    
+                    console.log('开始保存历史记录到阿里云OSS（优先方案）');
+                    console.log('当前用户信息:', {
+                        authToken: authToken ? authToken.substring(0, 10) + '...' : '无',
+                        userInfo: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id || '无用户ID' : '无用户信息'
+                    });
+                    
+                    // 检查历史记录项是否完整
+                    if (!historyItem.originalImage || !historyItem.resultImage) {
+                        console.warn('历史记录项不完整，详情:', {
+                            有原始图片: !!historyItem.originalImage,
+                            有结果图片: !!historyItem.resultImage,
+                            有提示词: !!historyItem.prompt,
+                            有创建时间: !!historyItem.createdAt
+                        });
+                    }
+                    
+                    // 准备请求数据
+                    const data = {
+                        originalImage: historyItem.originalImage,
+                        resultImage: historyItem.resultImage,
+                        prompt: historyItem.prompt || '图片锐化',
+                        processType: 'IMAGE_SHARPENING',
+                        timestamp: new Date().toISOString(),
+                        createdAt: historyItem.createdAt || new Date().toISOString() // 确保有创建时间
+                    };
+                    
+                    console.log('准备发送到服务器的数据:', {
+                        原始图片: data.originalImage ? data.originalImage.substring(0, 50) + '...' : '无',
+                        结果图片: data.resultImage ? data.resultImage.substring(0, 50) + '...' : '无',
+                        提示词: data.prompt,
+                        处理类型: data.processType,
+                        时间戳: data.timestamp,
+                        创建时间: data.createdAt
+                    });
+                    
+                    // 发送请求到服务器
+                    console.log('开始发送请求到OSS服务器...');
+                    const response = await fetch('/api/image-sharpen-history/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    console.log('OSS服务器响应状态码:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('OSS服务器响应错误内容:', errorText);
+                        throw new Error(`OSS保存失败: ${response.status}, 错误内容: ${errorText}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('✅ 历史记录已成功保存到OSS（优先方案）:', result);
+                    
+                    return result;
+                } catch (error) {
+                    console.error('❌ 保存到阿里云OSS失败（将使用localStorage备选方案）:', error);
+                    console.error('错误消息:', error.message);
+                    console.error('错误堆栈:', error.stack);
+                    throw error; // 抛出错误，让调用方处理备选方案
+                }
+            }
+
+            // 备选方案：保存到localStorage（仅在OSS保存失败时使用）
+            function saveHistoryToLocalStorage(historyItem) {
+                try {
+                    console.log('🔄 使用localStorage保存历史记录（备选方案）');
+                    
+                    // 保存到本地存储，但只保存图片URL引用而不是完整的base64数据
+                    let history = JSON.parse(localStorage.getItem('imageSharpenHistory') || '[]');
+                    console.log('当前localStorage中的历史记录:', history);
+                    
+                    // 创建一个精简版的历史记录项，避免存储过大的数据
+                    const compactHistoryItem = {
+                        originalImage: typeof historyItem.originalImage === 'string' && historyItem.originalImage.startsWith('data:') 
+                            ? '图片太大无法保存' // 不保存base64数据
+                            : historyItem.originalImage, // 保存URL引用
+                        resultImage: typeof historyItem.resultImage === 'string' && historyItem.resultImage.startsWith('data:')
+                            ? '图片太大无法保存' // 不保存base64数据
+                            : historyItem.resultImage, // 保存URL引用
+                        prompt: historyItem.prompt,
+                        createdAt: historyItem.createdAt
+                    };
+                    
+                    console.log('创建精简版历史记录项:', compactHistoryItem);
+                    
+                    history.unshift(compactHistoryItem);
+                    console.log('添加新记录后的历史记录:', history);
+                    
+                    // 过滤最近1天的记录
+                    const oneDayAgo = new Date();
+                    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+                    
+                    history = history.filter(item => {
+                        // 确保每条记录都有创建时间
+                        if (!item.createdAt) {
+                            item.createdAt = new Date().toISOString();
+                        }
+                        const itemDate = new Date(item.createdAt);
+                        return itemDate >= oneDayAgo;
+                    });
+                    
+                    console.log('过滤1天内记录后的历史记录:', history);
+                    
+                    // 限制历史记录数量为3个
+                    if (history.length > 3) {
+                        history = history.slice(0, 3);
+                    }
+                    
+                    // 在存储前检查数据大小
+                    const dataSize = JSON.stringify(history).length;
+                    if (dataSize > 2000000) { // 如果数据大于2MB
+                        console.warn('历史记录数据过大，清理旧记录');
+                        history = history.slice(0, 1); // 只保留最新的一条
+                    }
+                    
+                    console.log('最终保存到localStorage的历史记录（备选方案）:', history);
+                    localStorage.setItem('imageSharpenHistory', JSON.stringify(history));
+                    console.log('✅ 历史记录已成功保存到localStorage（备选方案）');
+                    
+                    // 刷新历史记录显示
+                    loadHistory();
+                } catch (error) {
+                    console.error('保存到localStorage失败:', error);
+                    // 尝试清理localStorage
+                    try {
+                        localStorage.removeItem('imageSharpenHistory');
+                        console.log('已清理历史记录缓存');
+                    } catch (e) {
+                        console.error('清理缓存失败', e);
+                    }
+                }
+            }
+
+            // 加载历史记录
+            async function loadHistory() {
+                console.log('开始加载历史记录');
+                const historyContainer = document.getElementById('history-container');
+                if (!historyContainer) {
+                    console.error('找不到历史记录容器');
+                    return;
+                }
+                
+                try {
+                    // 历史记录加载策略：优先从OSS加载，失败时从localStorage加载
+                    console.log('📖 开始加载历史记录（OSS优先，localStorage备选）');
+                    let history = [];
+                    
+                    try {
+                        console.log('🔍 尝试从OSS加载历史记录（优先方案）...');
+                        history = await loadHistoryFromOSS();
+                        console.log('✅ 从OSS成功获取到的历史记录:', history);
+                    } catch (ossError) {
+                        console.error('❌ 从OSS加载历史记录失败，启用localStorage备选方案:', ossError);
+                        
+                        try {
+                            console.log('🔄 尝试从localStorage加载历史记录（备选方案）...');
+                            const localHistoryStr = localStorage.getItem('imageSharpenHistory') || '[]';
+                            history = JSON.parse(localHistoryStr);
+                            
+                            if (!Array.isArray(history)) {
+                                console.warn('localStorage中的历史记录不是数组，使用空数组');
+                                history = [];
+                            }
+                            
+                            console.log('💾 从localStorage成功加载的历史记录（备选方案）:', history);
+                        } catch (localError) {
+                            console.error('❌ 从localStorage加载历史记录也失败:', localError);
+                            history = [];
+                        }
+                    }
+                    
+                    if (!history || history.length === 0) {
+                        console.log('没有历史记录，显示空状态');
+                        const noHistoryText = translate('image_sharpen.no_history');
+                        historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+                        return;
+                    }
+                    
+                    // 过滤24小时内的记录
+                    const now = new Date();
+                    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                    
+                    const recentHistory = history.filter(item => {
+                        // 确保每个记录都有时间戳
+                        // 不直接修改原对象，而是创建一个副本用于后续处理
+                        let itemWithTimestamp = item;
+                        if (!item.createdAt && !item.processTime && !item.timestamp) {
+                            console.warn('历史记录缺少创建时间，添加当前时间:', item);
+                            // 创建新对象而不是修改原对象
+                            itemWithTimestamp = {...item, timestamp: new Date().toISOString()};
+                        }
+                        
+                        const itemDate = new Date(itemWithTimestamp.processTime || itemWithTimestamp.createdAt || itemWithTimestamp.timestamp);
+                        const isRecent = itemDate >= twentyFourHoursAgo;
+                        
+                        if (!isRecent) {
+                            console.log('过滤掉超过24小时的记录:', {
+                                记录时间: itemDate.toLocaleString(),
+                                当前时间: now.toLocaleString(),
+                                提示词: itemWithTimestamp.description || itemWithTimestamp.prompt || '图片锐化'
+                            });
+                        }
+                        
+                        return isRecent;
+                    });
+                    
+                    console.log(`过滤前历史记录数量: ${history.length}, 过滤后数量: ${recentHistory.length}`);
+                    
+                    if (recentHistory.length === 0) {
+                        console.log('24小时内没有历史记录，显示空状态');
+                        const noHistoryText = translate('image_sharpen.no_history');
+                        historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+                        return;
+                    }
+                    
+                    // 清空历史记录容器
+                    historyContainer.innerHTML = '';
+                    
+                    // 遍历历史记录并创建卡片
+                        // 确保recentHistory是数组
+                        if (!Array.isArray(recentHistory)) {
+                            console.error('recentHistory不是数组:', recentHistory);
+                            historyContainer.innerHTML = '<p class="text-red-500 text-center py-4">历史记录格式错误</p>';
+                            return;
+                        }
+                        
+                        // 使用安全的方式遍历历史记录
+                        // 使用常规for循环替代forEach，避免匿名函数中的this绑定问题
+                        for (let index = 0; index < recentHistory.length; index++) {
+                            // 使用临时变量存储当前项，避免直接修改recentHistory中的项
+                            const item = Object.assign({}, recentHistory[index]);
+                            // 确保item是对象而不是数组
+                            if (!item || Array.isArray(item) || typeof item !== 'object') {
+                                console.error('历史记录项无效或不是对象:', item);
+                                continue; // 跳过这条记录
+                            }
+                            console.log(`渲染服务器历史记录项 ${index}:`, item);
+                        
+                            const historyCard = document.createElement('div');
+                            historyCard.className = 'history-card';
+                            
+                            // 处理不同数据源的字段差异
+                            // 安全地获取图片URL
+                            let originalImage = null;
+                            let resultImage = null;
+                            
+                            try {
+                                originalImage = item.originalImage || item.baseImageUrl || null;
+                                resultImage = item.processedImageUrl || item.resultImage || item.imageUrl;
+                            } catch (e) {
+                                console.error('获取图片URL时出错:', e);
+                            }
+                            const prompt = item.description || item.prompt || '图片锐化';
+                            const timestamp = item.processTime || item.createdAt;
+                        
+                            console.log(`历史记录项 ${index} 的图片URL:`, {
+                                原始图片: originalImage ? originalImage.substring(0, 50) + '...' : '无',
+                                结果图片: resultImage ? resultImage.substring(0, 50) + '...' : '无',
+                                提示词: prompt
+                            });
+                            
+                            if (!resultImage) {
+                                console.warn('历史记录项缺少结果图片URL:', item);
+                                continue; // 跳过无效记录
+                            }
+                        
+                            // 验证时间戳
+                            let createdAt = '未知时间';
+                            // 确保有时间戳，创建副本而不是修改原对象
+                            let safeTimestamp = timestamp || new Date().toISOString();
+                            
+                                    try {
+                                        const date = new Date(safeTimestamp);
+                                        if (!isNaN(date.getTime())) {
+                                            // 使用与后端一致的时间格式
+                                            createdAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                                        }
+                            } catch (error) {
+                                console.warn('时间戳格式化失败:', safeTimestamp, error);
+                            }
+                        
+                            historyCard.innerHTML = `
+                                <div class="relative">
+                                    <img src="${resultImage || '#'}" alt="结果图" class="history-thumbnail w-full h-32 object-cover" loading="lazy" 
+                                         onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';">
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-sm text-gray-700 truncate" title="${prompt}">${prompt || '图片锐化'}</p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">${createdAt}</span>
+                                        <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1">
+                                            <i class="ri-download-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        
+                            // 下载按钮点击事件
+                            const downloadHistoryBtn = historyCard.querySelector('.download-history-btn');
+                            if (downloadHistoryBtn) {
+                                downloadHistoryBtn.addEventListener('click', function() {
+                                    try {
+                                        // 验证图片URL是否有效
+                                        const validateUrl = (url) => {
+                                            return url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:'));
+                                        };
+                                        
+                                        const validOriginal = validateUrl(originalImage) && originalImage !== '图片太大无法保存';
+                                        const validResult = validateUrl(resultImage);
+                                        
+                                        console.log('下载图片状态:', {
+                                            原始图片有效: validOriginal,
+                                            结果图片有效: validResult,
+                                            原始图片URL: originalImage ? originalImage.substring(0, 30) + '...' : '无',
+                                            结果图片URL: resultImage ? resultImage.substring(0, 30) + '...' : '无'
+                                        });
+                                        
+                                        // 只下载结果图片
+                                        if (validResult) {
+                                            downloadImage(resultImage, `锐化结果_${Date.now()}.png`);
+                                        } else {
+                                            alert(translate('image_sharpen.result_not_available'));
+                                        }
+                                    } catch (e) {
+                                        console.error('下载历史记录图片失败:', e);
+                                        alert(translate('image_sharpen.download_failed'));
+                                    }
+                                });
+                            }
+                            
+                            historyContainer.appendChild(historyCard);
+                    }
+                } catch (error) {
+                    console.error('加载历史记录失败:', error);
+                    
+                    // 记录更详细的错误信息
+                    let errorDetails = '未知错误';
+                    if (error instanceof TypeError) {
+                        errorDetails = 'TypeError: ' + (error.message || '类型错误');
+                    } else if (error instanceof SyntaxError) {
+                        errorDetails = 'SyntaxError: ' + (error.message || 'JSON解析错误');
+                    } else if (error instanceof Error) {
+                        errorDetails = error.name + ': ' + (error.message || '未知错误');
+                    }
+                    console.error('错误类型和详情:', errorDetails);
+                    
+                    // 显示错误提示
+                    historyContainer.innerHTML = `<div class="text-center py-8">
+                        <p class="text-red-500 mb-2">加载历史记录失败</p>
+                        <p class="text-sm text-gray-500">请检查网络连接或稍后重试</p>
+                        <p class="text-xs text-gray-400 mt-1">错误信息: ${errorDetails}</p>
+                        <button onclick="loadHistory()" class="mt-2 text-indigo-600 hover:text-indigo-800 text-sm">点击重试</button>
+                    </div>`;
+                    
+                    // 尝试从localStorage加载
+                    try {
+                        console.log('尝试从localStorage加载历史记录');
+                        loadHistoryFromLocalStorage();
+                    } catch (localStorageError) {
+                        console.error('从localStorage加载历史记录失败:', localStorageError);
+                        const noHistoryText = translate('image_sharpen.no_history');
+                        historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+                    }
+                }
+                
+                // 从localStorage加载历史记录的函数
+                function loadHistoryFromLocalStorage(historyArray) {
+                    try {
+                        // 使用传入的数组或从localStorage获取
+                        const localHistory = historyArray || JSON.parse(localStorage.getItem('imageSharpenHistory') || '[]');
+                        console.log('从localStorage获取到的历史记录:', localHistory);
+                        
+                        if (localHistory.length === 0) {
+                            console.log('localStorage中也没有历史记录');
+                            const noHistoryText = translate('image_sharpen.no_history');
+                            historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+                            return;
+                        }
+                        
+                        // 过滤24小时内的记录
+                        const now = new Date();
+                        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                        
+                        // 确保localHistory是数组并且每个元素是对象
+                        if (!Array.isArray(localHistory)) {
+                            console.error('localStorage中的历史记录不是数组:', localHistory);
+                            // 创建一个新的数组变量，而不是尝试修改const变量
+                            const fixedLocalHistory = [];
+                            // 使用fixedLocalHistory替代localHistory进行后续操作
+                            return loadHistoryFromLocalStorage(fixedLocalHistory);
+                        }
+                        
+                        // 创建一个新数组来存储24小时内的记录
+                        const recentLocalHistory = [];
+                        
+                        // 遍历历史记录并过滤
+                        for (let i = 0; i < localHistory.length; i++) {
+                            const item = localHistory[i];
+                            
+                            // 跳过非对象或数组类型的项
+                            if (!item || typeof item !== 'object' || Array.isArray(item)) {
+                                console.warn('跳过无效的localStorage历史记录项:', item);
+                                continue;
+                            }
+                            
+                            // 创建一个副本，而不是修改原对象
+                            const itemCopy = {...item};
+                            
+                            // 确保每个记录都有时间戳
+                            if (!itemCopy.createdAt && !itemCopy.timestamp) {
+                                console.warn('localStorage历史记录缺少创建时间，添加当前时间');
+                                // 不修改原对象，而是在副本上添加属性
+                                const updatedItem = {...itemCopy, timestamp: new Date().toISOString()};
+                                
+                                const itemDate = new Date(updatedItem.createdAt || updatedItem.timestamp || now.toISOString());
+                                if (itemDate >= twentyFourHoursAgo) {
+                                    recentLocalHistory.push(updatedItem);
+                                }
+                            } else {
+                                const itemDate = new Date(itemCopy.createdAt || itemCopy.timestamp || now.toISOString());
+                                if (itemDate >= twentyFourHoursAgo) {
+                                    recentLocalHistory.push(itemCopy);
+                                }
+                            }
+                        }
+                        
+                        console.log(`localStorage过滤前历史记录数量: ${localHistory.length}, 过滤后数量: ${recentLocalHistory.length}`);
+                        
+                        if (recentLocalHistory.length === 0) {
+                            console.log('localStorage中24小时内没有历史记录');
+                            const noHistoryText = translate('image_sharpen.no_history');
+                            historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+                            return;
+                        }
+                        
+                        // 清空历史记录容器
+                        historyContainer.innerHTML = '';
+                        
+                        // 遍历历史记录并创建卡片
+                        for (let index = 0; index < recentLocalHistory.length; index++) {
+                            // 创建副本避免修改原对象
+                            const item = Object.assign({}, recentLocalHistory[index]);
+                            // 确保item是对象而不是数组
+                            if (Array.isArray(item)) {
+                                console.error('localStorage历史记录项是数组而不是对象:', item);
+                                continue; // 跳过这条记录
+                            }
+                            console.log(`渲染localStorage历史记录项 ${index}:`, item);
+                            
+                            const historyCard = document.createElement('div');
+                            historyCard.className = 'history-card';
+                            
+                            const originalImage = item.originalImage;
+                            const resultImage = item.resultImage;
+                            const prompt = item.prompt || '图片锐化';
+                            
+                            console.log(`localStorage历史记录项 ${index} 的图片URL:`, {
+                                原始图片: originalImage ? (typeof originalImage === 'string' ? originalImage.substring(0, 50) + '...' : '非字符串') : '无',
+                                结果图片: resultImage ? (typeof resultImage === 'string' ? resultImage.substring(0, 50) + '...' : '非字符串') : '无',
+                                提示词: prompt
+                            });
+                            
+                            // 验证时间戳
+                            let createdAt = '未知时间';
+                            // 确保有创建时间，但不修改原对象
+                            const itemWithTimestamp = item.createdAt ? item : { ...item, createdAt: new Date().toISOString() };
+                            
+                            try {
+                                const date = new Date(itemWithTimestamp.createdAt);
+                                if (!isNaN(date.getTime())) {
+                                    createdAt = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                                }
+                            } catch (error) {
+                                console.warn('localStorage时间戳格式化失败:', itemWithTimestamp.createdAt, error);
+                            }
+                            
+                            // 检查图片是否可用
+                            if (!resultImage || resultImage === '图片太大无法保存') {
+                                console.warn('localStorage历史记录项结果图片不可用:', item);
+                                continue; // 跳过无效记录
+                            }
+                            
+                            historyCard.innerHTML = `
+                                <div class="relative">
+                                    <img src="${resultImage || '#'}" alt="结果图" class="history-thumbnail w-full h-32 object-cover" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';">
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-sm text-gray-700 truncate" title="${prompt}">${prompt || '图片锐化'}</p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">${createdAt}</span>
+                                        <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1">
+                                            <i class="ri-download-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // 下载按钮点击事件
+                            const downloadHistoryBtn = historyCard.querySelector('.download-history-btn');
+                            if (downloadHistoryBtn) {
+                                downloadHistoryBtn.addEventListener('click', function() {
+                                    try {
+                                        // 只下载结果图片
+                                        downloadImage(resultImage, `锐化结果_${Date.now()}.png`);
+                                    } catch (error) {
+                                        console.error('下载历史记录图片失败:', error);
+                                        alert(translate('image_sharpen.download_failed'));
+                                    }
+                                });
+                            }
+                            
+                            historyContainer.appendChild(historyCard);
+                        }
+                    } catch (localError) {
+                        console.error('从localStorage加载历史记录失败:', localError);
+                        const noHistoryText = translate('image_sharpen.no_history');
+                        historyContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center py-4">${noHistoryText}</p>`;
+                    }
+                }
+            }
+
+            // 从服务器加载历史记录
+            async function loadHistoryFromServer() {
+                try {
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.log('用户未登录，无法获取历史记录');
+                        return [];
+                    }
+
+                    const response = await fetch('/api/history', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.results) {
+                        // 过滤出图片锐化相关的记录
+                        const sharpenHistory = data.results.filter(record => 
+                            record && typeof record === 'object' && (
+                                record.processType === 'IMAGE_SHARPENING' || 
+                                record.processType === '图片锐化' ||
+                                record.type === 'IMAGE_SHARPENING' ||
+                                record.type === '图片锐化'
+                            )
+                        );
+                        
+                        console.log(`从服务器获取到 ${sharpenHistory.length} 条锐化历史记录:`, sharpenHistory);
+                        
+                        // 验证每条记录的数据完整性
+                        const validHistory = sharpenHistory.filter(record => {
+                            const isValid = record && 
+                                (record.originalImage || record.resultImage || record.prompt) &&
+                                record.createdAt;
+                            
+                            if (!isValid) {
+                                console.warn('发现无效的历史记录项:', record);
+                            }
+                            
+                            return isValid;
+                        });
+                        
+                        console.log(`验证后有效记录 ${validHistory.length} 条:`, validHistory);
+                        return validHistory;
+                    } else {
+                        console.log('服务器返回数据格式错误:', data);
+                        return [];
+                    }
+                } catch (error) {
+                    console.error('从服务器加载历史记录失败:', error);
+                    return [];
+                }
+            }
+
+            // 从阿里云OSS加载历史记录
+            // 从阿里云OSS加载历史记录
+            async function loadHistoryFromOSS() {
+                // 添加防错机制
+                let retryCount = 0;
+                const maxRetries = 2;
+                try {
+                    // 从localStorage获取认证令牌
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.warn('未找到认证令牌，使用本地存储');
+                        try {
+                            const localHistoryStr = localStorage.getItem('imageSharpenHistory') || '[]';
+                            const localHistory = JSON.parse(localHistoryStr);
+                            
+                            // 验证解析结果是否为数组
+                            if (!Array.isArray(localHistory)) {
+                                console.warn('localStorage中的历史记录不是数组格式，返回空数组');
+                                return [];
+                            }
+                            
+                            console.log('从localStorage加载的历史记录:', localHistory);
+                            return localHistory;
+                        } catch (parseError) {
+                            console.error('解析localStorage历史记录失败:', parseError);
+                            return [];
+                        }
+                    }
+                    
+                    console.log('开始从阿里云OSS加载历史记录');
+                    
+                    // 先测试API是否可用
+                    try {
+                        const testResponse = await fetch('/api/image-sharpen-history/test');
+                        if (!testResponse.ok) {
+                            console.warn('历史记录API测试失败，状态码:', testResponse.status);
+                        } else {
+                            console.log('历史记录API测试成功');
+                        }
+                    } catch (testError) {
+                        console.warn('历史记录API测试出错:', testError);
+                    }
+                    
+                    // 发送请求到服务器
+                    const response = await fetch('/api/image-sharpen-history/list', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        console.warn(`HTTP错误: ${response.status}，回退到本地存储`);
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                        console.log('OSS返回的历史记录数据:', data);
+                    } catch (jsonError) {
+                        console.error('解析OSS返回的JSON数据失败:', jsonError);
+                        throw new Error('解析服务器返回数据失败');
+                    }
+                    
+                    if (data.success && data.records) {
+                        // 确保records是数组
+                        if (!Array.isArray(data.records)) {
+                            console.warn('OSS返回的records不是数组:', data.records);
+                            return [];
+                        }
+                        
+                        // 验证并过滤记录
+                        const validRecords = data.records
+                            .filter(record => 
+                                record && 
+                                typeof record === 'object' && 
+                                !Array.isArray(record) &&
+                                (record.originalImage || record.resultImage) &&
+                                record.timestamp
+                            )
+                            // 只保留24小时内的记录
+                            .filter(record => {
+                                const recordTime = new Date(record.timestamp);
+                                const twentyFourHoursAgo = new Date();
+                                twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+                                return recordTime >= twentyFourHoursAgo;
+                            })
+                            // 去重：根据结果图片URL去重，保留最新的记录
+                            .reduce((unique, record) => {
+                                // 查找是否已存在相同结果图片URL的记录
+                                const existingIndex = unique.findIndex(item => 
+                                    item.resultImage === record.resultImage
+                                );
+                                
+                                if (existingIndex >= 0) {
+                                    // 如果存在，比较时间戳，保留最新的
+                                    const existingTime = new Date(unique[existingIndex].timestamp).getTime();
+                                    const currentTime = new Date(record.timestamp).getTime();
+                                    
+                                    if (currentTime > existingTime) {
+                                        // 用新记录替换旧记录
+                                        unique[existingIndex] = record;
+                                    }
+                                } else {
+                                    // 如果不存在，添加到结果集
+                                    unique.push(record);
+                                }
+                                
+                                return unique;
+                            }, [])
+                            // 按时间戳降序排序（最新的排在前面）
+                            .sort((a, b) => {
+                                const timeA = new Date(a.timestamp).getTime();
+                                const timeB = new Date(b.timestamp).getTime();
+                                return timeB - timeA;
+                            })
+                            // 只保留最新的3条记录
+                            .slice(0, 3);
+                            
+                        console.log(`从OSS获取到 ${validRecords.length} 条有效历史记录`);
+                        return validRecords;
+                    } else {
+                        console.warn('OSS返回的数据格式无效，使用本地存储');
+                    }
+                    
+                    // 如果OSS没有数据或数据无效，尝试从localStorage加载
+                    console.log('OSS无有效数据，尝试从本地存储加载历史记录');
+                    const localHistory = JSON.parse(localStorage.getItem('imageSharpenHistory') || '[]');
+                    
+                    // 过滤24小时内的记录并只保留最新的3条
+                    const twentyFourHoursAgo = new Date();
+                    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+                    
+                    const recentLocalHistory = localHistory
+                        .filter(item => {
+                            const itemDate = new Date(item.createdAt);
+                            return itemDate >= twentyFourHoursAgo;
+                        })
+                        // 按时间戳降序排序（最新的排在前面）
+                        .sort((a, b) => {
+                            const timeA = new Date(a.createdAt).getTime();
+                            const timeB = new Date(b.createdAt).getTime();
+                            return timeB - timeA;
+                        })
+                        .slice(0, 3);
+                        
+                    console.log(`从localStorage加载的历史记录: 过滤前 ${localHistory.length} 条，过滤后 ${recentLocalHistory.length} 条`);
+                    return recentLocalHistory;
+                } catch (error) {
+                    console.error('从OSS加载历史记录失败，详细错误:', error);
+                    console.error('错误状态码:', error.status || '未知');
+                    console.error('错误信息:', error.message);
+                    
+                    // 从localStorage加载并过滤
+                    try {
+                        const localHistory = JSON.parse(localStorage.getItem('imageSharpenHistory') || '[]');
+                        
+                        // 过滤24小时内的记录并只保留最新的3条
+                        const twentyFourHoursAgo = new Date();
+                        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+                        
+                        const recentLocalHistory = localHistory
+                            .filter(item => {
+                                const itemDate = new Date(item.createdAt);
+                                return itemDate >= twentyFourHoursAgo;
+                            })
+                            .slice(0, 3);
+                            
+                        console.log(`错误回退到localStorage的历史记录: 过滤前 ${localHistory.length} 条，过滤后 ${recentLocalHistory.length} 条`);
+                        return recentLocalHistory;
+                    } catch (localError) {
+                        console.error('localStorage也加载失败:', localError);
+                        return [];
+                    }
+                }
+            }
+
+            // 清空历史记录按钮事件
+            document.getElementById('clear-history-btn').addEventListener('click', function() {
+                if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+                    clearHistoryFromOSS()
+                        .then(result => {
+                            if (result.success) {
+                                // 同时清空localStorage中的备份
+                                localStorage.removeItem('imageSharpenHistory');
+                                // 刷新历史记录显示
+                                loadHistory();
+                                // 提示用户
+                                alert(translate('image_sharpen.history_cleared'));
+                            } else {
+                                alert(translate('image_sharpen.clear_history_failed') + ': ' + (result.message || '未知错误'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('清空历史记录失败:', error);
+                            alert(translate('image_sharpen.clear_history_failed') + ': ' + error.message);
+                        });
+                }
+            });
+
+            // 从OSS清除历史记录
+            async function clearHistoryFromOSS() {
+                try {
+                    // 从localStorage获取认证令牌
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.warn('未找到认证令牌，只清除本地存储');
+                        // 清空localStorage中的备份
+                        localStorage.removeItem('imageSharpenHistory');
+                        return { success: true };
+                    }
+                    
+                    console.log('开始清除阿里云OSS中的历史记录');
+                    
+                    // 发送请求到服务器
+                    const response = await fetch('/api/image-sharpen-history/clear', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('OSS历史记录已清除:', result);
+                    
+                    return result;
+                } catch (error) {
+                    console.error('清除OSS历史记录失败:', error);
+                    throw error;
+                }
+            }
+            
+            // 刷新历史记录按钮事件
+            document.getElementById('refresh-history-btn').addEventListener('click', function() {
+                loadHistory();
+            });
+
+            // 显示图片函数
+            function displayImages(originalImageSrc, resultImageSrc) {
+                console.log('显示图片:', {
+                    原始图片: originalImageSrc ? originalImageSrc.substring(0, 50) + '...' : '无',
+                    结果图片: resultImageSrc ? resultImageSrc.substring(0, 50) + '...' : '无'
+                });
+                
+                const originalImage = document.getElementById('original-image');
+                const resultImage = document.getElementById('result-image');
+                const originalImagePlaceholder = document.getElementById('original-image-placeholder');
+                const resultImagePlaceholder = document.getElementById('result-image-placeholder');
+                
+                // 显示原始图片
+                if (originalImageSrc && originalImageSrc !== '图片太大无法保存') {
+                    originalImage.src = originalImageSrc;
+                    originalImage.classList.remove('hidden');
+                    originalImagePlaceholder.classList.add('hidden');
+                } else {
+                    // 如果没有原始图片，显示提示
+                    originalImage.classList.add('hidden');
+                    originalImagePlaceholder.classList.remove('hidden');
+                    originalImagePlaceholder.textContent = '原始图片不可用';
+                }
+                
+                // 显示结果图片
+                if (resultImageSrc) {
+                    resultImage.src = resultImageSrc;
+                    resultImage.classList.remove('hidden');
+                    resultImagePlaceholder.classList.add('hidden');
+                } else {
+                    // 如果没有结果图片，显示提示
+                    resultImage.classList.add('hidden');
+                    resultImagePlaceholder.classList.remove('hidden');
+                    resultImagePlaceholder.textContent = '结果图片不可用';
+                }
+                
+                // 显示下载按钮
+                downloadBtn.classList.remove('hidden');
+                saveToDownloadsBtn.classList.remove('hidden');
+            }
+
+            // 下载图片函数
+            function downloadImage(imageSrc, filename) {
+                const link = document.createElement('a');
+                link.href = imageSrc;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // 清理所有存储按钮事件已移除
+
+            // 清理存储空间函数
+            function cleanupStorage() {
+                try {
+                    // 检查存储空间使用情况
+                    const testKey = 'storage_test';
+                    const testValue = 'x'.repeat(1000); // 1KB测试数据
+                    
+                    try {
+                        localStorage.setItem(testKey, testValue);
+                        localStorage.removeItem(testKey);
+                    } catch (error) {
+                        console.warn('存储空间不足，开始清理当前功能历史记录:', error);
+                        
+                        // 只清理当前功能的历史记录
+                        try {
+                            localStorage.removeItem('imageSharpenHistory');
+                            console.log('已清理图像锐化历史记录');
+                        } catch (cleanError) {
+                            console.error('清理历史记录失败:', cleanError);
+                        }
+                    }
+                } catch (error) {
+                    console.error('清理存储空间失败:', error);
+                }
+            }
+
+            // 页面加载时初始化
+            cleanupStorage();
+            
+            // 确保翻译系统初始化完成后再加载历史记录
+            setTimeout(() => {
+                loadHistory();
+            }, 100);
         });
+        
+        // 页面加载时检查存储空间并加载历史记录
+        // 注意：这些函数需要在DOMContentLoaded事件内部调用
+        
+        // 用户状态监听函数
+        function setupUserStateListener() {
+            let currentUserId = null;
+            let currentAuthToken = null;
+            
+            // 获取当前用户ID
+            function getCurrentUserId() {
+                try {
+                    const userInfo = localStorage.getItem('user');
+                    if (userInfo) {
+                        const user = JSON.parse(userInfo);
+                        return user.id || user.phone || 'unknown';
+                    }
+                } catch (e) {
+                    console.warn('解析用户信息失败:', e);
+                }
+                return null;
+            }
+            
+            // 检查用户是否切换
+            function checkUserSwitch() {
+                const newUserId = getCurrentUserId();
+                const newAuthToken = localStorage.getItem('authToken');
+                
+                // 如果是第一次检查，记录当前状态
+                if (currentUserId === null) {
+                    currentUserId = newUserId;
+                    currentAuthToken = newAuthToken;
+                    console.log('图片锐化页面：初始化用户状态监听，当前用户:', currentUserId);
+                    return;
+                }
+                
+                // 检查用户ID或认证令牌是否发生变化
+                if (newUserId !== currentUserId || newAuthToken !== currentAuthToken) {
+                    console.log('图片锐化页面：检测到用户切换，清除历史记录');
+                    console.log('原用户:', currentUserId, '新用户:', newUserId);
+                    
+                    // 清除所有功能的历史记录
+                    const historyKeys = [
+                        'imageSharpenHistory',
+                        'imageExpansionHistory', 
+                        'textToImageHistory',
+                        'imageToVideoHistory',
+                        'videoStyleRepaintHistory',
+                        'videoSubtitleRemoverHistory',
+                        'multiImageToVideoHistory',
+                        'promptEditorHistory',
+                        'imageUpscalerHistory'
+                    ];
+                    
+                    historyKeys.forEach(key => {
+                        try {
+                            localStorage.removeItem(key);
+                            console.log(`已清除历史记录: ${key}`);
+                        } catch (e) {
+                            console.warn(`清除历史记录失败: ${key}`, e);
+                        }
+                    });
+                    
+                    // 更新当前状态
+                    currentUserId = newUserId;
+                    currentAuthToken = newAuthToken;
+                    
+                    // 重新加载历史记录（此时会从服务器获取新用户的数据）
+                    setTimeout(() => {
+                        loadHistory();
+                    }, 100);
+                }
+            }
+            
+            // 定期检查用户状态（每2秒检查一次）
+            setInterval(checkUserSwitch, 2000);
+            
+            // 监听localStorage变化
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'authToken' || e.key === 'user') {
+                    console.log('图片锐化页面：检测到认证信息变化，检查用户切换');
+                    setTimeout(checkUserSwitch, 100);
+                }
+            });
+            
+            // 监听页面可见性变化，当页面重新获得焦点时检查用户状态
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    console.log('图片锐化页面：页面重新获得焦点，检查用户状态');
+                    setTimeout(checkUserSwitch, 100);
+                }
+            });
+        }
 
         // 加载导航栏组件
         document.addEventListener('DOMContentLoaded', async function() {
@@ -799,6 +2000,128 @@
                 console.error('Failed to load navbar component:', error);
             }
         });
-    </script>
-</body>
+      </script>
+
+      <!-- 语言切换支持 -->
+      <script>
+          // 语言检测和切换功能
+          function initializeLanguageSupport() {
+              // 从URL参数或localStorage获取语言设置
+              function getLanguageFromParams() {
+                  try {
+                      // 1. 首先从URL参数获取
+                      const urlParams = new URLSearchParams(window.location.search);
+                      let langParam = urlParams.get('lang');
+                      
+                      if (langParam) {
+                          console.log('从URL参数获取语言:', langParam);
+                          // 转换语言格式：zh/en -> zh/en
+                          if (langParam === 'zh-cn') {
+                              langParam = 'zh';
+                          } else if (langParam === 'en-us') {
+                              langParam = 'en';
+                          }
+                          currentLanguage = langParam;
+                          // 保存到localStorage
+                          localStorage.setItem('language', langParam);
+                          return langParam;
+                      }
+                      
+                      // 2. 从localStorage获取
+                      const savedLang = localStorage.getItem('language');
+                      if (savedLang) {
+                          console.log('从localStorage获取语言:', savedLang);
+                          currentLanguage = savedLang;
+                          return savedLang;
+                      }
+                      
+                      // 3. 使用默认语言
+                      console.log('使用默认语言:', currentLanguage);
+                      return currentLanguage;
+                  } catch (error) {
+                      console.error('获取语言参数失败:', error);
+                      return 'zh';
+                  }
+              }
+
+              // 更新页面语言
+              function updatePageLanguage() {
+                  const currentLang = localStorage.getItem('language') || 'zh';
+                  
+                  // 更新页面标题
+                  document.title = translate('image_sharpen.page_title');
+                  
+                  // 更新HTML语言属性
+                  document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+                  
+                  // 更新所有带有 data-translate 属性的元素
+                  document.querySelectorAll('[data-translate]').forEach(element => {
+                      const key = element.getAttribute('data-translate');
+                      const translation = translate(key);
+                      
+                      if (element.tagName === 'TITLE') {
+                          element.textContent = translation;
+                      } else if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                          element.placeholder = translation;
+                      } else {
+                          element.textContent = translation;
+                      }
+                  });
+                  
+                  // 更新带有 data-translate-placeholder 属性的元素的 placeholder
+                  document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                      const key = element.getAttribute('data-translate-placeholder');
+                      const translation = translate(key);
+                      element.placeholder = translation;
+                  });
+                  
+                  // 更新带有 data-translate-title 属性的元素的 title
+                  document.querySelectorAll('[data-translate-title]').forEach(element => {
+                      const key = element.getAttribute('data-translate-title');
+                      const translation = translate(key);
+                      element.title = translation;
+                  });
+                  
+                  console.log('页面语言已更新为:', currentLang === 'zh' ? '中文' : 'English');
+              }
+
+              // 监听语言变化事件
+              window.addEventListener('languageChanged', function(event) {
+                  console.log('收到语言变化事件:', event.detail.language);
+                  currentLanguage = event.detail.language;
+                  localStorage.setItem('language', event.detail.language);
+                  updatePageLanguage();
+              });
+
+              // 监听来自父页面的语言切换消息
+              window.addEventListener('message', function(event) {
+                  if (event.data && event.data.type === 'languageChange') {
+                      console.log('收到语言切换消息:', event.data.language);
+                      localStorage.setItem('language', event.data.language);
+                      currentLanguage = event.data.language;
+                      updatePageLanguage();
+                  }
+              });
+
+              // 初始化语言
+              getLanguageFromParams();
+              updatePageLanguage();
+          }
+
+          // 页面加载完成后初始化语言支持
+          document.addEventListener('DOMContentLoaded', function() {
+              // 等待translations.js加载完成
+              if (typeof translate === 'function') {
+                  initializeLanguageSupport();
+              } else {
+                  // 如果translations.js还没加载完成，等待一下
+                  setTimeout(() => {
+                      if (typeof translate === 'function') {
+                          initializeLanguageSupport();
+                      }
+                  }, 100);
+              }
+          });
+      </script>
+  </body>
 </html> 

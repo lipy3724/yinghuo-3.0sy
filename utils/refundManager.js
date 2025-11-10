@@ -51,6 +51,32 @@ async function refundFeatureCredits(userId, taskId, featureName, reason = '任�
       globalTasksVar[taskId].refunded = true;
     }
     
+    // 如果全局变量中没有找到任务信息，尝试从数据库中查找
+    if (creditCost === 0) {
+      try {
+        const recentUsage = await FeatureUsage.findOne({
+          where: {
+            userId: userId,
+            featureName: featureName
+          },
+          order: [['createdAt', 'DESC']]
+        });
+        
+        if (recentUsage && recentUsage.details) {
+          const details = JSON.parse(recentUsage.details || '{}');
+          const tasks = details.tasks || [];
+          const taskInfo = tasks.find(t => t.taskId === taskId);
+          
+          if (taskInfo) {
+            creditCost = taskInfo.creditCost || 0;
+            console.log(`从数据库中找到任务信息: 任务ID=${taskId}, 积分=${creditCost}`);
+          }
+        }
+      } catch (dbError) {
+        console.error('从数据库查找任务信息失败:', dbError);
+      }
+    }
+    
     // 如果指定了强制退款积分数量，使用指定值
     if (options.forceCreditCost !== undefined) {
       creditCost = options.forceCreditCost;
@@ -212,7 +238,7 @@ function getGlobalTasksVariable(featureName) {
       return global.localRedrawTasks;
     case 'IMAGE_COLORIZATION':
       return global.imageColorizationTasks;
-    case 'IMAGE_EXPANSION':
+    case 'image-expansion':
       return global.imageExpansionTasks;
     case 'VIRTUAL_SHOE_MODEL':
       return global.virtualShoeModelTasks;
@@ -299,7 +325,7 @@ async function refundCutoutCredits(userId, taskId, reason = '任务失败') {
  * @returns {Promise<boolean>} - 退款是否成功
  */
 async function refundImageExpansionCredits(userId, taskId, reason = '任务失败') {
-  return refundFeatureCredits(userId, taskId, 'IMAGE_EXPANSION', reason);
+  return refundFeatureCredits(userId, taskId, 'image-expansion', reason);
 }
 
 /**

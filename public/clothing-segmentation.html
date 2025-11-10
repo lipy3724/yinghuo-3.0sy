@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能服饰分割 - 萤火AI</title>
+    <title data-translate="clothing_segmentation.page_title">智能服饰分割 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -53,6 +54,37 @@
             -webkit-user-select: none;
             -ms-user-select: none;
         }
+        
+        /* 生成历史样式 */
+        .history-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-thumbnail {
+            width: 100%;
+            height: 8rem;
+            object-fit: cover;
+        }
+        
+        
+        .download-history-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .download-history-btn:hover {
+            color: #4f46e5 !important;
+            transform: scale(1.1);
+        }
 
     </style>
 
@@ -60,141 +92,175 @@
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
 </head>
-<body class="min-h-screen bg-white">
+<body class="min-h-screen bg-gray-100">
     <!-- 简化版导航栏 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="w-full h-[calc(100vh-60px)] flex" style="margin-top: 60px;">
-        <div class="flex flex-col lg:flex-row bg-white h-full w-full">
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="clothing_segmentation.main_title">智能服饰分割</h1>
+        
+        <div class="w-full flex flex-col lg:flex-row bg-white rounded-lg shadow-md" style="min-height: calc(100vh - 200px);">
             <!-- 左侧：上传图片和提示词 -->
             <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-3">智能服饰分割</h2>
+                <h2 class="text-xl font-bold mb-3" data-translate="clothing_segmentation.settings_title">智能服饰分割</h2>
                 
                 <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
+                    <p class="text-sm text-gray-600 mb-2" data-translate="clothing_segmentation.usage_tips">使用提示:</p>
                     <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2">此功能可以精确识别并分割图片中的服装元素，为后续处理提供基础。</p>
-                        <p class="mb-2">上传包含服饰的图像后，系统会自动识别服装区域，并生成分割结果。</p>
-                        <p class="mb-2">支持以下服饰类别：上衣、外套、裙装、裤装、包类、鞋子、帽子等。</p>
-                        <p class="mb-2">图片要求：支持PNG、JPEG、JPG、BMP格式，大小不超过3MB，分辨率在50×50至3000×3000像素之间。</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        <p class="mb-2" data-translate="clothing_segmentation.description_1">此功能可以精确识别并分割图片中的服装元素，为后续处理提供基础。</p>
+                        <p class="mb-2" data-translate="clothing_segmentation.description_2">上传包含服饰的图像后，系统会自动识别服装区域，并生成分割结果。</p>
+                        <p class="mb-2" data-translate="clothing_segmentation.description_3">支持以下服饰类别：上衣、外套、裙装、裤装、包类、鞋子、帽子等。</p>
+                        <p class="mb-2" data-translate="clothing_segmentation.description_4">图片要求：支持PNG、JPEG、JPG、BMP格式，大小不超过3MB，分辨率在50×50至3000×3000像素之间。</p>
+                        <p class="text-red-500 font-medium" data-translate="clothing_segmentation.warning_text">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
                     </div>
                 </div>
 
                 <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
                     <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
-                    <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
+                    <p class="text-gray-500 text-center text-xs px-2" data-translate="clothing_segmentation.upload_text">点击或者拖动文件到这区域来上传</p>
                     <input type="file" id="image-upload" class="hidden" accept="image/*">
                 </div>
-                <p class="text-xs text-gray-500 mb-4">上传服饰图像</p>
+                <p class="text-xs text-gray-500 mb-4" data-translate="clothing_segmentation.upload_image_label">上传服饰图像</p>
                 
                 <!-- 服饰类别选择 -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">选择服饰类别:</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="clothing_segmentation.category_label">选择服饰类别:</label>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="tops" class="form-checkbox h-4 w-4 text-indigo-600" checked>
-                            <span class="text-sm">上衣 (tops)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_tops">上衣 (tops)</span>
                         </label>
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="coat" class="form-checkbox h-4 w-4 text-indigo-600">
-                            <span class="text-sm">外套 (coat)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_coat">外套 (coat)</span>
                         </label>
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="skirt" class="form-checkbox h-4 w-4 text-indigo-600">
-                            <span class="text-sm">裙装 (skirt)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_skirt">裙装 (skirt)</span>
                         </label>
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="pants" class="form-checkbox h-4 w-4 text-indigo-600">
-                            <span class="text-sm">裤装 (pants)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_pants">裤装 (pants)</span>
                         </label>
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="bag" class="form-checkbox h-4 w-4 text-indigo-600">
-                            <span class="text-sm">包类 (bag)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_bag">包类 (bag)</span>
                         </label>
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="shoes" class="form-checkbox h-4 w-4 text-indigo-600">
-                            <span class="text-sm">鞋子 (shoes)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_shoes">鞋子 (shoes)</span>
                         </label>
                         <label class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100">
                             <input type="checkbox" name="clothClass" value="hat" class="form-checkbox h-4 w-4 text-indigo-600">
-                            <span class="text-sm">帽子 (hat)</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.category_hat">帽子 (hat)</span>
                         </label>
                     </div>
                 </div>
                 
                 <!-- 返回结果类型选择 -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">返回结果类型:</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="clothing_segmentation.result_type_label">返回结果类型:</label>
                     <div class="flex space-x-4">
                         <label class="flex items-center space-x-2">
                             <input type="radio" name="returnForm" value="" class="form-radio h-4 w-4 text-indigo-600" checked>
-                            <span class="text-sm">无背景图</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.result_no_background">无背景图</span>
                         </label>
                         <label class="flex items-center space-x-2">
                             <input type="radio" name="returnForm" value="mask" class="form-radio h-4 w-4 text-indigo-600">
-                            <span class="text-sm">二值遮罩图</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.result_mask">二值遮罩图</span>
                         </label>
                         <label class="flex items-center space-x-2">
                             <input type="radio" name="returnForm" value="whiteBK" class="form-radio h-4 w-4 text-indigo-600">
-                            <span class="text-sm">白底图</span>
+                            <span class="text-sm" data-translate="clothing_segmentation.result_white_background">白底图</span>
                         </label>
                     </div>
                 </div>
                 
                 <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
                     <i class="ri-magic-line mr-2"></i>
-                    开始分割
+                    <span data-translate="clothing_segmentation.start_segmentation">开始分割</span>
                 </button>
+                <p class="mt-2 text-center text-sm text-gray-500" data-translate="clothing_segmentation.credits_cost">
+                    一次消耗2积分
+                </p>
             </div>
             
             <!-- 右侧：效果展示 -->
             <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
-                <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
+                <h2 class="text-xl font-bold mb-4 text-center" data-translate="clothing_segmentation.effect_display">效果展示</h2>
                 
                 <div class="flex flex-col md:flex-row gap-6 flex-grow">
                     <div class="w-full md:w-1/2">
-                        <h3 class="text-base font-medium mb-3 text-center">原始图像:</h3>
+                        <h3 class="text-base font-medium mb-3 text-center" data-translate="clothing_segmentation.original_image">原始图像:</h3>
                         <div id="original-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden relative">
                             <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片" draggable="false">
-                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
+                            <p id="original-image-placeholder" class="text-gray-500 text-center px-4" data-translate="clothing_segmentation.original_placeholder">上传图片后将在这里显示</p>
                         </div>
                     </div>
                     
                     <div class="w-full md:w-1/2">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-base font-medium text-center">分割结果:</h3>
-                            <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-1 px-2 rounded-md hover:bg-indigo-700 text-sm flex items-center">
-                                <i class="ri-save-line mr-1"></i>
-                                保存到下载中心
-                            </button>
-                        </div>
+                        <h3 class="text-base font-medium text-center mb-3" data-translate="clothing_segmentation.segmentation_result">分割结果:</h3>
                         <div id="result-image-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                             <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="分割结果">
-                            <p id="result-image-placeholder" class="text-gray-500 text-center px-4">分割结果将在这里显示</p>
+                            <p id="result-image-placeholder" class="text-gray-500 text-center px-4" data-translate="clothing_segmentation.result_placeholder">分割结果将在这里显示</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- 分类结果展示 -->
                 <div id="class-results-container" class="mt-6 hidden">
-                    <h3 class="text-base font-medium mb-3">分类结果:</h3>
+                    <h3 class="text-base font-medium mb-3" data-translate="clothing_segmentation.classification_result">分类结果:</h3>
                     <div id="class-results" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <!-- 分类结果将在这里动态添加 -->
                     </div>
                 </div>
 
                 <div class="mt-4 flex justify-center space-x-4">
+                    <button id="save-to-downloads-btn" class="hidden bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
+                        <i class="ri-save-line mr-2"></i>
+                        <span data-translate="clothing_segmentation.save_to_downloads">保存到下载中心</span>
+                    </button>
+                    
                     <button id="download-btn" class="hidden bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
                         <i class="ri-download-line mr-2"></i>
-                        下载结果
+                        <span data-translate="clothing_segmentation.download_result">下载结果</span>
                     </button>
                     
                     <button id="download-all-btn" class="hidden bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 flex items-center justify-center">
                         <i class="ri-file-zip-line mr-2"></i>
-                        下载所有分类结果
+                        <span data-translate="clothing_segmentation.download_all_results">下载所有分类结果</span>
                     </button>
+                </div>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold" data-translate="clothing_segmentation.generation_history">生成历史</h2>
+                        <div class="flex items-center space-x-2">
+                            <button id="clear-history-btn" class="text-red-600 hover:text-red-800 text-sm" title="清空历史记录">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800">
+                                <i class="ri-refresh-line text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- 历史记录将通过JavaScript动态添加到这里 -->
+                        <div class="col-span-full flex items-center justify-center py-8">
+                            <p class="text-gray-500 text-center" data-translate="clothing_segmentation.no_history">暂无历史记录</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <div class="mt-4 text-center">
+                        <p class="text-xs text-gray-500">
+                            <i class="ri-time-line mr-1"></i>
+                            <span data-translate="clothing_segmentation.history_time_note">仅显示24小时内最新3条历史记录</span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -406,6 +472,22 @@
                         classResultsContainer.classList.add('hidden');
                         downloadAllBtn.classList.add('hidden');
                     }
+                    
+                    // 6. 保存到历史记录并刷新历史显示
+                    try {
+                        await saveToHistory({
+                            inputUrl: imageUrl,
+                            outputUrl: result.imageUrl,
+                            classUrls: result.classUrls,
+                            clothClasses: clothClasses,
+                            returnForm: returnForm
+                        });
+                        // 刷新历史记录显示
+                        await loadHistory();
+                    } catch (historyError) {
+                        console.error('保存历史记录失败:', historyError);
+                        // 历史记录保存失败不影响主要功能
+                    }
                 } catch (error) {
                     console.error('处理失败:', error);
                     
@@ -494,6 +576,379 @@
                     loadingOverlay.classList.add('hidden');
                 }
             });
+            
+            // 历史记录相关功能
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            const historyContainer = document.getElementById('history-container');
+            
+            // 加载历史记录
+            async function loadHistory() {
+                console.log('开始加载服饰分割历史记录');
+                if (!historyContainer) {
+                    console.error('找不到历史记录容器');
+                    return;
+                }
+                
+                try {
+                    // 显示加载中状态
+                    historyContainer.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                            <p class="mt-2 text-gray-500 text-center" data-translate="clothing_segmentation.loading_history">${translate('clothing_segmentation.loading_history')}</p>
+                        </div>
+                    `;
+                    
+                    // 从OSS和服务器加载历史记录
+                    console.log('尝试从OSS和服务器加载历史记录...');
+                    let history = [];
+                    
+                    try {
+                        history = await loadHistoryFromServer();
+                        console.log('从OSS服务器获取到的历史记录:', history);
+                    } catch (serverError) {
+                        console.error('从OSS服务器加载历史记录失败:', serverError);
+                        history = [];
+                    }
+                    
+                    if (!history || history.length === 0) {
+                        console.log('没有历史记录，显示空状态');
+                        historyContainer.innerHTML = `
+                            <div class="col-span-full flex items-center justify-center py-8">
+                                <p class="text-gray-500 text-center" data-translate="clothing_segmentation.no_history">${translate('clothing_segmentation.no_history')}</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // 过滤24小时内的记录
+                    const now = new Date();
+                    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                    
+                    const recentHistory = history.filter(item => {
+                        let itemWithTimestamp = item;
+                        if (!item.createdAt && !item.created_at && !item.timestamp) {
+                            console.warn('历史记录缺少创建时间，添加当前时间:', item);
+                            itemWithTimestamp = {...item, timestamp: new Date().toISOString()};
+                        }
+                        
+                        const itemDate = new Date(itemWithTimestamp.created_at || itemWithTimestamp.createdAt || itemWithTimestamp.timestamp);
+                        const isRecent = itemDate >= twentyFourHoursAgo;
+                        
+                        if (!isRecent) {
+                            console.log('过滤掉超过24小时的记录:', {
+                                记录时间: itemDate.toLocaleString(),
+                                当前时间: now.toLocaleString(),
+                                描述: '服饰分割'
+                            });
+                        }
+                        
+                        return isRecent;
+                    });
+                    
+                    console.log(`过滤前历史记录数量: ${history.length}, 过滤后数量: ${recentHistory.length}`);
+                    
+                    if (recentHistory.length === 0) {
+                        console.log('24小时内没有历史记录，显示空状态');
+                        historyContainer.innerHTML = `
+                            <div class="col-span-full flex items-center justify-center py-8">
+                                <p class="text-gray-500 text-center" data-translate="clothing_segmentation.no_history">${translate('clothing_segmentation.no_history')}</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // 限制只显示最新的3条记录
+                    const limitedHistory = recentHistory.slice(0, 3);
+                    console.log(`限制显示记录数量: 原始${recentHistory.length}条，显示${limitedHistory.length}条`);
+                    
+                    // 显示历史记录
+                    displayHistory(limitedHistory);
+                    
+                } catch (error) {
+                    console.error('加载历史记录失败:', error);
+                    historyContainer.innerHTML = '<p class="text-red-500 text-center py-4">加载历史记录失败，请稍后重试</p>';
+                }
+            }
+            
+            // 从服务器加载历史记录
+            async function loadHistoryFromServer() {
+                try {
+                    const authToken = localStorage.getItem('authToken');
+                    if (!authToken) {
+                        console.log('用户未登录，无法获取服务器历史记录');
+                        return [];
+                    }
+
+                    const response = await fetch('/api/cloth-segmentation/history', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.data && data.data.tasks) {
+                        const tasks = data.data.tasks;
+                        
+                        console.log(`从服务器获取到 ${tasks.length} 条服饰分割历史记录:`, tasks);
+                        
+                        // 验证每条记录的数据完整性
+                        const validHistory = tasks.filter(record => {
+                            return record && 
+                                   typeof record === 'object' && 
+                                   (record.outputUrl || record.imageUrl || record.result_image_url) &&
+                                   (record.created_at || record.createdAt || record.timestamp);
+                        });
+                        
+                        console.log(`服务器历史记录验证: 原始${tasks.length}条，有效${validHistory.length}条`);
+                        
+                        return validHistory;
+                    } else {
+                        console.warn('服务器返回的数据格式无效:', data);
+                        return [];
+                    }
+                } catch (error) {
+                    console.error('从服务器加载历史记录失败:', error);
+                    throw error;
+                }
+            }
+
+            // 显示历史记录
+            function displayHistory(tasks) {
+                if (!tasks || tasks.length === 0) {
+                    historyContainer.innerHTML = `
+                        <div class="col-span-full flex items-center justify-center py-8">
+                            <p class="text-gray-500 text-center" data-translate="clothing_segmentation.no_history">${translate('clothing_segmentation.no_history')}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 清空历史记录容器
+                historyContainer.innerHTML = '';
+                
+                // 遍历历史记录并创建卡片
+                for (let index = 0; index < tasks.length; index++) {
+                    const task = Object.assign({}, tasks[index]);
+                    
+                    if (!task || Array.isArray(task) || typeof task !== 'object') {
+                        console.error('历史记录项无效或不是对象:', task);
+                        continue;
+                    }
+                    
+                    console.log(`渲染服饰分割历史记录项 ${index}:`, task);
+                    
+                    try {
+                        const historyCard = createHistoryCard(task);
+                        historyContainer.appendChild(historyCard);
+                    } catch (cardError) {
+                        console.error('创建历史记录卡片失败:', cardError, task);
+                        continue;
+                    }
+                }
+            }
+            
+            // 创建历史记录卡片
+            function createHistoryCard(task) {
+                const card = document.createElement('div');
+                card.className = 'history-card bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200';
+                
+                // 安全地获取图片URL
+                let imageUrl = null;
+                let originalUrl = null;
+                
+                try {
+                    imageUrl = task.outputUrl || task.imageUrl || task.result_image_url;
+                    originalUrl = task.inputUrl || task.original_image_url;
+                } catch (e) {
+                    console.error('获取图片URL时出错:', e);
+                }
+                
+                if (!imageUrl) {
+                    console.warn('历史记录项缺少结果图片URL:', task);
+                    // 返回占位卡片
+                    card.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <i class="ri-image-line text-2xl mb-2"></i>
+                            <p class="text-sm">图片加载失败</p>
+                        </div>
+                    `;
+                    return card;
+                }
+                
+                // 验证时间戳并格式化
+                let createdAt = '未知时间';
+                const timestamp = task.created_at || task.createdAt || task.timestamp;
+                
+                try {
+                    const date = new Date(timestamp || new Date());
+                    if (!isNaN(date.getTime())) {
+                        createdAt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                    }
+                } catch (error) {
+                    console.warn('时间戳格式化失败:', timestamp, error);
+                }
+                
+                // 获取服饰类别信息
+                const clothClasses = task.clothClasses || task.cloth_classes || [];
+                const classesText = Array.isArray(clothClasses) && clothClasses.length > 0 
+                    ? clothClasses.map(cls => clothClassNames[cls] || cls).join(', ')
+                    : '服饰分割';
+                
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${imageUrl}" alt="服饰分割结果" class="history-thumbnail w-full h-32 object-cover" loading="lazy"
+                             onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPuWbvueJh+WKoOi9veWksei0pTwvdGV4dD48L3N2Zz4=';">
+                    </div>
+                    <div class="p-3">
+                        <p class="text-sm text-gray-700 truncate" title="${classesText}">${classesText}</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-xs text-gray-500">${createdAt}</span>
+                            <div class="flex space-x-1">
+                                <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1" onclick="downloadHistoryImage('${imageUrl}', '服饰分割_${task.id || new Date().getTime()}')" title="下载">
+                                    <i class="ri-download-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                return card;
+            }
+            
+            
+            // 下载历史图片 (增强版)
+            window.downloadHistoryImage = function(imageUrl, filename) {
+                try {
+                    // 验证图片URL是否有效
+                    const validateUrl = (url) => {
+                        return url && typeof url === 'string' && (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:'));
+                    };
+                    
+                    if (!validateUrl(imageUrl)) {
+                        alert('图片URL无效，无法下载');
+                        return;
+                    }
+                    
+                    console.log('开始下载历史图片:', {
+                        URL: imageUrl.substring(0, 50) + '...',
+                        文件名: filename
+                    });
+                    
+                    // 创建下载链接
+                    const link = document.createElement('a');
+                    link.href = imageUrl;
+                    link.download = filename + '.png';
+                    link.style.display = 'none';
+                    
+                    // 添加到DOM并触发下载
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 清理DOM
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                    }, 100);
+                    
+                    console.log('下载请求已发送');
+                    
+                } catch (error) {
+                    console.error('下载历史图片失败:', error);
+                    alert('下载失败: ' + error.message);
+                }
+            };
+            
+            // 通用下载图片函数 (供其他地方使用)
+            function downloadImage(imageUrl, filename) {
+                try {
+                    if (!imageUrl) {
+                        throw new Error('图片URL为空');
+                    }
+                    
+                    const link = document.createElement('a');
+                    link.href = imageUrl;
+                    link.download = filename || `服饰分割_${Date.now()}.png`;
+                    link.style.display = 'none';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                    }, 100);
+                    
+                    console.log('图片下载成功:', filename);
+                } catch (error) {
+                    console.error('下载图片失败:', error);
+                    throw error;
+                }
+            }
+            
+            // 清空历史记录
+            async function clearHistory() {
+                if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+                    try {
+                        const response = await fetch('/api/cloth-segmentation/history', {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            displayHistory([]);
+                            alert('历史记录已清空！');
+                        } else {
+                            alert('清空历史记录失败');
+                        }
+                    } catch (error) {
+                        console.error('清空历史记录失败:', error);
+                        alert('清空历史记录失败: ' + error.message);
+                    }
+                }
+            }
+            
+            // 绑定历史记录按钮事件
+            if (clearHistoryBtn) {
+                clearHistoryBtn.addEventListener('click', clearHistory);
+            }
+            
+            if (refreshHistoryBtn) {
+                refreshHistoryBtn.addEventListener('click', loadHistory);
+            }
+            
+            // 保存到历史记录
+            async function saveToHistory(taskData) {
+                try {
+                    // 1. 保存到服务器
+                    const response = await fetch('/api/cloth-segmentation/history', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify(taskData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('保存历史记录到服务器失败');
+                    }
+                    
+                    console.log('历史记录保存到OSS服务器成功');
+                    
+                } catch (error) {
+                    console.error('保存历史记录到OSS服务器失败:', error);
+                    throw new Error('保存历史记录失败');
+                }
+            }
+            // 页面加载完成后加载历史记录
+            loadHistory();
             
             // 显示分类结果
             function displayClassResults(classUrls) {
@@ -964,6 +1419,25 @@
                     return false;
                 }
             }
+        });
+
+        // 初始化翻译系统
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initializeTranslations === 'function') {
+                initializeTranslations();
+            }
+            
+            // 调试：添加语言切换测试按钮
+            console.log('当前语言:', localStorage.getItem('language') || 'zh');
+            console.log('可用翻译:', typeof translate === 'function' ? '是' : '否');
+            
+            // 添加全局调试函数
+            window.testLanguageSwitch = function(lang) {
+                localStorage.setItem('language', lang);
+                location.reload();
+            };
+            
+            console.log('调试提示：在控制台输入 testLanguageSwitch("en") 切换到英文，testLanguageSwitch("zh") 切换到中文');
         });
     </script>
 </body>

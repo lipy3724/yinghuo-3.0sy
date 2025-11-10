@@ -22,17 +22,17 @@ const ImageHistory = sequelize.define('ImageHistory', {
     comment: '图片标题'
   },
   originalImageUrl: {
-    type: DataTypes.TEXT,
+    type: DataTypes.TEXT('long'),
     allowNull: true,
     comment: '原始图片URL'
   },
   imageUrl: {
-    type: DataTypes.TEXT,
+    type: DataTypes.TEXT('long'),
     allowNull: false,
     comment: '图片URL（可能是原始图片或处理后的图片）'
   },
   processedImageUrl: {
-    type: DataTypes.TEXT,
+    type: DataTypes.TEXT('long'),
     allowNull: true,
     comment: '处理后的图片URL'
   },
@@ -55,7 +55,7 @@ const ImageHistory = sequelize.define('ImageHistory', {
     comment: '处理时间'
   },
   description: {
-    type: DataTypes.TEXT,
+    type: DataTypes.TEXT('long'),
     allowNull: true,
     comment: '处理描述'
   },

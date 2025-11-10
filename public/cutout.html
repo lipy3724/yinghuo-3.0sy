@@ -90,6 +90,49 @@
             }
         }
         
+        // 全局变量保存当前语言
+        let currentLanguage = 'zh-cn'; // 默认中文
+        
+        // 获取语言参数的函数
+        function getLanguageFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const lang = urlParams.get('lang');
+            
+            // 如果URL中有语言参数，使用它；否则使用默认的中文
+            if (lang === 'en-us' || lang === 'en') {
+                return 'en-us';
+            } else {
+                return 'zh-cn';
+            }
+        }
+
+        // 动态切换编辑器语言
+        function changeEditorLanguage(lang) {
+            console.log('切换编辑器语言到:', lang);
+            currentLanguage = lang;
+            
+            // 向编辑器iframe发送语言切换消息
+            if (iframeEle && iframeEle.contentWindow) {
+                const message = {
+                    lang: lang
+                };
+                iframeEle.contentWindow.postMessage(message, '*');
+                console.log('已向编辑器发送语言切换消息:', message);
+            }
+        }
+
+        // 监听来自父页面的语言切换消息
+        window.addEventListener('message', function(event) {
+            console.log('收到消息:', event.data);
+            
+            // 检查是否是语言切换消息
+            if (event.data && event.data.type === 'changeLanguage') {
+                const newLang = event.data.language;
+                console.log('收到语言切换请求:', newLang);
+                changeEditorLanguage(newLang);
+            }
+        });
+
         // 构建编辑器URL并加载
         async function initializeEditor() {
             // 首先获取配置
@@ -98,12 +141,16 @@
                 return; // 如果配置获取失败，不继续初始化
             }
             
+            // 获取初始语言设置（从URL参数或默认值）
+            currentLanguage = getLanguageFromUrl();
+            console.log('初始语言设置:', currentLanguage);
+            
             // 构建基本参数
             const params = {
                 apiHost: 'aibcn',
                 appKey: window.INTL_OP_FRAME_SDK_CONFIG.appKey,
                 trial: true,
-                lang: 'zh-cn',
+                lang: currentLanguage,
                 // 以下是抠图专用参数
                 bizMode: 'cutout', // 使用抠图模式
                 backGroundType: 'TRANSPARENT', // 透明背景

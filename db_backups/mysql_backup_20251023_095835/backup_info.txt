@@ -1,0 +1,25 @@
+数据库备份信息
+================
+
+备份时间: 2025-10-23 10:01:14
+数据库名: yinghuo
+数据库类型: MySQL (MariaDB 10.4.28)
+备份方法: mysqldump
+
+备份文件信息:
+- 文件名: yinghuo_mysql_backup.sql
+- 文件大小: 1.84MB (1936030 bytes)
+- 文件行数:      461
+- 表数量: 12
+- INSERT语句数量: 10
+
+备份参数:
+- 主机: 127.0.0.1
+- 端口: 3306
+- 用户: root
+- 参数: --single-transaction --skip-routines --skip-triggers
+
+恢复命令:
+mysql -h 127.0.0.1 -P 3306 -u root yinghuo < yinghuo_mysql_backup.sql
+
+备份状态: 成功 ✅

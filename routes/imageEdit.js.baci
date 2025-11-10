@@ -6,6 +6,7 @@ const { FEATURES } = require('../middleware/featureAccess');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
 const User = require('../models/User');
 const { FeatureUsage } = require('../models/FeatureUsage');
+const { refundLocalRedrawCredits } = require('../utils/refundManager');
 
 // 配置API密钥和基础URL
 const API_KEY = process.env.DASHSCOPE_API_KEY;
@@ -146,7 +147,8 @@ router.post('/create-task', protect, async (req, res) => {
             timestamp: new Date(),
             imageUrl: requestData.input?.base_image_url,
             prompt: requestData.input?.prompt,
-            isFree: isFree // 添加免费使用标记
+            isFree: isFree, // 添加免费使用标记
+            status: 'pending' // 添加任务状态
           };
           
           console.log(`局部重绘任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}, 积分=${creditCost}, 是否免费=${isFree}`);
@@ -170,15 +172,17 @@ router.post('/create-task', protect, async (req, res) => {
                 taskId: taskId,
                 creditCost: creditCost, // 积分已在中间件中扣除
                 timestamp: new Date(),
-                isFree: isFree // 添加免费使用标记
+                isFree: isFree, // 添加免费使用标记
+                status: 'pending' // 添加任务状态
               });
               
-              // 更新usage记录 - 更新details字段但不重复累加积分
-              // 积分已在统一中间件中扣除，这里不需要再次累加
+              // 更新usage记录 - 更新details字段
               usage.details = JSON.stringify({
                 ...details,
                 tasks: tasks
               });
+              
+              // 不在这里累加积分，积分已在统一中间件中扣除
               
               // 保存更新
               await usage.save();
@@ -196,7 +200,8 @@ router.post('/create-task', protect, async (req, res) => {
                     taskId: taskId,
                     creditCost: creditCost, // 积分已在中间件中扣除
                     timestamp: new Date(),
-                    isFree: isFree // 添加免费使用标记
+                    isFree: isFree, // 添加免费使用标记
+                    status: 'pending' // 添加任务状态
                   }]
                 })
               });
@@ -209,6 +214,32 @@ router.post('/create-task', protect, async (req, res) => {
           
           return res.status(response.status || 200).json(response.data);
         } catch (error) {
+          // 处理API调用失败，尝试退款
+          try {
+            // 使用任务ID进行退款，确保可以追踪
+            const taskId = `redraw-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+            console.log(`局部重绘API调用失败，尝试退款: 用户ID=${req.user.id}, 任务ID=${taskId}`);
+            
+            // 记录失败任务信息
+            if (!global.localRedrawTasks) {
+              global.localRedrawTasks = {};
+            }
+            
+            global.localRedrawTasks[taskId] = {
+              userId: req.user.id,
+              creditCost: req.featureUsage?.creditCost || 0,
+              hasChargedCredits: true,
+              timestamp: new Date(),
+              status: 'FAILED',
+              errorMessage: `API调用失败: ${error.message}`
+            };
+            
+            // 调用退款函数
+            await refundLocalRedrawCredits(req.user.id, taskId, `API调用失败: ${error.message}`);
+          } catch (refundError) {
+            console.error('局部重绘退款失败:', refundError);
+          }
+          
           handleApiError(error, res);
         }
       });
@@ -653,7 +684,7 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
             const responseData = response.data;
             console.log('详细响应数据:', JSON.stringify(responseData, null, 2));
             
-            // 如果任务成功完成，更新全局变量中的状态
+            // 如果任务成功完成，更新全局变量中的状态和数据库记录
             if (responseData.output?.task_status === 'SUCCEEDED') {
                 // 尝试获取图片URL
                 let resultUrl = '';
@@ -673,8 +704,49 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
                     global.imageEditTasks[taskId].completedAt = new Date();
                     console.log(`更新指令编辑任务状态: taskId=${taskId}, status=SUCCEEDED`);
                 }
+                
+                // 检查是否是局部重绘任务
+                if (global.localRedrawTasks && global.localRedrawTasks[taskId]) {
+                    global.localRedrawTasks[taskId].status = 'SUCCEEDED';
+                    global.localRedrawTasks[taskId].resultUrl = resultUrl;
+                    global.localRedrawTasks[taskId].completedAt = new Date();
+                    console.log(`更新局部重绘任务状态: taskId=${taskId}, status=SUCCEEDED`);
+                    
+                    // 更新数据库中的任务状态
+                    try {
+                        const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                        const userId = global.localRedrawTasks[taskId].userId;
+                        const originalImageUrl = global.localRedrawTasks[taskId].imageUrl;
+                        const creditCost = global.localRedrawTasks[taskId].creditCost || 0;
+                        const isFree = global.localRedrawTasks[taskId].isFree || false;
+                        
+                        const usage = await FeatureUsage.findOne({
+                            where: { userId, featureName: 'LOCAL_REDRAW' }
+                        });
+                        
+                        if (usage) {
+                            // 使用saveTaskDetails更新任务状态
+                            await saveTaskDetails(usage, {
+                                taskId: taskId,
+                                status: 'completed',
+                                timestamp: new Date().toISOString(),
+                                creditCost: creditCost,
+                                isFree: isFree,
+                                featureName: 'LOCAL_REDRAW',
+                                extraData: {
+                                    resultUrl: resultUrl,
+                                    originalImage: originalImageUrl
+                                }
+                            });
+                            
+                            console.log(`更新数据库中局部重绘任务状态: taskId=${taskId}, status=completed`);
+                        }
+                    } catch (dbError) {
+                        console.error('更新数据库中局部重绘任务状态失败:', dbError);
+                    }
+                }
             }
-            // 如果任务失败，更新全局变量中的状态
+            // 如果任务失败，更新全局变量中的状态和数据库记录，并尝试退款
             else if (responseData.output?.task_status === 'FAILED') {
                 const taskId = responseData.output.task_id;
                 const errorMessage = responseData.output.message || '任务执行失败';
@@ -685,6 +757,50 @@ router.get('/task-status/:taskId', protect, async (req, res) => {
                     global.imageEditTasks[taskId].errorMessage = errorMessage;
                     global.imageEditTasks[taskId].completedAt = new Date();
                     console.log(`更新指令编辑任务状态: taskId=${taskId}, status=FAILED, error=${errorMessage}`);
+                }
+                
+                // 检查是否是局部重绘任务
+                if (global.localRedrawTasks && global.localRedrawTasks[taskId]) {
+                    global.localRedrawTasks[taskId].status = 'FAILED';
+                    global.localRedrawTasks[taskId].errorMessage = errorMessage;
+                    global.localRedrawTasks[taskId].completedAt = new Date();
+                    console.log(`更新局部重绘任务状态: taskId=${taskId}, status=FAILED, error=${errorMessage}`);
+                    
+                    // 更新数据库中的任务状态
+                    try {
+                        const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+                        const userId = global.localRedrawTasks[taskId].userId;
+                        const originalImageUrl = global.localRedrawTasks[taskId].imageUrl;
+                        const creditCost = global.localRedrawTasks[taskId].creditCost || 0;
+                        const isFree = global.localRedrawTasks[taskId].isFree || false;
+                        
+                        const usage = await FeatureUsage.findOne({
+                            where: { userId, featureName: 'LOCAL_REDRAW' }
+                        });
+                        
+                        if (usage) {
+                            // 使用saveTaskDetails更新任务状态
+                            await saveTaskDetails(usage, {
+                                taskId: taskId,
+                                status: 'failed',
+                                timestamp: new Date().toISOString(),
+                                creditCost: creditCost,
+                                isFree: isFree,
+                                featureName: 'LOCAL_REDRAW',
+                                error: errorMessage,
+                                extraData: {
+                                    originalImage: originalImageUrl
+                                }
+                            });
+                            
+                            console.log(`更新数据库中局部重绘任务状态: taskId=${taskId}, status=failed`);
+                        }
+                        
+                        // 尝试退款
+                        await refundLocalRedrawCredits(userId, taskId, `任务失败: ${errorMessage}`);
+                    } catch (dbError) {
+                        console.error('更新数据库中局部重绘任务状态失败:', dbError);
+                    }
                 }
             }
             

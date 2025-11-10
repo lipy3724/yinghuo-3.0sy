@@ -1,0 +1,49 @@
+映火AI项目数据库完整备份报告
+=====================================
+
+备份时间: 2025-10-11 17:44:15
+备份类型: 完整备份
+备份目录: db_backups/complete_backup_20251011_174415
+项目路径: /Users/houkai/Documents/Yinghuo1/积分end
+
+数据库备份详情:
+
+1. SQLite数据库 (yinghuo.db)
+   - 文件大小: 40K
+   - 用户数量: 5
+   - 功能使用记录: 1
+   - 图片历史记录: 0
+   - 备份文件: yinghuo.db, yinghuo_20251011_174415.sql
+   - database.db: 已备份
+   - database.sqlite: 已备份
+   - MySQL数据库: mysqldump命令未找到
+   - MongoDB数据库: 未配置或mongodump命令未找到
+   - 配置文件: 已备份
+
+备份摘要:
+========
+- 备份总大小: 140K
+- 备份文件数量:       23
+- 备份完成时间: 2025-10-11 17:44:15
+
+恢复说明:
+========
+1. SQLite数据库恢复:
+   cp db_backups/complete_backup_20251011_174415/yinghuo.db ./yinghuo.db
+   或
+   sqlite3 yinghuo.db < db_backups/complete_backup_20251011_174415/yinghuo_20251011_174415.sql
+
+2. MySQL数据库恢复 (如果有备份):
+   mysql -h$DB_HOST -u$DB_USER -p$DB_PASSWORD $DB_NAME < db_backups/complete_backup_20251011_174415/mysql_yinghuo_20251011_174415.sql
+
+3. MongoDB数据库恢复 (如果有备份):
+   mongorestore --uri="$MONGODB_URI" db_backups/complete_backup_20251011_174415/mongodb_backup/
+
+注意事项:
+========
+- 恢复前请备份当前数据库
+- 确保目标环境的数据库版本兼容
+- 恢复后检查数据完整性
+- 敏感配置信息(.env)需要单独配置
+
+   - 压缩文件: db_backups/complete_backup_20251011_174415.tar.gz

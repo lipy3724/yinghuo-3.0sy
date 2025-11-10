@@ -359,7 +359,7 @@ async function callVideoSubtitleRemovalApi(params) {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json'
                 },
-                timeout: 20000 // 20秒超时
+                timeout: 60000 // 60秒超时
             });
         } catch (postError) {
             console.error('视频字幕擦除API POST请求失败，尝试GET方法:', postError.message);
@@ -368,7 +368,7 @@ async function callVideoSubtitleRemovalApi(params) {
                 headers: {
                     'Accept': 'application/json'
                 },
-                timeout: 20000 // 20秒超时
+                timeout: 60000 // 60秒超时
             });
         }
         
@@ -442,7 +442,7 @@ async function checkAsyncJobStatus(jobId) {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json'
                 },
-                timeout: 10000 // 10秒超时
+                timeout: 30000 // 30秒超时
             });
         } catch (postError) {
             console.error('POST请求失败，尝试GET方法:', postError.message);
@@ -451,7 +451,7 @@ async function checkAsyncJobStatus(jobId) {
                 headers: {
                     'Accept': 'application/json'
                 },
-                timeout: 10000
+                timeout: 30000 // 30秒超时
             });
         }
         

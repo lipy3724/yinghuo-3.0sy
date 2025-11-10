@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>亚马逊Listing专业写作 - 萤火AI</title>
+    <title data-translate="amazon_listing.page_title">亚马逊Listing专业写作 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
@@ -171,6 +171,7 @@
     <link rel="stylesheet" href="/components/styles.css">
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
+    <script src="/js/translations.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏容器 -->
@@ -201,10 +202,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">listing写作与优化</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="amazon_listing.main_title">listing写作与优化</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="listing-writer" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入您的产品信息，AI将为您生成专业的亚马逊Listing，包括标题、五点描述和产品描述。</p>
+                    <p class="text-gray-600 mb-4" data-translate="amazon_listing.description">输入您的产品信息，AI将为您生成专业的亚马逊Listing，包括标题、五点描述和产品描述。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -212,13 +213,13 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="amazon_listing.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>提供详细的产品信息，包括产品特点、材质、尺寸等</li>
-                                    <li>添加目标关键词以确保100%的关键词相关性和埋词率</li>
-                                    <li>标题长度将控制在150-200个字符之间</li>
-                                    <li>五点描述每点不超过200个字符，突出产品特性</li>
-                                    <li>当产品类目不为空时，商品特性将以类目特性为基础展开</li>
+                                    <li data-translate="amazon_listing.tip1">提供详细的产品信息，包括产品特点、材质、尺寸等</li>
+                                    <li data-translate="amazon_listing.tip2">添加目标关键词以确保100%的关键词相关性和埋词率</li>
+                                    <li data-translate="amazon_listing.tip3">标题长度将控制在150-200个字符之间</li>
+                                    <li data-translate="amazon_listing.tip4">五点描述每点不超过200个字符，突出产品特性</li>
+                                    <li data-translate="amazon_listing.tip5">当产品类目不为空时，商品特性将以类目特性为基础展开</li>
                                 </ul>
                             </div>
                         </div>
@@ -226,14 +227,14 @@
                     
                     <form id="listingWriterForm">
                         <div class="mb-5">
-                            <label for="productFeatureCount" class="block text-gray-700 font-medium mb-2">商品特性的条数 <span class="text-red-500">*</span></label>
-                            <input type="text" id="productFeatureCount" name="productFeatureCount" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入商品特性的条数，如果不填则默认为5">
+                            <label for="productFeatureCount" class="block text-gray-700 font-medium mb-2" data-translate="amazon_listing.product_feature_count">商品特性的条数 <span class="text-red-500">*</span></label>
+                            <input type="text" id="productFeatureCount" name="productFeatureCount" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_listing.product_feature_count_placeholder" placeholder="请输入商品特性的条数，如果不填则默认为5">
                         </div>
                         
                         <div class="mb-5">
-                            <label for="productKeywords" class="block text-gray-700 font-medium mb-2">商品关键词 <span class="text-red-500">*</span></label>
+                            <label for="productKeywords" class="block text-gray-700 font-medium mb-2" data-translate="amazon_listing.product_keywords">商品关键词 <span class="text-red-500">*</span></label>
                             <div class="flex">
-                                <input type="text" id="productKeywords" name="productKeywords" class="form-input w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入商品关键词" required>
+                                <input type="text" id="productKeywords" name="productKeywords" class="form-input w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_listing.product_keywords_placeholder" placeholder="请输入商品关键词" required>
                                 <button type="button" id="aiRecommendKeywords" class="btn-primary px-3 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700 focus:outline-none">
                                     <i class="ri-magic-line"></i>
                                 </button>
@@ -241,30 +242,30 @@
                         </div>
                         
                         <div class="mb-5">
-                            <label for="productBrand" class="block text-gray-700 font-medium mb-2">商品品牌</label>
-                            <input type="text" id="productBrand" name="productBrand" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入商品品牌，如果不填则认为无">
+                            <label for="productBrand" class="block text-gray-700 font-medium mb-2" data-translate="amazon_listing.product_brand">商品品牌</label>
+                            <input type="text" id="productBrand" name="productBrand" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_listing.product_brand_placeholder" placeholder="请输入商品品牌，如果不填则认为无">
                         </div>
                         
                         <div class="mb-5">
-                            <label for="productCategory" class="block text-gray-700 font-medium mb-2">商品类目</label>
-                            <input type="text" id="productCategory" name="productCategory" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入商品类目，如果不填则认为无">
+                            <label for="productCategory" class="block text-gray-700 font-medium mb-2" data-translate="amazon_listing.product_category">商品类目</label>
+                            <input type="text" id="productCategory" name="productCategory" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_listing.product_category_placeholder" placeholder="请输入商品类目，如果不填则认为无">
                         </div>
                         
                         <div class="mb-5">
-                            <label for="productSellingPoints" class="block text-gray-700 font-medium mb-2">商品卖点</label>
-                            <textarea id="productSellingPoints" name="productSellingPoints" rows="3" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入商品卖点，如果不填则认为无"></textarea>
+                            <label for="productSellingPoints" class="block text-gray-700 font-medium mb-2" data-translate="amazon_listing.product_selling_points">商品卖点</label>
+                            <textarea id="productSellingPoints" name="productSellingPoints" rows="3" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="amazon_listing.product_selling_points_placeholder" placeholder="请输入商品卖点，如果不填则认为无"></textarea>
                         </div>
                         
                         <div class="mb-5">
-                            <label class="block text-gray-700 font-medium mb-2">生成语言</label>
+                            <label class="block text-gray-700 font-medium mb-2" data-translate="amazon_listing.output_language">生成语言</label>
                             <div class="flex gap-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="text-indigo-600 focus:ring-indigo-500" checked>
-                                    <span class="ml-2">中文</span>
+                                    <span class="ml-2" data-translate="amazon_listing.chinese">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="ml-2">英文</span>
+                                    <span class="ml-2" data-translate="amazon_listing.english">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -272,7 +273,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateListingButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-magic-line mr-2"></i>
-                                生成Listing
+                                <span data-translate="amazon_listing.generate_listing">生成Listing</span>
                             </button>
                         </div>
                     </form>
@@ -283,19 +284,19 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">生成结果</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2" data-translate="amazon_listing.generation_results">生成结果</h2>
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-price-tag-3-line mr-2 text-indigo-500"></i>标题
+                        <i class="ri-price-tag-3-line mr-2 text-indigo-500"></i><span data-translate="amazon_listing.title">标题</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <p id="generatedTitle" class="text-gray-800"></p>
-                        <p class="text-xs text-gray-500 mt-2">字符数：<span id="titleCharCount">0</span>/200</p>
+                        <p class="text-xs text-gray-500 mt-2"><span data-translate="amazon_listing.character_count">字符数</span>：<span id="titleCharCount">0</span>/200</p>
                     </div>
                 </div>
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-list-check-2 mr-2 text-indigo-500"></i>产品特性
+                        <i class="ri-list-check-2 mr-2 text-indigo-500"></i><span data-translate="amazon_listing.product_features">产品特性</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <ul id="generatedBulletPoints" class="list-disc ml-5 space-y-2 text-gray-800"></ul>
@@ -303,7 +304,7 @@
                 </div>
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-file-text-line mr-2 text-indigo-500"></i>产品描述
+                        <i class="ri-file-text-line mr-2 text-indigo-500"></i><span data-translate="amazon_listing.product_description">产品描述</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <div id="generatedDescription" class="text-gray-800 whitespace-pre-line"></div>
@@ -312,12 +313,12 @@
                 <div class="flex justify-end gap-3">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制全部
+                        <span data-translate="amazon_listing.copy_all">复制全部</span>
                     </button>
 
                     <button type="button" id="newGenerationButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        重新生成
+                        <span data-translate="amazon_listing.regenerate">重新生成</span>
                     </button>
                 </div>
             </div>
@@ -327,8 +328,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-file-list-3-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">您的Listing结果将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"生成Listing"按钮开始创建</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="amazon_listing.result_placeholder_title">您的Listing结果将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="amazon_listing.result_placeholder_desc">填写左侧表单并点击“生成Listing”按钮开始创建</p>
                 </div>
             </div>
         </div>
@@ -336,13 +337,55 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在处理中，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="amazon_listing.processing">正在处理中，请稍候...</p>
             </div>
         </div>
     </div>
 
     <script>
+        // 翻译系统支持
+        function getTranslation(key) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+        }
+
+        // 更新页面语言
+        function updatePageLanguage() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 更新页面标题
+            document.title = getTranslation('amazon_listing.page_title');
+            
+            // 更新所有带有 data-translate 属性的元素
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                
+                if (element.tagName === 'TITLE') {
+                    element.textContent = translation;
+                } else if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                    element.placeholder = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            });
+            
+            // 更新所有带有 data-translate-placeholder 属性的元素
+            document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                const translation = getTranslation(key);
+                element.placeholder = translation;
+            });
+        }
+
+        // 监听语言变化
+        window.addEventListener('languageChanged', function() {
+            updatePageLanguage();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            // 初始化翻译系统
+            updatePageLanguage();
             // Listing写作表单提交
             const listingWriterForm = document.getElementById('listingWriterForm');
             const generateListingButton = document.getElementById('generateListingButton');
@@ -414,7 +457,7 @@
                 e.preventDefault();
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在生成Listing，请稍候...';
+                processingText.textContent = getTranslation('amazon_listing.generating');
                 try {// 获取表单数据
                     const formData = {
                         productFeatureCount: document.getElementById('productFeatureCount').value,
@@ -438,7 +481,7 @@
                     const result = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(result.error || '生成Listing失败');
+                        throw new Error(result.error || getTranslation('amazon_listing.error.generation_failed'));
                     }
                     
                     // 更新结果
@@ -472,7 +515,7 @@
                     
                 } catch (error) {
                     console.error('生成Listing出错:', error);
-                    alert(`生成失败: ${error.message}`);
+                    alert(`${getTranslation('amazon_listing.error.generation_failed')}: ${error.message}`);
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -485,11 +528,11 @@
                     .map(li => li.textContent)
                     .join('\n');
                 const description = document.getElementById('generatedDescription').textContent;
-                const fullText = `标题：\n${title}\n\n产品特性：\n${bulletPoints}\n\n产品描述：\n${description}`;
+                const fullText = `${getTranslation('amazon_listing.copy_format_title')}\n${title}\n\n${getTranslation('amazon_listing.copy_format_features')}\n${bulletPoints}\n\n${getTranslation('amazon_listing.copy_format_description')}\n${description}`;
                 navigator.clipboard.writeText(fullText).then(() => {
                     // 显示复制成功提示
                     const originalText = copyButton.innerHTML;
-                    copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                    copyButton.innerHTML = `<i class="ri-check-line mr-1"></i>${getTranslation('amazon_listing.copied')}`;
                     copyButton.classList.add('bg-green-500', 'text-white');
                     copyButton.classList.remove('text-indigo-600', 'bg-white');
                     
@@ -528,13 +571,13 @@
                     const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
                     
                     if (!productCategory) {
-                        alert('请先填写商品类目，以便AI推荐相关关键词。');
+                        alert(getTranslation('amazon_listing.error.category_required'));
                         return;
                     }
                     
                     try {
                         loadingOverlay.classList.remove('hidden');
-                        processingText.textContent = '正在生成推荐关键词，请稍候...';// 调用API获取AI推荐关键词
+                        processingText.textContent = getTranslation('amazon_listing.generating_keywords');// 调用API获取AI推荐关键词
                         const response = await fetch('/api/amazon-listing/recommend-keywords', {
                             method: 'POST',
                             headers: {
@@ -550,7 +593,7 @@
                         const result = await response.json();
                         
                         if (!response.ok) {
-                            throw new Error(result.error || '获取推荐关键词失败');
+                            throw new Error(result.error || getTranslation('amazon_listing.error.keywords_failed'));
                         }
                         
                         // 更新关键词输入框
@@ -568,7 +611,7 @@
                         
                     } catch (error) {
                         console.error('获取推荐关键词出错:', error);
-                        alert(`获取推荐关键词失败: ${error.message}`);
+                        alert(`${getTranslation('amazon_listing.error.keywords_failed')}: ${error.message}`);
                         loadingOverlay.classList.add('hidden');
                     }
                 });

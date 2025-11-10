@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>恢复Test账户历史记录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .status.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">恢复Test账户历史记录</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">问题说明</h2>
+            <p class="text-gray-700 mb-4">
+                由于之前的用户状态监听函数存在bug，在用户切换时会错误地清除之前用户的历史记录。
+                这个工具可以帮助恢复test账户的历史记录。
+            </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">当前状态</h2>
+            <div id="current-status" class="status info">
+                检查中...
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">操作</h2>
+            <div class="space-y-4">
+                <button onclick="checkAllHistoryKeys()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    检查所有历史记录键
+                </button>
+                <button onclick="simulateTestUser()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    模拟Test用户登录
+                </button>
+                <button onclick="restoreTestHistory()" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
+                    恢复Test用户历史记录
+                </button>
+                <button onclick="clearAllData()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    清空所有数据
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">localStorage状态</h2>
+            <div id="localStorage-content" class="bg-gray-100 p-4 rounded text-sm font-mono">
+                暂无数据
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 更新状态显示
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('current-status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        // 更新localStorage显示
+        function updateLocalStorageDisplay() {
+            const contentDiv = document.getElementById('localStorage-content');
+            const allKeys = Object.keys(localStorage);
+            const imageColorizationKeys = allKeys.filter(key => key.startsWith('imageColorizationHistory'));
+            
+            let content = '所有localStorage键:\n\n';
+            
+            // 显示所有键
+            allKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const isImageColorization = key.startsWith('imageColorizationHistory');
+                const isUser = key === 'user';
+                const isAuthToken = key === 'authToken';
+                
+                let icon = '📁';
+                if (isImageColorization) icon = '🔑';
+                else if (isUser) icon = '👤';
+                else if (isAuthToken) icon = '🔐';
+                
+                content += `${icon} ${key}:\n`;
+                
+                if (isImageColorization) {
+                    try {
+                        const history = value ? JSON.parse(value) : [];
+                        content += `   记录数量: ${history.length}\n`;
+                        if (history.length > 0) {
+                            content += `   最新记录: ${history[0].prompt || '无标题'}\n`;
+                            content += `   创建时间: ${new Date(history[0].createdAt).toLocaleString()}\n`;
+                        }
+                    } catch (e) {
+                        content += `   数据格式错误\n`;
+                    }
+                } else if (isUser) {
+                    try {
+                        const user = value ? JSON.parse(value) : null;
+                        if (user) {
+                            content += `   用户ID: ${user.id || '未知'}\n`;
+                            content += `   用户名: ${user.username || '未知'}\n`;
+                            content += `   手机: ${user.phone || '未知'}\n`;
+                        }
+                    } catch (e) {
+                        content += `   数据格式错误\n`;
+                    }
+                } else {
+                    content += `   值: ${value ? value.substring(0, 50) + '...' : 'null'}\n`;
+                }
+                content += '\n';
+            });
+            
+            if (imageColorizationKeys.length === 0) {
+                content += '没有找到图像上色历史记录键\n';
+            }
+            
+            contentDiv.textContent = content;
+        }
+
+        // 检查所有历史记录键
+        function checkAllHistoryKeys() {
+            updateStatus('检查所有历史记录键...', 'info');
+            updateLocalStorageDisplay();
+            
+            const imageColorizationKeys = Object.keys(localStorage).filter(key => key.startsWith('imageColorizationHistory'));
+            
+            if (imageColorizationKeys.length > 0) {
+                updateStatus(`找到 ${imageColorizationKeys.length} 个历史记录键`, 'success');
+            } else {
+                updateStatus('没有找到任何历史记录键', 'error');
+            }
+        }
+
+        // 模拟Test用户登录
+        function simulateTestUser() {
+            const testUser = {
+                id: 'test_user_123',
+                username: 'test',
+                phone: '13800138000'
+            };
+            
+            localStorage.setItem('user', JSON.stringify(testUser));
+            localStorage.setItem('authToken', 'token_test_' + Date.now());
+            
+            updateStatus('Test用户已登录', 'success');
+            updateLocalStorageDisplay();
+        }
+
+        // 恢复Test用户历史记录
+        function restoreTestHistory() {
+            const testUser = {
+                id: 'test_user_123',
+                username: 'test',
+                phone: '13800138000'
+            };
+            
+            // 设置Test用户
+            localStorage.setItem('user', JSON.stringify(testUser));
+            
+            // 创建Test用户的历史记录
+            const testHistoryKey = 'imageColorizationHistory_test_user_123';
+            const testHistory = [
+                {
+                    originalImage: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+                    resultImage: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+                    prompt: 'Test用户的图像上色记录 - 恢复测试',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    originalImage: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+                    resultImage: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=',
+                    prompt: 'Test用户的第二张图像上色记录',
+                    createdAt: new Date(Date.now() - 3600000).toISOString() // 1小时前
+                }
+            ];
+            
+            localStorage.setItem(testHistoryKey, JSON.stringify(testHistory));
+            
+            updateStatus('Test用户历史记录已恢复', 'success');
+            updateLocalStorageDisplay();
+        }
+
+        // 清空所有数据
+        function clearAllData() {
+            if (confirm('确定要清空所有数据吗？此操作不可恢复。')) {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.startsWith('imageColorizationHistory') || key === 'user' || key === 'authToken')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                
+                updateStatus('所有数据已清空', 'success');
+                updateLocalStorageDisplay();
+            }
+        }
+
+        // 页面加载时更新显示
+        window.addEventListener('load', function() {
+            updateLocalStorageDisplay();
+            checkAllHistoryKeys();
+        });
+    </script>
+</body>
+</html>
+

@@ -34,7 +34,7 @@ router.use((req, res, next) => {
 
 // GLM-4 API配置
 const GLM4_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const API_KEY = '3b44830460204a70971923fe409f1e5c.KcLtiQMc0M4oXnOV';
+const API_KEY = 'aac9756fe5ec431299e7555d0b305183.I2AatcK7F71HY0t2';
 
 // 构建请求头中的认证信息
 const getAuthHeaders = () => {
@@ -1027,7 +1027,8 @@ unmetNeeds:
             top_p: 0.8,
             max_tokens: 4000
         }, {
-            headers: getAuthHeaders()
+            headers: getAuthHeaders(),
+            timeout: 60000 // 增加超时时间到60秒，适应消费者洞察的复杂分析需求
         });
 
         // 解析API响应

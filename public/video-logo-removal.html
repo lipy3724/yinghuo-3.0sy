@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com; media-src 'self' blob: data: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com https://yinghuo-ai.oss-cn-shanghai.aliyuncs.com; connect-src 'self' https://*.aliyuncs.com;">
+    <title>视频去水印/Logo - 萤火AI</title>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- 统一认证检查 -->
+    <script src="/js/auth-check.js"></script>
+    <!-- 导航栏样式 -->
+    <link rel="stylesheet" href="/components/styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-y: auto;
+        }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #6366f1;
+            background-color: #f9fafb;
+        }
+        .upload-area.dragover {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+        .video-preview-container {
+            aspect-ratio: 16/9;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e5e7eb;
+        }
+        .video-preview-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .logo-box-selector {
+            position: absolute;
+            border: 2px solid #ef4444;
+            background-color: rgba(239, 68, 68, 0.1);
+            cursor: move;
+            min-width: 20px;
+            min-height: 20px;
+        }
+        .logo-box-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: nw-resize;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .logo-box-handle:hover {
+            background-color: #dc2626;
+            transform: scale(1.2);
+        }
+        .logo-box-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+        .logo-box-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+        .logo-box-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+        .logo-box-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+        .task-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fff;
+        }
+        .task-item.processing {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .task-item.completed {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .task-item.failed {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .processing-animation {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 简化版导航栏 -->
+    <div id="navbar-simple"></div>
+
+    <!-- 主要内容 -->
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8">视频去水印/Logo</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧面板: 上传视频和设置 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">视频去水印设置</h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">视频上传</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-gray-700">上传需要去除水印的视频</span>
+                    </div>
+                    <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
+                        <input type="file" id="video-upload" class="hidden" accept="video/mp4">
+                        <div id="upload-placeholder">
+                            <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">拖放视频到此处或 <span class="text-indigo-600 font-medium">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1">支持 MP4 格式，最大1GB，分辨率不超过1080P</p>
+                        </div>
+                        <div id="preview-container" class="hidden">
+                            <p id="video-info" class="text-sm text-gray-500"></p>
+                            <button type="button" id="remove-video" class="mt-2 text-sm text-red-500 hover:text-red-700">
+                                移除视频
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">支持MP4格式，最大1GB，分辨率不超过1080P</p>
+                </div>
+
+                <!-- 添加视频时长和积分消耗信息 -->
+                <div id="video-duration-info" class="hidden mb-6 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+                    <i class="ri-time-line mr-1"></i>
+                    视频时长: 计算中...
+                </div>
+
+                <!-- 添加积分扣除说明 -->
+                <div class="mb-6 p-3 bg-green-50 text-green-700 rounded-md text-sm">
+                    <i class="ri-information-line mr-1"></i>
+                    <strong>积分将在任务成功完成后才扣除</strong>，请耐心等待处理结果。任务失败不会扣除积分。
+                </div>
+
+                <!-- 水印区域设置（上传后显示） -->
+                <div id="logo-settings-section" class="mb-6" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">水印区域设置</label>
+                    <div class="text-gray-600 text-sm mb-2">
+                        <p class="mb-1">在右侧视频预览区域点击并拖拽来选择要去除的水印区域，最多可选择2个区域</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        <button id="add-logo-box" class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">
+                            <i class="fas fa-plus mr-1"></i>添加区域
+                        </button>
+                        <button id="clear-logo-boxes" class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">
+                            <i class="fas fa-trash mr-1"></i>清除所有
+                        </button>
+                    </div>
+                    <div id="logo-boxes-list" class="space-y-2">
+                        <!-- 水印区域列表将在这里显示 -->
+                    </div>
+                </div>
+                
+                <div class="pt-4">
+                    <button id="submit-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="ri-magic-line mr-2"></i>
+                        开始处理
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500">
+                        处理时间与视频长度成正比，5 积分/30秒（不满30秒按30秒计算）
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium">
+                        请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 右侧面板: 视频预览和历史记录 -->
+            <div class="lg:col-span-3">
+                <!-- 视频预览区域 -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h2 class="text-xl font-bold mb-4">视频预览</h2>
+                    <div id="original-video-container" class="video-preview-container flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative">
+                        <div id="original-video-wrapper" class="hidden w-full h-full relative">
+                            <video id="original-video" class="w-full h-full object-contain" controls></video>
+                        </div>
+                        <div id="original-video-placeholder" class="text-center p-6">
+                            <i class="ri-video-line text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">您上传的视频将在这里显示</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 处理后视频区域 -->
+                    <div id="resultContainer" class="hidden mt-6">
+                        <h3 class="text-lg font-medium text-gray-700 mb-2">处理后视频</h3>
+                        <div id="output-video-container" class="video-preview-container flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative">
+                            <div id="output-video-wrapper" class="hidden w-full h-full relative">
+                                <video id="output-video" class="w-full h-full object-contain" controls></video>
+                            </div>
+                            <div id="output-video-placeholder" class="text-center p-6">
+                                <i class="ri-video-line text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-gray-500 text-sm">处理结果将在这里显示</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="generation-status" class="mt-4 hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">处理进度</span>
+                            <span id="status-text" class="text-sm text-indigo-600">正在处理...</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-3 mt-4 hidden" id="video-actions">
+                        <button id="download-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <i class="ri-download-2-line mr-1"></i>
+                            下载视频
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">生成历史</h2>
+                        <div class="flex space-x-2">
+                            <button id="clear-all-tasks-global-btn" class="text-gray-500 hover:text-red-600" title="清空历史记录">
+                                <i class="ri-delete-bin-line text-xl"></i>
+                            </button>
+                            <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800" title="刷新历史记录">
+                                <i class="ri-refresh-line text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="history-container" class="space-y-4">
+                        <div class="text-center py-8 text-gray-500">
+                            <p>暂无视频去水印记录</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 保存时间提示 -->
+                    <p class="text-xs text-gray-400 mt-3 text-center">仅显示24小时内的历史记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载导航栏组件
+            try {
+                const navbarResponse = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await navbarResponse.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件JavaScript
+                const componentsScript = document.createElement('script');
+                componentsScript.src = '/components/components.js';
+                document.head.appendChild(componentsScript);
+            } catch (error) {
+                console.error('加载导航栏失败:', error);
+            }
+        });
+    </script>
+
+    <!-- 主要JavaScript逻辑 -->
+    <script>
+        // 全局变量
+        let uploadedVideo = null;
+        let currentTask = null;
+        let logoBoxes = [];
+        let isSelecting = false;
+        let currentBox = null;
+
+        // DOM元素
+        const uploadArea = document.getElementById('upload-area');
+        const videoUpload = document.getElementById('video-upload');
+        const logoSettingsSection = document.getElementById('logo-settings-section');
+        const submitBtn = document.getElementById('submit-btn');
+        const originalVideo = document.getElementById('original-video');
+        const originalVideoContainer = document.getElementById('original-video-container');
+        const originalVideoWrapper = document.getElementById('original-video-wrapper');
+        const originalVideoPlaceholder = document.getElementById('original-video-placeholder');
+        const outputVideo = document.getElementById('output-video');
+        const outputVideoContainer = document.getElementById('output-video-container');
+        const outputVideoWrapper = document.getElementById('output-video-wrapper');
+        const outputVideoPlaceholder = document.getElementById('output-video-placeholder');
+        const resultContainer = document.getElementById('resultContainer');
+        const videoActions = document.getElementById('video-actions');
+        const downloadBtn = document.getElementById('download-btn');
+        const generationStatus = document.getElementById('generation-status');
+        const progressBar = document.getElementById('progress-bar');
+        const statusText = document.getElementById('status-text');
+        const historyContainer = document.getElementById('history-container');
+        const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+        const videoDurationInfo = document.getElementById('video-duration-info');
+
+        // 上传区域点击事件
+        uploadArea.addEventListener('click', () => {
+            videoUpload.click();
+        });
+        
+        // 文件选择事件
+        videoUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleVideoFile(file);
+            }
+        });
+        
+        // 拖拽上传功能
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                // 触发文件选择事件
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                videoUpload.files = dataTransfer.files;
+                
+                // 手动触发change事件
+                const event = new Event('change', { bubbles: true });
+                videoUpload.dispatchEvent(event);
+            }
+        });
+
+        // 智能文件名分析和建议
+        function analyzeFileName(fileName) {
+            const analysis = {
+                hasChinese: /[\u4e00-\u9fa5]/.test(fileName),
+                hasSpecialChars: /[^a-zA-Z0-9._-]/.test(fileName.replace(/[\u4e00-\u9fa5]/g, '')),
+                hasSpaces: /\s/.test(fileName),
+                hasUnsafeChars: /[<>:"/\\|?*]/.test(fileName),
+                length: fileName.length,
+                isValid: true,
+                issues: [],
+                suggestions: []
+            };
+            
+            if (analysis.hasChinese) {
+                analysis.issues.push('包含中文字符');
+                analysis.suggestions.push('建议使用英文或拼音命名');
+                analysis.isValid = false;
+            }
+            
+            if (analysis.hasSpecialChars) {
+                analysis.issues.push('包含特殊字符');
+                analysis.suggestions.push('建议只使用字母、数字、下划线(_)和连字符(-)');
+                analysis.isValid = false;
+            }
+            
+            if (analysis.hasSpaces) {
+                analysis.issues.push('包含空格');
+                analysis.suggestions.push('建议使用下划线(_)替代空格');
+                analysis.isValid = false;
+            }
+            
+            if (analysis.length > 50) {
+                analysis.issues.push('文件名过长');
+                analysis.suggestions.push('建议缩短文件名长度');
+                analysis.isValid = false;
+            }
+            
+            return analysis;
+        }
+        
+        // 生成智能文件名建议
+        function generateFileNameSuggestion(fileName) {
+            const ext = fileName.substring(fileName.lastIndexOf('.'));
+            let nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+            
+            // 中文转英文映射
+            const chineseToEnglish = {
+                '视频': 'video', '电影': 'movie', '短片': 'clip', '录像': 'record',
+                '测试': 'test', '样本': 'sample', '演示': 'demo', '教程': 'tutorial',
+                '会议': 'meeting', '培训': 'training', '新闻': 'news', '广告': 'ad',
+                '音乐': 'music', '游戏': 'game', '动画': 'animation', '风景': 'scenery',
+                '旅游': 'travel', '美食': 'food', '生活': 'life', '工作': 'work'
+            };
+            
+            let suggested = nameWithoutExt;
+            
+            // 转换常用中文词汇
+            for (const [chinese, english] of Object.entries(chineseToEnglish)) {
+                suggested = suggested.replace(new RegExp(chinese, 'g'), english);
+            }
+            
+            // 处理剩余中文字符
+            suggested = suggested.replace(/[\u4e00-\u9fa5]/g, 'cn');
+            
+            // 处理特殊字符
+            suggested = suggested
+                .replace(/\s+/g, '_')  // 空格转下划线
+                .replace(/[^a-zA-Z0-9_-]/g, '_')  // 其他特殊字符转下划线
+                .replace(/_+/g, '_')  // 合并多个下划线
+                .replace(/^_|_$/g, '');  // 移除开头结尾下划线
+            
+            if (!suggested) suggested = 'video';
+            
+            return suggested + ext;
+        }
+
+        function handleVideoFile(file) {
+            // 智能分析文件名
+            const analysis = analyzeFileName(file.name);
+            
+            // 如果文件名有问题，显示友好的提示信息（非阻塞）
+            // 系统会自动处理文件名，不需要阻止用户上传
+            if (!analysis.isValid) {
+                const suggestion = generateFileNameSuggestion(file.name);
+                // 显示文件名优化提示（非阻塞式）
+                showFileNameOptimizationTip(file.name, suggestion, analysis);
+            }
+
+            // 验证文件类型
+            if (file.type !== 'video/mp4') {
+                alert('只支持MP4格式的视频文件');
+                return;
+            }
+
+            // 验证文件大小（1GB）
+            if (file.size > 1024 * 1024 * 1024) {
+                alert('视频文件大小不能超过1GB');
+                return;
+            }
+
+            uploadedVideo = file;
+            const videoURL = URL.createObjectURL(file);
+            
+            // 显示原视频预览
+            originalVideo.src = videoURL;
+            originalVideoPlaceholder.classList.add('hidden');
+            originalVideoWrapper.classList.remove('hidden');
+            
+            // 显示文件信息
+            showFileInfo(file);
+            
+            // 监听视频元数据加载事件，获取视频时长
+            originalVideo.onloadedmetadata = function() {
+                // 检查视频分辨率
+                if (originalVideo.videoWidth > 1920 || originalVideo.videoHeight > 1080) {
+                    alert('视频分辨率不能超过1080P');
+                    resetVideoUpload();
+                    return;
+                }
+                
+                const duration = Math.round(originalVideo.duration);
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+                const durationText = `${minutes}分${seconds}秒`;
+                
+                // 显示视频时长信息
+                if (videoDurationInfo) {
+                    videoDurationInfo.innerHTML = `
+                        <i class="ri-time-line mr-1"></i>
+                        视频时长: ${durationText}
+                    `;
+                    videoDurationInfo.classList.remove('hidden');
+                }
+                
+                console.log('视频信息:', {
+                    duration: durationText,
+                    width: originalVideo.videoWidth,
+                    height: originalVideo.videoHeight
+                });
+                
+                // 显示设置区域
+                logoSettingsSection.style.display = 'block';
+                submitBtn.disabled = false;
+                
+                // 初始化水印区域选择
+                initLogoBoxSelection();
+            };
+        }
+
+        function resetVideoUpload() {
+            uploadedVideo = null;
+            if (originalVideo) {
+                originalVideo.src = '';
+            }
+            if (originalVideoPlaceholder) {
+                originalVideoPlaceholder.classList.remove('hidden');
+            }
+            if (originalVideoWrapper) {
+                originalVideoWrapper.classList.add('hidden');
+            }
+            if (outputVideo) {
+                outputVideo.src = '';
+            }
+            if (outputVideoPlaceholder) {
+                outputVideoPlaceholder.classList.remove('hidden');
+            }
+            if (outputVideoWrapper) {
+                outputVideoWrapper.classList.add('hidden');
+            }
+            if (resultContainer) {
+                resultContainer.classList.add('hidden');
+            }
+            if (logoSettingsSection) {
+                logoSettingsSection.style.display = 'none';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+            logoBoxes = [];
+            clearLogoBoxes();
+            if (videoDurationInfo) {
+                videoDurationInfo.classList.add('hidden');
+            }
+            // 重置上传区域显示
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const previewContainer = document.getElementById('preview-container');
+            if (uploadPlaceholder) {
+                uploadPlaceholder.classList.remove('hidden');
+            }
+            if (previewContainer) {
+                previewContainer.classList.add('hidden');
+            }
+        }
+
+        // 初始化水印区域选择
+        function initLogoBoxSelection() {
+            // 添加区域按钮事件
+            const addBtn = document.getElementById('add-logo-box');
+            const clearBtn = document.getElementById('clear-logo-boxes');
+            
+            // 移除旧的事件监听器（如果存在）
+            const newAddBtn = addBtn.cloneNode(true);
+            const newClearBtn = clearBtn.cloneNode(true);
+            addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+            clearBtn.parentNode.replaceChild(newClearBtn, clearBtn);
+            
+            newAddBtn.addEventListener('click', addLogoBox);
+            newClearBtn.addEventListener('click', clearLogoBoxes);
+            
+            // 视频容器点击事件（使用原视频容器）
+            if (originalVideoContainer && !originalVideoWrapper.classList.contains('hidden')) {
+                originalVideoContainer.addEventListener('mousedown', startBoxSelection);
+            }
+        }
+
+        // 添加水印区域
+        function addLogoBox() {
+            if (logoBoxes.length >= 2) {
+                alert('最多只能添加2个水印区域');
+                return;
+            }
+            
+            // 检查视频是否已上传
+            if (!originalVideoContainer || originalVideoWrapper.classList.contains('hidden')) {
+                alert('请先上传视频');
+                return;
+            }
+            
+            const box = {
+                id: Date.now(),
+                x: 0.1, // 相对位置 (0-1)
+                y: 0.1,
+                w: 0.2,
+                h: 0.2
+            };
+            
+            logoBoxes.push(box);
+            renderLogoBox(box);
+            updateLogoBoxesList();
+        }
+
+        // 渲染水印区域选择器
+        function renderLogoBox(box) {
+            const container = originalVideoContainer || originalVideoWrapper;
+            const containerRect = container.getBoundingClientRect();
+            const boxElement = document.createElement('div');
+            boxElement.className = 'logo-box-selector';
+            boxElement.dataset.boxId = box.id;
+            
+            // 设置位置和大小
+            boxElement.style.left = (box.x * 100) + '%';
+            boxElement.style.top = (box.y * 100) + '%';
+            boxElement.style.width = (box.w * 100) + '%';
+            boxElement.style.height = (box.h * 100) + '%';
+            
+            // 添加调整手柄
+            ['nw', 'ne', 'sw', 'se'].forEach(direction => {
+                const handle = document.createElement('div');
+                handle.className = `logo-box-handle ${direction}`;
+                handle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    startResize(e, boxElement, box, direction);
+                });
+                boxElement.appendChild(handle);
+            });
+            
+            // 添加删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+            deleteBtn.className = 'absolute top-0 right-0 w-6 h-6 bg-red-500 text-white text-xs rounded-full -mt-3 -mr-3 hover:bg-red-600';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeLogoBox(box.id);
+            };
+            boxElement.appendChild(deleteBtn);
+            
+            container.appendChild(boxElement);
+            
+            // 添加拖拽功能
+            makeDraggable(boxElement, box);
+        }
+
+        // 全局变量：跟踪调整大小状态
+        let isResizing = false;
+        let resizeHandle = null;
+        let resizeStartX = 0;
+        let resizeStartY = 0;
+        let resizeStartBox = null;
+        let resizeBoxElement = null;
+        let resizeBox = null;
+
+        // 使区域可拖拽
+        function makeDraggable(element, box) {
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+            
+            element.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('logo-box-handle')) return;
+                if (e.target.closest('button')) return; // 忽略删除按钮
+                
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                const rect = element.getBoundingClientRect();
+                const container = originalVideoContainer || originalVideoWrapper;
+                const containerRect = container.getBoundingClientRect();
+                
+                startLeft = (rect.left - containerRect.left) / containerRect.width;
+                startTop = (rect.top - containerRect.top) / containerRect.height;
+                
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (isResizing) {
+                    handleResize(e);
+                    return;
+                }
+                if (!isDragging) return;
+                
+                const container = originalVideoWrapper;
+                const containerRect = container.getBoundingClientRect();
+                const deltaX = (e.clientX - startX) / containerRect.width;
+                const deltaY = (e.clientY - startY) / containerRect.height;
+                
+                box.x = Math.max(0, Math.min(1 - box.w, startLeft + deltaX));
+                box.y = Math.max(0, Math.min(1 - box.h, startTop + deltaY));
+                
+                element.style.left = (box.x * 100) + '%';
+                element.style.top = (box.y * 100) + '%';
+                
+                updateLogoBoxesList();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                if (isResizing) {
+                    stopResize();
+                }
+            });
+        }
+
+        // 开始调整大小
+        function startResize(e, boxElement, box, direction) {
+            isResizing = true;
+            resizeHandle = direction;
+            resizeStartX = e.clientX;
+            resizeStartY = e.clientY;
+            resizeBoxElement = boxElement;
+            resizeBox = box;
+            resizeStartBox = {
+                x: box.x,
+                y: box.y,
+                w: box.w,
+                h: box.h
+            };
+            e.preventDefault();
+        }
+
+        // 处理调整大小
+        function handleResize(e) {
+            if (!isResizing || !resizeStartBox) return;
+            
+            const container = originalVideoWrapper;
+            const containerRect = container.getBoundingClientRect();
+            const deltaX = (e.clientX - resizeStartX) / containerRect.width;
+            const deltaY = (e.clientY - resizeStartY) / containerRect.height;
+            
+            let newX = resizeStartBox.x;
+            let newY = resizeStartBox.y;
+            let newW = resizeStartBox.w;
+            let newH = resizeStartBox.h;
+            
+            const minSize = 0.02; // 最小尺寸为容器的2%
+            
+            // 根据手柄方向调整大小
+            switch (resizeHandle) {
+                case 'nw': // 左上角
+                    newX = Math.max(0, resizeStartBox.x + deltaX);
+                    newY = Math.max(0, resizeStartBox.y + deltaY);
+                    newW = Math.max(minSize, resizeStartBox.w - deltaX);
+                    newH = Math.max(minSize, resizeStartBox.h - deltaY);
+                    // 确保不超出右边界和下边界
+                    if (newX + newW > 1) {
+                        newW = 1 - newX;
+                    }
+                    if (newY + newH > 1) {
+                        newH = 1 - newY;
+                    }
+                    break;
+                case 'ne': // 右上角
+                    newY = Math.max(0, resizeStartBox.y + deltaY);
+                    newW = Math.max(minSize, resizeStartBox.w + deltaX);
+                    newH = Math.max(minSize, resizeStartBox.h - deltaY);
+                    // 确保不超出右边界和下边界
+                    if (newX + newW > 1) {
+                        newW = 1 - newX;
+                    }
+                    if (newY + newH > 1) {
+                        newH = 1 - newY;
+                    }
+                    break;
+                case 'sw': // 左下角
+                    newX = Math.max(0, resizeStartBox.x + deltaX);
+                    newW = Math.max(minSize, resizeStartBox.w - deltaX);
+                    newH = Math.max(minSize, resizeStartBox.h + deltaY);
+                    // 确保不超出右边界和下边界
+                    if (newX + newW > 1) {
+                        newW = 1 - newX;
+                    }
+                    if (newY + newH > 1) {
+                        newH = 1 - newY;
+                    }
+                    break;
+                case 'se': // 右下角
+                    newW = Math.max(minSize, resizeStartBox.w + deltaX);
+                    newH = Math.max(minSize, resizeStartBox.h + deltaY);
+                    // 确保不超出右边界和下边界
+                    if (newX + newW > 1) {
+                        newW = 1 - newX;
+                    }
+                    if (newY + newH > 1) {
+                        newH = 1 - newY;
+                    }
+                    break;
+            }
+            
+            // 更新box对象和DOM
+            if (resizeBox && resizeBoxElement) {
+                resizeBox.x = newX;
+                resizeBox.y = newY;
+                resizeBox.w = newW;
+                resizeBox.h = newH;
+                
+                // 更新DOM
+                resizeBoxElement.style.left = (resizeBox.x * 100) + '%';
+                resizeBoxElement.style.top = (resizeBox.y * 100) + '%';
+                resizeBoxElement.style.width = (resizeBox.w * 100) + '%';
+                resizeBoxElement.style.height = (resizeBox.h * 100) + '%';
+                
+                updateLogoBoxesList();
+            }
+        }
+
+        // 停止调整大小
+        function stopResize() {
+            isResizing = false;
+            resizeHandle = null;
+            resizeStartBox = null;
+            resizeBoxElement = null;
+            resizeBox = null;
+        }
+
+        // 开始区域选择
+        function startBoxSelection(e) {
+            if (e.target !== originalVideoContainer && e.target !== originalVideoWrapper && e.target !== originalVideo) return;
+            if (logoBoxes.length >= 2) return;
+            
+            const container = originalVideoContainer || originalVideoWrapper;
+            const containerRect = container.getBoundingClientRect();
+            const x = (e.clientX - containerRect.left) / containerRect.width;
+            const y = (e.clientY - containerRect.top) / containerRect.height;
+            
+            const box = {
+                id: Date.now(),
+                x: x,
+                y: y,
+                w: 0.1,
+                h: 0.1
+            };
+            
+            logoBoxes.push(box);
+            renderLogoBox(box);
+            updateLogoBoxesList();
+        }
+
+        // 移除水印区域
+        function removeLogoBox(boxId) {
+            logoBoxes = logoBoxes.filter(box => box.id !== boxId);
+            const boxElement = document.querySelector(`[data-box-id="${boxId}"]`);
+            if (boxElement) {
+                boxElement.remove();
+            }
+            updateLogoBoxesList();
+        }
+
+        // 清除所有水印区域
+        function clearLogoBoxes() {
+            logoBoxes = [];
+            const boxElements = document.querySelectorAll('.logo-box-selector');
+            boxElements.forEach(element => element.remove());
+            updateLogoBoxesList();
+        }
+        
+        // 显示视频
+        function displayVideo(videoUrl) {
+            // 使用代理API加载视频，避免CSP问题（特别是http://协议的URL）
+            // direct=true 参数表示这是预览而非下载
+            const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
+            console.log('使用代理URL加载视频:', proxyUrl);
+            
+            outputVideo.src = proxyUrl;
+            outputVideoPlaceholder.classList.add('hidden');
+            outputVideoWrapper.classList.remove('hidden');
+            if (resultContainer) {
+                resultContainer.classList.remove('hidden');
+            }
+            videoActions.classList.remove('hidden');
+            
+            // 为下载按钮添加事件监听器
+            if (downloadBtn && videoUrl) {
+                // 移除之前的事件监听器（如果有）
+                downloadBtn.replaceWith(downloadBtn.cloneNode(true));
+                const newDownloadBtn = document.getElementById('download-btn');
+                
+                newDownloadBtn.addEventListener('click', () => {
+                    console.log('预览区域下载按钮被点击，视频URL:', videoUrl);
+                    
+                    if (!videoUrl || !videoUrl.trim()) {
+                        console.error('视频URL为空，无法下载');
+                        alert('视频URL为空，请等待视频完全生成后再尝试下载');
+                        return;
+                    }
+                    
+                    try {
+                        // 使用代理API下载视频
+                        const downloadUrl = `/api/video-logo-removal/download/${currentTask?.taskId || ''}`;
+                        console.log('使用下载API:', downloadUrl);
+                        
+                        // 创建一个隐藏的下载链接
+                        const a = document.createElement('a');
+                        a.href = downloadUrl;
+                        a.download = '无水印视频.mp4'; // 设置下载文件名
+                        
+                        // 添加到文档中
+                        document.body.appendChild(a);
+                        
+                        // 模拟点击
+                        a.click();
+                        console.log('下载链接已点击');
+                        
+                        // 移除下载链接
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                        }, 100);
+                        
+                    } catch (error) {
+                        console.error('下载失败:', error);
+                        // 备用方案：直接在新窗口打开视频URL
+                        window.open(videoUrl, '_blank');
+                    }
+                });
+            }
+        }
+
+        // 更新水印区域列表
+        function updateLogoBoxesList() {
+            const listContainer = document.getElementById('logo-boxes-list');
+            
+            if (logoBoxes.length === 0) {
+                listContainer.innerHTML = '<p class="text-gray-500 text-sm">暂未选择水印区域，系统将自动识别</p>';
+                return;
+            }
+            
+            listContainer.innerHTML = logoBoxes.map((box, index) => `
+                <div class="flex items-center justify-between bg-white rounded p-3 border">
+                    <div class="flex-1">
+                        <span class="font-medium">区域 ${index + 1}</span>
+                        <span class="text-sm text-gray-500 ml-2">
+                            位置: (${(box.x * 100).toFixed(1)}%, ${(box.y * 100).toFixed(1)}%)
+                            大小: ${(box.w * 100).toFixed(1)}% × ${(box.h * 100).toFixed(1)}%
+                        </span>
+                    </div>
+                    <button onclick="removeLogoBox(${box.id})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 提交任务
+        submitBtn.addEventListener('click', async () => {
+            if (!uploadedVideo) {
+                alert('请先上传视频文件');
+                return;
+            }
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>提交中...';
+                
+                const formData = new FormData();
+                formData.append('video', uploadedVideo);
+                
+                // 添加水印区域参数
+                if (logoBoxes.length > 0) {
+                    formData.append('logoBoxes', JSON.stringify(logoBoxes));
+                }
+                
+                // 获取认证令牌
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    alert('请先登录后再提交任务');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-magic mr-2"></i>开始去除水印';
+                    return;
+                }
+                
+                // 构建请求头
+                const headers = {
+                    'Authorization': `Bearer ${authToken}`
+                };
+                
+                const response = await fetch('/api/video-logo-removal/submit', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                
+                // 检查响应状态
+                if (!response.ok) {
+                    // 如果是401错误，提示用户重新登录
+                    if (response.status === 401) {
+                        alert('认证失败，请重新登录后再试');
+                        // 可选：跳转到登录页面
+                        // window.location.href = '/login.html';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-magic mr-2"></i>开始去除水印';
+                        return;
+                    }
+                    // 其他错误，尝试解析错误信息
+                    let errorMessage = `请求失败: ${response.status} ${response.statusText}`;
+                    try {
+                        const errorResult = await response.json();
+                        if (errorResult.message) {
+                            errorMessage = errorResult.message;
+                        } else if (errorResult.error) {
+                            errorMessage = errorResult.error;
+                        }
+                    } catch (parseError) {
+                        // 如果无法解析JSON，使用默认错误信息
+                        console.warn('无法解析错误响应:', parseError);
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentTask = result.data;
+                    
+                    // 显示处理状态
+                    generationStatus.classList.remove('hidden');
+                    statusText.textContent = '正在处理视频...';
+                    progressBar.style.width = '20%';
+                    
+                    // 添加处理中的任务到历史记录
+                    const processingItem = {
+                        taskId: currentTask.taskId,
+                        status: 'PROCESSING',
+                        originalVideoUrl: originalVideo.src,
+                        createdAt: new Date().toISOString()
+                    };
+                    addToHistory(processingItem);
+                    
+                    // 开始检查任务状态
+                    checkTaskStatus(currentTask.taskId);
+                    
+                    // 重置上传区域
+                    resetVideoUpload();
+                } else {
+                    // 根据错误代码提供更友好的提示
+                    let errorMessage = result.message;
+                    if (result.code === 'URL_INVALID_CHARACTERS') {
+                        errorMessage = '⚠️ 文件名包含中文字符导致处理失败\n\n请重新上传文件名只包含英文字母和数字的视频文件';
+                    }
+                    alert('提交失败: ' + errorMessage);
+                }
+                
+            } catch (error) {
+                console.error('提交任务失败:', error);
+                alert('提交任务失败: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-magic mr-2"></i>开始去除水印';
+            }
+        });
+
+        // 检查任务状态
+        async function checkTaskStatus(taskId) {
+            let retryCount = 0;
+            const maxRetries = 3;
+            let progress = 0;
+            
+            // 获取认证令牌
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                console.error('未找到认证令牌，无法查询任务状态');
+                alert('请先登录后再查看任务状态');
+                return;
+            }
+            
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/video-logo-removal/status/${taskId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        // 如果是401错误，提示用户重新登录
+                        if (response.status === 401) {
+                            clearInterval(interval);
+                            generationStatus.classList.add('hidden');
+                            alert('认证失败，请重新登录后再查看任务状态');
+                            throw new Error('认证失败');
+                        }
+                        throw new Error(result.message || '检查任务状态失败');
+                    }
+                    
+                    console.log('任务状态响应:', result);
+                    
+                    // 获取实际的任务状态
+                    const taskStatus = result.data ? result.data.status : result.status;
+                    const taskResult = result.result || (result.data ? result.data.result : null);
+                    
+                    // 状态映射
+                    let normalizedStatus = taskStatus;
+                    if (taskStatus === 'SUCCEEDED' || taskStatus === 'PROCESS_SUCCESS' || taskStatus === 'Success' || taskStatus === 'completed') {
+                        normalizedStatus = 'completed';
+                    } else if (taskStatus === 'FAILED' || taskStatus === 'PROCESS_FAILED' || taskStatus === 'Failed' || taskStatus === 'failed') {
+                        normalizedStatus = 'failed';
+                    } else if (taskStatus === 'PROCESSING' || taskStatus === 'PROCESS_RUNNING' || taskStatus === 'RUNNING' || taskStatus === 'processing') {
+                        normalizedStatus = 'processing';
+                    } else if (taskStatus === 'PENDING' || taskStatus === 'pending') {
+                        normalizedStatus = 'pending';
+                    }
+                    
+                    // 根据任务状态处理
+                    switch (normalizedStatus) {
+                        case 'completed':
+                            clearInterval(interval);
+                            generationStatus.classList.add('hidden');
+                            
+                            // 获取视频URL
+                            const videoUrl = taskResult?.videoUrl || result.data?.resultUrl || result.resultUrl || result.data?.resultVideoUrl;
+                            if (videoUrl) {
+                                displayVideo(videoUrl);
+                            } else {
+                                console.error('未找到视频URL:', { taskResult, result });
+                                alert('任务完成但未找到视频文件，请重试');
+                                break;
+                            }
+                            
+                            // 立即重新加载历史记录
+                            console.log('✅ 任务完成，立即刷新历史记录');
+                            loadTaskHistory();
+                            
+                            // 延迟2秒再次刷新，确保OSS更新已完成
+                            setTimeout(() => {
+                                console.log('🔄 延迟刷新历史记录以确保显示最新状态');
+                                loadTaskHistory();
+                            }, 2000);
+                            break;
+                            
+                        case 'failed':
+                            clearInterval(interval);
+                            generationStatus.classList.add('hidden');
+                            alert('视频处理失败: ' + (result.data?.message || result.message || result.error || '未知错误'));
+                            
+                            // 立即重新加载历史记录
+                            console.log('❌ 任务失败，立即刷新历史记录');
+                            loadTaskHistory();
+                            
+                            // 延迟2秒再次刷新
+                            setTimeout(() => {
+                                console.log('🔄 延迟刷新历史记录以确保显示最新状态');
+                                loadTaskHistory();
+                            }, 2000);
+                            break;
+                            
+                        case 'processing':
+                            // 更新进度条
+                            const serverProgress = result.data?.progress || 0;
+                            if (serverProgress > 0) {
+                                progress = serverProgress;
+                            } else {
+                                progress += 2; // 每5秒增加2%
+                                if (progress > 95) progress = 95; // 最多到95%
+                            }
+                            progressBar.style.width = `${progress}%`;
+                            statusText.textContent = '正在处理...';
+                            break;
+                            
+                        default:
+                            console.warn('未知任务状态:', normalizedStatus);
+                    }
+                    
+                } catch (error) {
+                    console.error('检查任务状态出错:', error);
+                    retryCount++;
+                    
+                    if (error.message && error.message.includes('404')) {
+                        console.log('任务不存在，停止轮询');
+                        clearInterval(interval);
+                        generationStatus.classList.add('hidden');
+                        alert('任务不存在或已过期，请重新上传视频并提交处理请求。');
+                        return;
+                    }
+                    
+                    if (retryCount >= maxRetries) {
+                        console.error(`任务状态查询失败，已重试${maxRetries}次`);
+                        clearInterval(interval);
+                        generationStatus.classList.add('hidden');
+                        alert('任务状态查询失败，请刷新页面重试。如果问题持续存在，请重新上传视频。');
+                    } else {
+                        console.log(`任务状态查询失败，将进行第${retryCount}次重试`);
+                    }
+                }
+            }, 5000);
+        }
+
+        // 添加到历史记录
+        function addToHistory(item) {
+            let history = JSON.parse(localStorage.getItem('videoLogoRemovalHistory') || '[]');
+            
+            // 检查是否已存在相同任务ID的记录
+            const existingIndex = history.findIndex(h => h.taskId === item.taskId);
+            if (existingIndex !== -1) {
+                // 更新现有记录
+                history[existingIndex] = { ...history[existingIndex], ...item };
+            } else {
+                // 添加新记录
+                history.unshift(item);
+            }
+            
+            // 只保留最新的10条记录
+            history = history.slice(0, 10);
+            
+            localStorage.setItem('videoLogoRemovalHistory', JSON.stringify(history));
+            console.log('历史记录已更新:', item);
+        }
+
+        // 显示文件名优化提示
+        function showFileNameOptimizationTip(originalName, suggestedName, analysis) {
+            // 移除已存在的提示
+            const existingTip = document.getElementById('filename-optimization-tip');
+            if (existingTip) {
+                existingTip.remove();
+            }
+            
+            const tipContainer = document.createElement('div');
+            tipContainer.id = 'filename-optimization-tip';
+            tipContainer.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4';
+            tipContainer.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-500 text-lg"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h4 class="text-sm font-medium text-blue-800 mb-2">
+                            <i class="fas fa-magic mr-1"></i>文件名自动优化提示
+                        </h4>
+                        <div class="text-sm text-blue-700 space-y-1 mb-2">
+                            <p><strong>原文件名：</strong><span class="font-mono">${originalName}</span></p>
+                            <p class="text-blue-800 font-medium">
+                                <i class="fas fa-check-circle mr-1"></i>系统将自动处理文件名，无需手动重命名
+                            </p>
+                            <p class="text-xs text-blue-600 mt-1">
+                                检测到：${analysis.issues.join('、')}
+                            </p>
+                        </div>
+                        <div class="mt-2">
+                            <button onclick="this.closest('#filename-optimization-tip').remove()" 
+                                    class="text-xs text-blue-600 hover:text-blue-800 underline">
+                                <i class="fas fa-times mr-1"></i>关闭提示
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 插入到水印区域设置之前
+            const logoSettingsSection = document.getElementById('logo-settings-section');
+            if (logoSettingsSection && logoSettingsSection.parentNode) {
+                logoSettingsSection.parentNode.insertBefore(tipContainer, logoSettingsSection);
+            }
+        }
+
+        // 显示文件信息
+        function showFileInfo(file) {
+            const uploadPlaceholder = document.getElementById('upload-placeholder');
+            const previewContainer = document.getElementById('preview-container');
+            const videoInfo = document.getElementById('video-info');
+            
+            if (uploadPlaceholder && previewContainer && videoInfo) {
+                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                videoInfo.textContent = `${file.name} (${fileSizeMB} MB)`;
+                
+                uploadPlaceholder.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+            }
+            
+            // 添加移除视频按钮事件
+            const removeVideoBtn = document.getElementById('remove-video');
+            if (removeVideoBtn) {
+                removeVideoBtn.onclick = () => {
+                    resetVideoUpload();
+                    videoUpload.value = '';
+                };
+            }
+        }
+
+        // 加载任务历史
+        async function loadTaskHistory() {
+            try {
+                // 检查用户是否已登录
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.log('用户未登录，从localStorage加载历史记录');
+                    loadHistoryFromLocalStorage();
+                    return;
+                }
+                
+                console.log('从服务器加载视频去水印历史记录...');
+                
+                // 从后端API获取历史记录
+                const response = await fetch('/api/video-logo-removal/history', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`服务器返回错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || '获取历史记录失败');
+                }
+                
+                const history = data.data?.tasks || data.tasks || [];
+                console.log(`从服务器获取到 ${history.length} 条历史记录`);
+                
+                renderHistory(history);
+                
+            } catch (error) {
+                console.error('从服务器加载历史记录失败:', error);
+                console.log('回退到localStorage加载历史记录');
+                loadHistoryFromLocalStorage();
+            }
+        }
+        
+        // 从localStorage加载历史记录
+        function loadHistoryFromLocalStorage() {
+            const history = JSON.parse(localStorage.getItem('videoLogoRemovalHistory') || '[]');
+            
+            // 过滤24小时内的记录
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentHistory = history.filter(item => {
+                const itemDate = new Date(item.createdAt);
+                return itemDate >= twentyFourHoursAgo;
+            });
+            
+            // 只保留最新1条记录
+            const limitedHistory = recentHistory.slice(0, 1);
+            
+            console.log(`从localStorage获取到 ${history.length} 条历史记录，过滤后显示 ${limitedHistory.length} 条`);
+            renderHistory(limitedHistory);
+        }
+
+        // 渲染历史记录
+        function renderHistory(history) {
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<div class="text-center py-8 text-gray-500"><p>暂无视频去水印记录</p></div>';
+                return;
+            }
+                            
+            historyContainer.innerHTML = '';
+            
+            history.forEach((item, index) => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'video-task bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4';
+                taskElement.id = `task-${item.taskId || item.id}`;
+                
+                // 适配不同的数据源格式
+                const videoUrl = item.videoUrl || item.resultVideoUrl || item.ossResultUrl;
+                const originalVideoUrl = item.originalVideoUrl;
+                const taskId = item.taskId || item.id;
+                
+                // 状态映射
+                let taskStatus = item.status || 'SUCCEEDED';
+                let statusClass, statusText;
+                
+                if (item.status === 'SUCCEEDED' || item.status === 'PROCESS_SUCCESS' || item.status === 'Success' || item.status === 'completed') {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = '已完成';
+                } else if (item.status === 'FAILED' || item.status === 'PROCESS_FAILED' || item.status === 'Failed' || item.status === 'failed') {
+                    statusClass = 'bg-red-100 text-red-800';
+                    statusText = '失败';
+                } else if (item.status === 'PROCESSING' || item.status === 'PROCESS_RUNNING' || item.status === 'RUNNING' || item.status === 'processing') {
+                    statusClass = 'bg-blue-100 text-blue-800';
+                    statusText = '处理中';
+                } else if (item.status === 'PENDING' || item.status === 'pending') {
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = '排队中';
+                } else {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = '已完成';
+                }
+                
+                console.log(`渲染任务: taskId=${taskId}, 原始状态=${item.status}, videoUrl=${videoUrl ? '存在' : '缺失'}`);
+                
+                // 视频预览（仅当任务成功且有视频URL时）
+                let videoPreview = '';
+                if ((item.status === 'SUCCEEDED' || item.status === 'PROCESS_SUCCESS' || item.status === 'Success' || item.status === 'completed') && videoUrl) {
+                    // 使用代理API加载视频，避免CSP问题（特别是http://协议的URL）
+                    const proxyVideoUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
+                    videoPreview = `
+                        <div class="mt-3">
+                            <video controls class="w-full rounded" style="max-height: 180px">
+                                <source src="${proxyVideoUrl}" type="video/mp4">
+                                您的浏览器不支持视频标签
+                            </video>
+                            <div class="flex justify-end mt-2">
+                                <a href="/api/video-logo-removal/download/${taskId}" class="text-indigo-600 hover:text-indigo-800 text-sm mr-3" download>
+                                    <i class="ri-download-2-line mr-1"></i>下载
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                } else if ((item.status === 'PROCESSING' || item.status === 'PROCESS_RUNNING' || item.status === 'RUNNING' || item.status === 'processing') && taskId) {
+                    videoPreview = `
+                        <div class="mt-3 flex justify-end">
+                            <button class="check-status-btn text-blue-600 hover:text-blue-800 text-sm" data-task-id="${taskId}">
+                                <i class="ri-refresh-line mr-1"></i>检查状态
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                // 格式化时间戳
+                const createdDate = new Date(item.createdAt);
+                const formattedDate = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}-${String(createdDate.getDate()).padStart(2, '0')} ${String(createdDate.getHours()).padStart(2, '0')}:${String(createdDate.getMinutes()).padStart(2, '0')}`;
+                
+                taskElement.innerHTML = `
+                    <div class="flex justify-between">
+                        <div class="flex-1 pr-4">
+                            <p class="font-medium">视频去水印</p>
+                            <div class="flex mt-2 text-sm text-gray-500">
+                                ${taskId ? `<span class="mr-4">任务ID: ${taskId}</span>` : ''}
+                                <span>${formattedDate}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="px-2 py-1 text-xs rounded-full ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                    ${videoPreview}
+                `;
+                
+                historyContainer.appendChild(taskElement);
+            });
+            
+            // 添加状态检查按钮事件监听器
+            document.querySelectorAll('.check-status-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const taskId = btn.dataset.taskId;
+                    if (taskId) {
+                        try {
+                            // 获取认证令牌
+                            const authToken = localStorage.getItem('authToken');
+                            if (!authToken) {
+                                alert('请先登录后再查看任务状态');
+                                return;
+                            }
+                            
+                            const response = await fetch(`/api/video-logo-removal/status/${taskId}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${authToken}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                const result = await response.json();
+                                console.log('任务状态检查结果:', result);
+                                
+                                // 如果任务已完成，刷新历史记录
+                                if (result.status === 'SUCCEEDED' || result.status === 'PROCESS_SUCCESS' || result.status === 'completed') {
+                                    await loadTaskHistory();
+                                } else if (result.status === 'FAILED' || result.status === 'PROCESS_FAILED' || result.status === 'failed') {
+                                    await loadTaskHistory();
+                                }
+                            } else {
+                                // 如果是401错误，提示用户重新登录
+                                if (response.status === 401) {
+                                    alert('认证失败，请重新登录后再查看任务状态');
+                                } else {
+                                    const errorData = await response.json().catch(() => ({}));
+                                    console.error('检查状态失败:', errorData.message || '未知错误');
+                                }
+                            }
+                        } catch (error) {
+                            console.error('检查状态出错:', error);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 刷新历史记录按钮点击事件
+        if (refreshHistoryBtn) {
+            refreshHistoryBtn.addEventListener('click', function() {
+                loadTaskHistory();
+            });
+        }
+        
+        // 清空所有任务按钮事件
+        const clearAllTasksBtn = document.getElementById('clear-all-tasks-global-btn');
+        if (clearAllTasksBtn) {
+            clearAllTasksBtn.addEventListener('click', async function() {
+                console.log('清空所有任务按钮被点击');
+                
+                // 确认对话框
+                if (!confirm('确定要清空所有视频去水印任务记录吗？此操作不可恢复。')) {
+                    return;
+                }
+                
+                try {
+                    // 显示加载状态
+                    clearAllTasksBtn.disabled = true;
+                    clearAllTasksBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-1"></i>清空中...';
+                    
+                    // 调用清空API
+                    const response = await fetch('/api/video-logo-removal/clear-all-tasks', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    console.log('清空任务API响应:', result);
+                    
+                    if (response.ok && result.success) {
+                        // 清空成功，刷新任务列表
+                        loadTaskHistory();
+                    } else {
+                        throw new Error(result.error || '清空失败');
+                    }
+                    
+                } catch (error) {
+                    console.error('清空任务失败:', error);
+                    alert('清空失败: ' + error.message);
+                } finally {
+                    // 恢复按钮状态
+                    clearAllTasksBtn.disabled = false;
+                    clearAllTasksBtn.innerHTML = '<i class="ri-delete-bin-line mr-1"></i>清空所有';
+                }
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTaskHistory();
+        });
+    </script>
+</body>
+</html>

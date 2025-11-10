@@ -9,6 +9,28 @@ function logout() {
         localStorage.removeItem('adminAuthToken');
         localStorage.removeItem('adminUser');
         
+        // 清除所有功能的历史记录，确保用户数据隔离
+        const historyKeys = [
+            'imageSharpenHistory',
+            'imageExpansionHistory', 
+            'textToImageHistory',
+            'imageToVideoHistory',
+            'videoStyleRepaintHistory',
+            'videoSubtitleRemoverHistory',
+            'multiImageToVideoHistory',
+            'promptEditorHistory',
+            'imageUpscalerHistory'
+        ];
+        
+        historyKeys.forEach(key => {
+            try {
+                localStorage.removeItem(key);
+                console.log(`已清除历史记录: ${key}`);
+            } catch (e) {
+                console.warn(`清除历史记录失败: ${key}`, e);
+            }
+        });
+        
         // 清除可能存在的会话cookie
         document.cookie.split(";").forEach(function(c) {
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
@@ -66,6 +88,28 @@ async function userLogout() {
         // 只清除用户相关的本地存储，保留管理员登录信息
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        
+        // 清除所有功能的历史记录，确保用户数据隔离
+        const historyKeys = [
+            'imageSharpenHistory',
+            'imageExpansionHistory', 
+            'textToImageHistory',
+            'imageToVideoHistory',
+            'videoStyleRepaintHistory',
+            'videoSubtitleRemoverHistory',
+            'multiImageToVideoHistory',
+            'promptEditorHistory',
+            'imageUpscalerHistory'
+        ];
+        
+        historyKeys.forEach(key => {
+            try {
+                localStorage.removeItem(key);
+                console.log(`已清除历史记录: ${key}`);
+            } catch (e) {
+                console.warn(`清除历史记录失败: ${key}`, e);
+            }
+        });
         
         // 清除用户相关的会话cookie
         document.cookie.split(";").forEach(function(c) {

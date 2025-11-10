@@ -2,6 +2,7 @@ const sequelize = require('./db');
 const User = require('../models/User');
 const { FeatureUsage } = require('../models/FeatureUsage');
 const ImageHistory = require('../models/ImageHistory');
+const { CreditHistory } = require('../models/CreditHistory');
 
 /**
  * 同步数据库表结构
@@ -21,6 +22,10 @@ async function syncDatabase() {
     // 同步ImageHistory表
     await ImageHistory.sync({ force: false });
     console.log('ImageHistory表同步完成');
+    
+    // 同步CreditHistory表
+    await CreditHistory.sync({ force: false });
+    console.log('CreditHistory表同步完成');
     
     console.log('所有表同步完成');
   } catch (error) {

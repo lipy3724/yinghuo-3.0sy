@@ -1,0 +1,59 @@
+映火AI项目 - XAMPP MySQL数据库备份报告
+=====================================
+
+备份时间: 2025-10-18 12:02:11
+备份类型: MySQL完整备份
+数据库: yinghuo (XAMPP MariaDB)
+备份目录: db_backups/mysql_backup_20251018_120211
+项目路径: /Users/houkai/Documents/Yinghuo1/视频数字人START
+
+数据库配置:
+- 主机: 127.0.0.1:3306
+- 用户: root
+- 数据库: yinghuo
+
+数据库统计:
+用户数量: 18
+功能使用记录: 186
+图片历史记录: 12
+客服消息: 26
+支付订单: 69
+
+备份文件:
+- yinghuo_mysql_backup.sql (2.8M)
+
+数据库表信息:
+table_name	table_rows
+customer_assignments	0
+customer_messages	26
+feature_usages	173
+image_colorization_histories	0
+image_histories	12
+migration_history	3
+payment_orders	68
+SequelizeMeta	2
+users	18
+user_sessions	109
+video_results	0
+
+恢复说明:
+========
+1. 快速恢复（使用恢复脚本）:
+   cd db_backups/mysql_backup_20251018_120211
+   ./restore.sh
+
+2. 手动恢复到原数据库:
+   /Applications/XAMPP/bin/mysql -h127.0.0.1 -uroot yinghuo < db_backups/mysql_backup_20251018_120211/yinghuo_mysql_backup.sql
+
+3. 恢复到新数据库:
+   /Applications/XAMPP/bin/mysql -h127.0.0.1 -uroot -e "CREATE DATABASE yinghuo_restore;"
+   /Applications/XAMPP/bin/mysql -h127.0.0.1 -uroot yinghuo_restore < db_backups/mysql_backup_20251018_120211/yinghuo_mysql_backup.sql
+
+注意事项:
+========
+- 恢复前请备份当前数据库
+- 确保XAMPP MySQL服务正在运行
+- 备份文件包含完整的表结构和数据
+- 不包含存储过程和触发器（避免版本兼容问题）
+
+备份完成时间: 2025-10-18 12:02:11

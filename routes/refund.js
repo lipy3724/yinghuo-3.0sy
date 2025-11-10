@@ -67,6 +67,51 @@ const createRefundHandler = (refundFunction) => {
     };
 };
 
+/**
+ * 通用退款请求处理函数 - 不需要认证的版本
+ * @param {Function} refundFunction - 特定功能的退款函数
+ * @returns {Function} - Express中间件函数
+ */
+const createPublicRefundHandler = (refundFunction) => {
+    return async (req, res) => {
+        try {
+            const { taskId, reason } = req.body;
+            
+            if (!taskId) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: '缺少任务ID参数' 
+                });
+            }
+            
+            console.log(`收到公开退款请求: 任务ID=${taskId}, 原因=${reason || '未提供'}`);
+            
+            // 对于公开接口，我们无法获取用户ID，传null
+            const success = await refundFunction(null, taskId, reason || '前端请求退款(公开接口)');
+            
+            if (success) {
+                console.log(`退款成功(公开接口): 任务ID=${taskId}`);
+                return res.status(200).json({ 
+                    success: true, 
+                    message: '退款处理成功' 
+                });
+            } else {
+                console.log(`退款失败(公开接口): 任务ID=${taskId}`);
+                return res.status(400).json({ 
+                    success: false, 
+                    message: '退款处理失败，可能是任务不存在或已经退款' 
+                });
+            }
+        } catch (error) {
+            console.error('处理公开退款请求时出错:', error);
+            return res.status(500).json({ 
+                success: false, 
+                message: '服务器处理退款请求时出错: ' + error.message 
+            });
+        }
+    };
+};
+
 // 模特肤色替换退款接口
 router.post('/model-skin-changer', protect, createRefundHandler(refundModelSkinChangerCredits));
 
@@ -105,6 +150,9 @@ router.post('/scene-generator', protect, createRefundHandler(refundSceneGenerato
 
 // 图像扩展退款接口
 router.post('/image-expansion', protect, createRefundHandler(refundImageExpansionCredits));
+
+// 图像扩展退款接口 - 公开版本，不需要认证
+router.post('/image-expansion-fallback', createPublicRefundHandler(refundImageExpansionCredits));
 
 // 图像模糊变清晰退款接口
 router.post('/image-sharpening', protect, createRefundHandler(refundImageSharpeningCredits));

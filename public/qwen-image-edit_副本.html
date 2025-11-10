@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像编辑 - 萤火AI</title>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <script src="/js/tailwind.min.js"></script>
+    <link href="/components/styles.css" rel="stylesheet">
+    <link href="/css/error-styles.css" rel="stylesheet">
+    <script src="/js/logout-handler.js"></script>
+    <script src="/js/auth-check.js"></script>
+    <script src="/feature-tracker.js"></script>
+    <script src="/js/error-handler.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/js/auth-helper.js"></script>
+    <!-- 本地备份的remixicon -->
+    <link href="/css/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .card {
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        @keyframes firefly-glow {
+            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
+            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
+        }
+        .logo-text {
+            animation: firefly-glow 3s infinite;
+        }
+        .logo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #6366f1;
+            border-radius: 50%;
+            margin-left: 2px;
+            margin-right: 4px;
+            position: relative;
+            top: -2px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: rgba(99, 102, 241, 1);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .image-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .image-upload-area:hover {
+            border-color: #6366f1;
+            background-color: #f8fafc;
+        }
+        
+        .image-upload-area.dragover {
+            border-color: #6366f1;
+            background-color: #ede9fe;
+        }
+        
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-preview-container {
+            position: relative;
+            display: inline-block;
+            margin: 8px;
+        }
+        
+        .remove-image-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        
+        .result-image {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: 8px;
+            background-color: #f9fafb;
+        }
+        
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-succeeded {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-failed {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* 历史记录卡片样式 - 参照智能扩图 */
+        .history-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .history-card img {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .history-card:hover img {
+            filter: brightness(1.05);
+        }
+        
+        /* 文本截断样式 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* 下载按钮样式 */
+        .download-history-btn {
+            transition: all 0.2s ease-in-out;
+            border-radius: 4px;
+        }
+        
+        .download-history-btn:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            transform: scale(1.1);
+        }
+        
+        /* 模态框动画 */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* 缩略图悬停效果 */
+        .history-card .relative img {
+            transition: all 0.3s ease;
+        }
+        
+        .history-card:hover .relative img {
+            filter: brightness(1.05);
+        }
+        
+        /* 状态标签在缩略图上的样式 */
+        .history-card .absolute .task-status {
+            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 功能按钮样式 */
+        .function-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #ffffff;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .function-btn:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+            color: #111827;
+        }
+
+        .function-btn.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        .function-btn.active:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .function-btn i {
+            margin-right: 8px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .function-btn span {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 简化版导航栏 -->
+    <div id="navbar-simple"></div>
+
+    <!-- 主要内容 -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8" style="margin-top: 60px;">
+        <div class="px-4 py-6 sm:px-0">
+            <!-- 页面标题 -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">图像编辑</h1>
+                <p class="text-lg text-gray-600">支持多图输入，精确修改图内文字、增删移动物体、改变主体动作、迁移图片风格</p>
+                <div class="mt-4 flex justify-center items-center space-x-4 text-sm text-gray-500">
+                    <span class="flex items-center">
+                        <i class="ri-image-line mr-1"></i>
+                        支持1-3张图片
+                    </span>
+                    <span class="flex items-center">
+                        <i class="ri-file-line mr-1"></i>
+                        JPG、PNG、WEBP格式
+                    </span>
+                    <span class="flex items-center">
+                        <i class="ri-coin-line mr-1"></i>
+                        首次免费，后续7积分/张图片
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex gap-6">
+                <!-- 左侧功能菜单 -->
+                <div class="w-64 flex-shrink-0">
+                    <div class="bg-white rounded-lg shadow p-4 sticky top-20">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">图像编辑</h3>
+                        <div class="space-y-2">
+                            <button class="function-btn active" data-function="multi-fusion">
+                                <i class="ri-collage-line"></i>
+                                <span>多图融合</span>
+                            </button>
+                            <button class="function-btn" data-function="consistency">
+                                <i class="ri-user-line"></i>
+                                <span>主体一致性保持</span>
+                            </button>
+                            <button class="function-btn" data-function="sketch-create">
+                                <i class="ri-pencil-line"></i>
+                                <span>草图创作</span>
+                            </button>
+                            <button class="function-btn" data-function="creative-gen">
+                                <i class="ri-palette-line"></i>
+                                <span>文创生成</span>
+                            </button>
+                            <button class="function-btn" data-function="depth-gen">
+                                <i class="ri-stack-line"></i>
+                                <span>根据深度图生成图像</span>
+                            </button>
+                            <button class="function-btn" data-function="keypoint-gen">
+                                <i class="ri-focus-3-line"></i>
+                                <span>根据关键点生成图像</span>
+                            </button>
+                            <button class="function-btn" data-function="text-edit">
+                                <i class="ri-font-size"></i>
+                                <span>文字编辑</span>
+                            </button>
+                            <button class="function-btn" data-function="object-edit">
+                                <i class="ri-scissors-line"></i>
+                                <span>增删改及替换</span>
+                            </button>
+                            <button class="function-btn" data-function="perspective">
+                                <i class="ri-camera-3-line"></i>
+                                <span>视角转换</span>
+                            </button>
+                            <button class="function-btn" data-function="bg-replace">
+                                <i class="ri-landscape-line"></i>
+                                <span>背景替换</span>
+                            </button>
+                            <button class="function-btn" data-function="photo-restore">
+                                <i class="ri-image-2-line"></i>
+                                <span>老照片处理</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间：主要内容区域 -->
+                <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- 左侧：图片上传和参数设置 -->
+                    <div class="space-y-6">
+                    <!-- 图片上传区域 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">上传图片（1-3张）</h3>
+                        
+                        <div id="imageUploadArea" class="image-upload-area">
+                            <div class="text-center">
+                                <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">点击或拖拽上传图片</p>
+                                <p class="text-sm text-gray-500">支持 JPG、PNG、WEBP 格式，单张最大 10MB</p>
+                            </div>
+                            <input type="file" id="imageInput" multiple accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none;">
+                        </div>
+                        
+                        <!-- 图片预览区域 -->
+                        <div id="imagePreviewArea" class="mt-4 text-center" style="display: none;">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">已上传的图片：</h4>
+                            <div id="imagePreviewContainer"></div>
+                        </div>
+                    </div>
+
+                    <!-- 编辑指令 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">编辑指令</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="promptInput" class="block text-sm font-medium text-gray-700 mb-2">
+                                    编辑描述 <span class="text-red-500">*</span>
+                                </label>
+                                <textarea 
+                                    id="promptInput" 
+                                    rows="4" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="请详细描述您想要的编辑效果，例如：将图中的人物改为站立姿势，弯腰握住狗的前爪"
+                                ></textarea>
+                                <p class="mt-1 text-xs text-gray-500">提供清晰的指令，AI才能精准处理。支持中英文双语。</p>
+                            </div>
+                            
+                            <div>
+                                <label for="negativePromptInput" class="block text-sm font-medium text-gray-700 mb-2">
+                                    负面提示（可选）
+                                </label>
+                                <textarea 
+                                    id="negativePromptInput" 
+                                    rows="2" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="描述您不希望出现的内容，例如：模糊、扭曲、变形、低质量"
+                                ></textarea>
+                            </div>
+                            
+                            <!-- 输出图片数量设置 -->
+                            <div>
+                                <label for="outputCountInput" class="block text-sm font-medium text-gray-700 mb-2">
+                                    输出图片数量
+                                </label>
+                                <select 
+                                    id="outputCountInput" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    onchange="updateCreditCost()"
+                                >
+                                    <option value="1" selected>1张图片</option>
+                                    <option value="2">2张图片</option>
+                                    <option value="3">3张图片</option>
+                                    <option value="4">4张图片</option>
+                                    <option value="5">5张图片</option>
+                                    <option value="6">6张图片</option>
+                                </select>
+                                <div class="mt-2 flex items-center justify-between">
+                                    <p class="text-xs text-gray-500">支持生成1-6张图片</p>
+                                    <div id="creditCostDisplay" class="text-sm font-medium text-indigo-600">
+                                        预计消耗：7积分
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 随机数种子设置 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">随机数种子（高级选项）</h3>
+                        
+                        <div>
+                            <label for="seedInput" class="block text-sm font-medium text-gray-700 mb-2">
+                                随机数种子
+                            </label>
+                            <input 
+                                type="number" 
+                                id="seedInput" 
+                                name="seed" 
+                                min="0" 
+                                max="2147483647" 
+                                placeholder="留空则自动生成随机种子"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            >
+                            <p class="mt-1 text-xs text-gray-500">
+                                输入0到2147483647之间的整数。使用相同的种子值可以生成相同的结果，实现可重复的图像编辑效果。
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 开始编辑按钮 -->
+                    <div class="text-center">
+                        <button 
+                            id="startEditBtn" 
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-8 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled
+                        >
+                            <i class="ri-magic-line mr-2"></i>
+                            开始编辑
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 右侧：编辑结果和历史记录 -->
+                <div class="space-y-6">
+                    <!-- 编辑结果 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">编辑结果</h3>
+                        
+                        <div id="editResultArea">
+                            <div class="text-center py-12 text-gray-500">
+                                <i class="ri-image-line text-4xl mb-4"></i>
+                                <p>上传图片并输入编辑指令后，编辑结果将在这里显示</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 历史记录 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">编辑历史</h3>
+                            <button 
+                                id="refreshHistoryBtn" 
+                                class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                            >
+                                <i class="ri-refresh-line mr-1"></i>
+                                刷新
+                            </button>
+                        </div>
+                        
+                        <div id="historyArea">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="ri-history-line text-3xl mb-2"></i>
+                                <p>暂无编辑历史</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示模态框 -->
+    <div id="loadingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">正在处理图像编辑</h3>
+                <p class="text-sm text-gray-500 mb-4">AI正在分析您的图片和指令，请耐心等待...</p>
+                <div class="text-xs text-gray-400">
+                    <p>预计处理时间：30-60秒</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let uploadedImages = [];
+        let currentTaskId = null;
+        let pollingInterval = null;
+        let currentFunctionType = 'multi-fusion'; // 🔥 新增：当前选择的功能类型
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载导航栏组件
+            try {
+                const navbarResponse = await fetch('/components/navbar-simple.html');
+                const navbarHtml = await navbarResponse.text();
+                document.getElementById('navbar-simple').innerHTML = navbarHtml;
+                
+                // 加载组件JavaScript
+                const componentsScript = document.createElement('script');
+                componentsScript.src = '/components/components.js';
+                document.head.appendChild(componentsScript);
+            } catch (error) {
+                console.error('加载导航栏组件失败:', error);
+            }
+            
+            initializeEventListeners();
+            loadEditHistory();
+            
+            // 初始化为多图融合功能
+            handleFunctionSwitch('multi-fusion');
+        });
+
+        // 更新积分消耗显示
+        function updateCreditCost() {
+            const outputCount = parseInt(document.getElementById('outputCountInput').value) || 1;
+            const creditCost = outputCount * 7; // 每张图片7积分
+            const creditDisplay = document.getElementById('creditCostDisplay');
+            if (creditDisplay) {
+                creditDisplay.textContent = `预计消耗：${creditCost}积分`;
+            }
+        }
+
+        // 初始化事件监听器
+        function initializeEventListeners() {
+            // 功能按钮点击事件
+            document.querySelectorAll('.function-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 移除所有按钮的active状态
+                    document.querySelectorAll('.function-btn').forEach(b => b.classList.remove('active'));
+                    // 添加当前按钮的active状态
+                    this.classList.add('active');
+                    
+                    const functionType = this.dataset.function;
+                    handleFunctionSwitch(functionType);
+                });
+            });
+
+            // 图片上传区域点击事件
+            document.getElementById('imageUploadArea').addEventListener('click', () => {
+                document.getElementById('imageInput').click();
+            });
+
+            // 文件选择事件
+            document.getElementById('imageInput').addEventListener('change', handleImageUpload);
+
+            // 拖拽上传事件
+            const uploadArea = document.getElementById('imageUploadArea');
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+
+
+            // 开始编辑按钮事件
+            document.getElementById('startEditBtn').addEventListener('click', startImageEdit);
+
+            // 刷新历史记录按钮事件
+            document.getElementById('refreshHistoryBtn').addEventListener('click', loadEditHistory);
+
+            // 监听输入变化，更新按钮状态
+            document.getElementById('promptInput').addEventListener('input', updateStartButtonState);
+        }
+
+        // 🔥 新增：清理功能状态
+        function clearFunctionState() {
+            // 1. 清理上传的图片
+            uploadedImages = [];
+            updateImagePreview();
+            
+            // 2. 清空输入框内容
+            const promptInput = document.getElementById('promptInput');
+            if (promptInput) {
+                promptInput.value = '';
+            }
+            
+            const negativePromptInput = document.getElementById('negativePromptInput');
+            if (negativePromptInput) {
+                negativePromptInput.value = '';
+            }
+            
+            const seedInput = document.getElementById('seedInput');
+            if (seedInput) {
+                seedInput.value = '';
+            }
+            
+            
+            // 4. 重置输出图片数量为1张
+            const outputCountInput = document.getElementById('outputCountInput');
+            if (outputCountInput) {
+                outputCountInput.value = '1';
+                updateCreditCost();
+            }
+            
+            // 5. 清理编辑结果区域
+            const editResultArea = document.getElementById('editResultArea');
+            if (editResultArea) {
+                editResultArea.innerHTML = `
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="ri-image-line text-4xl mb-4"></i>
+                        <p>上传图片并输入编辑指令后，编辑结果将在这里显示</p>
+                    </div>
+                `;
+            }
+            
+            // 6. 停止当前任务轮询
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            
+            // 7. 重置当前任务ID
+            currentTaskId = null;
+            
+            // 8. 隐藏加载模态框
+            const loadingModal = document.getElementById('loadingModal');
+            if (loadingModal) {
+                loadingModal.style.display = 'none';
+            }
+            
+            // 9. 重置文件输入
+            const imageInput = document.getElementById('imageInput');
+            if (imageInput) {
+                imageInput.value = '';
+            }
+            
+            // 10. 清理历史记录区域（将在功能切换后重新加载）
+            const historyArea = document.getElementById('historyArea');
+            if (historyArea) {
+                historyArea.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="ri-history-line text-3xl mb-2"></i>
+                        <p>正在加载历史记录...</p>
+                    </div>
+                `;
+            }
+            
+            // 11. 更新开始按钮状态
+            updateStartButtonState();
+            
+            console.log('🧹 功能状态已清理');
+        }
+
+        // 处理功能切换
+        function handleFunctionSwitch(functionType) {
+            // 🔥 新增：清理之前功能的状态和数据
+            clearFunctionState();
+            
+            // 🔥 新增：更新当前功能类型
+            currentFunctionType = functionType;
+            
+            // 根据不同功能类型显示不同的提示信息
+            const functionInfo = {
+                'multi-fusion': {
+                    title: '多图融合',
+                    description: '将多张图片融合成一张，创造全新的视觉效果',
+                    placeholder: '请描述您希望如何融合这些图片，例如：\n- 将第一张图的人物和第二张图的背景融合\n- 创建一个包含所有图片元素的合成图\n- 将多张风景图融合成全景图'
+                },
+                'consistency': {
+                    title: '主体一致性保持',
+                    description: '在不同场景中保持主体人物或物体的一致性',
+                    placeholder: '请描述您希望保持一致的主体和新的场景，例如：\n- 保持人物外观，将背景改为海边\n- 保持产品外观，放置在不同的环境中\n- 保持角色特征，改变动作姿态'
+                },
+                'sketch-create': {
+                    title: '草图创作',
+                    description: '将简单的草图转换为精美的艺术作品',
+                    placeholder: '请描述您希望将草图转换成什么样的作品，例如：\n- 将手绘草图转换为写实风格的画作\n- 将简笔画转换为卡通风格的插画\n- 将建筑草图转换为3D效果图'
+                },
+                'creative-gen': {
+                    title: '文创生成',
+                    description: '基于文字描述生成创意图像作品',
+                    placeholder: '请详细描述您想要生成的创意作品，例如：\n- 设计一个现代简约风格的logo\n- 创作一幅抽象艺术画\n- 生成一个产品包装设计\n- 制作一张宣传海报'
+                },
+                'depth-gen': {
+                    title: '根据深度图生成图像',
+                    description: '基于深度信息生成具有立体感的图像',
+                    placeholder: '请描述您希望生成的图像内容和风格，例如：\n- 根据深度图生成室内场景\n- 创建具有层次感的风景画\n- 生成3D效果的产品展示图'
+                },
+                'keypoint-gen': {
+                    title: '根据关键点生成图像',
+                    description: '基于关键点信息生成符合姿态的图像',
+                    placeholder: '请描述您希望生成的图像和姿态要求，例如：\n- 根据人体关键点生成特定姿势的人物\n- 基于手部关键点生成手势图像\n- 根据面部关键点生成表情图像'
+                },
+                'text-edit': {
+                    title: '文字编辑',
+                    description: '精确编辑图片中的文字内容',
+                    placeholder: '请描述您要编辑的文字内容，例如：\n- 将图片中的"SALE"改为"促销"\n- 修改海报上的日期信息\n- 更换标识牌上的文字\n- 翻译图片中的外文文字'
+                },
+                'object-edit': {
+                    title: '增删改及替换',
+                    description: '对图片中的物体进行增加、删除、修改或替换',
+                    placeholder: '请描述您要进行的物体编辑操作，例如：\n- 删除图片中的某个人物\n- 在桌子上添加一个苹果\n- 将汽车替换为自行车\n- 修改建筑物的颜色'
+                },
+                'perspective': {
+                    title: '视角转换',
+                    description: '改变图片的拍摄视角和观察角度',
+                    placeholder: '请描述您希望的视角变化，例如：\n- 将正面视角改为侧面视角\n- 从低角度改为鸟瞰视角\n- 将室内视角改为室外视角\n- 改变产品的展示角度'
+                },
+                'bg-replace': {
+                    title: '背景替换',
+                    description: '替换图片的背景环境',
+                    placeholder: '请描述您希望的新背景，例如：\n- 将室内背景改为海滩风景\n- 将白色背景改为渐变色背景\n- 将城市背景改为森林背景\n- 添加特定的场景背景'
+                },
+                'photo-restore': {
+                    title: '老照片处理',
+                    description: '修复和增强老旧照片的质量',
+                    placeholder: '请描述您希望对老照片进行的处理，例如：\n- 修复照片上的划痕和污渍\n- 提高照片的清晰度和对比度\n- 为黑白照片上色\n- 修复破损的照片边缘'
+                }
+            };
+
+            const info = functionInfo[functionType] || functionInfo['multi-fusion'];
+            
+            // 更新页面标题和描述
+            document.querySelector('h1').textContent = info.title;
+            document.querySelector('h1').nextElementSibling.textContent = info.description;
+            
+            // 更新编辑指令的占位符文本
+            const textarea = document.getElementById('promptInput');
+            if (textarea) {
+                textarea.placeholder = info.placeholder;
+                textarea.value = ''; // 清空之前的内容
+            }
+
+            // 根据功能类型显示/隐藏相关控件
+            updateUIForFunction(functionType);
+            
+            // 🔥 新增：重新加载当前功能的历史记录
+            setTimeout(() => {
+                loadEditHistory();
+            }, 100); // 延迟一点时间确保UI更新完成
+        }
+
+        // 根据功能类型更新UI
+        function updateUIForFunction(functionType) {
+            // 这里可以根据不同功能显示/隐藏特定的控件
+            // 例如某些功能可能不需要特定的设置等
+            
+            // 暂时保持所有控件可见，后续可以根据需要进行调整
+            console.log('切换到功能:', functionType);
+        }
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            processImageFiles(files);
+        }
+
+        // 处理拖拽悬停
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        // 处理拖拽离开
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        // 处理拖拽放下
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            const files = Array.from(event.dataTransfer.files);
+            processImageFiles(files);
+        }
+
+        // 处理图片文件
+        function processImageFiles(files) {
+            // 过滤图片文件
+            const imageFiles = files.filter(file => {
+                return file.type.startsWith('image/') && 
+                       ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+            });
+
+            if (imageFiles.length === 0) {
+                alert('请选择有效的图片文件（JPG、PNG、WEBP格式）');
+                return;
+            }
+
+            // 检查文件数量限制
+            if (uploadedImages.length + imageFiles.length > 3) {
+                alert('最多只能上传3张图片');
+                return;
+            }
+
+            // 检查文件大小
+            const oversizedFiles = imageFiles.filter(file => file.size > 10 * 1024 * 1024);
+            if (oversizedFiles.length > 0) {
+                alert('图片文件大小不能超过10MB');
+                return;
+            }
+
+            // 添加图片到列表
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedImages.push({
+                        file: file,
+                        dataUrl: e.target.result,
+                        name: file.name
+                    });
+                    updateImagePreview();
+                    updateStartButtonState();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 更新图片预览
+        function updateImagePreview() {
+            const previewArea = document.getElementById('imagePreviewArea');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+
+            if (uploadedImages.length === 0) {
+                previewArea.style.display = 'none';
+                return;
+            }
+
+            previewArea.style.display = 'block';
+            previewContainer.innerHTML = '';
+
+            uploadedImages.forEach((image, index) => {
+                const container = document.createElement('div');
+                container.className = 'image-preview-container';
+
+                const img = document.createElement('img');
+                img.src = image.dataUrl;
+                img.className = 'image-preview';
+                img.alt = image.name;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-image-btn';
+                removeBtn.innerHTML = '×';
+                removeBtn.onclick = () => removeImage(index);
+
+                container.appendChild(img);
+                container.appendChild(removeBtn);
+                previewContainer.appendChild(container);
+            });
+        }
+
+        // 移除图片
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            updateImagePreview();
+            updateStartButtonState();
+            
+            // 重置文件输入
+            document.getElementById('imageInput').value = '';
+        }
+
+        // 更新开始按钮状态
+        function updateStartButtonState() {
+            const startBtn = document.getElementById('startEditBtn');
+            const prompt = document.getElementById('promptInput').value.trim();
+            const hasImages = uploadedImages.length > 0;
+
+            startBtn.disabled = !(hasImages && prompt);
+        }
+
+        // 开始图像编辑
+        async function startImageEdit() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            const negativePrompt = document.getElementById('negativePromptInput').value.trim();
+
+            if (!prompt) {
+                alert('请输入编辑指令');
+                return;
+            }
+
+            if (uploadedImages.length === 0) {
+                alert('请至少上传一张图片');
+                return;
+            }
+
+            try {
+                // 显示加载模态框
+                document.getElementById('loadingModal').style.display = 'block';
+
+                // 准备FormData
+                const formData = new FormData();
+                formData.append('prompt', `[${currentFunctionType}] ${prompt}`); // 🔥 新增：在prompt前添加功能类型标识
+                formData.append('negativePrompt', negativePrompt);
+                
+                // 添加输出图片数量参数
+                const outputCount = document.getElementById('outputCountInput').value;
+                console.log('🔍 前端调试 - 选择的图片数量:', outputCount);
+                formData.append('n', outputCount);
+                
+                // 添加随机数种子参数
+                const seed = document.getElementById('seedInput').value;
+                if (seed && seed.trim() !== '') {
+                    formData.append('seed', seed);
+                }
+
+                // 添加图片文件
+                uploadedImages.forEach((image, index) => {
+                    formData.append('images', image.file);
+                });
+
+                console.log('开始创建通义千问图像编辑任务...');
+
+                // 调用API创建任务
+                const response = await fetch('/api/qwen-image-edit/create', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentTaskId = result.data.taskId;
+                    console.log('任务创建成功，任务ID:', currentTaskId);
+
+                    // 开始轮询任务状态
+                    startTaskPolling();
+                } else {
+                    throw new Error(result.message || '创建任务失败');
+                }
+
+            } catch (error) {
+                console.error('创建图像编辑任务失败:', error);
+                document.getElementById('loadingModal').style.display = 'none';
+                alert('创建任务失败: ' + error.message);
+            }
+        }
+
+        // 开始轮询任务状态
+        function startTaskPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/qwen-image-edit/status/${currentTaskId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
+
+                    const result = await response.json();
+                    
+                    // 🔍 调试：显示完整的API响应数据
+                    console.log('🔍 调试 - 状态查询API响应:', result);
+
+                    if (result.success && result.data.status === 'SUCCEEDED') {
+                        // 任务完成
+                        clearInterval(pollingInterval);
+                        document.getElementById('loadingModal').style.display = 'none';
+                        
+                        // 检查是否有编辑后的图片
+                        if (result.data.resultImages && result.data.resultImages.length > 0) {
+                            // 有编辑后的图片，显示图片结果
+                            displayEditResult(result.data);
+                        } else if (result.data.editingInstructions) {
+                            // 只有编辑指导，显示指导内容
+                            displayEditInstructions(result.data);
+                        } else {
+                            displayEditResult(result.data);
+                        }
+                        loadEditHistory(); // 刷新历史记录
+                        
+                    } else if (!result.success || result.data.status === 'FAILED') {
+                        // 任务失败
+                        clearInterval(pollingInterval);
+                        document.getElementById('loadingModal').style.display = 'none';
+                        alert('图像编辑失败: ' + (result.data?.error || '未知错误'));
+                    }
+                    // 任务进行中，继续轮询
+
+                } catch (error) {
+                    console.error('查询任务状态失败:', error);
+                }
+            }, 3000); // 每3秒查询一次
+        }
+
+        // 显示编辑结果（包含编辑后的图片）
+        function displayEditResult(taskData) {
+            const resultArea = document.getElementById('editResultArea');
+            
+            // 优先使用OSS存储的图片，如果没有则使用原始结果
+            let displayImages = [];
+            
+            if (taskData.ossResultImages && taskData.ossResultImages.length > 0) {
+                displayImages = taskData.ossResultImages.map(item => item.ossUrl);
+                console.log('🔍 调试 - 使用OSS结果图片:', taskData.ossResultImages);
+            } else if (taskData.resultImages && taskData.resultImages.length > 0) {
+                displayImages = taskData.resultImages.map(item => {
+                    // 确保返回有效的URL字符串
+                    if (typeof item === 'string') {
+                        return item;
+                    } else if (item && typeof item === 'object' && item.url) {
+                        return item.url;
+                    } else {
+                        console.error('❌ 无效的图片数据:', item);
+                        return null;
+                    }
+                }).filter(url => url !== null); // 过滤掉无效的URL
+                console.log('🔍 调试 - 使用原始结果图片:', taskData.resultImages);
+            }
+            
+            // 🔍 调试：检查所有图片URL
+            console.log('🔍 调试 - 最终显示的图片URLs:', displayImages);
+            
+            if (!displayImages || displayImages.length === 0) {
+                // 如果没有图片但有指导，显示指导内容
+                if (taskData.editingInstructions) {
+                    displayEditInstructions(taskData);
+                    return;
+                }
+                
+                resultArea.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="ri-error-warning-line text-3xl mb-2"></i>
+                        <p>未生成编辑结果</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let resultHtml = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">
+                            <i class="ri-image-edit-line mr-2"></i>图像编辑完成
+                        </h4>
+                        <div class="flex items-center space-x-2">
+                            <span class="task-status status-succeeded">已完成</span>
+                            ${taskData.ossResultImages && taskData.ossResultImages.length > 0 ? 
+                                '<span class="text-xs text-green-600"><i class="ri-cloud-line"></i>已保存到云端</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                        <strong>编辑指令：</strong>${getCleanPrompt(taskData.prompt)}
+                        ${taskData.negativePrompt ? `<br><strong>负面提示：</strong>${taskData.negativePrompt}` : ''}
+                    </div>
+                    <div class="text-center mb-4">
+                        <span class="text-sm font-medium text-green-600">
+                            <i class="ri-check-line"></i> 成功生成 ${displayImages.length} 张编辑后的图片
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            `;
+
+            displayImages.forEach((imageUrl, index) => {
+                // 🔍 调试：检查图片URL是否正确
+                console.log(`🔍 调试 - 图片URL ${index + 1}:`, imageUrl);
+                if (imageUrl && imageUrl.includes('200bject')) {
+                    console.error('❌ 发现错误的URL:', imageUrl);
+                    console.trace('URL来源追踪');
+                }
+                
+                resultHtml += `
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div class="text-center">
+                            <div class="relative inline-block">
+                                <img src="${imageUrl}" alt="编辑结果 ${index + 1}" class="result-image mx-auto rounded-lg shadow-md">
+                                <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                                    ${index + 1}/${displayImages.length}
+                                </div>
+                            </div>
+                            <div class="mt-3 space-y-2">
+                                <div class="flex space-x-2 justify-center">
+                                    <a href="${imageUrl}" download="qwen-edit-result-${index + 1}.jpg" 
+                                       class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 transition-colors">
+                                        <i class="ri-download-line mr-1"></i>
+                                        下载
+                                    </a>
+                                    <button onclick="saveToDownloadCenter('${imageUrl}', 'QWEN_IMAGE_EDIT', '图像编辑结果 ${index + 1}', '${taskData.prompt}')" 
+                                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 transition-colors">
+                                        <i class="ri-save-line mr-1"></i>
+                                        保存
+                                    </button>
+                                    <button onclick="previewImage('${imageUrl}')" 
+                                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-purple-600 bg-purple-100 hover:bg-purple-200 transition-colors">
+                                        <i class="ri-eye-line mr-1"></i>
+                                        预览
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultHtml += `
+                    </div>
+                    ${taskData.editingInstructions ? `
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h5 class="font-medium text-blue-900 mb-2">
+                                <i class="ri-lightbulb-line mr-1"></i>编辑说明
+                            </h5>
+                            <div class="text-sm text-blue-800 whitespace-pre-wrap">${taskData.editingInstructions}</div>
+                        </div>
+                    ` : ''}
+                    <div class="text-xs text-gray-500 text-center space-x-4">
+                        <span>消耗积分: ${taskData.isFree ? '0（免费）' : taskData.creditCost}${taskData.resultImages && taskData.resultImages.length > 1 ? ` (${taskData.resultImages.length}张×7积分)` : ''}</span>
+                        <span>完成时间: ${new Date(taskData.completedAt).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+
+            resultArea.innerHTML = resultHtml;
+        }
+        
+        // 显示编辑指导（仅文本模式）
+        function displayEditInstructions(taskData) {
+            const resultArea = document.getElementById('editResultArea');
+            
+            const instructionsHtml = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">
+                            <i class="ri-lightbulb-line mr-2"></i>图像编辑指导
+                        </h4>
+                        <div class="flex items-center space-x-2">
+                            <span class="task-status status-succeeded">已完成</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                        <strong>编辑指令：</strong>${getCleanPrompt(taskData.prompt)}
+                        ${taskData.negativePrompt ? `<br><strong>负面提示：</strong>${taskData.negativePrompt}` : ''}
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="text-center mb-3">
+                            <i class="ri-robot-line text-2xl text-blue-600"></i>
+                            <p class="text-sm font-medium text-blue-900 mt-1">专业编辑指导</p>
+                        </div>
+                        <div class="text-sm text-blue-800 whitespace-pre-wrap leading-relaxed">${taskData.editingInstructions}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 text-center space-x-4">
+                        <span>消耗积分: ${taskData.isFree ? '0（免费）' : taskData.creditCost}${taskData.resultImages && taskData.resultImages.length > 1 ? ` (${taskData.resultImages.length}张×7积分)` : ''}</span>
+                        <span>完成时间: ${new Date(taskData.completedAt).toLocaleString()}</span>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <p class="text-sm text-yellow-800">
+                            <i class="ri-information-line mr-1"></i>
+                            当前使用的是编辑指导模式，提供专业的图像编辑建议。如需直接生成编辑后的图片，请联系管理员升级API权限。
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            resultArea.innerHTML = instructionsHtml;
+        }
+        
+        // 预览图片
+        function previewImage(imageUrl) {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="relative max-w-4xl max-h-full p-4">
+                    <img src="${imageUrl}" class="max-w-full max-h-full object-contain rounded-lg">
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-75">
+                        <i class="ri-close-line"></i>
+                    </button>
+                </div>
+            `;
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            document.body.appendChild(modal);
+        }
+
+        // 🔥 新增：清理prompt中的功能类型标识
+        function getCleanPrompt(prompt) {
+            if (!prompt) return '';
+            
+            // 移除功能类型标识 [function-type]
+            const cleanPrompt = prompt.replace(/^\[[\w-]+\]\s*/, '');
+            return cleanPrompt;
+        }
+
+        // 加载编辑历史
+        async function loadEditHistory() {
+            try {
+                const response = await fetch('/api/qwen-image-edit/history?limit=20', { // 🔥 增加获取数量以便过滤
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 🔥 新增：根据当前功能类型过滤历史记录
+                    const filteredTasks = result.data.tasks.filter(task => {
+                        // 检查prompt是否包含当前功能类型的标识
+                        return task.prompt && task.prompt.startsWith(`[${currentFunctionType}]`);
+                    });
+                    
+                    // 只显示前5条匹配的记录
+                    const limitedTasks = filteredTasks.slice(0, 5);
+                    
+                    console.log(`🔍 历史记录过滤结果: 总数=${result.data.tasks.length}, 当前功能(${currentFunctionType})=${limitedTasks.length}`);
+                    
+                    displayEditHistory(limitedTasks);
+                } else {
+                    console.error('加载历史记录失败:', result.message);
+                    displayEditHistory([]);
+                }
+
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                displayEditHistory([]);
+            }
+        }
+
+        // 显示编辑历史
+        function displayEditHistory(tasks) {
+            const historyArea = document.getElementById('historyArea');
+
+            if (!tasks || tasks.length === 0) {
+                historyArea.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="ri-history-line text-3xl mb-2"></i>
+                        <p>暂无编辑历史</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 优先显示有结果图的记录，然后按创建时间排序，只取前3条
+            const sortedTasks = tasks
+                .sort((a, b) => {
+                    // 优先显示有结果图的记录
+                    const aHasResult = (a.ossResultImages && a.ossResultImages.length > 0) || 
+                                     (a.resultImages && a.resultImages.length > 0);
+                    const bHasResult = (b.ossResultImages && b.ossResultImages.length > 0) || 
+                                     (b.resultImages && b.resultImages.length > 0);
+                    
+                    if (aHasResult && !bHasResult) return -1;
+                    if (!aHasResult && bHasResult) return 1;
+                    
+                    // 如果都有结果图或都没有结果图，按时间排序
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                })
+                .slice(0, 3);
+
+            // 使用网格布局显示历史记录 - 参照智能扩图样式
+            let historyHtml = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
+
+            sortedTasks.forEach((task, index) => {
+                const statusClass = task.status === 'SUCCEEDED' ? 'status-succeeded' : 
+                                  task.status === 'FAILED' ? 'status-failed' : 'status-pending';
+                const statusText = task.status === 'SUCCEEDED' ? '已完成' : 
+                                 task.status === 'FAILED' ? '失败' : '处理中';
+
+                // 获取结果图片用于缩略图显示
+                let thumbnailImage = null;
+                if (task.ossResultImages && task.ossResultImages.length > 0) {
+                    thumbnailImage = task.ossResultImages[0].ossUrl;
+                } else if (task.resultImages && task.resultImages.length > 0) {
+                    const firstResult = task.resultImages[0];
+                    if (typeof firstResult === 'string') {
+                        thumbnailImage = firstResult;
+                    } else if (firstResult && typeof firstResult === 'object' && firstResult.url) {
+                        thumbnailImage = firstResult.url;
+                    }
+                }
+
+                historyHtml += `
+                    <div class="history-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer h-full flex flex-col">
+                        ${thumbnailImage ? `
+                            <div class="relative flex-shrink-0">
+                                <img src="${thumbnailImage}" alt="编辑结果" class="w-full h-40 object-cover" loading="lazy">
+                                <div class="absolute top-2 right-2">
+                                    <span class="task-status ${statusClass} text-xs backdrop-blur-sm bg-white bg-opacity-90 border border-white border-opacity-20">${statusText}</span>
+                                </div>
+                                ${task.ossResultImages && task.ossResultImages.length > 0 ? 
+                                    '<div class="absolute top-2 left-2"><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded backdrop-blur-sm bg-opacity-90"><i class="ri-cloud-line"></i> 已保存</span></div>' : ''}
+                            </div>
+                        ` : `
+                            <div class="h-40 bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <div class="text-center">
+                                    <i class="ri-image-line text-3xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-500">无结果图片</p>
+                                    <span class="task-status ${statusClass} text-xs mt-2 inline-block">${statusText}</span>
+                                </div>
+                            </div>
+                        `}
+                        
+                        <div class="p-3 flex-1 flex flex-col">
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-2 flex-1" title="${getCleanPrompt(task.prompt)}">${getCleanPrompt(task.prompt)}</p>
+                            
+                            <div class="mt-auto space-y-2">
+                                <div class="flex justify-between items-center text-xs text-gray-500">
+                                    <span>${new Date(task.createdAt).toLocaleString('zh-CN')}</span>
+                                    ${thumbnailImage ? `
+                                        <button class="download-history-btn text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50 transition-all" 
+                                                onclick="event.stopPropagation(); downloadHistoryImage('${thumbnailImage}', '编辑结果_${task.taskId || Date.now()}.png')"
+                                                title="下载图片">
+                                            <i class="ri-download-line text-sm"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            
+                                
+                                <div class="pt-2 border-t border-gray-100 text-right">
+                                    <span class="text-xs text-gray-500">积分: ${task.isFree ? '0（免费）' : task.creditCost}${task.resultImages && task.resultImages.length > 1 ? ` (${task.resultImages.length}张×7积分)` : ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            historyHtml += '</div>';
+            historyArea.innerHTML = historyHtml;
+
+            // 为历史记录卡片添加点击事件（查看详情）
+            document.querySelectorAll('.history-card').forEach((card, index) => {
+                card.addEventListener('click', function(e) {
+                    // 如果点击的是下载按钮，不触发卡片点击事件
+                    if (e.target.closest('.download-history-btn')) {
+                        return;
+                    }
+                    showHistoryDetail(sortedTasks[index]);
+                });
+            });
+        }
+
+        // 显示历史记录详情
+        function showHistoryDetail(task) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 modal-enter';
+            
+            // 获取所有结果图片
+            let displayImages = [];
+            if (task.ossResultImages && task.ossResultImages.length > 0) {
+                displayImages = task.ossResultImages.map(item => item.ossUrl);
+            } else if (task.resultImages && task.resultImages.length > 0) {
+                displayImages = task.resultImages.map(item => {
+                    if (typeof item === 'string') {
+                        return item;
+                    } else if (item && typeof item === 'object' && item.url) {
+                        return item.url;
+                    }
+                    return null;
+                }).filter(url => url !== null);
+            }
+
+            modal.innerHTML = `
+                <div class="relative top-10 mx-auto p-6 border w-11/12 max-w-3xl shadow-xl rounded-lg bg-white">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900">编辑详情</h3>
+                        <button class="close-modal text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="ri-edit-line text-blue-600 mr-2"></i>
+                                <label class="text-sm font-medium text-blue-900">编辑指令</label>
+                            </div>
+                            <p class="text-sm text-gray-800 leading-relaxed">${getCleanPrompt(task.prompt)}</p>
+                        </div>
+                        
+                        ${task.negativePrompt ? `
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <div class="flex items-center mb-2">
+                                    <i class="ri-forbid-line text-red-600 mr-2"></i>
+                                    <label class="text-sm font-medium text-red-900">负面提示</label>
+                                </div>
+                                <p class="text-sm text-gray-800 leading-relaxed">${task.negativePrompt}</p>
+                            </div>
+                        ` : ''}
+                        
+                        
+                        ${displayImages.length > 0 ? `
+                            <div>
+                                <div class="flex items-center mb-4">
+                                    <i class="ri-image-line text-green-600 mr-2"></i>
+                                    <label class="text-sm font-medium text-green-900">编辑结果 (${displayImages.length}张)</label>
+                                </div>
+                                <div class="space-y-4">
+                                    ${displayImages.map((url, index) => `
+                                        <div class="relative group bg-gray-50 rounded-lg p-4">
+                                            <div class="text-center">
+                                                <div class="text-xs text-gray-500 mb-2">结果图 ${index + 1}</div>
+                                                <div class="inline-block relative">
+                                                    <img src="${url}" alt="编辑结果 ${index + 1}" 
+                                                         class="max-w-full max-h-80 object-contain rounded border shadow-sm" 
+                                                         style="min-height: 100px;">
+                                                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button class="bg-white bg-opacity-90 hover:bg-opacity-100 text-indigo-600 p-2 rounded-full shadow-md hover:shadow-lg transition-all" 
+                                                                onclick="event.stopPropagation(); downloadHistoryImage('${url}', '编辑结果_${index + 1}_${task.taskId || Date.now()}.png')"
+                                                                title="下载图片">
+                                                            <i class="ri-download-line text-sm"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="bg-gray-50 rounded-lg p-4 border-t">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                                <div class="flex items-center">
+                                    <i class="ri-time-line text-gray-500 mr-2"></i>
+                                    <span class="text-gray-600">${new Date(task.createdAt).toLocaleString('zh-CN')}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="ri-coin-line text-gray-500 mr-2"></i>
+                                    <span class="text-gray-600">积分: ${task.isFree ? '0（免费）' : task.creditCost}${task.resultImages && task.resultImages.length > 1 ? ` (${task.resultImages.length}张×7积分)` : ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // 关闭模态框事件
+            modal.querySelector('.close-modal').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+
+            // 点击背景关闭模态框
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+        }
+
+        // 下载历史记录图片
+        function downloadHistoryImage(imageUrl, fileName) {
+            try {
+                const link = document.createElement('a');
+                link.href = imageUrl;
+                link.download = fileName || `编辑结果_${Date.now()}.png`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                console.log('历史图片下载成功:', fileName);
+            } catch (error) {
+                console.error('历史图片下载失败:', error);
+                alert('图片下载失败，请重试');
+            }
+        }
+
+        // 保存图片到下载中心
+        async function saveToDownloadCenter(imageUrl, type, title, description) {
+            try {
+                // 检查是否已登录
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    throw new Error('请先登录再保存图片');
+                }
+                
+                console.log('保存图片到下载中心:', {
+                    imageUrl: imageUrl ? imageUrl.substring(0, 50) + '...' : '无',
+                    type: type,
+                    title: title,
+                    description: description
+                });
+                
+                const response = await fetch('/api/downloads/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        imageUrl: imageUrl,
+                        type: type,
+                        title: title,
+                        description: description,
+                        saveAction: 'manual'
+                    })
+                });
+
+                console.log('保存响应状态:', response.status);
+                
+                const result = await response.json();
+                console.log('保存响应数据:', result);
+                
+                if (!response.ok) {
+                    throw new Error(result.message || result.error || `HTTP ${response.status}: 保存失败`);
+                }
+                
+                if (result.success) {
+                    // 显示成功提示
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                    toast.textContent = '图片已保存到下载中心';
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        if (document.body.contains(toast)) {
+                            document.body.removeChild(toast);
+                        }
+                    }, 3000);
+                } else {
+                    throw new Error(result.message || '保存失败');
+                }
+            } catch (error) {
+                console.error('保存到下载中心失败:', error);
+                
+                // 显示错误提示
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                toast.textContent = '保存失败: ' + error.message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 3000);
+            }
+        }
+
+        // 页面卸载时清理轮询
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        });
+    </script>
+</body>
+</html>

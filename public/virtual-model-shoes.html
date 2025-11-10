@@ -12,36 +12,16 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-        .logo-text {
-            animation: firefly-glow 3s infinite;
-        }
-        .logo-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #6366f1;
-            border-radius: 50%;
-            margin-left: 2px;
-            margin-right: 4px;
-            position: relative;
-            top: -2px;
-        }
-        @keyframes firefly-glow {
-            0% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
-            50% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 15px rgba(99, 102, 241, 0.3); }
-            100% { text-shadow: 0 0 3px rgba(99, 102, 241, 0.5); }
-        }
         .upload-area {
-            border: 2px dashed #e5e7eb;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            cursor: pointer;
             transition: all 0.3s ease;
             min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
         }
         .upload-area:hover {
             border-color: #6366f1;
+            background-color: #f9fafb;
         }
         .upload-area.drag-over {
             border-color: #6366f1;
@@ -73,35 +53,61 @@
             width: 100%;
             height: 100%;
         }
-        
-
+        .instructions {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        /* 图片拖动禁用 */
+        img {
+            -webkit-user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
     </style>
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- 简化版导航栏 -->
+<body class="min-h-screen bg-gray-100">
+    <!-- 导航栏组件容器 -->
     <div id="navbar-simple"></div>
 
     <!-- 主内容区域 -->
-    <div class="container mx-auto px-4 py-8" style="margin-top: 60px;">
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h1 class="text-2xl font-bold text-gray-800 mb-2">智能虚拟模特鞋靴试穿</h1>
-            <p class="text-gray-600 mb-4">上传模特图片和鞋靴图片，AI技术自动生成模特穿搭效果</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
+        <h1 class="text-3xl font-bold text-center mb-8">智能虚拟模特鞋靴试穿</h1>
+        
+        <div class="w-full flex flex-col lg:flex-row bg-white" style="min-height: calc(100vh - 200px);">
+            <!-- 左侧：上传图片和设置 -->
+            <div class="w-full lg:w-1/3 border-r border-gray-200 p-5 flex flex-col h-full overflow-auto">
+                <h2 class="text-xl font-bold mb-3">试穿设置</h2>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
+                    <div class="instructions bg-gray-50 p-3 rounded-md">
+                        <p class="mb-2">此功能可以将模特和鞋靴图片合成，生成模特穿搭效果。</p>
+                        <p class="mb-2">上传清晰的全身模特照片和鞋靴产品图，系统将自动分析并生成穿搭效果。</p>
+                        <p class="mb-2">为获得最佳效果，请确保模特图片中的鞋子部分清晰可见。</p>
+                        <p class="text-red-500 font-medium">请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                    </div>
+                </div>
+
                 <!-- 模特图片上传区域 -->
-                <div class="flex flex-col">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-3">模特图片</h2>
-                    <div id="model-upload-area" class="upload-area rounded-lg p-4 bg-gray-50 relative cursor-pointer">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="ri-user-line mr-1"></i>模特图片
+                    </label>
+                    <div id="model-upload-area" class="upload-area flex flex-col items-center justify-center bg-gray-50 relative">
                         <input type="file" id="model-input" class="hidden" accept="image/*">
-                        <div id="model-placeholder" class="upload-placeholder">
-                            <i class="ri-user-line text-5xl text-gray-400 mb-2"></i>
+                        <div id="model-placeholder" class="upload-placeholder p-4">
+                            <i class="ri-user-line text-4xl text-gray-400 mb-2"></i>
                             <p class="text-gray-500 text-center mb-2">点击或拖拽上传模特图片</p>
                             <p class="text-xs text-gray-400 text-center">支持 JPG、PNG 格式，大小不超过 5MB</p>
                         </div>
                         <div class="image-container hidden" id="model-image-container">
-                            <img id="model-preview" class="preview-image">
+                            <img id="model-preview" class="preview-image" draggable="false">
                         </div>
                         <button id="model-remove-btn" class="hidden absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                             <i class="ri-close-line"></i>
@@ -110,49 +116,79 @@
                 </div>
 
                 <!-- 鞋靴图片上传区域 -->
-                <div class="flex flex-col">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-3">鞋靴图片</h2>
-                    <div id="shoes-upload-area" class="upload-area rounded-lg p-4 bg-gray-50 relative cursor-pointer">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="ri-footprint-line mr-1"></i>鞋靴图片
+                    </label>
+                    <div id="shoes-upload-area" class="upload-area flex flex-col items-center justify-center bg-gray-50 relative">
                         <input type="file" id="shoes-input" class="hidden" accept="image/*">
-                        <div id="shoes-placeholder" class="upload-placeholder">
-                            <i class="ri-footprint-line text-5xl text-gray-400 mb-2"></i>
+                        <div id="shoes-placeholder" class="upload-placeholder p-4">
+                            <i class="ri-footprint-line text-4xl text-gray-400 mb-2"></i>
                             <p class="text-gray-500 text-center mb-2">点击或拖拽上传鞋靴图片</p>
                             <p class="text-xs text-gray-400 text-center">支持 JPG、PNG 格式，大小不超过 5MB</p>
                         </div>
                         <div class="image-container hidden" id="shoes-image-container">
-                            <img id="shoes-preview" class="preview-image">
+                            <img id="shoes-preview" class="preview-image" draggable="false">
                         </div>
                         <button id="shoes-remove-btn" class="hidden absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                             <i class="ri-close-line"></i>
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- 操作区域 -->
-            <div class="mt-8 flex flex-col items-center">
-                <button id="submit-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                <!-- 这里添加flex-grow来占用剩余空间，让按钮推到底部 -->
+                <div class="flex-grow"></div>
+
+                <button id="submit-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center mt-auto disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    <i class="ri-magic-line mr-2"></i>
                     开始试穿
                 </button>
-                <p class="text-xs text-gray-500 mt-3">注意：请确保模特和鞋靴图片清晰，以获得最佳效果</p>
+                <p class="mt-2 text-center text-sm text-gray-500">
+                    试穿生成需要10-20秒，消耗25积分
+                </p>
+            </div>
+            
+            <!-- 右侧：效果展示 -->
+            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
+                <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
+                
+                <div class="flex flex-col md:flex-row gap-6 flex-grow">
+                    <div class="w-full md:w-1/2">
+                        <h3 class="text-base font-medium mb-3 text-center">模特图像:</h3>
+                        <div id="original-model-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden relative">
+                            <img id="display-model-image" class="hidden max-w-full max-h-full object-contain" alt="模特图片" draggable="false">
+                            <p id="model-image-placeholder" class="text-gray-500 text-center px-4">上传模特图片后将在这里显示</p>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-1/2">
+                        <h3 class="text-base font-medium mb-3 text-center">鞋靴图像:</h3>
+                        <div id="original-shoes-container" class="h-64 md:h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                            <img id="display-shoes-image" class="hidden max-w-full max-h-full object-contain" alt="鞋靴图片" draggable="false">
+                            <p id="shoes-image-placeholder" class="text-gray-500 text-center px-4">上传鞋靴图片后将在这里显示</p>
+                        </div>
             </div>
         </div>
 
         <!-- 结果区域 -->
-        <div id="result-container" class="bg-white rounded-lg shadow-md p-6 hidden">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">试穿结果</h2>
-            <div class="flex justify-center">
-                <img id="result-image" class="max-w-full h-auto max-h-[500px]">
+                <div id="result-container" class="mt-8 hidden">
+                    <h3 class="text-lg font-medium mb-3 text-center">试穿结果:</h3>
+                    <div class="h-96 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                        <img id="result-image" class="max-w-full max-h-full object-contain" alt="试穿结果">
             </div>
-            <div class="mt-6 flex justify-center space-x-4">
-                <button id="download-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                    
+                    <div class="mt-4 flex justify-center space-x-4">
+                        <button id="download-btn" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 flex items-center justify-center">
                     <i class="ri-download-line mr-2"></i>
-                    下载图片
+                            下载结果
                 </button>
-                <button id="try-again-btn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 flex items-center">
+                        <button id="try-again-btn" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 flex items-center justify-center">
                     <i class="ri-refresh-line mr-2"></i>
                     重新试穿
                 </button>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
 
@@ -163,7 +199,6 @@
                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
                     <p id="loading-message" class="text-gray-700 text-center">正在生成试穿效果...</p>
                     <p id="loading-status" class="text-gray-500 text-sm mt-2 text-center">任务状态: 准备中...</p>
-                </div>
             </div>
         </div>
     </div>
@@ -190,661 +225,517 @@
             const modelPreview = document.getElementById('model-preview');
             const modelPlaceholder = document.getElementById('model-placeholder');
             const modelRemoveBtn = document.getElementById('model-remove-btn');
+            const displayModelImage = document.getElementById('display-model-image');
+            const modelImagePlaceholder = document.getElementById('model-image-placeholder');
             
             const shoesUploadArea = document.getElementById('shoes-upload-area');
             const shoesInput = document.getElementById('shoes-input');
             const shoesPreview = document.getElementById('shoes-preview');
             const shoesPlaceholder = document.getElementById('shoes-placeholder');
             const shoesRemoveBtn = document.getElementById('shoes-remove-btn');
+            const displayShoesImage = document.getElementById('display-shoes-image');
+            const shoesImagePlaceholder = document.getElementById('shoes-image-placeholder');
             
             const submitBtn = document.getElementById('submit-btn');
             const resultContainer = document.getElementById('result-container');
-            const loadingContainer = document.getElementById('loading-container');
             const resultImage = document.getElementById('result-image');
             const downloadBtn = document.getElementById('download-btn');
             const tryAgainBtn = document.getElementById('try-again-btn');
+            const loadingContainer = document.getElementById('loading-container');
+            const loadingMessage = document.getElementById('loading-message');
+            const loadingStatus = document.getElementById('loading-status');
             
             let modelFile = null;
             let shoesFile = null;
-            let taskId = null;
-            let taskCheckInterval = null;
+            // 添加全局语言变量
+            let currentLanguage = 'zh-cn';
             
-            // 检查是否可以提交
-            function checkSubmitStatus() {
-                submitBtn.disabled = !(modelFile && shoesFile);
+            // 获取语言参数的函数
+            function getLanguageFromParams() {
+                try {
+                    // 1. 首先从URL参数获取
+                    const urlParams = new URLSearchParams(window.location.search);
+                    let langParam = urlParams.get('lang');
+                    
+                    if (langParam) {
+                        console.log('从URL参数获取语言:', langParam);
+                        // 转换语言格式：zh/en -> zh-cn/en-us
+                        if (langParam === 'zh') {
+                            langParam = 'zh-cn';
+                        } else if (langParam === 'en') {
+                            langParam = 'en-us';
+                        }
+                        currentLanguage = langParam;
+                        // 保存到localStorage
+                        localStorage.setItem('preferred_language', langParam);
+                        return langParam;
+                    }
+                    
+                    // 2. 从localStorage获取
+                    const savedLang = localStorage.getItem('preferred_language');
+                    if (savedLang) {
+                        console.log('从localStorage获取语言:', savedLang);
+                        currentLanguage = savedLang;
+                        return savedLang;
+                    }
+                    
+                    // 3. 使用默认语言
+                    console.log('使用默认语言:', currentLanguage);
+                    return currentLanguage;
+                } catch (error) {
+                    console.error('获取语言参数失败:', error);
+                    return 'zh-cn';
+                }
             }
             
-            // 模特图片上传区域事件处理
+            // 监听来自父页面的语言切换消息
+            window.addEventListener('message', function(event) {
+                try {
+                    if (event.data && event.data.type === 'changeLanguage') {
+                        const newLanguage = event.data.language;
+                        console.log('收到语言切换消息:', newLanguage);
+                        
+                        if (newLanguage && newLanguage !== currentLanguage) {
+                            currentLanguage = newLanguage;
+                            localStorage.setItem('preferred_language', newLanguage);
+                            
+                            // 向父页面发送确认消息
+                            if (event.source) {
+                                event.source.postMessage({
+                                    type: 'languageChanged',
+                                    language: newLanguage,
+                                    success: true
+                                }, '*');
+                            }
+                            
+                            // 这个页面是独立页面，可以考虑刷新页面以应用新语言
+                            // 但为了保持用户体验，我们只更新语言变量
+                            console.log('语言已切换到:', newLanguage);
+                        }
+                    }
+                } catch (error) {
+                    console.error('处理语言切换消息失败:', error);
+                }
+            });
+            
+            // 初始化语言设置
+            getLanguageFromParams();
+            
+            // 模特图片上传处理
             modelUploadArea.addEventListener('click', () => {
                 modelInput.click();
             });
             
             modelInput.addEventListener('change', (e) => {
                 if (e.target.files && e.target.files[0]) {
-                    handleModelFile(e.target.files[0]);
+                    handleModelFileSelect(e.target.files[0]);
                 }
             });
             
             modelRemoveBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                modelFile = null;
-                modelPreview.src = '';
-                document.getElementById('model-image-container').classList.add('hidden');
-                modelPlaceholder.classList.remove('hidden');
-                modelRemoveBtn.classList.add('hidden');
-                
-                // 重置容器高度
-                document.getElementById('model-upload-area').style.height = '';
-                
-                // 恢复边框样式
-                modelUploadArea.classList.remove('has-image');
-                
-                checkSubmitStatus();
+                resetModelUpload();
             });
             
-            // 鞋靴图片上传区域事件处理
+            // 鞋靴图片上传处理
             shoesUploadArea.addEventListener('click', () => {
                 shoesInput.click();
             });
             
             shoesInput.addEventListener('change', (e) => {
                 if (e.target.files && e.target.files[0]) {
-                    handleShoesFile(e.target.files[0]);
+                    handleShoesFileSelect(e.target.files[0]);
                 }
             });
             
             shoesRemoveBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                shoesFile = null;
-                shoesPreview.src = '';
-                document.getElementById('shoes-image-container').classList.add('hidden');
-                shoesPlaceholder.classList.remove('hidden');
-                shoesRemoveBtn.classList.add('hidden');
-                
-                // 重置容器高度
-                document.getElementById('shoes-upload-area').style.height = '';
-                
-                // 恢复边框样式
-                shoesUploadArea.classList.remove('has-image');
-                
-                checkSubmitStatus();
+                resetShoesUpload();
             });
             
-            // 处理模特图片文件
-            function handleModelFile(file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('图片大小不能超过5MB');
+            // 拖放功能
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                modelUploadArea.addEventListener(eventName, preventDefaults, false);
+                shoesUploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                modelUploadArea.addEventListener(eventName, () => {
+                    modelUploadArea.classList.add('drag-over');
+                }, false);
+                
+                shoesUploadArea.addEventListener(eventName, () => {
+                    shoesUploadArea.classList.add('drag-over');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                modelUploadArea.addEventListener(eventName, () => {
+                    modelUploadArea.classList.remove('drag-over');
+                }, false);
+                
+                shoesUploadArea.addEventListener(eventName, () => {
+                    shoesUploadArea.classList.remove('drag-over');
+                }, false);
+            });
+            
+            modelUploadArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                
+                if (file && file.type.startsWith('image/')) {
+                    handleModelFileSelect(file);
+                }
+            }, false);
+            
+            shoesUploadArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                
+                if (file && file.type.startsWith('image/')) {
+                    handleShoesFileSelect(file);
+                }
+            }, false);
+            
+            // 处理模特文件选择
+            function handleModelFileSelect(file) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB
+                    alert('文件大小不能超过5MB');
                     return;
                 }
                 
                 modelFile = file;
-                
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    modelPreview.src = e.target.result;
-                    modelPreview.onload = function() {
-                        // 显示图片容器
-                        document.getElementById('model-image-container').classList.remove('hidden');
-                        modelPlaceholder.classList.add('hidden');
-                        modelRemoveBtn.classList.remove('hidden');
-                        
-                        // 根据图片尺寸调整容器高度
-                        adjustContainerHeight('model-upload-area', modelPreview);
-                        
-                        // 移除边框样式
-                        modelUploadArea.classList.add('has-image');
-                    };
-                };
-                reader.readAsDataURL(file);
                 
-                checkSubmitStatus();
+                reader.onload = (e) => {
+                    modelPreview.src = e.target.result;
+                    displayModelImage.src = e.target.result;
+                    modelPreview.classList.remove('hidden');
+                    displayModelImage.classList.remove('hidden');
+                        modelPlaceholder.classList.add('hidden');
+                    modelImagePlaceholder.classList.add('hidden');
+                        modelRemoveBtn.classList.remove('hidden');
+                    modelUploadArea.classList.add('has-image');
+                    
+                    checkSubmitButton();
+                };
+                
+                reader.readAsDataURL(file);
             }
             
-            // 处理鞋靴图片文件
-            function handleShoesFile(file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('图片大小不能超过5MB');
+            // 处理鞋靴文件选择
+            function handleShoesFileSelect(file) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB
+                    alert('文件大小不能超过5MB');
                     return;
                 }
                 
                 shoesFile = file;
-                
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                
+                reader.onload = (e) => {
                     shoesPreview.src = e.target.result;
-                    shoesPreview.onload = function() {
-                        // 显示图片容器
-                        document.getElementById('shoes-image-container').classList.remove('hidden');
+                    displayShoesImage.src = e.target.result;
+                    shoesPreview.classList.remove('hidden');
+                    displayShoesImage.classList.remove('hidden');
                         shoesPlaceholder.classList.add('hidden');
+                    shoesImagePlaceholder.classList.add('hidden');
                         shoesRemoveBtn.classList.remove('hidden');
-                        
-                        // 根据图片尺寸调整容器高度
-                        adjustContainerHeight('shoes-upload-area', shoesPreview);
-                        
-                        // 移除边框样式
-                        shoesUploadArea.classList.add('has-image');
-                    };
+                    shoesUploadArea.classList.add('has-image');
+                    
+                    checkSubmitButton();
                 };
+                
                 reader.readAsDataURL(file);
-                
-                checkSubmitStatus();
             }
             
-            // 处理拖拽
-            function setupDragDrop(element, handleFile) {
-                element.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    element.classList.add('drag-over');
-                });
+            // 重置模特上传
+            function resetModelUpload() {
+                modelFile = null;
+                modelInput.value = '';
+                modelPreview.src = '';
+                displayModelImage.src = '';
+                modelPreview.classList.add('hidden');
+                displayModelImage.classList.add('hidden');
+                modelPlaceholder.classList.remove('hidden');
+                modelImagePlaceholder.classList.remove('hidden');
+                modelRemoveBtn.classList.add('hidden');
+                modelUploadArea.classList.remove('has-image');
                 
-                element.addEventListener('dragleave', () => {
-                    element.classList.remove('drag-over');
-                });
-                
-                element.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    element.classList.remove('drag-over');
-                    
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        handleFile(e.dataTransfer.files[0]);
-                    }
-                });
+                checkSubmitButton();
             }
             
-            setupDragDrop(modelUploadArea, handleModelFile);
-            setupDragDrop(shoesUploadArea, handleShoesFile);
-            
-            // 根据图片尺寸调整容器高度
-            function adjustContainerHeight(containerId, imageElement) {
-                const container = document.getElementById(containerId);
-                const aspectRatio = imageElement.naturalWidth / imageElement.naturalHeight;
+            // 重置鞋靴上传
+            function resetShoesUpload() {
+                shoesFile = null;
+                shoesInput.value = '';
+                shoesPreview.src = '';
+                displayShoesImage.src = '';
+                shoesPreview.classList.add('hidden');
+                displayShoesImage.classList.add('hidden');
+                shoesPlaceholder.classList.remove('hidden');
+                shoesImagePlaceholder.classList.remove('hidden');
+                shoesRemoveBtn.classList.add('hidden');
+                shoesUploadArea.classList.remove('has-image');
                 
-                // 设置最小高度和最大高度
-                const minHeight = 200; // 最小高度200px
-                const maxHeight = 400; // 最大高度400px
-                
-                // 根据图片比例计算合适的高度
-                let height = container.clientWidth / aspectRatio;
-                
-                // 限制在最小和最大高度范围内
-                height = Math.max(minHeight, Math.min(height, maxHeight));
-                
-                // 应用高度
-                container.style.height = `${height}px`;
+                checkSubmitButton();
             }
             
-            // 上传图片到服务器并获取URL
-            async function uploadImageAndGetUrl(file, type) {
-                const formData = new FormData();
-                formData.append('image', file);
-                formData.append('imageType', type); // 'model' 或 'shoe'
-                
-                try {
-                    // 使用OSS直接上传接口
-                    const response = await fetch('/api/image-to-oss', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        const errText = await response.text();
-                        console.error('上传失败响应:', errText);
-                        throw new Error(`上传图片失败 (${response.status}): ${errText || '未知错误'}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('图片上传成功:', data);
-                    
-                    if (!data.imageUrl) {
-                        throw new Error('服务器未返回图片URL');
-                    }
-                    
-                    return data.imageUrl;
-                } catch (error) {
-                    console.error('上传图片失败:', error);
-                    throw error;
-                }
+            // 检查提交按钮状态
+            function checkSubmitButton() {
+                submitBtn.disabled = !(modelFile && shoesFile);
             }
             
-            // 创建鞋靴模特试穿任务
-            async function createShoeModelTask(modelImageUrl, shoeImageUrl) {
-                try {
-                    console.log('创建鞋靴模特试穿任务:', {
-                        modelImageUrl,
-                        shoeImageUrl
-                    });
-                    
-                    const response = await fetch('/api/create-shoe-model-task', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        },
-                        body: JSON.stringify({
-                            modelImageUrl,
-                            shoeImageUrl: [shoeImageUrl] // 确保以数组形式传递
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('创建任务失败响应:', errorText);
-                        throw new Error(`创建任务失败 (${response.status}): ${errorText || '未知错误'}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('创建任务成功:', data);
-                    
-                    if (!data.success || !data.taskId) {
-                        throw new Error('服务器响应格式不正确或创建任务失败');
-                    }
-                    
-                    return data.taskId;
-                } catch (error) {
-                    console.error('创建任务失败:', error);
-                    throw error;
-                }
-            }
-            
-            // 查询任务状态和结果 - 使用query参数方式（兼容旧版本）
-            async function checkTaskStatus(taskId) {
-                try {
-                    console.log(`查询任务状态(query方式), 任务ID: ${taskId}`);
-                    
-                    const response = await fetch(`/api/check-task-status?taskId=${taskId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('查询任务状态失败响应:', errorText);
-                        throw new Error(`查询任务状态失败 (${response.status}): ${errorText || '未知错误'}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('查询任务状态成功:', data);
-                    
-                    if (!data.success) {
-                        throw new Error(data.message || '查询任务状态失败');
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    console.error('查询任务状态失败:', error);
-                    throw error;
-                }
-            }
-            
-            // 查询任务状态和结果 - 使用路径参数方式（符合阿里云API格式）
-            async function checkTaskStatusByPath(taskId) {
-                try {
-                    console.log(`查询任务状态(路径方式), 任务ID: ${taskId}`);
-                    
-                    const response = await fetch(`/api/tasks/${taskId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('查询任务状态失败响应:', errorText);
-                        throw new Error(`查询任务状态失败 (${response.status}): ${errorText || '未知错误'}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('查询任务状态成功(阿里云原始格式):', data);
-                    
-                    // 返回阿里云API原始结果
-                    return data;
-                } catch (error) {
-                    console.error('查询任务状态失败:', error);
-                    throw error;
-                }
-            }
-            
-            // 提交处理
+            // 提交按钮点击事件
             submitBtn.addEventListener('click', async () => {
                 if (!modelFile || !shoesFile) {
+                    alert('请上传模特图片和鞋靴图片');
                     return;
                 }
                 
-                // 显示加载中
+                // 显示加载状态
                 loadingContainer.classList.remove('hidden');
-                resultContainer.classList.add('hidden');
-                
-                const loadingMessage = document.getElementById('loading-message');
-                const loadingStatus = document.getElementById('loading-status');
+                loadingMessage.textContent = '正在上传图片...';
+                loadingStatus.textContent = '任务状态: 准备中...';
                 
                 try {
-                    loadingMessage.textContent = '正在上传图片...';
-                    loadingStatus.textContent = '任务状态: 准备中...';
+                    // 创建FormData对象
+                    const formData = new FormData();
+                    formData.append('modelImage', modelFile);
+                    formData.append('shoesImage', shoesFile);
                     
-                    let modelImageUrl, shoeImageUrl;
-                    
-                    // 上传模特图片
-                    try {
-                        modelImageUrl = await uploadImageAndGetUrl(modelFile, 'model');
-                        console.log('模特图片上传成功:', modelImageUrl);
-                    } catch (uploadError) {
-                        console.error('模特图片上传失败:', uploadError);
-                        throw new Error('模特图片上传失败: ' + uploadError.message);
-                    }
-                    
-                    // 上传鞋靴图片
-                    try {
-                        shoeImageUrl = await uploadImageAndGetUrl(shoesFile, 'shoe');
-                        console.log('鞋靴图片上传成功:', shoeImageUrl);
-                    } catch (uploadError) {
-                        console.error('鞋靴图片上传失败:', uploadError);
-                        throw new Error('鞋靴图片上传失败: ' + uploadError.message);
-                    }
-                    
-                    loadingMessage.textContent = '正在创建试穿任务...';
-                    
-                    // 创建鞋靴模特试穿任务
-                    let taskId;
-                    try {
-                        taskId = await createShoeModelTask(modelImageUrl, shoeImageUrl);
-                        console.log('试穿任务创建成功, 任务ID:', taskId);
-                    } catch (taskError) {
-                        console.error('创建试穿任务失败:', taskError);
-                        throw new Error('创建试穿任务失败: ' + taskError.message);
-                    }
-                    
+                    // 发送请求到后端
                     loadingMessage.textContent = '正在生成试穿效果...';
-                    loadingStatus.textContent = '任务状态: 排队中';
+                    const response = await fetch('/api/virtual-try-on', {
+                        method: 'POST',
+                        body: formData
+                    });
                     
-                    // 定时检查任务状态
-                    let checkCount = 0;
-                    taskCheckInterval = setInterval(async () => {
-                        try {
-                            checkCount++;
-                            console.log(`第${checkCount}次检查任务状态, 任务ID: ${taskId}`);
+                    if (!response.ok) {
+                        throw new Error('服务器响应错误');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.message || '生成失败');
+                    }
+                    
+                    // 如果任务是异步的，需要轮询检查任务状态
+                    if (data.taskId) {
+                        await checkTaskStatus(data.taskId);
+                    } else if (data.resultUrl) {
+                        // 如果直接返回了结果URL，显示结果
+                        displayResult(data.resultUrl);
+                    } else {
+                        throw new Error('未返回有效的结果');
+                    }
+                } catch (error) {
+                    console.error('生成失败:', error);
+                    loadingContainer.classList.add('hidden');
+                    alert(`生成失败: ${error.message}`);
+                }
+            });
+            
+            // 检查任务状态
+            async function checkTaskStatus(taskId) {
+                let attempts = 0;
+                const maxAttempts = 60; // 最多检查60次，每次间隔3秒，总共最多等待3分钟
+                
+                const taskCheckInterval = setInterval(async () => {
+                    attempts++;
+                    
+                    if (attempts > maxAttempts) {
+                        clearInterval(taskCheckInterval);
+                        loadingContainer.classList.add('hidden');
+                        console.error('任务处理时间过长');
+                        alert('任务处理时间过长，请稍后重试');
+                    }
+                    
+                    try {
+                        loadingStatus.textContent = `任务状态: 处理中...（${attempts}/${maxAttempts}）`;
+                        
+                        const response = await fetch(`/api/virtual-try-on/tasks/${taskId}`);
+                        
+                        if (!response.ok) {
+                            throw new Error('查询任务状态失败');
+                        }
+                        
+                        const data = await response.json();
+                        
+                        if (data.status === 'SUCCEEDED' && data.resultUrl) {
+                            clearInterval(taskCheckInterval);
+                            displayResult(data.resultUrl);
+                        } else                         if (data.status === 'FAILED') {
+                            clearInterval(taskCheckInterval);
+                            loadingContainer.classList.add('hidden');
                             
-                            // 尝试使用路径参数的方式查询任务状态（符合阿里云API格式）
-                            let result;
-                            let isStandardFormat = false;
-                            
-                            try {
-                                // 首先尝试使用标准API格式
-                                result = await checkTaskStatusByPath(taskId);
-                                isStandardFormat = true;
-                                console.log('使用符合阿里云API的方式获取结果成功');
-                            } catch (pathError) {
-                                console.warn('使用阿里云API格式查询失败，尝试使用兼容模式:', pathError.message);
-                                // 失败时退回到兼容方式
-                                result = await checkTaskStatus(taskId);
-                                console.log('使用兼容模式获取结果成功');
+                            // 提供更详细的错误信息
+                            let errorMessage = data.message || '未知错误';
+                            if (data.errorCode) {
+                                console.error(`错误代码: ${data.errorCode}`, data);
+                                
+                                // 根据错误代码提供更友好的提示
+                                switch(data.errorCode) {
+                                    case 'CONFIG_ERROR':
+                                        errorMessage = '系统配置错误，请联系客服';
+                                        break;
+                                    case 'NETWORK_ERROR':
+                                        errorMessage = '网络连接问题，请稍后重试';
+                                        break;
+                                    case 'INVALID_PARAMETERS':
+                                        errorMessage = '图片格式或参数不符合要求，请更换图片重试';
+                                        break;
+                                    case 'AUTH_ERROR':
+                                        errorMessage = 'API认证失败，请刷新页面重试';
+                                        break;
+                                    case 'SERVER_ERROR':
+                                        errorMessage = '服务器暂时不可用，请稍后重试';
+                                        break;
+                                    default:
+                                        // 使用服务器返回的消息
+                                        break;
+                                }
                             }
                             
-                            // 获取任务状态：根据API返回格式处理
-                            let taskStatus, resultUrl, errorCode, errorMessage;
-                            
-                            if (isStandardFormat) {
-                                // 标准阿里云格式
-                                taskStatus = result.output.task_status;
-                                // 尝试从多个可能的字段获取结果URL
-                                if (result.output.result_url) {
-                                    resultUrl = result.output.result_url;
-                                } else if (result.output.result_urls && result.output.result_urls.length > 0) {
-                                    console.log('从result_urls数组获取URL');
-                                    resultUrl = result.output.result_urls[0];
-                                } else if (result.output.results) {
-                                    // 检查截图显示的格式：results字段可能是对象或数组
-                                    console.log('尝试从results字段获取URL');
-                                    if (Array.isArray(result.output.results) && result.output.results.length > 0) {
-                                        // results是数组(标准格式)
-                                        console.log('从results数组获取URL');
-                                        if (result.output.results[0].url) {
-                                            console.log('从results[0].url字段获取URL');
-                                            resultUrl = result.output.results[0].url;
-                                        }
-                                    } else if (typeof result.output.results === 'object' && result.output.results.url) {
-                                        // results是对象
-                                        console.log('从results.url字段获取URL');
-                                        resultUrl = result.output.results.url;
-                                    }
-                                }
-                                errorCode = result.output.code;
-                                errorMessage = result.output.message || result.output.error_message;
-                            } else {
-                                // 兼容格式
-                                taskStatus = result.output?.task_status || result.taskStatus;
-                                // 尝试从多个可能的字段获取结果URL
-                                if (result.output?.result_url) {
-                                    resultUrl = result.output.result_url;
-                                } else if (result.output?.result_urls && result.output.result_urls.length > 0) {
-                                    console.log('从result_urls数组获取URL');
-                                    resultUrl = result.output.result_urls[0];
-                                } else if (result.output?.results) {
-                                    // 检查截图显示的格式：results字段可能是对象或数组
-                                    console.log('尝试从results字段获取URL');
-                                    if (Array.isArray(result.output.results) && result.output.results.length > 0) {
-                                        // results是数组(标准格式)
-                                        console.log('从results数组获取URL');
-                                        if (result.output.results[0].url) {
-                                            console.log('从results[0].url字段获取URL');
-                                            resultUrl = result.output.results[0].url;
-                                        }
-                                    } else if (typeof result.output.results === 'object' && result.output.results.url) {
-                                        // results是对象
-                                        console.log('从results.url字段获取URL');
-                                        resultUrl = result.output.results.url;
-                                    }
-                                } else {
-                                    resultUrl = result.resultUrl;
-                                }
-                                errorCode = result.output?.code || result.output?.error_code || result.code;
-                                errorMessage = result.output?.message || result.output?.error_message || result.message;
-                            }
-                            
-                            // 更新状态显示
-                            switch(taskStatus) {
-                                case 'PENDING':
-                                    loadingStatus.textContent = `任务状态: 排队中 (${checkCount})`;
-                                    break;
-                                case 'RUNNING':
-                                    // 显示任务指标信息（如果有）
-                                    if (isStandardFormat && result.output.task_metrics) {
-                                        const metrics = result.output.task_metrics;
-                                        loadingStatus.textContent = `任务状态: 处理中 (${checkCount}) - 总数:${metrics.TOTAL}, 成功:${metrics.SUCCEEDED}, 失败:${metrics.FAILED}`;
+                            // 显示错误消息，如果已退款则添加提示
+                            if (data.refunded) {
+                                alert(`生成失败: ${errorMessage}\n\n积分已自动退还，请稍后重试。`);
                                     } else {
-                                        loadingStatus.textContent = `任务状态: 处理中 (${checkCount})`;
-                                    }
-                                    break;
-                                case 'SUSPENDED':
-                                    loadingStatus.textContent = `任务状态: 已挂起 (${checkCount})`;
-                                    break;
-                            }
-                            
-                            if (taskStatus === 'SUCCEEDED') {
-                                // 任务成功完成
-                                clearInterval(taskCheckInterval);
+                                alert(`生成失败: ${errorMessage}`);
                                 
-                                loadingMessage.textContent = '试穿效果生成成功！';
-                                loadingStatus.textContent = '正在加载结果...';
-                                
-                                console.log('收到成功结果:', result);
-                                
-                                if (!resultUrl) {
-                                    console.error('结果URL获取失败，完整响应:', JSON.stringify(result, null, 2));
-                                    throw new Error('服务器未返回结果图片URL');
-                                }
-                                
-                                console.log('获取到结果URL:', resultUrl);
-                                
-                                // 显示结果
-                                resultImage.src = resultUrl;
-                                
-                                // 等待图片加载完成后显示结果
-                                resultImage.onload = function() {
-                                    loadingContainer.classList.add('hidden');
-                                    resultContainer.classList.remove('hidden');
-                                };
-                                
-                                // 如果图片加载失败
-                                resultImage.onerror = function() {
-                                    console.error('结果图片加载失败');
-                                    loadingContainer.classList.add('hidden');
-                                    alert('结果图片加载失败，请重试');
-                                };
-                            } else if (taskStatus === 'FAILED') {
-                                // 任务失败
-                                clearInterval(taskCheckInterval);
-                                loadingContainer.classList.add('hidden');
-                                
-                                // 任务失败时请求退款
+                                // 如果服务器未处理退款，尝试客户端请求退款
                                 try {
-                                    await requestRefund(taskId, errorMessage || '虚拟试鞋任务失败');
-                                    console.log(`已为任务 ${taskId} 请求退款`);
+                                    await requestRefund(taskId, `任务处理失败: ${data.errorCode || '未知错误'}`);
                                 } catch (refundError) {
                                     console.error('退款请求失败:', refundError);
                                 }
-                                
-                                // 针对特定错误代码提供用户友好的错误提示
-                                let friendlyMessage = '试穿任务失败';
-                                if (errorCode === 'InvalidFile.Content' || (errorMessage && (errorMessage.includes('no suitable human-body') || errorMessage.includes('InvalidFile.Content')))) {
-                                    friendlyMessage = '输入的人体图像没有合适的人体，请重新上传。';
-                                } else if (errorCode === 'InvalidFile.Type' || (errorMessage && errorMessage.includes('文件类型错误'))) {
-                                    friendlyMessage = '图片的尺寸/格式不正确，请重新上传。';
-                                } else if (errorCode === 'InvalidFile.Resolution' || (errorMessage && (errorMessage.includes('image resolution is invalid') || errorMessage.includes('aspect ratio')))) {
-                                    friendlyMessage = '图片尺寸/格式有问题，请重新上传。';
-                                } else if (errorCode === 'InvalidFile.Size' || (errorMessage && errorMessage.includes('文件大小'))) {
-                                    friendlyMessage = '图片文件过大，请上传小于5MB的图片。';
-                                } else if (errorCode === 'InvalidParameter' || (errorMessage && errorMessage.includes('参数错误'))) {
-                                    friendlyMessage = '参数设置有误，请检查图片和设置后重试。';
-                                } else if (errorCode === 'Throttling' || (errorMessage && errorMessage.includes('请求过于频繁'))) {
-                                    friendlyMessage = '请求过于频繁，请稍后再试。';
-                                } else if (errorCode === 'InsufficientBalance' || (errorMessage && errorMessage.includes('余额不足'))) {
-                                    friendlyMessage = '账户余额不足，请充值后再试。';
-                                } else if (errorMessage) {
-                                    friendlyMessage = `试穿任务失败: ${errorMessage}`;
-                                }
-                                
-                                console.error('任务失败详情:', { errorCode, errorMessage, friendlyMessage });
-                                alert(friendlyMessage);
                             }
-                            
-                            // 如果检查次数过多（超过5分钟），自动取消
-                            if (checkCount > 100) { // 100次 * 3秒 = 5分钟
-                                clearInterval(taskCheckInterval);
-                                loadingContainer.classList.add('hidden');
-                                console.error('任务处理时间过长');
-                                alert('任务处理时间过长，请稍后重试');
-                            }
+                        }
+                        // 其他状态继续等待
                         } catch (error) {
                             console.error('查询任务状态出错:', error);
                             clearInterval(taskCheckInterval);
                             loadingContainer.classList.add('hidden');
                             
-                            // 查询状态出错时也尝试退款
-                            if (taskId) {
+                            // 根据错误类型提供不同的用户提示
+                            let errorMessage = '查询任务状态出错';
+                            let shouldRefund = true;
+                            
+                            // 尝试解析错误响应
+                            if (error.response && error.response.data) {
+                                const errorData = error.response.data;
+                                const errorCode = errorData.code;
+                                
+                                switch (errorCode) {
+                                    case 'TASK_NOT_FOUND':
+                                    case 'TaskNotFound':
+                                        errorMessage = '任务不存在或已过期，这可能是网络问题导致的。';
+                                        break;
+                                    case 'AUTH_ERROR':
+                                    case 'AuthError':
+                                        errorMessage = 'API认证失败，请刷新页面重试。';
+                                        shouldRefund = false; // 认证问题不需要退款
+                                        break;
+                                    case 'NETWORK_ERROR':
+                                    case 'NetworkError':
+                                        errorMessage = '网络连接问题，请检查网络后重试。';
+                                        break;
+                                    case 'CLIENT_ERROR':
+                                    case 'ClientError':
+                                        errorMessage = errorData.message || '请求参数错误，请重新上传图片。';
+                                        break;
+                                    case 'SERVER_ERROR':
+                                    case 'ServerError':
+                                        errorMessage = '阿里云服务暂时不可用，请稍后重试。';
+                                        break;
+                                case 'API_RESPONSE_ERROR':
+                                    errorMessage = '服务器响应格式异常，请联系客服。';
+                                        break;
+                                    default:
+                                        errorMessage = errorData.message || error.message || '查询任务状态出错';
+                                }
+                        } else if (error.message && error.message.includes('Cannot read properties of undefined')) {
+                            // 特别处理task_status访问错误
+                            errorMessage = '任务状态查询失败，服务器返回了不完整的数据。';
+                            console.error('任务状态数据结构错误:', error.message);
+                            } else {
+                                errorMessage = error.message || '查询任务状态出错';
+                            }
+                            
+                            // 查询状态出错时尝试退款
+                            if (taskId && shouldRefund) {
                                 try {
-                                    await requestRefund(taskId, `查询任务状态出错: ${error.message}`);
-                                    console.log(`已为任务 ${taskId} 请求退款`);
-                                    alert('查询任务状态出错: ' + error.message + '\n系统已自动申请退款，积分或免费次数将很快退还到您的账户。');
+                                    await requestRefund(taskId, `查询任务状态出错: ${errorMessage}`);
                                 } catch (refundError) {
                                     console.error('退款请求失败:', refundError);
-                                    alert('查询任务状态出错: ' + error.message);
-                                }
-                            } else {
-                            alert('查询任务状态出错: ' + error.message);
                             }
                         }
-                    }, 3000); // 每3秒检查一次任务状态
-                } catch (error) {
-                    console.error('处理过程出错:', error);
-                    loadingContainer.classList.add('hidden');
-                    alert('提交失败: ' + error.message);
-                }
-            });
+                        
+                        alert(`生成失败: ${errorMessage}`);
+                    }
+                }, 3000);
+            }
             
-            // 下载按钮
-            downloadBtn.addEventListener('click', () => {
-                // 创建一个 blob URL 来直接下载图片，避免浏览器显示下载提示
-                fetch(resultImage.src)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const blobUrl = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = '虚拟试鞋结果_' + Date.now() + '.jpg';
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        // 释放 blob URL
-                        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-                    });
-            });
-            
-            // 重新试穿按钮
-            tryAgainBtn.addEventListener('click', () => {
-                resultContainer.classList.add('hidden');
-                
-                // 清除上一次的任务检查
-                if (taskCheckInterval) {
-                    clearInterval(taskCheckInterval);
-                    taskCheckInterval = null;
-                }
-            });
-            
-            // 添加退款请求函数
+            // 请求退款
             async function requestRefund(taskId, reason) {
                 try {
-                    console.log(`开始请求退款: 任务ID=${taskId}, 原因=${reason}`);
-                    
-                    const authToken = localStorage.getItem('authToken');
-                    if (!authToken) {
-                        console.error('用户未登录，无法请求退款');
-                        return false;
-                    }
-                    
-                    const response = await fetch('/api/refund/virtual-shoe-model', {
+                    const response = await fetch('/api/refund', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ taskId, reason })
+                        body: JSON.stringify({
+                            taskId,
+                            reason
+                        })
                     });
                     
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error(`退款请求失败: ${response.status}, ${errorText}`);
-                        return false;
-                    }
+                    const data = await response.json();
                     
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        console.log('退款请求成功:', result);
-                        return true;
+                    if (data.success) {
+                        console.log('退款成功');
                     } else {
-                        console.error('退款请求被拒绝:', result.message);
-                        return false;
+                        console.error('退款失败:', data.message);
                     }
                 } catch (error) {
                     console.error('退款请求出错:', error);
-                    return false;
+                    throw error;
                 }
             }
             
-            // 验证登录状态
-            initializeUserUI();
-            
-            function initializeUserUI() {
-                // 用户状态由统一的auth-check.js处理，这里不进行认证检查
-                console.log('虚拟试鞋页面：用户状态由auth-check.js统一处理');
+            // 显示结果
+            function displayResult(resultUrl) {
+                loadingContainer.classList.add('hidden');
+                resultImage.src = resultUrl;
+                resultContainer.classList.remove('hidden');
+                
+                // 滚动到结果区域
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
             }
+            
+            // 下载结果图片
+            downloadBtn.addEventListener('click', () => {
+                if (resultImage.src) {
+                    const link = document.createElement('a');
+                    link.href = resultImage.src;
+                    link.download = '虚拟试穿结果.jpg';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+            
+            // 重新试穿
+            tryAgainBtn.addEventListener('click', () => {
+                resultContainer.classList.add('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
         });
     </script>
 </body>

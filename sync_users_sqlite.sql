@@ -1,0 +1,85 @@
+-- SQLite用户数据同步脚本
+-- 将image_translator数据库的用户数据同步到SQLite数据库
+-- 策略：image_translator数据覆盖当前项目数据
+
+-- 开始事务
+BEGIN TRANSACTION;
+
+-- 备份当前用户表（可选，用于回滚）
+CREATE TABLE IF NOT EXISTS users_backup_20251023 AS SELECT * FROM users;
+
+-- 清空当前用户表
+DELETE FROM users;
+
+-- 重置自增ID
+DELETE FROM sqlite_sequence WHERE name='users';
+
+-- 插入image_translator数据库的用户数据（适配SQLite格式）
+-- 注意：SQLite的字段映射
+-- MySQL字段 -> SQLite字段映射：
+-- id -> id
+-- username -> username  
+-- password -> password
+-- created_at -> createdAt
+-- updated_at -> updatedAt
+-- last_login_at -> lastActiveAt
+-- phone -> phone
+-- credits -> credits
+-- vip_expire_at -> (忽略，SQLite表中没有此字段)
+-- invite_code -> (忽略，SQLite表中没有此字段)
+-- invite_code_expire_at -> (忽略，SQLite表中没有此字段)
+-- is_verified -> (忽略，SQLite表中没有此字段)
+-- is_internal -> isInternal
+-- remark -> remark
+-- is_banned -> isBanned
+-- ban_reason -> (映射到banReason)
+-- ban_expire_at -> (映射到banExpireAt)
+-- is_admin -> isAdmin
+-- is_customer_service -> isCustomerService
+
+INSERT INTO users (id, username, password, createdAt, updatedAt, lastActiveAt, phone, credits, isAdmin, isInternal, isCustomerService, remark, isBanned, banReason, banExpireAt) VALUES 
+(1, 'lili1119', '$2b$10$jeEyljmuP67AnyJUA65UEuL9JUXLHXioJ.LiWWRv3iDnuIeS.fRm6', '2025-04-22 18:27:01', '2025-10-22 00:46:02', '2025-10-22 00:46:02', NULL, 11903, 0, 0, 0, '', 0, NULL, NULL),
+(3, 'lilili1119', '$2b$10$A1PEAzNjsE36qeyVMJtIkuZo8suhrnJLfcj5ms1I2Th8ATDFXyitq', '2025-04-24 00:22:55', '2025-08-18 07:12:22', '2025-08-18 07:12:22', '18237164080', 465, 1, 0, 0, '', 0, NULL, NULL),
+(8, 'admin', '$2b$10$./RjsqdMrJbaYal/8UTWBuqV5GK3L7WqUa.SGSGzyZAKh5y7AVsjW', '2025-05-29 22:04:12', '2025-10-22 01:05:48', '2025-10-22 01:05:48', NULL, 596, 1, 0, 0, NULL, 0, NULL, NULL),
+(9, '123', '$2b$10$0.aUMtoYYwJuVpr3rZBq3e7vSwUfTibRG9ta6uV0ZTQkzIOa2KTL.', '2025-06-09 01:53:18', '2025-06-23 16:46:03', '2025-06-23 16:46:03', '', 200, 0, 1, 0, '', 0, NULL, NULL),
+(15, 'customerservice', '$2b$10$4BnquoaEf2g4Y1/4igXpZOS/VO0lDxIHw1yCH2g1NWFrNz0ioqPoq', '2025-06-26 00:31:19', '2025-10-22 06:46:29', '2025-10-22 06:46:29', NULL, 1000, 0, 0, 1, 'kefu123', 0, NULL, NULL),
+(16, 'kfk', '$2b$10$SlT4xSKWYGCRoT5nLec5tOoBAo39FeseABqL998iUfKrmk7x.5x3m', '2025-06-26 00:32:32', '2025-10-22 01:04:35', '2025-10-22 01:04:35', NULL, 0, 0, 0, 1, NULL, 0, NULL, NULL),
+(24, 'MAQ', '$2b$10$L.DyvpxEK6SoYb6u8VOTxeXntCYqFpKT3HTrJbnO2fRMSuBrL0pbO', '2025-08-18 07:10:59', '2025-10-23 01:50:27', '2025-10-23 01:50:27', '13461633097', 9515, 0, 1, 0, '', 0, NULL, NULL),
+(25, 'bai', '$2b$10$V3qUykA0EyOyLaMTB/UpleLIaJCW30nbI6o3yvNvMb3L59aW9z6ge', '2025-08-18 07:19:38', '2025-10-20 08:21:16', '2025-10-20 08:21:16', '15886744257', 376, 0, 1, 0, '', 0, NULL, NULL),
+(26, 'arya huang', '$2b$10$yhyjwssXdnrOd8E4R4l9vuIK.Wt4o1FTNdRYT96DF8hbtSFBTnYPG', '2025-08-20 02:11:31', '2025-10-21 02:18:37', '2025-10-21 02:18:37', '18239932512', 349, 0, 1, 0, '', 0, NULL, NULL),
+(27, '15003876751', '$2b$10$cizI8MMTn3ea6V1M2AfUMOLF8eAVLFGqBpOP4osO3cdxkyJpmZj8K', '2025-08-20 06:09:40', '2025-08-20 06:48:38', '2025-08-20 06:48:38', '15003876751', 593, 0, 1, 0, '', 0, NULL, NULL),
+(28, 'Youmiao', '$2b$10$U7.CDVONoWgp2mV7WKKxSepUtcoW1YG27GJp3JYw9zrueK7s1zvDS', '2025-08-20 06:10:20', '2025-10-22 09:13:46', '2025-10-22 09:13:46', '13101719509', 573, 0, 1, 0, '', 0, NULL, NULL),
+(29, 'shiyan426', '$2b$10$RbRw2PfxGfaOIZvH1dMTFemvAcjk8v.y/8GzBM0ynBQzGCrDEVYgu', '2025-08-21 08:32:08', '2025-09-29 01:41:09', '2025-09-29 01:41:09', '15544113344', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(30, '可爱萌萌小精灵', '$2b$10$Dw49AwkD5M7xLPvaTQykK.6NdFdz2uz594s/UstjZMra9fDx3SfKK', '2025-08-21 08:35:37', '2025-08-21 08:35:37', NULL, '18211189181', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(31, 'Mizukila', '$2b$10$P8yKkob0pFZNf8CM7VJgFeI4CAwD.WZDGuq8EPWcADiZqRPzti8Y2', '2025-08-21 08:37:11', '2025-08-21 08:37:11', NULL, '13651158517', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(32, '13538924552', '$2b$10$kDQF.XQV0Z5n1FeiMsMTPeomo/BkLXfAxUBldsf41eg/RcPLLa/uy', '2025-08-21 08:38:02', '2025-08-21 08:38:02', NULL, '13538924552', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(33, 'Iblow', '$2b$10$fX34.e3w2cTEmE2bmeuzeuVqhWSB/S.w2hcfrauOU/hS072Q3x8ry', '2025-08-21 08:40:42', '2025-08-21 08:40:42', NULL, '18691632036', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(34, 'HIGER', '$2b$10$3Kchl3TzjkiQ1Nd9agoDLexPe90OsDThALA9yRdebCUKH4AbtjxgW', '2025-08-21 08:43:58', '2025-08-21 08:43:58', NULL, '15159132095', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(35, 'xingzhe666', '$2b$10$vWd..p0aYo6yhZsEdOhRwuqursmoarg6lf8BamSHzErF0b6Ix/qmi', '2025-08-21 08:44:51', '2025-08-21 08:44:51', NULL, '18305302128', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(36, 'Yan', '$2b$10$wZDzRWB2W5dMOiD5JlBj7u8UNIyoLX5gXYQVNSe6apGWOKugyzDbO', '2025-08-21 08:46:24', '2025-08-21 08:46:24', NULL, '19138304508', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(37, '℃----', '$2b$10$OAo8hdt6TWW37/i/o79MouR5z5R/rp71lkU7f/8XE9RPCcAkD1HWW', '2025-08-21 08:48:41', '2025-08-21 08:48:41', NULL, '18737257215', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(38, '385451519', '$2b$10$xRE8.eytD1GP1CXUktjNtu4wahjaBFV7lRdWKdrcrGwUGJspdMkg6', '2025-08-21 08:49:25', '2025-08-21 08:49:25', NULL, '18031109006', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(39, 'lucio', '$2b$10$V0LtT5pte2DQqTNgc44YFuppyy7GK6dpQ.VK8OekMnBXriPoyA5gC', '2025-08-21 12:37:55', '2025-08-21 13:13:28', '2025-08-21 13:13:28', '18576464153', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(40, '17692710912', '$2b$10$JVSfTZTHYr0iwrUWHJPUm.L0u43r7EmMZXGeXn6FmB7q4CwNeG8SO', '2025-08-23 01:08:12', '2025-08-23 10:23:54', '2025-08-23 10:23:54', '17692710912', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(41, 'lk5645', '$2b$10$jROg0KB6..lk20KzwL9hQOiP2LfEDvEgSZmZe5kQQ8Wb9JVFuPlXG', '2025-08-26 08:45:50', '2025-08-26 08:49:11', '2025-08-26 08:49:11', '19110504365', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(43, 'gwtj', '$2b$10$H60bj2XtfC.xl1rTgt29eOoDgQXGzaQ21QDTBo7iV6qdeTu4M2WPm', '2025-08-27 15:46:18', '2025-08-27 15:46:55', '2025-08-27 15:46:55', '13022211005', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(44, 'jiang', '$2b$10$t7WIxLaIIAPttd7ZbwvimuA334mUPKeQuNp5tKor2rjr/z1jmZmYi', '2025-08-28 01:59:51', '2025-10-20 10:01:08', '2025-10-20 10:01:08', '15515565456', 465, 0, 0, 0, '', 0, NULL, NULL),
+(45, 'liu', '$2b$10$BINvp2xbwyWoYdSowgAzO.FQe.HP7HItqKgcHzysu9ymV5vadZuvi', '2025-08-28 03:16:20', '2025-08-28 07:32:37', '2025-08-28 07:32:37', '13607661557', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(46, '360551557', '$2b$10$AApq1C3Kgrf6bS8.k3bzQuG6ouyFymhTR2fDcc6ZC19Nna8FjZhry', '2025-08-31 04:55:14', '2025-08-31 05:35:01', '2025-08-31 05:35:01', '13990906059', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(47, '钱多多', '$2b$10$WyP43SX72c8vVsDle0ksWOXyEUOcPDGDphTCKp0sdIseiThVVB/CC', '2025-09-01 07:53:34', '2025-09-01 08:01:51', '2025-09-01 08:01:51', '13217356542', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(48, '15590794308', '$2b$10$a6wXmOwyaEX6jmSnAGrpsOXJFVPq4a/v6Prf3E8gv/D6WkNW3Y7ry', '2025-09-03 08:02:22', '2025-09-07 09:09:54', '2025-09-07 09:09:54', '15590794308', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(49, '满楼2025', '$2b$10$9sM5tFuExqbDJ1sXKtQSs.Y31hIa3YankvxuFRe/Rxj9csppHnLti', '2025-09-07 04:28:23', '2025-09-07 10:30:56', '2025-09-07 10:30:56', '15978695122', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(50, 'wxq369', '$2b$10$nN0qF0igbYzLm16jlGlNjePpr8q.S69ph5VSPjV..QUIqNlVqoqJe', '2025-09-14 03:45:50', '2025-09-14 04:02:10', '2025-09-14 04:02:10', '19995172565', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(51, 'wendy', '$2b$10$X4LTiGbtu4Yy/Wd9cVMZseKrfITeJ6.eB6UomqfKEZ.6LNpFic/e.', '2025-09-15 05:50:57', '2025-09-17 10:18:52', '2025-09-17 10:18:52', '18101307769', 595, 0, 0, 0, '', 0, NULL, NULL),
+(52, '高家炜', '$2b$10$Y.DN1jLni3Kz6RG7AwyiJeA2ghKAwFp.cwboLID.nPx2RkSGqSILW', '2025-09-18 07:05:30', '2025-09-18 07:16:11', '2025-09-18 07:16:11', '15153299019', 0, 0, 0, 0, NULL, 0, NULL, NULL),
+(53, '22222', '$2b$10$O7j7eKQHB6RGUSf7LmaSN.NyDD2SOeEmlc4EZ0Jk6kRQuEU0uYHRW', '2025-10-01 12:53:48', '2025-10-01 12:54:37', '2025-10-01 12:54:37', '15203501112', 0, 0, 0, 0, NULL, 0, NULL, NULL);
+
+-- 更新自增序列
+UPDATE sqlite_sequence SET seq = 53 WHERE name = 'users';
+
+-- 提交事务
+COMMIT;
+
+-- 验证同步结果
+SELECT COUNT(*) as total_users FROM users;
+SELECT id, username, credits FROM users ORDER BY id LIMIT 10;

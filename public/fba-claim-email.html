@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FBA索赔邮件 - 萤火AI</title>
+    <title data-translate="fba_claim_email.page_title">FBA索赔邮件 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
@@ -169,8 +169,10 @@
         }
     </style>
 
-    <link rel="icon" href="/images/favicon.png" type="image/png">  <script src="/js/auth-check.js"></script>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
+    <script src="/translations.js"></script>
 </head>
 <body class="bg-gray-50">
     <!-- 导航栏组件容器 -->
@@ -180,10 +182,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">FBA索赔邮件</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="fba_claim_email.main_title">FBA索赔邮件</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="fba-claim" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入订单问题描述，AI将为您生成专业的FBA索赔邮件，帮助您向亚马逊申请赔偿。</p>
+                    <p class="text-gray-600 mb-4" data-translate="fba_claim_email.description">输入订单问题描述，AI将为您生成专业的FBA索赔邮件，帮助您向亚马逊申请赔偿。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -191,12 +193,12 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="fba_claim_email.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>详细描述您遇到的FBA订单问题，例如：产品损坏、丢失、库存差异等</li>
-                                    <li>提供相关的订单号、SKU、数量等具体信息</li>
-                                    <li>说明您期望的赔偿方式（退款、补发等）</li>
-                                    <li>系统会根据您的描述生成专业、有理有据的索赔邮件</li>
+                                    <li data-translate="fba_claim_email.tip1">详细描述您遇到的FBA订单问题，例如：产品损坏、丢失、库存差异等</li>
+                                    <li data-translate="fba_claim_email.tip2">提供相关的订单号、SKU、数量等具体信息</li>
+                                    <li data-translate="fba_claim_email.tip3">说明您期望的赔偿方式（退款、补发等）</li>
+                                    <li data-translate="fba_claim_email.tip4">系统会根据您的描述生成专业、有理有据的索赔邮件</li>
                                 </ul>
                             </div>
                         </div>
@@ -204,32 +206,32 @@
                     
                     <form id="fbaClaimForm">
                         <div class="mb-5">
-                            <label for="orderIssue" class="block text-gray-700 font-medium mb-2">订单问题描述 <span class="text-red-500">*</span></label>
-                            <textarea id="orderIssue" name="orderIssue" rows="8" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="" required></textarea>
+                            <label for="orderIssue" class="block text-gray-700 font-medium mb-2"><span data-translate="fba_claim_email.order_issue">订单问题描述</span> <span class="text-red-500">*</span></label>
+                            <textarea id="orderIssue" name="orderIssue" rows="8" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="fba_claim_email.order_issue_placeholder" placeholder="请输入订单问题描述，例如：FBA仓库在处理订单时导致产品损坏，订单号为XXX，SKU为XXX，数量为X件..." required></textarea>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                             <div>
-                                <label for="orderNumber" class="block text-gray-700 font-medium mb-2">订单号 <span class="text-gray-500">(选填)</span></label>
-                                <input type="text" id="orderNumber" name="orderNumber" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="">
+                                <label for="orderNumber" class="block text-gray-700 font-medium mb-2"><span data-translate="fba_claim_email.order_number">订单号</span> <span class="text-gray-500" data-translate="fba_claim_email.order_number_optional">(选填)</span></label>
+                                <input type="text" id="orderNumber" name="orderNumber" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="fba_claim_email.order_number_placeholder" placeholder="请输入订单号...">
                             </div>
                             
                             <div>
-                                <label for="skuInfo" class="block text-gray-700 font-medium mb-2">SKU信息 <span class="text-gray-500">(选填)</span></label>
-                                <input type="text" id="skuInfo" name="skuInfo" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="">
+                                <label for="skuInfo" class="block text-gray-700 font-medium mb-2"><span data-translate="fba_claim_email.sku_info">SKU信息</span> <span class="text-gray-500" data-translate="fba_claim_email.order_number_optional">(选填)</span></label>
+                                <input type="text" id="skuInfo" name="skuInfo" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate-placeholder="fba_claim_email.sku_info_placeholder" placeholder="请输入SKU信息...">
                             </div>
                         </div>
                         
                         <div class="mb-5">
-                            <label class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label class="block text-gray-700 font-medium mb-2" data-translate="fba_claim_email.output_language">输出语言</label>
                             <div class="flex gap-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="text-indigo-600 focus:ring-indigo-500" checked>
-                                    <span class="ml-2">中文</span>
+                                    <span class="ml-2" data-translate="fba_claim_email.chinese">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="ml-2">英文</span>
+                                    <span class="ml-2" data-translate="fba_claim_email.english">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -237,7 +239,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateClaimButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-mail-send-line mr-2"></i>
-                                生成索赔邮件
+                                <span data-translate="fba_claim_email.generate_claim">生成索赔邮件</span>
                             </button>
                         </div>
                     </form>
@@ -248,11 +250,11 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">FBA索赔邮件</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2" data-translate="fba_claim_email.claim_email_title">FBA索赔邮件</h2>
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-mail-open-line mr-2 text-indigo-500"></i>索赔邮件内容
+                        <i class="ri-mail-open-line mr-2 text-indigo-500"></i><span data-translate="fba_claim_email.claim_email_content">索赔邮件内容</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
                         <div id="claimEmailResult" class="text-gray-800 whitespace-pre-line"></div>
@@ -262,11 +264,11 @@
                 <div class="flex justify-end gap-3">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制邮件内容
+                        <span data-translate="fba_claim_email.copy_email">复制邮件内容</span>
                     </button>
                     <button type="button" id="newClaimButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        创建新索赔
+                        <span data-translate="fba_claim_email.new_claim">创建新索赔</span>
                     </button>
                 </div>
             </div>
@@ -276,8 +278,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-file-claim-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">您的FBA索赔邮件将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"生成索赔邮件"按钮开始创建</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="fba_claim_email.result_placeholder_title">您的FBA索赔邮件将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="fba_claim_email.result_placeholder_desc">填写左侧表单并点击"生成索赔邮件"按钮开始创建</p>
                 </div>
             </div>
         </div>
@@ -285,13 +287,56 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在生成索赔邮件，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="fba_claim_email.processing">正在生成索赔邮件，请稍候...</p>
             </div>
         </div>
     </div>
 
     <script>
+        // 翻译系统支持
+        function getTranslation(key) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+        }
+
+        // 更新页面语言
+        function updatePageLanguage() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 更新页面标题
+            document.title = getTranslation('fba_claim_email.page_title');
+            
+            // 更新所有带有 data-translate 属性的元素
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                
+                if (element.tagName === 'TITLE') {
+                    element.textContent = translation;
+                } else if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                    element.placeholder = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            });
+            
+            // 更新所有带有 data-translate-placeholder 属性的元素
+            document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                const translation = getTranslation(key);
+                element.placeholder = translation;
+            });
+        }
+
+        // 监听语言变化
+        window.addEventListener('languageChanged', function() {
+            updatePageLanguage();
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
+            // 初始化翻译系统
+            updatePageLanguage();
+            
             // 加载导航栏组件
             try {
                 const response = await fetch('/components/navbar-simple.html');
@@ -360,7 +405,7 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在分析问题并生成索赔邮件，请稍候...';
+                processingText.textContent = getTranslation('fba_claim_email.processing_detailed');
                 
                 try {
                     // 已由后端统一中间件处理积分扣除，无需在前端再次检查，避免重复扣费
@@ -386,7 +431,7 @@
                     const result = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(result.error || '生成索赔邮件失败');
+                        throw new Error(result.error || getTranslation('fba_claim_email.error.generation_failed'));
                     }
                     
                     // 更新结果
@@ -409,7 +454,7 @@
                     
                 } catch (error) {
                     console.error('生成索赔邮件出错:', error);
-                    alert(`生成失败: ${error.message}`);
+                    alert(`${getTranslation('fba_claim_email.error.generation_failed')}: ${error.message}`);
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -422,7 +467,8 @@
                 navigator.clipboard.writeText(claimEmail).then(() => {
                     // 显示复制成功提示
                     const originalText = copyButton.innerHTML;
-                    copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                    const copiedText = getTranslation('fba_claim_email.copied');
+                    copyButton.innerHTML = `<i class="ri-check-line mr-1"></i>${copiedText}`;
                     copyButton.classList.add('bg-green-500', 'text-white');
                     copyButton.classList.remove('text-indigo-600', 'bg-white');
                     

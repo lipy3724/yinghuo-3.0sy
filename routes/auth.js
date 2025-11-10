@@ -1548,4 +1548,75 @@ router.post('/logout', protect, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/auth/check
+ * @desc    检查用户登录状态
+ * @access  私有
+ */
+router.get('/check', protect, async (req, res) => {
+  try {
+    // 如果到达这里，用户已经通过了protect中间件的验证
+    // 这意味着用户已经登录并且token有效
+    
+    // 从数据库获取最新的用户信息
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'username', 'phone', 'credits', 'isAdmin', 'isInternal', 'isCustomerService', 'lastActiveAt', 'isBanned', 'banReason', 'banExpireAt']
+    });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+    
+    // 检查用户是否被封禁
+    const banStatus = user.checkBanStatus();
+    if (banStatus) {
+      // 格式化过期时间
+      let expireMessage = '永久封禁';
+      if (banStatus.expireAt) {
+        const expireDate = new Date(banStatus.expireAt);
+        expireMessage = `封禁至 ${expireDate.getFullYear()}-${(expireDate.getMonth() + 1).toString().padStart(2, '0')}-${expireDate.getDate().toString().padStart(2, '0')}`;
+      }
+      
+      return res.status(403).json({
+        success: false,
+        message: '账号已被封禁',
+        data: {
+          isBanned: true,
+          reason: banStatus.reason,
+          expireMessage: expireMessage,
+          forceLogout: true
+        }
+      });
+    }
+    
+    // 获取当前用户的活跃会话数
+    const activeSessionCount = await UserSession.getActiveSessionCount(user.id);
+    
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        username: user.username,
+        phone: user.phone,
+        credits: user.credits,
+        isAdmin: user.isAdmin,
+        isInternal: user.isInternal,
+        isCustomerService: user.isCustomerService,
+        lastActiveAt: user.lastActiveAt,
+        activeSessionCount
+      }
+    });
+  } catch (error) {
+    console.error('检查用户状态错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，无法检查用户状态',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router; 

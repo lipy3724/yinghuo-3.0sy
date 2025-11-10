@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多图转视频404错误调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .test-section { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .log { background: #000; color: #0f0; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>多图转视频404错误调试工具</h1>
+    
+    <div class="test-section">
+        <h3>1. 认证状态检查</h3>
+        <div id="auth-status">检查中...</div>
+        <button onclick="checkAuth()">重新检查认证</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. API端点测试</h3>
+        <div id="api-test">准备测试...</div>
+        <button onclick="testAllEndpoints()">测试所有端点</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 模拟多图转视频流程</h3>
+        <div id="simulation">准备模拟...</div>
+        <button onclick="simulateMultiImageFlow()">开始模拟</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 详细日志</h3>
+        <div id="log" class="log"></div>
+        <button onclick="clearLog()">清除日志</button>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        function setStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = message;
+            element.className = `test-section ${type}`;
+        }
+        
+        async function checkAuth() {
+            log('开始检查认证状态...');
+            
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            
+            if (!token) {
+                setStatus('auth-status', '❌ 未找到认证令牌', 'error');
+                log('错误: 未找到认证令牌');
+                return false;
+            }
+            
+            if (!user) {
+                setStatus('auth-status', '❌ 未找到用户信息', 'error');
+                log('错误: 未找到用户信息');
+                return false;
+            }
+            
+            try {
+                const userData = JSON.parse(user);
+                setStatus('auth-status', `✅ 认证正常<br>用户: ${userData.account}<br>令牌: ${token.substring(0, 20)}...`, 'success');
+                log(`认证成功: 用户=${userData.account}, 令牌=${token.substring(0, 20)}...`);
+                return true;
+            } catch (e) {
+                setStatus('auth-status', '❌ 用户信息解析失败', 'error');
+                log(`错误: 用户信息解析失败 - ${e.message}`);
+                return false;
+            }
+        }
+        
+        async function testAllEndpoints() {
+            log('开始测试所有API端点...');
+            
+            const endpoints = [
+                { name: '多图转视频状态查询', url: '/api/multi-image-to-video/status/test-task-id', method: 'GET' },
+                { name: '多图转视频任务列表', url: '/api/multi-image-to-video/tasks', method: 'GET' },
+                { name: '多图转视频提交', url: '/api/multi-image-to-video', method: 'POST' },
+                { name: '通用任务状态查询', url: '/api/tasks/test-task-id', method: 'GET' }
+            ];
+            
+            let results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    log(`测试端点: ${endpoint.name} (${endpoint.method} ${endpoint.url})`);
+                    
+                    const response = await fetch(endpoint.url, {
+                        method: endpoint.method,
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const status = response.status;
+                    const result = {
+                        name: endpoint.name,
+                        url: endpoint.url,
+                        status: status,
+                        exists: status !== 404
+                    };
+                    
+                    results.push(result);
+                    
+                    if (status === 404) {
+                        log(`❌ ${endpoint.name}: 404 Not Found`);
+                    } else if (status === 401) {
+                        log(`✅ ${endpoint.name}: 401 Unauthorized (端点存在)`);
+                    } else {
+                        log(`✅ ${endpoint.name}: ${status} (端点存在)`);
+                    }
+                    
+                } catch (error) {
+                    log(`❌ ${endpoint.name}: 请求失败 - ${error.message}`);
+                    results.push({
+                        name: endpoint.name,
+                        url: endpoint.url,
+                        status: 'ERROR',
+                        exists: false
+                    });
+                }
+            }
+            
+            const existingEndpoints = results.filter(r => r.exists);
+            const missingEndpoints = results.filter(r => !r.exists);
+            
+            let statusHtml = `<strong>测试结果:</strong><br>`;
+            statusHtml += `✅ 存在的端点: ${existingEndpoints.length}<br>`;
+            statusHtml += `❌ 缺失的端点: ${missingEndpoints.length}<br><br>`;
+            
+            if (missingEndpoints.length > 0) {
+                statusHtml += `<strong>缺失的端点:</strong><br>`;
+                missingEndpoints.forEach(ep => {
+                    statusHtml += `❌ ${ep.name}: ${ep.url}<br>`;
+                });
+            }
+            
+            setStatus('api-test', statusHtml, missingEndpoints.length > 0 ? 'error' : 'success');
+        }
+        
+        async function simulateMultiImageFlow() {
+            log('开始模拟多图转视频流程...');
+            
+            // 检查认证
+            const authOk = await checkAuth();
+            if (!authOk) {
+                setStatus('simulation', '❌ 认证失败，无法继续模拟', 'error');
+                return;
+            }
+            
+            // 模拟创建任务
+            log('模拟创建多图转视频任务...');
+            try {
+                const response = await fetch('/api/multi-image-to-video', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sceneType: 'costume',
+                        duration: 3,
+                        transitionStyle: 'fade',
+                        transitionDuration: 0.5,
+                        videoRatio: '16:9',
+                        videoQuality: 'high',
+                        videoFps: 24
+                    })
+                });
+                
+                const data = await response.json();
+                log(`创建任务响应: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.success && data.data && data.data.taskId) {
+                    const taskId = data.data.taskId;
+                    log(`任务创建成功，taskId: ${taskId}`);
+                    
+                    // 测试状态查询
+                    log(`测试状态查询: /api/multi-image-to-video/status/${taskId}`);
+                    const statusResponse = await fetch(`/api/multi-image-to-video/status/${taskId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        }
+                    });
+                    
+                    const statusData = await statusResponse.json();
+                    log(`状态查询响应: ${JSON.stringify(statusData, null, 2)}`);
+                    
+                    if (statusResponse.status === 404) {
+                        setStatus('simulation', `❌ 状态查询返回404<br>任务ID: ${taskId}<br>这可能是问题所在！`, 'error');
+                    } else {
+                        setStatus('simulation', `✅ 流程模拟成功<br>任务ID: ${taskId}<br>状态查询正常`, 'success');
+                    }
+                } else {
+                    setStatus('simulation', `❌ 任务创建失败: ${data.message}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`模拟流程出错: ${error.message}`);
+                setStatus('simulation', `❌ 模拟失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载时自动检查
+        window.onload = function() {
+            log('页面加载完成，开始自动检查...');
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

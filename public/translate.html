@@ -45,6 +45,32 @@
         // 添加全局变量保存当前任务ID
         let currentTaskId = null;
         
+        // 语言设置变量
+        let currentLanguage = 'zh-cn'; // 默认中文
+        
+        // 从URL参数或localStorage获取语言设置
+        function getLanguageFromParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            
+            if (langParam) {
+                // 从URL参数获取语言
+                currentLanguage = langParam === 'en' ? 'en-us' : 'zh-cn';
+                console.log('从URL参数获取语言:', currentLanguage);
+            } else {
+                // 从localStorage获取语言
+                const storedLang = localStorage.getItem('language');
+                if (storedLang) {
+                    currentLanguage = storedLang === 'en' ? 'en-us' : 'zh-cn';
+                    console.log('从localStorage获取语言:', currentLanguage);
+                } else {
+                    console.log('使用默认语言:', currentLanguage);
+                }
+            }
+            
+            return currentLanguage;
+        }
+        
         // 从API获取配置信息
         async function fetchConfig() {
             try {
@@ -108,21 +134,24 @@
         
         // 构建编辑器URL并加载
         async function initializeEditor() {
+            // 首先获取语言设置
+            const language = getLanguageFromParams();
+            
             // 首先获取配置
             const configSuccess = await fetchConfig();
             if (!configSuccess) {
                 return; // 如果配置获取失败，不继续初始化
             }
             
-            // 只构建基本参数，不包含imageUrl
+            // 根据语言设置构建参数
             const params = {
                 apiHost: 'aibcn',
                 appKey: window.INTL_OP_FRAME_SDK_CONFIG.appKey,
                 trial: true,
-                lang: 'zh-cn',
+                lang: language, // 使用动态获取的语言
                 // 添加源语言和目标语言设置
-                sourceLanguage: 'zh', // 中文
-                targetLanguage: 'en',  // 英语
+                sourceLanguage: language === 'en-us' ? 'en' : 'zh',
+                targetLanguage: language === 'en-us' ? 'zh' : 'en',
                 charge: true // 开启生产拦截
             };
             
@@ -147,7 +176,7 @@
             
             // 更新iframe的src
             iframeEle.src = url;
-            console.log("加载编辑器: 默认源语言为中文，目标语言为英语，已开启生产拦截");
+            console.log(`加载编辑器: 界面语言=${language}, 源语言=${params.sourceLanguage}, 目标语言=${params.targetLanguage}, 已开启生产拦截`);
         }
         
         // 保存图片到服务器
@@ -284,11 +313,24 @@
             }
         }
         
-        // 监听编辑器消息
+        // 监听来自父页面的语言切换消息
         window.addEventListener("message", (ev) => {
-            console.log("收到编辑器消息:", JSON.stringify(ev.data));
+            console.log("收到消息:", JSON.stringify(ev.data));
             
-            // 检查源是否可信
+            // 处理来自父页面的语言切换消息
+            if (ev.data && ev.data.action === 'changeLanguage') {
+                const newLang = ev.data.lang;
+                console.log('收到语言切换消息:', newLang);
+                
+                // 更新当前语言
+                currentLanguage = newLang === 'en' ? 'en-us' : 'zh-cn';
+                
+                // 重新初始化编辑器
+                initializeEditor();
+                return;
+            }
+            
+            // 检查源是否可信（编辑器消息）
             if (ev.origin !== 'https://editor.d.design') {
                 console.log("收到来自其他源的消息:", ev.origin);
                 // 出于安全考虑，我们仍然处理消息，但要记录下来

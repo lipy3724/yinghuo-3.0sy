@@ -191,7 +191,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 刷新任务列表
     refreshTasksBtn.addEventListener('click', loadUserTasks);
+    
+    // 全局清空所有任务按钮点击事件
+    const clearAllTasksGlobalBtn = document.getElementById('clear-all-tasks-global-btn');
+    if (clearAllTasksGlobalBtn) {
+        clearAllTasksGlobalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            confirmDeleteTask();
+        });
+    }
+    
+    // 监听语言切换事件，更新任务列表和预览区域
+    document.addEventListener('languageChanged', (event) => {
+        console.log('文生视频页面：收到语言切换事件:', event.detail.language);
+        // 重新渲染任务列表
+        renderTasks();
+        // 更新预览区域占位符文本（如果预览区域是空的）
+        updatePreviewPlaceholder();
+    });
+    
+    // 初始化预览区域占位符文本
+    updatePreviewPlaceholder();
 });
+
+// 更新预览区域占位符文本
+function updatePreviewPlaceholder() {
+    // 检查预览区域是否为空（没有视频元素）
+    const hasVideo = previewContainer.querySelector('video');
+    if (!hasVideo) {
+        // 检查是否已经有占位符文本
+        const placeholderDiv = previewContainer.querySelector('.text-gray-500');
+        if (placeholderDiv) {
+            const previewText = typeof translate === 'function' ? translate('text_to_video.preview_placeholder') : '您生成的视频将在这里显示';
+            const textElement = placeholderDiv.querySelector('p');
+            if (textElement) {
+                textElement.textContent = previewText;
+            }
+        } else {
+            // 如果没有占位符，创建一个
+            const previewText = typeof translate === 'function' ? translate('text_to_video.preview_placeholder') : '您生成的视频将在这里显示';
+            previewContainer.innerHTML = `
+                <div class="flex items-center justify-center h-full text-gray-500">
+                    <p>${previewText}</p>
+                </div>
+            `;
+        }
+    }
+}
 
 // 生成视频
 function generateVideo() {
@@ -553,9 +599,14 @@ function renderTasks() {
     }
 
     if (tasks.length === 0) {
+        // 使用翻译函数获取文本
+        const noRecordsText = typeof translate === 'function' ? translate('text_to_video.no_records') : '暂无视频生成记录';
+        const taskListInfoText = typeof translate === 'function' ? translate('text_to_video.task_list_info') : '仅显示24小时内的最新1条记录';
+        
         tasksContainer.innerHTML = `
             <div class="text-center py-8 text-gray-500">
-                <p>暂无视频生成记录</p>
+                <p>${noRecordsText}</p>
+                <p class="text-sm mt-2 text-gray-400">${taskListInfoText}</p>
             </div>
         `;
         return;
@@ -564,11 +615,14 @@ function renderTasks() {
     // 按创建时间降序排序
     tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
+    // 只显示最新的一条记录
+    const tasksToShow = tasks.slice(0, 1);
+    
     // 清空容器
     tasksContainer.innerHTML = '';
     
     // 渲染每个任务
-    tasks.forEach(task => {
+    tasksToShow.forEach(task => {
         // 创建任务元素
         const taskElement = createTaskElement(task);
         tasksContainer.appendChild(taskElement);
@@ -592,14 +646,7 @@ function renderTasks() {
         });
     });
     
-    // 添加删除按钮事件
-    document.querySelectorAll('.delete-task-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const taskId = btn.dataset.taskId;
-            confirmDeleteTask(taskId);
-        });
-    });
+    // 注意：清空所有任务按钮现在在页面顶部，事件监听器在页面加载时已绑定
 }
 
 // 创建单个任务元素
@@ -671,24 +718,15 @@ function createTaskElement(task) {
                     <a href="/api/video-subtitle-removal/download?url=${encodeURIComponent(task.videoUrl)}" class="text-indigo-600 hover:text-indigo-800 text-sm mr-3" download>
                         <i class="ri-download-2-line mr-1"></i>下载
                     </a>
-                    <button class="text-indigo-600 hover:text-indigo-800 text-sm preview-btn mr-3" data-url="${task.videoUrl}">
+                    <button class="text-indigo-600 hover:text-indigo-800 text-sm preview-btn" data-url="${task.videoUrl}">
                         <i class="ri-fullscreen-line mr-1"></i>预览
-                    </button>
-                    <button class="text-red-600 hover:text-red-800 text-sm delete-task-btn" data-task-id="${task.id}">
-                        <i class="ri-delete-bin-line mr-1"></i>删除
                     </button>
                 </div>
             </div>
         `;
     } else {
-        // 对于未完成的任务，只显示删除按钮
-        videoPreview = `
-            <div class="flex justify-end mt-2">
-                <button class="text-red-600 hover:text-red-800 text-sm delete-task-btn" data-task-id="${task.id}">
-                    <i class="ri-delete-bin-line mr-1"></i>删除
-                </button>
-            </div>
-        `;
+        // 对于未完成的任务，不显示额外的按钮
+        videoPreview = '';
     }
     
     // 格式化时间戳
@@ -771,7 +809,7 @@ function loadUserTasks() {
         return response.json();
     })
     .then(data => {
-        console.log(`获取到 ${data.length} 个任务`);
+        console.log(`获取到 ${data.length} 个任务（OSS存储，24小时内最新记录）`);
         
         tasks = data;
         renderTasks();
@@ -962,20 +1000,21 @@ function showGenerationProgress(task) {
 }
 
 // 确认删除任务
-function confirmDeleteTask(taskId) {
-    console.log('确认删除任务:', taskId);
-    if (!confirm('确定要删除这个视频任务吗？')) {
+function confirmDeleteTask() {
+    console.log('确认删除所有任务');
+    const confirmText = typeof translate === 'function' ? translate('text_to_video.clear_all_confirm') : '确定要清空所有历史记录吗？此操作将删除所有视频任务，无法恢复！';
+    if (!confirm(confirmText)) {
         console.log('用户取消删除操作');
         return;
     }
     
-    console.log('用户确认删除，执行删除操作');
-    deleteTask(taskId);
+    console.log('用户确认删除所有任务，执行清空操作');
+    deleteAllTasks();
 }
 
-// 删除任务
-function deleteTask(taskId) {
-    console.log(`开始删除任务: ${taskId}`);
+// 清空所有任务
+function deleteAllTasks() {
+    console.log('开始清空所有任务');
     
     const authToken = localStorage.getItem('authToken');
     if (!authToken) {
@@ -984,52 +1023,44 @@ function deleteTask(taskId) {
         return;
     }
     
-    // 查找任务对象，以获取完整信息
-    const taskToDelete = tasks.find(task => task.id === taskId);
-    if (!taskToDelete) {
-        console.warn(`未找到ID为 ${taskId} 的任务对象`);
-    } else {
-        console.log('找到要删除的任务:', taskToDelete);
-    }
-    
-    // 本地删除函数
-    const removeTaskLocally = () => {
-        // 从任务列表中移除
-        const index = tasks.findIndex(task => task.id === taskId);
-        if (index !== -1) {
-            tasks.splice(index, 1);
-            console.log('任务已从本地列表中移除');
-            
-            // 如果有轮询，停止轮询
-            if (pollingIntervals[taskId]) {
-                clearInterval(pollingIntervals[taskId]);
-                delete pollingIntervals[taskId];
-                console.log(`停止了任务 ${taskId} 的轮询`);
-            }
-            
-            // 重新渲染任务列表
-            renderTasks();
-            
-            // 如果删除的是当前预览的视频，清空预览
-            const currentPreviewUrl = previewContainer.querySelector('video source')?.src;
-            if (taskToDelete && taskToDelete.videoUrl === currentPreviewUrl) {
-                console.log('删除的任务是当前预览的视频，清空预览区域');
-                previewContainer.innerHTML = `
-                    <div class="flex items-center justify-center h-full text-gray-500">
-                        <p>您生成的视频将在这里显示</p>
-                    </div>
-                `;
-            }
-            
-            return true;
-        } else {
-            console.warn('无法从本地删除：未在任务列表中找到该任务');
-            return false;
+    // 本地清空函数
+    const clearAllTasksLocally = () => {
+        // 清空任务列表
+        tasks.length = 0;
+        console.log('已清空本地任务列表');
+        
+        // 停止所有轮询
+        Object.keys(pollingIntervals).forEach(taskId => {
+            clearInterval(pollingIntervals[taskId]);
+            delete pollingIntervals[taskId];
+        });
+        console.log('已停止所有任务轮询');
+        
+        // 更新本地存储
+        try {
+            localStorage.setItem('textToVideoTasks', JSON.stringify([]));
+            console.log('本地存储已清空');
+        } catch (error) {
+            console.error('清空本地存储失败:', error);
         }
+        
+        // 重新渲染任务列表
+        renderTasks();
+        
+        // 清空预览区域
+        const previewText = typeof translate === 'function' ? translate('text_to_video.preview_placeholder') : '您生成的视频将在这里显示';
+        previewContainer.innerHTML = `
+            <div class="flex items-center justify-center h-full text-gray-500">
+                <p>${previewText}</p>
+            </div>
+        `;
+        
+        return true;
     };
     
-    // 调用后端API删除任务
-    fetch(`/api/text-to-video/tasks/${taskId}`, {
+    // 调用后端API清空所有任务
+    console.log('正在调用API清空所有任务:', '/api/text-to-video/tasks/clear-all');
+    fetch('/api/text-to-video/tasks/clear-all', {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${authToken}`,
@@ -1037,31 +1068,38 @@ function deleteTask(taskId) {
         }
     })
     .then(response => {
+        console.log('API响应状态:', response.status, response.statusText);
         if (response.ok) {
             return response.json();
         } else {
-            throw new Error(`删除失败: HTTP ${response.status}`);
+            throw new Error(`清空失败: HTTP ${response.status} - ${response.statusText}`);
         }
     })
     .then(result => {
-        console.log('删除成功:', result);
-        if (removeTaskLocally()) {
-            showToast('任务已删除', 'success');
+        console.log('清空成功:', result);
+        if (clearAllTasksLocally()) {
+            const successText = typeof translate === 'function' ? translate('text_to_video.clear_all_success') : '所有历史记录已清空';
+            showToast(successText, 'success');
         } else {
-            showToast('任务已从服务器删除，但本地列表更新失败', 'warning');
+            const warningText = typeof translate === 'function' ? translate('text_to_video.clear_all_server_success') : '服务器已清空，但本地列表更新失败';
+            showToast(warningText, 'warning');
         }
     })
     .catch(error => {
-        console.error('删除任务失败:', error);
-        // 如果API调用失败，询问是否本地删除
-        if (confirm('删除任务失败，是否从本地列表中移除？')) {
-            if (removeTaskLocally()) {
-                showToast('任务已从本地列表移除', 'warning');
+        console.error('清空任务失败:', error);
+        // 如果API调用失败，询问是否本地清空
+        const retryConfirmText = typeof translate === 'function' ? translate('text_to_video.clear_all_retry_confirm') : '清空任务失败，是否从本地列表中清空？';
+        if (confirm(retryConfirmText)) {
+            if (clearAllTasksLocally()) {
+                const localSuccessText = typeof translate === 'function' ? translate('text_to_video.clear_all_local_success') : '本地历史记录已清空';
+                showToast(localSuccessText, 'warning');
             } else {
-                showToast('无法移除任务', 'error');
+                const localFailedText = typeof translate === 'function' ? translate('text_to_video.clear_all_local_failed') : '无法清空本地记录';
+                showToast(localFailedText, 'error');
             }
         } else {
-            showToast('删除任务失败', 'error');
+            const failedText = typeof translate === 'function' ? translate('text_to_video.clear_all_failed') : '清空任务失败';
+            showToast(failedText, 'error');
         }
     });
 } 

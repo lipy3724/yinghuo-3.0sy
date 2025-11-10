@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试图片上传问题</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 10px 20px; margin: 5px; }
+        input[type="file"] { margin: 10px 0; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>调试图片上传问题</h1>
+    
+    <div class="test-section">
+        <h3>测试1: 使用FormData发送Base64数据</h3>
+        <input type="file" id="fileInput1" accept="image/*">
+        <button onclick="testFormDataUpload()">测试FormData上传</button>
+        <div id="result1" class="result"></div>
+        <div id="log1" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>测试2: 使用JSON发送Base64数据</h3>
+        <input type="file" id="fileInput2" accept="image/*">
+        <button onclick="testJSONUpload()">测试JSON上传</button>
+        <div id="result2" class="result"></div>
+        <div id="log2" class="log"></div>
+    </div>
+
+    <script>
+        const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3NTcyOTM5MzksImV4cCI6MTc1OTg4NTkzOX0.RZYkITa8spDfj8zOWkcO15tYJEDOl7zKQnwlFaXgs60";
+        
+        function addLog(logId, message) {
+            const logDiv = document.getElementById(logId);
+            logDiv.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+        }
+        
+        async function testFormDataUpload() {
+            const fileInput = document.getElementById('fileInput1');
+            const resultDiv = document.getElementById('result1');
+            const logDiv = document.getElementById('log1');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">请选择图片文件</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async (event) => {
+                const dataURL = event.target.result;
+                addLog('log1', 'Data URL长度: ' + dataURL.length);
+                addLog('log1', 'Data URL前缀: ' + dataURL.substring(0, 50));
+                
+                // 提取Base64数据
+                let base64Data;
+                if (dataURL.startsWith('data:')) {
+                    base64Data = dataURL.split(',')[1];
+                } else {
+                    base64Data = dataURL;
+                }
+                
+                addLog('log1', 'Base64数据长度: ' + base64Data.length);
+                addLog('log1', 'Base64数据前缀: ' + base64Data.substring(0, 50));
+                
+                // 创建FormData
+                const formData = new FormData();
+                formData.append('image', base64Data);
+                formData.append('type', 'base64');
+                
+                addLog('log1', 'FormData字段: image=' + (formData.get('image') ? '有值' : '无值') + ', type=' + formData.get('type'));
+                
+                try {
+                    addLog('log1', '发送请求到 /api/upload/image');
+                    const response = await fetch('/api/upload/image', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: formData
+                    });
+                    
+                    addLog('log1', '响应状态: ' + response.status);
+                    const data = await response.json();
+                    addLog('log1', '响应数据: ' + JSON.stringify(data, null, 2));
+                    
+                    if (data.success && data.imageUrl) {
+                        resultDiv.innerHTML = `<div class="success">上传成功: ${data.imageUrl}</div>`;
+                    } else {
+                        resultDiv.innerHTML = `<div class="error">上传失败: ${data.message || '未知错误'}</div>`;
+                    }
+                } catch (error) {
+                    addLog('log1', '请求错误: ' + error.message);
+                    resultDiv.innerHTML = `<div class="error">请求失败: ${error.message}</div>`;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        async function testJSONUpload() {
+            const fileInput = document.getElementById('fileInput2');
+            const resultDiv = document.getElementById('result2');
+            const logDiv = document.getElementById('log2');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">请选择图片文件</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async (event) => {
+                const dataURL = event.target.result;
+                addLog('log2', 'Data URL长度: ' + dataURL.length);
+                
+                // 提取Base64数据
+                let base64Data;
+                if (dataURL.startsWith('data:')) {
+                    base64Data = dataURL.split(',')[1];
+                } else {
+                    base64Data = dataURL;
+                }
+                
+                addLog('log2', 'Base64数据长度: ' + base64Data.length);
+                
+                try {
+                    addLog('log2', '发送JSON请求到 /api/upload/image');
+                    const response = await fetch('/api/upload/image', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            image: base64Data,
+                            type: 'base64'
+                        })
+                    });
+                    
+                    addLog('log2', '响应状态: ' + response.status);
+                    const data = await response.json();
+                    addLog('log2', '响应数据: ' + JSON.stringify(data, null, 2));
+                    
+                    if (data.success && data.imageUrl) {
+                        resultDiv.innerHTML = `<div class="success">上传成功: ${data.imageUrl}</div>`;
+                    } else {
+                        resultDiv.innerHTML = `<div class="error">上传失败: ${data.message || '未知错误'}</div>`;
+                    }
+                } catch (error) {
+                    addLog('log2', '请求错误: ' + error.message);
+                    resultDiv.innerHTML = `<div class="error">请求失败: ${error.message}</div>`;
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>

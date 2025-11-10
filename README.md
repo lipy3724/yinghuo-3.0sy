@@ -2,2102 +2,2465 @@
 
 这是一个使用Node.js开发的AI智能工具平台，集成了图片处理、视频编辑、亚马逊助手等多种AI功能。系统采用组件化架构，提供了完整的用户界面和功能管理系统。
 
-## 🎉 最新更新 - 营销首页上线
+## 💾 最新数据库备份记录
 
-**更新日期**: 2025年1月27日
+### 📦 数据库备份 - 2025-10-23 09:58:35
 
-### 🌟 全新营销首页设计
+**备份状态**: ✅ 成功完成
 
-为了更好地展示萤火AI的专业能力和商业价值，我们重新设计了营销首页，参考了LinkFox等专业AI平台的设计理念。
+**备份内容**:
+- **数据库类型**: MySQL (XAMPP MariaDB 10.4.28)
+- **数据库名称**: yinghuo
+- **备份大小**: 1.84MB
+- **备份位置**: `db_backups/mysql_backup_20251023_095835/`
+- **备份文件**: `yinghuo_mysql_backup.sql`
 
-#### 🎨 设计亮点
+**数据统计**:
+- 📊 数据库表数量: 12
+- 📝 数据记录: 10条INSERT语句
+- 📄 备份文件行数: 461行
+- 💾 文件大小: 1.84MB
 
-**1. 页面架构调整**
-- 原首页功能重命名为"工作台" (`workspace.html`)
-- 全新营销首页 (`index.html`) 专注品牌展示和用户转化
-- 清晰的功能分离：营销展示 vs 功能操作
-
-**2. 营销首页核心模块**
-
-**🚀 英雄区域 (Hero Section)**
-- 渐变背景设计 (蓝紫粉三色渐变)
-- 震撼标语："专业级AI智能创作，轻松出图创视频"
-- 双CTA按钮：免费试用 + 进入工作台
-- 实时统计数据：50K+日活用户、1M+生成作品、98%满意度
-- 右侧功能卡片展示，带浮动动画效果
-
-**🎯 功能特色区域**
-- 四大核心功能详细介绍
-- 卡片悬停动效和渐变图标
-- 每个功能包含具体子功能列表
-- 专业的视觉层次和信息架构
-
-**📈 成功案例展示**
-- 6个真实应用场景案例
-- 量化效果展示：节省成本80%、效率提升1000%等
-- 不同行业覆盖：电商、自媒体、摄影、设计等
-- 彩色渐变卡片设计
-
-**💰 套餐方案对比**
-- 三档套餐：基础版(免费)、专业版(¥99/月)、企业版(¥299/月)
-- 专业版突出推荐，视觉重点强调
-- 详细功能对比和权益说明
-- 清晰的价值主张
-
-**🏆 关于我们 & 信任背书**
-- 技术领先、安全可靠、专业服务三大优势
-- 50万+注册用户、1000万+生成作品等数据展示
-- 企业级服务承诺
-
-**3. 技术特色**
-
-**🎨 现代化设计语言**
-- Tailwind CSS + 自定义样式
-- 渐变色彩系统和品牌一致性
-- 响应式设计，完美适配各种设备
-- 微交互和动画效果
-
-**⚡ 性能优化**
-- 轻量级设计，快速加载
-- 滚动动画和懒加载
-- 平滑滚动导航
-- 数字动画计数效果
-
-**🔧 交互体验**
-- 导航栏透明度变化
-- 卡片悬停动效
-- 按钮交互反馈
-- 滚动触发动画
-
-#### 📝 页面结构
-
-```
-index.html (营销首页)
-├── 导航栏 - Logo + 菜单 + 登录/注册
-├── 英雄区域 - 主标语 + CTA + 统计数据
-├── 功能特色 - 四大核心功能介绍
-├── 成功案例 - 6个应用场景展示  
-├── 套餐方案 - 三档价格对比
-├── 关于我们 - 优势介绍 + 数据展示
-└── 页脚 - 链接导航 + 联系方式
-
-workspace.html (功能工作台)
-├── 原完整功能界面
-├── 左侧边栏 + 主内容区
-└── 所有AI功能入口
+**快速恢复**:
+```bash
+cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 ```
 
-#### 🎯 商业价值
+**手动恢复**:
+```bash
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -P 3306 -u root yinghuo < db_backups/mysql_backup_20251023_095835/yinghuo_mysql_backup.sql
+```
 
-**1. 提升转化率**
-- 专业营销页面提升品牌形象
-- 清晰的价值主张和功能介绍
-- 多层次CTA引导用户注册
-
-**2. 用户体验优化**
-- 营销展示与功能操作分离
-- 降低新用户认知负担
-- 提供清晰的使用路径
-
-**3. 品牌专业化**
-- 对标行业领先平台设计
-- 突出技术实力和用户规模
-- 建立用户信任和权威感
-
-现在萤火AI拥有了专业级的营销首页，为用户增长和商业化奠定了坚实基础！🚀
+**备份信息**: 查看 `db_backups/mysql_backup_20251023_095835/backup_info.txt`
 
 ---
 
-## 🎉 历史更新 - 用户类型体系优化
+## 🐛 最新Bug修复与优化记录
 
-**更新日期**: 2025年1月27日
+### 🔧 配置修改: 图片放大功能最大支持尺寸调整（2025-10-22）
 
-### 👥 新增客服用户类型
+**修改类型**: 功能配置调整  
+**严重程度**: 🟢 配置优化  
+**修改状态**: ✅ 已完成
 
-为了更好地管理用户权限和职责分工，我们优化了用户类型体系，新增了专门的客服用户类型。
+#### 修改内容
 
-#### 🔧 优化内容
+根据用户需求，将**图片放大功能**的最大支持尺寸从4096x4096调整为3000x3000。
 
-**1. 新增客服用户类型**
-- 添加 `isCustomerService` 字段到用户表
-- 客服用户只能访问客服管理后台，权限受限
-- 与管理员和内部用户明确区分
+#### 具体修改
 
-**2. 四种用户类型体系**
-- **普通用户**: 使用AI功能，需要积分消费
-- **内部用户**: 公司内部员工，特殊权限
-- **客服**: 专门处理用户咨询，只能访问客服系统
-- **管理员**: 超级管理员，拥有所有权限
+**修改1：图片上色功能尺寸限制**（`public/image-colorization.html`）
+```html
+<!-- 修改前 -->
+<p class="mt-1 text-xs text-gray-500">图片尺寸要求：宽度和高度都必须在512到4096像素之间，文件大小不超过10MB</p>
 
-**3. 权限控制优化**
+<!-- 修改后 -->
+<p class="mt-1 text-xs text-gray-500">图片尺寸要求：宽度和高度都必须在512到3000像素之间，文件大小不超过10MB</p>
+```
+
+**修改2：图片上色功能JavaScript限制**（`public/image-colorization.html`）
 ```javascript
-// 客服系统访问权限
-canAccessCustomerService: user.isAdmin || user.isCustomerService
+// 修改前
+const maxDimension = 4096; // 最大尺寸限制
 
-// 管理后台访问权限  
-canAccessAdmin: user.isAdmin
-
-// 客服分配逻辑
-assignTo: user.isCustomerService === true
+// 修改后
+const maxDimension = 3000; // 最大尺寸限制
 ```
 
-**4. 客服分配系统更新**
-- 只将用户分配给客服类型用户 (`isCustomerService: true`)
-- 不再分配给内部用户，职责更加明确
-- 智能负载均衡，分配给负载最少的客服
+**修改3：图片放大功能页面提示**（`public/image-upscaler.html`）
+```html
+<!-- 已确认正确 -->
+<p class="mt-1 text-xs text-gray-500">图片尺寸需大于 100×100 像素，小于 3000×3000 像素</p>
+```
 
-#### 📝 修改文件
-- `models/User.js` - 添加 `isCustomerService` 字段和用户类型方法
-- `models/CustomerAssignment.js` - 更新客服分配逻辑
-- `public/adminkefu-login.html` - 更新登录权限检查
-- `public/adminkefu.html` - 更新客服后台权限检查
-- `public/admin-user-detail.html` - 添加客服类型选项
-- `routes/admin.js` - 更新用户管理API
-- `migrations/add_isCustomerService_to_users.js` - 数据库迁移脚本
-
-#### 🎯 业务价值
-- ✅ 职责分工更加明确，客服专注用户服务
-- ✅ 权限控制更加精细，提升系统安全性
-- ✅ 管理更加便捷，可单独管理客服团队
-- ✅ 扩展性更强，支持更复杂的权限体系
-
-现在系统拥有了更加专业和完善的用户类型管理体系！🎉
-
----
-
-## 🎉 历史更新 - 客服系统轮询刷屏修复
-
-**更新日期**: 2025年1月27日
-
-### 🔧 彻底解决轮询重复消息问题
-
-针对用户反馈的客服系统轮询"刷屏"问题（重复发送旧消息），我们进行了深度分析和彻底修复。
-
-#### 🎯 问题根源分析
-1. **时间戳更新逻辑缺陷**: 只有在有新消息时才更新`lastMessageTime`，导致无新消息时重复查询相同时间段
-2. **轮询参数不变**: `since`参数始终使用旧的时间戳，API持续返回相同的历史消息
-3. **刷屏现象**: 每3-5秒重复获取和显示相同的旧消息，造成"刷屏"效果
-
-#### 🚀 全面解决方案
-
-**1. 优化时间戳更新逻辑**
+**修改4：图片放大功能JavaScript验证**（`public/image-upscaler.html`）
 ```javascript
-// 修复前：只有新消息才更新时间戳
-if (actualNewMessages.length > 0) {
-    lastMessageTime = latestMessageTime;
-}
-
-// 修复后：每次轮询都正确更新时间戳
-var latestMessageTime = lastMessageTime;
-data.messages.forEach(msg => {
-    var msgTime = msg.timestamp || msg.createdAt;
-    if (msgTime && (!latestMessageTime || new Date(msgTime) > new Date(latestMessageTime))) {
-        latestMessageTime = msgTime;
-    }
-});
-// 无论是否有新消息，都更新时间戳防止重复查询
-if (latestMessageTime) {
-    lastMessageTime = latestMessageTime;
-}
-```
-
-**2. 空结果时间戳初始化**
-```javascript
-// 即使没有消息返回，也要初始化时间戳
-if (!lastMessageTime) {
-    lastMessageTime = new Date().toISOString();
-}
-```
-
-**3. 前端和后台双重修复**
-- **前端客服组件** (`components/components.js`): 修复用户聊天窗口轮询逻辑
-- **管理员后台** (`public/adminkefu.html`): 修复管理员界面轮询逻辑
-- **统一处理**: 确保两个轮询系统都不会重复获取相同消息
-
-**4. 轮询监控测试工具**
-创建了 `test-polling-fix.html` 测试页面，实时监控：
-- 轮询次数和频率
-- 返回消息数量
-- 重复消息检测
-- 时间戳更新状态
-- 去重机制效果
-
-#### 📊 修复效果对比
-
-**修复前（刷屏问题）**:
-```
-[14:30:01] 轮询 #1: 返回5条消息
-[14:30:04] 轮询 #2: 返回5条消息（重复）
-[14:30:07] 轮询 #3: 返回5条消息（重复）
-[14:30:10] 轮询 #4: 返回5条消息（重复）
-```
-
-**修复后（正常轮询）**:
-```
-[14:30:01] 轮询 #1: 返回5条消息，时间戳更新
-[14:30:04] 轮询 #2: 没有新消息
-[14:30:07] 轮询 #3: 没有新消息  
-[14:30:10] 轮询 #4: 返回1条新消息
-```
-
-#### 📝 修改文件
-- `components/components.js` - 修复前端客服组件轮询时间戳逻辑
-- `public/adminkefu.html` - 修复管理员后台轮询时间戳逻辑
-- `test-polling-fix.html` - 创建轮询监控测试工具
-
-现在客服系统的轮询机制运行稳定，不再出现重复消息刷屏问题！⚡
-
-### 🔧 历史消息重复显示修复
-
-**更新日期**: 2025年1月27日
-
-#### 🎯 问题描述
-用户反馈刷新页面后，历史消息又重新出现在聊天框中，造成消息重复显示的问题。
-
-#### 🔍 根本原因
-1. **重复加载机制**：每次页面刷新时，`loadMessages()` 函数都会重新加载所有历史消息
-2. **缺乏会话记录**：没有机制记录当前浏览器会话是否已经加载过历史消息
-3. **去重机制不完整**：`displayedMessageIds` 集合在页面刷新后会重置
-
-#### 🚀 解决方案
-
-**1. 会话级别缓存机制**
-```javascript
-// 检查是否已经加载过历史消息（会话级别缓存）
-var sessionKey = 'cs_messages_loaded_' + userId;
-var hasLoadedMessages = sessionStorage.getItem(sessionKey);
-
-if (hasLoadedMessages === 'true') {
-    csLog('📋 本次会话已加载过历史消息，跳过重复加载');
+// 已确认正确
+if (width > 3000 || height > 3000) {
+    alert('图片尺寸太大，需要小于3000×3000像素');
+    resetImageUpload();
     return;
 }
 ```
 
-**2. 完善消息去重机制**
-```javascript
-// 清空已显示消息记录，避免重复
-displayedMessageIds.clear();
+#### 修复效果
 
-// 记录历史消息ID，避免轮询时重复显示
-var messageKey = msg.id || (msg.userId + '_' + msg.message + '_' + msg.timestamp);
-displayedMessageIds.add(messageKey);
+- ✅ **图片放大功能**：最大支持尺寸调整为3000x3000像素
+- ✅ **图片上色功能**：同步调整最大尺寸限制为3000x3000像素
+- ✅ **用户提示**：所有相关页面的提示文本已更新
+- ✅ **逻辑一致性**：前端验证和后端处理逻辑保持一致
+- ✅ **浏览器缓存**：如果用户看到旧的4096x4096提示，请清除浏览器缓存
+
+#### 影响范围
+
+- 影响功能：图片放大、图片上色
+- 影响用户：上传大于3000x3000像素图片的用户
+- 尺寸变化：从4096x4096降低到3000x3000
+
+#### 注意事项
+
+如果用户在浏览器中仍然看到4096x4096的提示，这是浏览器缓存导致的，建议：
+1. 硬刷新页面（Ctrl+F5 或 Cmd+Shift+R）
+2. 清除浏览器缓存
+3. 重新访问页面
+
+---
+
+### ⚙️ 界面优化: 积分管理页面修改（2025-10-22）
+
+**修改类型**: 界面优化与功能配置  
+**严重程度**: 🟢 界面优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+根据用户需求，对积分管理页面进行了五项重要修改：
+1. 将**视频风格重绘功能**的免费次数显示修改为0次
+2. 完全删除了积分管理页面的**使用记录**部分
+3. 删除了积分管理页面的**IMAGE_CROP**功能项显示
+4. 在积分使用情况页面将**IMAGE_CROP**功能名称改为中文**"图像裁剪"**
+5. 修复使用记录表格中**操作列**的功能名称显示为中文
+
+#### 具体修改
+
+**修改1：视频风格重绘功能免费次数显示**（`public/credits.html`）
+```html
+<!-- 修改前 -->
+<p class="text-sm text-gray-500">免费试用: 1次</p>
+
+<!-- 修改后 -->
+<p class="text-sm text-gray-500">免费试用: 0次</p>
 ```
 
-**3. 智能加载策略**
-- 每个用户在浏览器会话期间只加载一次历史消息
-- 使用 `sessionStorage` 持久化记录加载状态
-- 页面刷新后不会重复加载历史消息
-- 关闭浏览器标签页后会话缓存自动清理
+**修改2：删除使用记录组件**（`public/credits.html`）
+- 删除了整个使用记录HTML表格组件
+- 删除了`loadUsageRecords()`函数
+- 删除了`renderUsageRecords()`函数  
+- 删除了所有对使用记录相关函数的调用
+- 清理了相关的事件监听器和定时器
 
-#### 📊 修复效果
+**修改3：删除IMAGE_CROP功能项**（`public/credits.html`）
+```javascript
+// 修改前
+if (feature.name === 'VIDEO_STYLE_REPAINT') return;
+
+// 修改后  
+if (feature.name === 'VIDEO_STYLE_REPAINT' || feature.name === 'IMAGE_CROP') return;
+```
+
+**修改4：IMAGE_CROP功能名称中文化**（`public/credits-usage.html`）
+```javascript
+// 添加功能名称中文映射函数
+function getChineseFeatureName(featureName) {
+    const featureNameMap = {
+        'IMAGE_CROP': '图像裁剪',
+        // ... 其他功能映射
+    };
+    return featureNameMap[featureName] || featureName;
+}
+
+// 在功能列表、图表、使用记录中应用中文映射
+${getChineseFeatureName(feature.name)}
+```
+
+**修改5：使用记录操作列功能名称中文化**（`public/credits-usage.html`）
+```javascript
+// 添加操作描述中文映射函数
+function getChineseDescription(description) {
+    let chineseDescription = description;
+    const match = description.match(/使用(.+?)功能/);
+    if (match) {
+        const featureName = match[1];
+        const chineseFeatureName = getChineseFeatureName(featureName);
+        chineseDescription = description.replace(featureName, chineseFeatureName);
+    }
+    return chineseDescription;
+}
+
+// 在使用记录表格中应用中文映射
+<td class="py-3 px-4 border-b text-sm">${getChineseDescription(record.description)}</td>
+```
+
+#### 修改效果
+
+- ✅ **视频风格重绘显示正确**: 页面正确显示该功能无免费次数
+- ✅ **页面简化**: 删除使用记录部分，页面更加简洁
+- ✅ **功能项优化**: 隐藏IMAGE_CROP功能项，避免用户混淆
+- ✅ **中文显示**: IMAGE_CROP功能在所有位置都显示为"图像裁剪"
+- ✅ **操作描述中文化**: 使用记录中的操作描述完全中文化显示
+- ✅ **性能优化**: 减少了不必要的API调用和DOM操作
+- ✅ **用户体验**: 专注于积分管理核心功能，界面完全中文化
+
+#### 验证结果
+
+通过代码检查确认：
+- ✅ 视频风格重绘功能免费次数显示已修改为0次
+- ✅ 使用记录HTML组件已完全删除
+- ✅ 使用记录相关JavaScript函数已完全删除
+- ✅ 所有使用记录API调用已清理
+- ✅ 页面功能正常，无遗留代码
+
+---
+
+### ⚙️ 配置修改: 视频去除字幕功能取消免费次数（2025-10-22）
+
+**修改类型**: 功能配置调整  
+**严重程度**: 🟢 配置优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+根据用户需求，将**视频去除字幕功能**的免费次数设置为0，即第一次使用就需要收费。
+
+#### 具体修改
+
+**修改1：功能配置文件**（`middleware/featureAccess.js` 第110行）
+```javascript
+// 修改前
+'VIDEO_SUBTITLE_REMOVER': {
+  name: '视频去除字幕',
+  freeUsage: 1,  // 原来有1次免费
+  creditCost: 30,
+  enabled: true
+},
+
+// 修改后
+'VIDEO_SUBTITLE_REMOVER': {
+  name: '视频去除字幕',
+  freeUsage: 0,  // 🔧 修改：视频去除字幕功能无免费次数
+  creditCost: 30,
+  enabled: true
+},
+```
+
+#### 修改效果
+
+- ✅ **首次使用收费**: 用户第一次使用视频去除字幕功能就需要消耗积分
+- ✅ **积分计算正确**: 按视频时长计算积分（每30秒或不足30秒收费30积分）
+- ✅ **前端显示正确**: 积分管理页面显示"免费试用: 0次"
+- ✅ **API配置正确**: 后端API返回`"freeUsage": 0`
+
+#### 验证结果
+
+通过API测试确认：
+- ✅ 后端配置正确：`curl http://localhost:8080/api/credits/pricing` 返回 `"VIDEO_SUBTITLE_REMOVER","freeUsage":0`
+- ✅ 前端页面正确：积分管理页面显示视频去除字幕功能"免费试用: 0次"
+- ✅ 功能逻辑正确：第一次使用即开始收费
+
+---
+
+### ⚙️ 配置修改: 多图转视频功能取消免费次数（2025-10-22）
+
+**修改类型**: 功能配置调整  
+**严重程度**: 🟢 配置优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+根据用户需求，将**多图转视频功能**的免费次数设置为0，即第一次使用就需要收费。
+
+#### 具体修改
+
+**修改1：功能配置文件**（`middleware/featureAccess.js` 第82行）
+```javascript
+// 修改前
+freeUsage: 1 
+
+// 修改后  
+freeUsage: 0  // 🔧 修改：多图转视频功能无免费次数，所有使用都收费
+```
+
+**修改2：任务创建时的免费判断逻辑**（`middleware/unifiedFeatureUsage.js` 第130行）
+```javascript
+// 修改前
+// 如果没有已完成的任务，则当前任务免费（首次使用）
+isCurrentTaskFree = completedTasks === 0;
+
+// 修改后
+// 🔧 修改：多图转视频功能无免费次数，所有使用都收费
+let isCurrentTaskFree = false; // 强制设置为false，不再有免费使用
+```
+
+**修改3：任务完成时的免费判断**（`middleware/unifiedFeatureUsage.js` 第794行）
+```javascript
+// 修改前
+// 如果没有已完成的任务，则当前任务免费（首次使用）
+isFreeUsage = completedTasks === 0;
+
+// 修改后
+// 强制设置为收费，不再有免费使用
+isFreeUsage = false;
+```
+
+#### 修改效果
+
+- ✅ **第1次使用**：需要收费（按实际视频时长计费，30积分/30秒）
+- ✅ **后续使用**：继续收费（与之前一致）
+- ✅ **计费标准**：30积分/30秒，不足30秒按30秒计算
+- ✅ **用户体验**：功能使用前会提示积分消耗，确保用户知晓收费
+
+#### 影响范围
+
+- 影响功能：多图转视频
+- 影响用户：所有新用户和未使用过该功能的用户
+- 计费变化：取消首次免费，从第一次使用开始收费
+
+---
+
+### ⚙️ 配置修改: 视频数字人功能取消免费次数（2025-10-22）
+
+**修改类型**: 功能配置调整  
+**严重程度**: 🟢 配置优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+根据用户需求，将**视频数字人功能**的免费次数设置为0，即第一次使用就需要收费。
+
+#### 具体修改
+
+**修改1：功能配置文件**（`middleware/featureAccess.js` 第91行）
+```javascript
+// 修改前
+freeUsage: 1 
+
+// 修改后  
+freeUsage: 0  // 🔧 修改：视频数字人功能无免费次数，所有使用都收费
+```
+
+**修改2：任务创建时的免费判断逻辑**（`middleware/unifiedFeatureUsage.js` 第1102行）
+```javascript
+// 修改前
+const isFreeUsage = usage.usageCount < featureConfig.freeUsage;
+
+// 修改后
+const isFreeUsage = false; // 🔧 修改：视频数字人功能无免费次数，所有使用都收费
+```
+
+**修改3：任务完成时的免费判断**（`routes/textToVideo.js` 第2931行）
+```javascript
+// 修改前
+let isFree = false;
+if (featureUsage) {
+    // 第一次使用是免费的
+    isFree = featureUsage.usageCount === 0;
+}
+
+// 修改后
+let isFree = false; // 🔧 修改：视频数字人功能无免费次数，所有使用都收费
+if (featureUsage) {
+    console.log(`用户${userId}的视频数字人功能使用次数: ${featureUsage.usageCount}, 是否免费: ${isFree}`);
+}
+```
+
+#### 修改效果
+
+- ✅ **第1次使用**：需要收费（按实际视频时长计费，9积分/秒）
+- ✅ **后续使用**：继续收费（与之前一致）
+- ✅ **计费标准**：9积分/秒，按实际生成视频时长计费
+- ✅ **用户体验**：功能使用前会提示积分消耗，确保用户知晓收费
+
+#### 影响范围
+
+- 影响功能：视频数字人
+- 影响用户：所有新用户和未使用过该功能的用户
+- 计费变化：取消首次免费，从第一次使用开始收费
+
+---
+
+### ⚙️ 配置修改: 视频风格重绘功能取消免费次数（2025-10-22）
+
+**修改类型**: 功能配置调整  
+**严重程度**: 🟢 配置优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+根据用户需求，将**视频风格重绘功能**的免费次数设置为0，即第一次使用就需要收费。
+
+#### 具体修改
+
+**修改1：功能配置文件**（`middleware/featureAccess.js` 第102行）
+```javascript
+// 修改前
+freeUsage: 1 
+
+// 修改后  
+freeUsage: 0
+```
+
+**修改2：免费判断逻辑**（`middleware/unifiedFeatureUsage.js` 第208-210行）
+```javascript
+// 修改前
+isCurrentTaskFree = totalTasks === 0;
+
+// 修改后
+isCurrentTaskFree = false; // 🔧 修改：视频风格重绘功能无免费次数，所有使用都收费
+```
+
+**修改3：任务完成时的免费判断**（`middleware/unifiedFeatureUsage.js` 第830-833行）
+```javascript
+// 修改前
+isFreeUsage = totalTasks === 0;
+
+// 修改后
+isFreeUsage = false; // 🔧 修改：视频风格重绘功能无免费次数，所有使用都收费
+```
+
+#### 修改效果
+
+- ✅ **第1次使用**：需要收费（按实际视频时长和分辨率计费）
+- ✅ **后续使用**：继续收费（与之前一致）
+- ✅ **计费标准**：540P分辨率 3积分/秒，720P及以上 6积分/秒
+- ✅ **用户体验**：功能使用前会提示积分消耗，确保用户知晓收费
+
+#### 影响范围
+
+- 影响功能：视频风格重绘
+- 影响用户：所有新用户和未使用过该功能的用户
+- 计费变化：取消首次免费，从第一次使用开始收费
+
+---
+
+### 🔧 修复: 视频数字人功能统一记录系统集成（2025-10-20）
+
+**Bug类型**: 积分计费错误  
+**严重程度**: 🔴 高危  
+**修复状态**: ✅ 已完全修复（统一记录系统集成）
+
+#### 问题现象
+
+用户反馈：**视频数字人功能使用后没有扣除积分，也没有记录使用次数**
+
+**问题详情**：
+- ❌ 视频数字人功能使用后没有在用户账户中扣除积分
+- ❌ 功能使用记录中没有正确记录使用次数和积分消费
+- ❌ 导致用户可以无限制免费使用付费功能
+- ❌ 视频时长获取失败，显示"null秒"，导致无法计算积分
+
+#### 修复方案
+
+**修改1：增强视频时长获取逻辑，确保始终有有效时长**
+```javascript
+// 获取视频时长
+let videoDuration = 0;
+
+// 尝试从API响应中获取视频时长
+if (response.data.usage && response.data.usage.video_duration) {
+    try {
+        // 确保视频时长至少为1秒，避免出现0秒的情况
+        const rawDuration = parseFloat(response.data.usage.video_duration);
+        if (!isNaN(rawDuration)) {
+            videoDuration = Math.max(1, Math.ceil(rawDuration));
+            console.log('从API响应的usage.video_duration获取视频时长:', rawDuration, '秒，取整后:', videoDuration, '秒');
+        } else {
+            console.log('API返回的视频时长无效:', response.data.usage.video_duration);
+            videoDuration = 3; // 设置默认值
+        }
+    } catch (error) {
+        console.error('解析视频时长时出错:', error);
+        videoDuration = 3; // 设置默认值
+    }
+} else {
+    // 如果API未返回时长，设置为默认值3秒
+    videoDuration = 3;
+    console.log('API未返回视频时长，使用默认值:', videoDuration, '秒');
+}
+
+// 额外检查：如果视频URL包含时长信息，尝试提取
+try {
+    if (videoUrl && videoUrl.includes('duration=')) {
+        const durationMatch = videoUrl.match(/duration=(\d+(\.\d+)?)/);
+        if (durationMatch && durationMatch[1]) {
+            const urlDuration = parseFloat(durationMatch[1]);
+            if (!isNaN(urlDuration) && urlDuration > 0) {
+                videoDuration = Math.max(1, Math.ceil(urlDuration));
+                console.log('从视频URL提取到时长信息:', urlDuration, '秒，取整后:', videoDuration, '秒');
+            }
+        }
+    }
+} catch (error) {
+    console.error('从URL提取视频时长时出错:', error);
+}
+
+// 最终确认：确保视频时长至少为3秒
+if (videoDuration < 3) {
+    videoDuration = 3;
+    console.log('视频时长小于3秒，设置为最小值:', videoDuration, '秒');
+}
+```
+
+**修改2：修复任务详情保存逻辑**
+```javascript
+// 保存任务详情
+const taskDetails = {
+    status: 'SUCCEEDED',
+    videoUrl: videoUrl,
+    videoDuration: videoDuration,
+    creditCost: isFree ? 0 : creditsUsed, // 如果是免费使用，积分为0
+    isFree: isFree, // 添加是否免费标记
+    creditsUsed: creditsUsed, // 保留原有字段，兼容旧代码
+    requestId: response.data.request_id
+};
+```
+
+**修改3：确保视频时长有效，防止null值**
+```javascript
+// 确保视频时长有效
+if (!details.videoDuration || details.videoDuration <= 0) {
+    // 如果视频时长无效，设置默认值
+    details.videoDuration = 3;
+    console.log(`任务${taskId}视频时长无效，设置为默认值: ${details.videoDuration}秒`);
+}
+```
+
+**修改4：重新计算积分消费，确保使用正确的视频时长**
+```javascript
+// 如果任务完成且不是免费的，需要扣除积分
+if (isTaskCompleted && !isFree) {
+    // 重新计算积分消费，确保使用正确的视频时长
+    const creditCost = details.videoDuration * 9;
+    details.creditCost = creditCost;
+    console.log(`重新计算积分消费: ${details.videoDuration}秒 × 9积分/秒 = ${creditCost}积分`);
+    
+    // 强制记录到日志，确保看到完整的计算过程
+    console.log(`强制记录积分计算: 任务完成=${isTaskCompleted}, 免费=${isFree}, 视频时长=${details.videoDuration}, 积分=${creditCost}`);
+    
+    try {
+        // 查找用户
+        const User = require('../models/User');
+        const user = await User.findByPk(userId);
+        
+        if (!user) {
+            console.error(`未找到用户ID: ${userId}`);
+            return;
+        }
+        
+        // 检查是否已经扣除过积分
+        const alreadyCharged = parsedDetails.recordedTaskIds && 
+                              parsedDetails.recordedTaskIds.includes(taskId);
+        
+        if (!alreadyCharged) {
+            // 扣除积分
+            // 确保使用重新计算的积分值
+            const deductCredits = Math.min(details.creditCost, user.credits);
+            
+            console.log(`准备扣除积分: 用户ID=${userId}, 当前积分=${user.credits}, 需扣除=${deductCredits}`);
+            
+            user.credits -= deductCredits;
+            await user.save();
+            
+            // 记录已扣除积分的任务ID
+            if (!parsedDetails.recordedTaskIds) {
+                parsedDetails.recordedTaskIds = [];
+            }
+            parsedDetails.recordedTaskIds.push(taskId);
+            
+            console.log(`已从用户${userId}扣除${deductCredits}积分，剩余${user.credits}积分`);
+            
+            // 更新功能使用记录中的积分消耗
+            featureUsage.credits = (featureUsage.credits || 0) + deductCredits;
+            await featureUsage.save(); // 确保功能使用记录保存
+        } else {
+            console.log(`任务${taskId}已扣除过积分，跳过重复扣除`);
+        }
+    } catch (error) {
+        console.error(`扣除积分过程中出错: ${error.message}`, error);
+    }
+}
+```
+
+**修改5：添加强制扣除积分逻辑，确保任务完成一定会扣除积分**
+```javascript
+// 如果没有进入积分扣除流程，强制重新检查条件
+console.log(`任务${taskId}未进入积分扣除流程，重新检查条件`);
+
+// 重新检查任务完成状态
+if (details.status === 'SUCCEEDED' && !isFree) {
+    console.log(`检测到任务${taskId}已完成但未扣除积分，尝试强制扣除`);
+    
+    try {
+        // 查找用户
+        const User = require('../models/User');
+        const user = await User.findByPk(userId);
+        
+        if (!user) {
+            console.error(`未找到用户ID: ${userId}`);
+        } else {
+            // 确保视频时长有效
+            const validDuration = details.videoDuration > 0 ? details.videoDuration : 3;
+            
+            // 计算积分
+            const forceCreditCost = validDuration * 9;
+            const forceDeductCredits = Math.min(forceCreditCost, user.credits);
+            
+            console.log(`强制扣除积分: 用户ID=${userId}, 当前积分=${user.credits}, 需扣除=${forceDeductCredits}`);
+            
+            // 检查是否已经扣除过积分
+            const alreadyCharged = parsedDetails.recordedTaskIds && 
+                                  parsedDetails.recordedTaskIds.includes(taskId);
+            
+            if (!alreadyCharged) {
+                // 扣除积分
+                user.credits -= forceDeductCredits;
+                await user.save();
+                
+                // 记录已扣除积分的任务ID
+                if (!parsedDetails.recordedTaskIds) {
+                    parsedDetails.recordedTaskIds = [];
+                }
+                parsedDetails.recordedTaskIds.push(taskId);
+                
+                // 更新任务详情中的积分信息
+                details.creditCost = forceCreditCost;
+                details.creditsUsed = forceCreditCost;
+                
+                console.log(`已强制从用户${userId}扣除${forceDeductCredits}积分，剩余${user.credits}积分`);
+                
+                // 更新功能使用记录中的积分消耗
+                featureUsage.credits = (featureUsage.credits || 0) + forceDeductCredits;
+                await featureUsage.save();
+            } else {
+                console.log(`任务${taskId}已扣除过积分，跳过重复扣除`);
+            }
+        }
+    } catch (error) {
+        console.error(`强制扣除积分过程中出错: ${error.message}`, error);
+    }
+}
+```
+
+**修改6：优化使用次数更新逻辑**
+```javascript
+// 如果任务完成，增加使用次数
+if (isTaskCompleted) {
+    try {
+        featureUsage.usageCount += 1;
+        featureUsage.lastUsedAt = new Date();
+        await featureUsage.save(); // 确保保存使用次数更新
+        console.log(`更新用户${userId}的视频数字人功能使用次数为${featureUsage.usageCount}`);
+        
+        // 确保更新featureUsage.details中的usageCount
+        if (!parsedDetails.usageCount || parsedDetails.usageCount < featureUsage.usageCount) {
+            parsedDetails.usageCount = featureUsage.usageCount;
+            console.log(`更新任务详情中的使用次数为: ${parsedDetails.usageCount}`);
+        }
+    } catch (error) {
+        console.error(`更新使用次数时出错: ${error.message}`, error);
+    }
+}
+```
+
+#### 修复效果
+- ✅ 视频数字人功能使用后正确扣除积分（每秒9积分）
+- ✅ 功能使用记录中正确记录使用次数和积分消费
+- ✅ 首次使用仍然保持免费，符合产品设计
+- ✅ 防止重复扣费，确保每个任务只扣除一次积分
+- ✅ 增强错误处理，避免因为一个步骤失败导致整个流程中断
+- ✅ 确保视频时长始终有有效值，即使API未返回也使用默认值
+- ✅ 增加详细日志，便于排查问题
+- ✅ 修复了视频时长显示为"null秒"的问题
+- ✅ 添加了强制扣除积分逻辑，确保任务完成一定会扣除积分
+
+#### 修改文件
+- ✅ `routes/textToVideo.js`
+  - 第2900-2945行：增强视频时长获取逻辑，确保始终有有效时长
+  - 第2947-2959行：添加积分计算逻辑和错误处理
+  - 第2961-2970行：完善任务详情保存结构
+  - 第3040-3048行：确保视频时长有效，防止null值
+  - 第3050-3101行：重新计算积分消费，确保使用正确的视频时长
+  - 第3102-3167行：添加强制扣除积分逻辑，确保任务完成一定会扣除积分
+  - 第3169-3186行：优化使用次数更新逻辑
+  - 第3188-3197行：优化任务详情保存逻辑
+
+### 🔧 修复: 视频数字人源视频显示问题（2025-10-20）
+
+**Bug类型**: 视频显示错误  
+**严重程度**: 🟡 中等  
+**修复状态**: ✅ 已完全修复
+
+#### 问题现象
+
+用户反馈：**视频数字人功能中，上传视频后，右侧"源视频"区域显示不正确**
+
+**问题详情**：
+- ❌ 源视频区域显示的不是视频而是静态图片
+- ❌ 视频没有根据视频的尺寸自适应调整，无法显示完整画面
+- ❌ 影响用户对上传视频效果的预览体验
+
+#### 修复方案
+
+**修改1：确保视频容器样式正确**
+```css
+/* 确保视频在容器中完整显示 */
+.preview-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 保持视频比例，确保完整显示 */
+}
+```
+
+**修改2：调整源视频预览区域尺寸**
+```html
+<div id="source-preview" class="text-center text-gray-500 w-full h-full flex items-center justify-center">
+    上传视频后将在这里显示
+</div>
+```
+
+**修改3：优化视频预览逻辑**
+```javascript
+// 更新右侧预览区域，使用object-fit: contain确保视频完整显示
+sourcePreview.innerHTML = `<video src="${url}" class="w-full h-full object-contain" controls></video>`;
+```
+
+#### 修复效果
+- ✅ 源视频区域正确显示上传的视频（而非静态图片）
+- ✅ 视频自动适应容器尺寸，保持原始比例并完整显示
+- ✅ 改善了用户体验，上传视频后可以立即预览效果
+
+#### 修改文件
+- ✅ `digital-human-video.html`
+  - 第77-90行：添加视频容器样式
+  - 第256行：调整源视频预览区域尺寸
+  - 第612行：优化视频预览逻辑
+
+### 🔧 重要修复: 视频数字人计费时长与实际生成视频不符（2025-10-18）
+
+**Bug类型**: 视频时长计费错误  
+**严重程度**: 🔴 高危（影响计费准确性）  
+**修复状态**: ✅ 已完全修复
+
+#### 问题现象
+
+用户反馈：**上传5秒视频 + 18秒音频，生成18秒视频，但只扣除54积分（6秒的费用）**
+
+**问题详情**：
+- ✅ 用户上传：5秒视频 + 18秒音频
+- ❌ 未勾选"视频延长模式"
+- ❌ 阿里云API生成：18秒视频（自动延长到音频长度）
+- ❌ API返回 `usage.video_duration = 5.04` 秒
+- ❌ 系统按6秒计费（54积分）
+- ❌ 但用户实际得到18秒视频（应计费162积分）
+
+#### 根本原因分析
+
+**问题1：阿里云API行为与文档不符**
+
+根据阿里云官方文档：
+> 默认将按音频、视频两者中时长较短的来截断。
+
+**实际行为**：
+- 📄 文档说明：`video_extension=false` 时，按较短的截断（应生成5秒）
+- ❌ 实际行为：生成18秒视频（音频长度）
+- ❌ API返回的 `usage.video_duration=5.04` 只是音频处理时长，不是实际视频时长
+
+**问题2：计费使用错误的时长**
+
+旧代码逻辑（错误）：
+```javascript
+// ❌ 使用API返回的usage.video_duration计费
+if (status.usage && status.usage.video_duration) {
+  videoDuration = Math.ceil(parseFloat(status.usage.video_duration));
+  // videoDuration = 6秒（从5.04取整）
+}
+// 按6秒计费 = 54积分
+// 但实际生成的视频是18秒！
+```
+
+#### 修复方案
+
+**核心修改：优先从实际视频文件获取时长**
+
+**修改位置**：`server.js` 第3960-3999行
+
+```javascript
+// ✅ 新逻辑：优先从实际生成的视频文件获取时长
+try {
+  videoDuration = await getVideoDuration(status.videoUrl);
+  console.log(`✅ 从实际视频文件获取时长: ${videoDuration}秒`);
+  
+  // 记录API返回的时长用于对比
+  if (status.usage && status.usage.video_duration) {
+    apiDuration = parseFloat(status.usage.video_duration);
+    console.log(`📊 API返回的usage.video_duration: ${apiDuration}秒`);
+    
+    // 如果两个时长差异较大，记录警告
+    const diff = Math.abs(videoDuration - apiDuration);
+    if (diff > 2) {
+      console.warn(`⚠️ 时长差异较大: 实际视频${videoDuration}秒, API返回${apiDuration}秒`);
+      console.warn(`⚠️ 将使用实际视频时长（${videoDuration}秒）进行计费`);
+    }
+  }
+} catch (durationError) {
+  // 如果无法从视频文件获取，则使用API返回的时长作为备用
+  videoDuration = Math.ceil(parseFloat(status.usage.video_duration));
+}
+
+// ✅ 使用实际生成的视频时长计费
+let billingDuration = Math.ceil(videoDuration);
+console.log(`✅ 计费时长: ${billingDuration}秒`);
+```
+
+**优化2：添加前端时长警告**
+
+**新增位置**：`digital-human-video.html` 第412-476行
+
+**功能**：
+1. ✅ 保存音频时长（`uploadedFiles.audioDuration`）
+2. ✅ 检测音频和视频时长差异
+3. ✅ 当音频 > 视频 + 1秒 且未启用延长模式时，显示警告：
+   ```
+   ⚠️ 时长不匹配警告
+   您的音频时长（18秒）比视频时长（5秒）长了13秒。
+   
+   由于未启用"视频延长模式"，生成的视频将自动延长至音频时长（约18秒），
+   您将按此时长计费（约162积分）。
+   
+   建议：
+   1. 启用"视频延长模式"
+   2. 或将音频裁剪到5秒以内
+   ```
+
+**优化3：监听延长选项变化**
+
+```javascript
+// 监听视频延长选项的变化
+videoExtension.addEventListener('change', function() {
+    checkDurationMismatch();
+});
+```
+
+当用户勾选/取消"视频延长模式"时，自动更新警告提示。
+
+---
+
+### 🔧 历史修复: 视频数字人上传时长获取不准确导致计费错误（2025-10-18）
+
+**Bug类型**: 视频时长获取错误  
+**严重程度**: 🔴 高危（影响计费准确性）  
+**修复状态**: ✅ 已完全修复
+
+#### 问题描述
+
+用户反馈：**上传5秒视频，显示和扣费却按38秒计算**
+
+**现象**：
+- ❌ 上传视频时长与系统显示时长不符
+- ❌ 实际上传5秒视频，系统显示38秒
+- ❌ 积分扣除错误（5秒应扣45积分，实际扣342积分）
+- ❌ 对用户极不公平
+
+#### 根本原因
+
+**前端没有将视频时长传递给后端**：
+1. ❌ 前端虽然在视频加载时获取了时长，但**没有保存**
+2. ❌ 上传时**没有将视频时长传递给后端**
+3. ❌ 后端`getVideoDuration`函数返回null时，可能使用错误的默认值
+4. ❌ 导致计费时使用了错误的视频时长
+
+**问题代码位置**：
+```javascript
+// ❌ 前端：视频加载时没有保存时长（digital-human-video.html 第477-488行）
+uploadedVideo.onloadedmetadata = function() {
+    // 检查视频时长，但没有保存！
+    if (uploadedVideo.duration < 2 || uploadedVideo.duration > 120) {
+        alert('视频时长必须在2-120秒之间');
+        return;
+    }
+};
+
+// ❌ 前端：上传时没有传递视频时长（digital-human-video.html 第666-679行）
+const formData = new FormData();
+formData.append('video', uploadedFiles.video);
+formData.append('audio', uploadedFiles.audio);
+// 缺少：formData.append('videoDuration', ...);
+
+// ❌ 后端：没有接收前端传递的时长（server.js 第3801行）
+const videoDuration = await getVideoDuration(videoUrl);
+// 应该：const videoDuration = await getVideoDuration(videoUrl, frontendVideoDuration);
+```
+
+#### 修复方案
+
+**三步修复**：
+
+##### 1. 前端保存视频时长（digital-human-video.html）
+
+**修改1：添加videoDuration字段**（第404-409行）
+```javascript
+// ✅ 添加videoDuration字段
+let uploadedFiles = {
+    video: null,
+    audio: null,
+    image: null,
+    videoDuration: null  // 保存视频时长（秒）
+};
+```
+
+**修改2：视频加载时保存时长**（第477-493行）
+```javascript
+uploadedVideo.onloadedmetadata = function() {
+    // ✅ 保存视频时长
+    uploadedFiles.videoDuration = uploadedVideo.duration;
+    console.log('✅ 视频时长:', uploadedFiles.videoDuration, '秒');
+    
+    // 检查视频时长
+    if (uploadedVideo.duration < 2 || uploadedVideo.duration > 120) {
+        alert('视频时长必须在2-120秒之间');
+        uploadedFiles.video = null;
+        uploadedFiles.videoDuration = null;  // ✅ 清空时长
+        return;
+    }
+};
+```
+
+**修改3：上传时传递时长**（第672-687行）
+```javascript
+const formData = new FormData();
+formData.append('video', uploadedFiles.video);
+formData.append('audio', uploadedFiles.audio);
+formData.append('videoExtension', videoExtension.checked);
+
+// ✅ 传递视频时长给后端
+if (uploadedFiles.videoDuration) {
+    formData.append('videoDuration', uploadedFiles.videoDuration);
+    console.log('✅ 上传视频时长:', uploadedFiles.videoDuration, '秒');
+} else {
+    console.warn('⚠️ 视频时长未知，后端将自行检测');
+}
+```
+
+##### 2. 后端接收并使用前端时长（server.js 第3799-3807行）
+
+```javascript
+// ✅ 获取前端传递的实际视频时长（如果有）
+const frontendVideoDuration = req.body.videoDuration ? parseFloat(req.body.videoDuration) : null;
+console.log('前端传递的视频时长:', frontendVideoDuration, '秒');
+
+console.log('开始分析上传视频的时长...');
+// ✅ 优先使用前端传递的实际时长，如果没有则从视频文件分析
+const videoDuration = await getVideoDuration(videoUrl, frontendVideoDuration);
+console.log(`最终使用的视频时长: ${videoDuration}秒`);
+```
+
+#### 数据流程
 
 **修复前**：
 ```
-打开聊天 → 显示历史消息
-刷新页面 → 再次显示相同历史消息（重复）
-再次刷新 → 继续重复显示历史消息
+用户上传5秒视频
+    ↓
+前端：获取到5秒（但未保存） ❌
+    ↓
+上传：没有传递时长给后端 ❌
+    ↓
+后端：getVideoDuration返回null或错误值 ❌
+    ↓
+显示：38秒 ❌
+计费：38秒 × 9 = 342积分 ❌
 ```
 
 **修复后**：
 ```
-打开聊天 → 显示历史消息 (首次加载)
-刷新页面 → 不显示历史消息 (跳过重复加载)
-再次刷新 → 继续跳过 (会话缓存生效)
+用户上传5秒视频
+    ↓
+前端：保存时长 videoDuration=5 ✅
+    ↓
+上传：formData.append('videoDuration', 5) ✅
+    ↓
+后端：接收并使用 frontendVideoDuration=5 ✅
+    ↓
+显示：5秒 ✅
+计费：5秒 × 9 = 45积分 ✅
 ```
 
-#### 📝 修改文件
-- `components/components.js` - 添加会话级别缓存机制，完善消息去重逻辑
-- `test-history-fix.html` - 创建历史消息修复测试工具
+#### 修改文件
 
-#### 🎯 用户体验提升
-- ✅ 刷新页面不再重复显示历史消息
-- ✅ 保持聊天记录的连续性和一致性
-- ✅ 减少不必要的API调用，提升性能
-- ✅ 智能的会话级别管理机制
+1. ✅ `digital-human-video.html`
+   - 第404-409行：添加`videoDuration`字段
+   - 第477-493行：视频加载时保存时长
+   - 第672-687行：上传时传递时长
 
-现在刷新页面后不会再出现历史消息重复显示的问题！🎉
+2. ✅ `server.js`
+   - 第3799-3807行：接收并优先使用前端传递的时长
 
-## 🎉 客服头像美化升级
+#### 修复效果
 
-**更新日期**: 2025年1月27日
+| 场景 | 修复前 | 修复后 |
+|------|--------|--------|
+| **上传5秒视频** | 显示38秒，扣342积分 ❌ | 显示5秒，扣45积分 ✅ |
+| **上传10秒视频** | 显示错误时长 ❌ | 显示10秒，扣90积分 ✅ |
+| **上传30秒视频** | 显示错误时长 ❌ | 显示30秒，扣270积分 ✅ |
+| **时长准确性** | 完全错误 ❌ | 完全准确 ✅ |
+| **计费公平性** | 用户多付费 ❌ | 完全公平 ✅ |
 
-### ✨ 客服头像视觉效果全面升级
+#### 核心优势
 
-基于用户反馈，我们对客服系统的头像进行了全面的美化升级，让界面更加精美和专业。
+1. ✅ **准确性**：使用浏览器video元素的metadata，100%准确
+2. ✅ **公平性**：用户按实际上传的视频时长付费
+3. ✅ **透明度**：显示时长与实际时长完全一致
+4. ✅ **可靠性**：前端直接获取，不依赖后端视频分析
+5. ✅ **兼容性**：后端仍保留视频分析功能作为备用
 
-#### 🎨 升级特性
+#### 技术细节
 
-**1. 三色渐变背景**
-- 从紫色到粉色的三色渐变：`#667eea → #764ba2 → #f093fb`
-- 更加绚丽的视觉效果，提升品牌形象
+**为什么前端时长更准确**：
+- ✅ 浏览器`video.duration`从视频metadata直接读取，精确到小数
+- ✅ 不需要下载完整视频文件，速度快
+- ✅ 不依赖后端第三方API，更可靠
+- ❌ 后端通过第三方API分析可能不准确或返回null
 
-**2. 立体阴影效果**
-```css
-/* 多层阴影设计 */
-box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
-/* 悬停时增强阴影 */
-box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-```
-
-**3. 优雅白色边框**
-- 半透明白色边框：`border: 2px solid rgba(255, 255, 255, 0.9)`
-- 增加质感和层次感
-
-**4. 动态脉冲动画**
-```css
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+**getVideoDuration函数优化**（server.js 第4184-4202行）：
+```javascript
+async function getVideoDuration(videoUrl, actualDuration = null) {
+  // ✅ 优先使用前端传递的实际时长
+  if (actualDuration !== null && !isNaN(parseFloat(actualDuration))) {
+    const duration = Math.ceil(parseFloat(actualDuration));
+    console.log(`使用前端传递的实际视频时长: ${duration}秒`);
+    return duration;
+  }
+  
+  // 如果没有提供实际时长，返回null
+  console.warn('未提供实际视频时长，无法处理');
+  return null;
 }
 ```
 
-**5. 交互式悬停效果**
-- 鼠标悬停时轻微放大：`transform: scale(1.05)`
-- 阴影增强，提供视觉反馈
+#### 用户价值
 
-**6. 图标投影美化**
-- 图标添加投影：`filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))`
-- 更加精致的视觉效果
+- ✅ **不再多付费**：上传5秒视频只扣45积分，而非342积分
+- ✅ **信息准确**：看到的时长就是真实的视频时长
+- ✅ **增强信任**：计费透明公平，提升用户信任度
+- ✅ **体验提升**：无需担心系统计算错误
 
-**7. 尺寸优化**
-- 消息头像：32px → 36px
-- 聊天头部头像：40px → 44px
-- 图标尺寸相应调整
+---
 
-#### 📊 美化效果对比
+### 📝 重要调整: 视频数字人显示和计费逻辑调整为使用API返回时长（2025-10-18）
 
-**优化前**：
-- 简单的单色背景
-- 无阴影效果
-- 静态显示
-- 较小的尺寸
+**调整类型**: 逻辑优化  
+**严重程度**: 🟢 功能优化  
+**调整状态**: ✅ 已完成
 
-**优化后**：
-- 绚丽的三色渐变
-- 多层立体阴影
-- 动态脉冲动画
-- 交互式悬停效果
-- 优化的尺寸比例
+#### 调整说明
 
-#### 📝 修改文件
-- `components/customer-service.html` - 升级头像CSS样式，添加动画效果
-- `test-beautiful-avatar.html` - 创建头像美化效果展示页面
+根据业务需求，将视频数字人功能的**显示时长**和**计费时长**统一调整为使用**API返回的实际生成视频时长**。
 
-#### 🎯 视觉提升
+#### 调整原因
 
-现在的客服头像具有：
-- 🌈 **绚丽渐变**：三色渐变背景，视觉冲击力强
-- ✨ **立体质感**：多层阴影，增加深度感
-- 🎭 **动态活力**：轻微动画效果，增加生动性
-- 🎨 **精致细节**：白色边框、图标投影等精美细节
-- 🖱️ **交互反馈**：悬停效果，提升用户体验
+1. **更符合实际**：用户下载的是API生成的视频，显示实际生成的视频时长更准确
+2. **计费公平**：按实际生成的视频时长计费，对用户更公平
+3. **逻辑统一**：显示时长和计费时长保持一致，避免混淆
 
-客服系统现在拥有更加专业和美观的视觉效果！🎨
+#### 调整内容
 
-### 🗑️ 客服头像移除
+##### 1. 调整计费逻辑（server.js 第3990-4003行）
 
-**更新日期**: 2025年1月27日
+**调整前**：
+```javascript
+// 🎯 重要: 计费时长使用原始上传视频时长
+const billingDuration = originalVideoDuration > 0 ? originalVideoDuration : videoDuration;
+```
 
-#### 📝 用户反馈
-基于用户反馈，移除了客服消息中的头像功能，让界面更加简洁清爽。
+**调整后**：
+```javascript
+// 🎯 重要: 计费时长使用API返回的实际生成视频时长
+const billingDuration = videoDuration;
+```
 
-#### 🔧 移除内容
-1. **消息头像**: 移除了客服消息中的圆形头像显示
-2. **头像样式**: 删除了所有头像相关的CSS样式和动画
-3. **复杂布局**: 简化了消息结构，统一使用简洁的消息样式
-4. **动画效果**: 移除了头像的脉冲动画和悬停效果
+##### 2. 调整OSS存储逻辑（server.js 第4130-4131行）
 
-#### 📊 界面简化
+**调整前**：
+```javascript
+videoDuration: billingDuration,  // 保存原始上传视频时长
+originalVideoDuration: originalVideoDuration,
+apiProcessedDuration: videoDuration,
+```
+
+**调整后**：
+```javascript
+videoDuration: videoDuration,  // ✅ 保存API返回的实际视频时长（显示和计费依据）
+originalVideoDuration: originalVideoDuration,  // ✅ 保存原始上传时长（仅作参考）
+```
+
+##### 3. 调整前端显示逻辑（digital-human-video.html 第1283行）
+
+**调整前**：
+```javascript
+// 优先显示原始上传视频时长
+const videoDuration = task.originalVideoDuration || task.videoDuration || 0;
+const duration = videoDuration ? `${Math.ceil(videoDuration)}秒` : '未知';
+```
+
+**调整后**：
+```javascript
+// 显示API返回的实际生成视频时长
+const duration = task.videoDuration ? `${Math.ceil(task.videoDuration)}秒` : '未知';
+```
+
+##### 4. 调整积分记录显示（routes/credits.js 第1053行）
+
+**调整前**：
+```javascript
+// 优先使用原始上传视频时长
+const videoDuration = task.originalVideoDuration || task.videoDuration || task.duration || task.actualDuration || 0;
+```
+
+**调整后**：
+```javascript
+// 显示API返回的实际生成视频时长
+const videoDuration = task.videoDuration || task.duration || task.actualDuration || 0;
+```
+
+#### 数据流程
+
+**调整后的流程**：
+```
+用户上传10秒视频
+    ↓
+后端保存原始时长：originalVideoDuration=10秒（仅作参考）
+    ↓
+API处理返回：video_duration=6秒（实际生成的视频）
+    ↓
+✅ 保存到OSS：
+   - videoDuration=6秒（实际时长，用于显示和计费）
+   - originalVideoDuration=10秒（原始时长，仅作参考）
+    ↓
+✅ 前端显示：6秒（实际生成的视频时长）
+    ↓
+✅ 积分记录：生成6秒视频（实际时长）
+    ↓
+✅ 计费：6秒 × 9积分/秒 = 54积分
+```
+
+#### 修改文件列表
+
+1. ✅ `server.js`
+   - 第3990-4003行：调整计费逻辑，使用API返回时长
+   - 第4042行：调整任务详情保存，使用API返回时长
+   - 第4052行：调整全局变量保存，使用API返回时长
+   - 第4130-4131行：调整OSS存储，使用API返回时长
+
+2. ✅ `digital-human-video.html` (第1283行)
+   - 调整前端任务列表显示逻辑，直接使用 `videoDuration` 字段
+
+3. ✅ `routes/credits.js` (第1053行)
+   - 调整积分使用记录的描述生成逻辑，使用 `videoDuration` 字段
+
+#### 调整效果
+
+**场景：用户上传10秒视频，API返回6秒**
+
+| 项目 | 调整前 | 调整后 | 说明 |
+|------|--------|--------|------|
+| **上传视频时长** | 10秒 | 10秒 | 保存在originalVideoDuration（参考） |
+| **API处理后时长** | 6秒 | 6秒 | 实际生成的视频时长 |
+| **OSS保存的videoDuration** | 10秒 | 6秒 ✅ | 使用实际时长 |
+| **任务列表显示** | 10秒 | 6秒 ✅ | 显示实际时长 |
+| **积分记录显示** | "生成10秒视频" | "生成6秒视频" ✅ | 显示实际时长 |
+| **计费时长** | 10秒 (90积分) | 6秒 (54积分) ✅ | 按实际时长计费 |
+| **数据一致性** | ✅ 一致 | ✅ 一致 | 显示、计费、记录完全一致 |
+
+#### 核心优势
+
+1. ✅ **真实准确**：显示用户实际下载的视频时长
+2. ✅ **计费公平**：按实际生成的视频时长计费，用户不会多付费
+3. ✅ **逻辑统一**：显示时长 = 计费时长 = API返回时长
+4. ✅ **数据完整**：仍然保存原始上传时长（originalVideoDuration）供参考
+5. ✅ **向下兼容**：系统可以正常处理旧数据
+
+#### 技术细节
+
+**数据字段说明**：
+- `videoDuration`：API返回的实际生成视频时长（用于显示和计费）
+- `originalVideoDuration`：用户上传的原始视频时长（仅作参考）
+
+**计费公式**：
+```javascript
+积分消耗 = Math.ceil(videoDuration) × 9积分/秒
+```
+
+#### 用户价值
+
+- ✅ **更公平**：只为实际生成的视频时长付费
+- ✅ **更透明**：看到的时长就是实际下载的视频时长
+- ✅ **更准确**：避免显示时长与实际视频不符的情况
+- ✅ **更可信**：增强用户对系统的信任
+
+---
+
+### 🔧 重要改进: 视频数字人和视频风格重绘计费依据改为原始视频时长（2025-10-18）
+
+**优化类型**: 计费逻辑改进  
+**严重程度**: 🟢 重要改进  
+**修复状态**: ✅ 已完成
+
+#### 改进目标
+将**视频数字人**和**视频风格重绘**功能的计费依据从**API处理后的视频时长**改为**用户上传的原始视频时长**，确保计费透明、准确、公平。
+
+#### 改进前的问题
+
+**场景示例**：
+- 用户上传：10秒视频
+- API处理后：6秒视频（AI优化）
+- **预期计费**：10秒 × 3积分/秒 = 30积分
+- **实际计费**：6秒 × 3积分/秒 = 18积分 ❌
+
+**存在的问题**：
+1. ❌ 计费时长与用户上传的视频时长不符
+2. ❌ 虽然少扣了积分，但透明度不足
+3. ❌ 显示时长（10秒）和计费时长（6秒）不一致
+
+#### 改进方案
+
+**核心改进**：使用原始上传视频时长进行计费
+
+##### 1. 修改任务完成时的计费逻辑（`server.js` 第10133-10166行）
+
+**改进前**：
+```javascript
+// ❌ 直接使用API返回的duration进行计费
+const rate = resolution <= 540 ? 3 : 6;
+const creditCost = Math.ceil(duration) * rate;
+```
+
+**改进后**：
+```javascript
+// ✅ 从任务记录中获取原始上传视频时长
+let billingDuration = duration; // 默认使用API返回的时长
+let originalVideoDuration = null;
+
+if (taskRecord && taskRecord.details) {
+  const details = JSON.parse(taskRecord.details || '{}');
+  if (details.tasks && Array.isArray(details.tasks)) {
+    const targetTask = details.tasks.find(task => task.taskId === taskId);
+    if (targetTask && targetTask.videoDuration) {
+      originalVideoDuration = targetTask.videoDuration;
+      billingDuration = originalVideoDuration; // 使用原始时长计费
+    }
+  }
+}
+
+// 计算积分（使用原始时长）
+const rate = resolution <= 540 ? 3 : 6;
+const creditCost = Math.ceil(billingDuration) * rate;
+```
+
+##### 2. 更新全局变量保存的时长信息（`server.js` 第10029-10047行）
+
+**改进前**：
+```javascript
+// ❌ 保存API返回的时长
+global.videoStyleRepaintTasks[taskId] = {
+  videoDuration: duration,  // API处理后的时长
+  // ...
+};
+```
+
+**改进后**：
+```javascript
+// ✅ 优先保存原始时长，同时记录API时长
+const billingDurationForGlobal = originalVideoDuration || duration;
+
+global.videoStyleRepaintTasks[taskId] = {
+  videoDuration: billingDurationForGlobal,         // 使用原始时长
+  originalVideoDuration: originalVideoDuration,     // 保存原始时长
+  apiProcessedDuration: duration,                   // 保存API时长（参考）
+  // ...
+};
+```
+
+#### 改进效果
+
+**场景：用户上传10秒视频，API返回6秒**
+
+| 项目 | 改进前 | 改进后 | 改进 |
+|------|--------|--------|------|
+| **计费依据** | 6秒（API时长） | 10秒（原始时长） | ✅ 使用原始时长 |
+| **540P计费** | 6 × 3 = 18积分 | 10 × 3 = 30积分 | ✅ 透明准确 |
+| **720P计费** | 6 × 6 = 36积分 | 10 × 6 = 60积分 | ✅ 透明准确 |
+| **数据一致性** | ❌ 不一致 | ✅ 一致 | ✅ 修复 |
+
+#### 核心优势
+
+1. ✅ **计费透明**：用户上传多长时间的视频，就按多长时间计费
+2. ✅ **数据准确**：计费基于用户上传的真实视频时长
+3. ✅ **体验优化**：消除了时长不一致导致的困惑
+4. ✅ **公平性**：所有用户按照相同的标准计费
+
+#### 相关文档
+- **视频风格重绘**详细说明：`视频风格重绘计费逻辑修复说明.md`
+  - 代码位置：`server.js` 第10029-10047行、第10133-10166行
+  - 计费公式：`Math.ceil(originalVideoDuration) × (resolution <= 540 ? 3 : 6)积分`
+  
+- **视频数字人**详细说明：`视频数字人计费逻辑修复说明.md`
+  - 代码位置：`server.js` 第3989-4007行、第4037-4056行
+  - 计费公式：`Math.ceil(originalVideoDuration) × 9积分`
+
+---
+
+### 🔧 重要修复: 视频风格重绘使用记录显示的视频时长与上传视频时长不符（2025-10-18）
+
+**Bug类型**: 数据记录与显示问题  
+**严重程度**: 🟡 中等  
+**修复状态**: ✅ 已完全修复
+
+#### 问题描述
+用户反馈在"积分使用记录"页面中，视频风格重绘功能显示的"处理X秒视频"时长与实际上传的视频时长不符。
+
+**示例**：
+- 用户上传：`37.76秒`的视频
+- 使用记录显示：`处理5秒视频`
+- 实际上传：`9秒`视频
+- 使用记录显示：`处理5秒视频`
+
+#### 问题根源
+
+经过深入分析，发现问题的核心原因是**时长数据的优先级设置错误**：
+
+1. **创建任务时**：
+   - 前端通过 `<video>` 元素的 `metadata` 获取准确的视频时长
+   - 保存为 `videoDuration` 字段（例如：37.76秒）
+
+2. **任务完成时**（问题所在）：
+   - 阿里云API返回 `usage.duration` 是**处理后的视频时长**
+   - 由于AI优化（去除重复帧、无效内容等），这个时长可能与原始视频不同
+   - 旧代码**优先使用API返回的时长**更新使用记录
+   - 导致使用记录显示的时长与用户上传的视频不符
+
+3. **使用记录显示时**：
+   - 代码从数据库读取 `actualDuration`（被错误地更新为API处理后的时长）
+   - 导致显示错误的时长
+
+#### 修复方案
+
+**核心思路**：使用记录应该显示**用户上传的原始视频时长**，而不是阿里云API处理后的时长。
+
+#### 修复内容
+
+##### 1. 修改任务完成时的时长显示逻辑（`server.js` 第9980-10027行）
 
 **修改前**：
+```javascript
+// ❌ 错误：优先使用API返回的准确时长
+const displayDuration = duration || originalVideoDuration || 3;
 ```
-[👤] 您好！欢迎使用萤火AI智能助手！
-     有什么可以帮助您的吗？
-     15:08
+
+**修改后**：
+```javascript
+// ✅ 正确：优先使用原始上传视频时长
+const displayDuration = originalVideoDuration || duration || 3;
+```
+
+**关键变更**：
+- ✅ 优先使用 `originalVideoDuration`（前端传递的原始视频时长）
+- ✅ 保存 `task.originalVideoDuration`（原始时长，用于显示）
+- ✅ 保存 `task.apiProcessedDuration`（API处理后时长，用于计费）
+- ✅ 更新 `task.actualDuration = originalVideoDuration || duration`（显示优先）
+- ✅ 更新 `operationText` 使用原始时长：`处理${Math.ceil(displayDuration)}秒视频`
+
+##### 2. 修改使用记录读取逻辑（`routes/credits.js` 第1063-1093行）
+
+**修改前**：
+```javascript
+// ❌ 错误：actualDuration优先级高，可能是API处理后的时长
+let duration = task.actualDuration || task.duration || task.videoDuration || ...;
+```
+
+**修改后**：
+```javascript
+// ✅ 正确：originalVideoDuration优先级最高
+let duration = task.originalVideoDuration || task.videoDuration || task.actualDuration || ...;
+```
+
+**关键变更**：
+- ✅ 最优先使用 `task.originalVideoDuration`（原始上传视频时长）
+- ✅ 其次使用 `task.videoDuration`（创建时保存的时长）
+- ✅ 最后才使用 `task.actualDuration`（API处理后的时长）
+- ✅ 添加日志输出时长字段优先级，便于调试
+
+#### 数据流程对比
+
+**修复前**：
+```
+用户上传37.76秒视频
+    ↓
+前端获取时长：37.76秒
+    ↓
+创建任务：保存 videoDuration=37.76
+    ↓
+阿里云处理：返回 duration=5秒（处理后）
+    ↓
+❌ 更新记录：actualDuration=5秒（错误！）
+    ↓
+使用记录显示：处理5秒视频（错误！）
+```
+
+**修复后**：
+```
+用户上传37.76秒视频
+    ↓
+前端获取时长：37.76秒
+    ↓
+创建任务：保存 videoDuration=37.76
+    ↓
+阿里云处理：返回 duration=5秒（处理后）
+    ↓
+✅ 更新记录：
+   - originalVideoDuration=37.76（原始，用于显示）
+   - apiProcessedDuration=5（处理后，用于计费）
+   - actualDuration=37.76（显示优先）
+    ↓
+使用记录显示：处理38秒视频（正确！✅）
+```
+
+#### 修改文件
+
+- ✅ `server.js` (第9980-10027行)
+  - 修改时长优先级：`originalVideoDuration > duration`
+  - 保存原始时长和API处理时长到不同字段
+  - 更新 `operationText` 使用原始时长
+
+- ✅ `routes/credits.js` (第1063-1093行)
+  - 修改读取优先级：`originalVideoDuration > videoDuration > actualDuration`
+  - 添加日志输出便于调试
+
+#### 重要说明
+
+1. **原始时长 vs 处理后时长**：
+   - **原始时长**：用户上传视频的真实时长（来自video元素metadata）
+   - **处理后时长**：阿里云AI优化后的视频时长（可能去除重复帧）
+   - **显示原则**：使用记录应显示**原始时长**，让用户清楚知道处理了多长的视频
+   - **计费原则**：积分计算使用**API返回的时长**（见第10027-10030行）
+
+2. **为什么API时长会不同**：
+   - 阿里云视频风格重绘API会对视频进行AI优化
+   - 可能去除重复帧、无效内容、优化帧率等
+   - 导致生成视频时长与原始视频不完全一致
+   - 这是正常的AI处理行为
+
+3. **字段命名规范**：
+   - `originalVideoDuration`：原始上传视频时长（用于显示）
+   - `apiProcessedDuration`：API处理后时长（用于参考）
+   - `actualDuration`：实际显示时长（优先使用原始时长）
+   - `videoDuration`：创建时保存的时长（兼容旧数据）
+
+#### 测试验证
+
+**测试场景**：
+1. 上传一个37.76秒的视频进行风格重绘
+2. 等待任务完成
+3. 查看"积分使用记录"页面
+
+**预期结果**：
+- ✅ 操作列显示：`处理38秒视频`（向上取整）
+- ✅ 时长与用户上传的视频时长一致
+- ✅ 不再显示API处理后的时长
+
+#### 用户价值
+
+- ✅ **准确性**：使用记录显示的时长与用户上传的视频一致
+- ✅ **透明度**：用户清楚知道处理了多长的视频
+- ✅ **可信度**：增强用户对系统计费准确性的信任
+- ✅ **兼容性**：保留API处理时长数据，用于计费和调试
+
+---
+
+### ✨ 优化: 移除视频风格重绘页面的蓝色提示框（2025-10-18）
+
+**优化类型**: 用户界面简化  
+**重要程度**: 🟢 低  
+**完成状态**: ✅ 已完成
+
+#### 优化内容
+根据用户反馈，**移除了视频风格重绘页面上传视频后显示的蓝色提示框**，简化用户界面，减少信息干扰。
+
+#### 移除的内容
+删除了以下功能：
+- 🗑️ **蓝色提示框**：上传视频后自动显示的视频时长处理提示
+- 🗑️ **`showDurationNotice` 函数**：创建和显示提示框的函数
+- 🗑️ **调用代码**：在视频上传后调用提示框的代码
+
+#### 提示框原本的内容
+提示框会根据视频时长显示不同的提示信息：
+- **长视频（>8秒）**：提示会进行内容优化，去除重复帧
+- **中等视频（5-8秒）**：提示可能略有差异
+- **短视频（<5秒）**：提示API计费时长说明
+
+#### 修改文件
+- ✅ `public/video-style-repaint.html` (第228-283行, 第251行)
+  - 删除 `showDurationNotice` 函数定义（56行代码）
+  - 删除调用 `showDurationNotice(duration)` 的代码（3行代码）
+
+#### 修改效果
+**修改前**：
+```
+上传视频 → 显示蓝色提示框（内容：视频时长、处理提示、优化策略等） → 继续操作
 ```
 
 **修改后**：
 ```
-您好！欢迎使用萤火AI智能助手！
-有什么可以帮助您的吗？
-15:08
+上传视频 → 直接继续操作 ✨
 ```
 
-#### 📝 修改文件
-- `components/components.js` - 简化addMessage函数，移除头像相关代码
-- `components/customer-service.html` - 删除头像CSS样式和HTML结构
+#### 用户价值
+- ✅ **界面简洁**：减少不必要的信息提示，让页面更干净
+- ✅ **操作流畅**：用户无需阅读提示，直接进行下一步操作
+- ✅ **降低干扰**：移除可能造成用户困惑的技术性提示
+- ✅ **提升体验**：更符合简洁直观的设计原则
 
-#### 🎯 界面效果
-- ✅ **更简洁**: 消息界面更加简洁清爽
-- ✅ **统一样式**: 管理员和用户消息使用统一的样式结构
-- ✅ **减少复杂度**: 移除了复杂的头像布局和动画
-- ✅ **快速加载**: 减少了CSS和HTML的复杂度，提升加载速度
+---
 
-现在客服系统拥有更加简洁的消息界面！🎨
+### 🔧 重要修复: 多图转视频任务完成后实时显示转场风格（2025-10-18）
 
-### 🖼️ Favicon头像功能
+**Bug类型**: 前端实时更新问题  
+**严重程度**: 🟡 中等  
+**修复状态**: ✅ 已完全修复
 
-**更新日期**: 2025年1月27日
+#### 问题描述
+用户反馈：**多图转视频选择"随机"转场风格后，任务完成时列表显示的是"随机"，必须刷新浏览器才能看到实际选定的转场风格**
 
-#### 📝 用户需求
-用户希望为客服消息添加头像，使用 `public/images/favicon.png` 作为头像图片，并将头像放在时间的前面。
+**用户期望**：
+- 任务完成后，无需刷新浏览器，任务列表就能立即显示实际使用的转场风格
+- 提供即时的用户反馈，提升用户体验
 
-#### 🎨 设计实现
+**问题根源**：
+1. **后端返回数据不完整**：任务状态查询API返回的数据中缺少 `transition`、`style`、`sceneType` 等字段
+2. **前端创建任务对象时缺少字段**：任务成功后创建的 `newTask` 对象中没有包含这些参数
+3. **数据未及时保存**：任务创建时 `extraData` 中没有保存这些参数
 
-**1. 头像位置布局**
-```html
-<!-- 管理员消息结构 -->
-<div class="cs-message admin">
-    <div class="cs-message-content">消息内容</div>
-    <div class="cs-message-footer">
-        <img src="/public/images/favicon.png" class="cs-message-avatar" alt="客服头像">
-        <div class="cs-message-time">15:17</div>
-    </div>
-</div>
-```
+#### 修复方案
 
-**2. 头像实现方式**
-```html
-<img src="/public/images/favicon.png" class="cs-message-avatar" alt="客服头像">
-```
+##### 1. 后端修复：保存完整的任务参数（server.js）
 
-**3. 布局特点**
-- **头像来源**: 直接使用 `favicon.png` 原始图片
-- **位置安排**: 头像在时间前面，符合阅读习惯
-- **简洁设计**: 无额外CSS修饰，保持原始效果
-
-#### 📊 消息样式对比
-
-**客服消息（带头像）**：
-```
-您好！欢迎使用萤火AI智能助手！
-🖼️ 15:17
-```
-
-**用户消息（无头像）**：
-```
-                    你好，有什么问题吗
-                            15:17
-```
-
-#### 🎯 功能特点
-- ✅ **品牌识别**: 使用favicon.png作为客服头像，增强品牌认知
-- ✅ **视觉区分**: 客服消息带头像，用户消息无头像，清晰区分
-- ✅ **友好体验**: 头像让对话更有人情味和亲和力
-- ✅ **简洁设计**: 直接使用favicon.png原始尺寸，无额外修饰
-- ✅ **一致性**: 所有客服消息统一使用相同头像
-
-#### 📝 修改文件
-- `components/components.js` - 为管理员消息添加头像和footer布局
-- `components/customer-service.html` - 添加头像CSS样式和HTML结构
-- `test-favicon-avatar.html` - 创建头像效果展示页面
-
-现在客服消息拥有了友好的favicon头像，提升了对话的亲和力！🖼️
-
-### 🔄 聊天窗口状态持久化
-
-**更新日期**: 2025年1月27日
-
-#### 📝 用户需求
-用户希望刷新页面时，客服聊天窗口保持之前的打开/关闭状态，不要重置。
-
-#### 🎨 技术实现
-
-**1. 状态保存机制**
+**修改1：任务创建时保存完整参数**（第790-798行）
 ```javascript
-// 打开窗口时保存状态
-localStorage.setItem('cs_chat_window_open', 'true');
-
-// 关闭窗口时保存状态
-localStorage.setItem('cs_chat_window_open', 'false');
-```
-
-**2. 状态恢复机制**
-```javascript
-function restoreChatWindowState() {
-    var savedState = localStorage.getItem('cs_chat_window_open');
-    if (savedState === 'true') {
-        setTimeout(function() {
-            window.openChatWindow();
-        }, 200);
-    }
+extraData: {
+    description: '多图转视频',
+    imageCount: req.files.length,
+    duration: duration || 5,
+    // 🎯 保存视频参数，确保前端可以显示具体的转场风格、视频风格等信息
+    transition: mappedTransition,  // 保存实际使用的转场风格
+    style: style,
+    sceneType: scene
 }
 ```
 
-#### 🎯 功能特点
-- ✅ **状态记忆**: 使用localStorage保存聊天窗口状态
-- ✅ **自动恢复**: 页面刷新后自动恢复之前的窗口状态
-- ✅ **延迟加载**: 确保DOM元素加载完成后再恢复状态
-- ✅ **用户友好**: 避免用户每次刷新都要重新打开聊天窗口
-
-#### 📝 修改文件
-- `components/customer-service.html` - 添加状态保存和恢复逻辑
-
-#### 💡 使用场景
-- 用户正在与客服聊天时刷新页面
-- 用户在不同页面间跳转但希望保持聊天窗口状态
-- 提升用户体验，减少重复操作
-
-现在用户刷新页面时，聊天窗口会保持之前的状态！🔄
-
-## 🎉 客服系统界面优化
-
-**更新日期**: 2025年1月27日
-
-### ✨ 客服消息头像功能上线
-
-为了提升用户体验和界面美观度，我们为客服系统的管理员消息添加了头像功能。
-
-#### 🎨 界面改进特性
-
-**1. 客服消息头像显示**
-- 所有管理员/客服消息现在都带有圆形头像
-- 头像采用紫色渐变背景（#667eea → #764ba2）
-- 使用客服图标（ri-customer-service-2-fill）
-- 头像尺寸：32x32像素，与消息内容完美对齐
-
-**2. 消息布局优化**
-```html
-<!-- 新的消息结构 -->
-<div class="cs-message admin">
-    <div class="cs-message-header">
-        <div class="cs-message-avatar">
-            <i class="ri-customer-service-2-fill"></i>
-        </div>
-        <div class="cs-message-body">
-            <div class="cs-message-content">消息内容</div>
-            <div class="cs-message-time">时间</div>
-        </div>
-    </div>
-</div>
+**修改2：任务状态查询时返回完整参数**（第2505-2508行）
+```javascript
+const formattedTask = {
+    // ... 其他字段
+    // 🎯 添加视频参数字段，确保前端可以显示具体的转场风格、视频风格等信息
+    transition: foundTask.extraData?.transition || null,
+    style: foundTask.extraData?.style || null,
+    sceneType: foundTask.extraData?.sceneType || null
+};
 ```
 
-**3. 样式特点**
-- 头像在左边，消息内容在头像右边（右上角位置）
-- 头像与消息内容第一行完美对齐，不随消息长度改变
-- 用户消息保持原有样式（右对齐，无头像）
-- flex布局确保长文本消息时头像位置保持稳定
-- 响应式设计，适配各种屏幕尺寸
+##### 2. 前端修复：任务完成时使用完整数据（multi-image-to-video.js）
 
-**4. 技术实现**
+**修改3：创建新任务对象时包含所有参数**（第702-705行）
 ```javascript
-// 在addMessage函数中为管理员消息添加头像结构
-if (type === 'admin') {
-    messageDiv.innerHTML = 
-        '<div class="cs-message-header">' +
-            '<div class="cs-message-avatar">' +
-                '<i class="ri-customer-service-2-fill"></i>' +
-            '</div>' +
-            '<div class="cs-message-body">' +
-                '<div class="cs-message-content">' + escapeHtml(content) + '</div>' +
-                '<div class="cs-message-time">' + timeStr + '</div>' +
-            '</div>' +
-        '</div>';
+const newTask = {
+    // ... 其他字段
+    // 🎯 添加视频参数字段，确保任务列表可以立即显示具体的转场风格、视频风格等信息
+    transition: data.task?.transition || null,
+    style: data.task?.style || null,
+    sceneType: data.task?.sceneType || null
+};
+```
+
+#### 修改文件
+- ✅ `server.js` (第790-798行, 第2505-2508行)
+  - 任务创建时在 `extraData` 中保存 `transition`、`style`、`sceneType`
+  - 任务状态查询时返回这些字段
+
+- ✅ `public/js/multi-image-to-video.js` (第702-705行)
+  - 任务成功后从后端响应中获取这些字段
+  - 创建 `newTask` 对象时包含这些参数
+
+#### 修复效果
+**修复前**：
+```
+1. 用户选择"随机"转场 → 提交任务
+2. 任务完成 → 任务列表显示"转场: 随机" ❌
+3. 刷新浏览器 → 任务列表显示"转场: 水墨" ✅
+```
+
+**修复后**：
+```
+1. 用户选择"随机"转场 → 提交任务
+2. 任务完成 → 任务列表立即显示"转场: 水墨" ✅
+3. 无需刷新浏览器 ✨
+```
+
+#### 技术细节
+**数据流程**：
+1. 用户选择"随机"转场（前端传空字符串）
+2. 后端随机选择具体转场（如 'ink' = 水墨）
+3. 保存任务时将 `mappedTransition` 存入 `extraData`
+4. 调用阿里云API生成视频
+5. 前端轮询任务状态
+6. 任务完成后，后端返回包含 `transition: 'ink'` 的数据
+7. 前端使用该数据创建 `newTask` 对象
+8. 渲染任务列表，显示"水墨"
+
+#### 用户价值
+- ✅ **实时反馈**：任务完成后立即看到实际使用的参数，无需刷新
+- ✅ **用户体验**：流畅的交互体验，不中断用户操作流程
+- ✅ **信息完整**：任务列表显示所有重要参数（转场、风格、场景等）
+- ✅ **降低困惑**：用户不会疑惑为什么要刷新才能看到正确信息
+
+---
+
+### 🔧 重要修复: 多图转视频"随机"转场风格显示问题（2025-10-18）
+
+**Bug类型**: 数据显示不准确  
+**严重程度**: 🟡 中等  
+**修复状态**: ✅ 已完全修复
+
+#### 问题描述
+用户反馈：**当选择"随机"转场风格时，任务列表显示的是"随机"，而不是系统实际选定的具体转场风格**
+
+**用户期望**：
+- 选择"随机"转场时，系统应该在后端随机选择一个具体的转场风格（如"水墨"、"缩放"等）
+- 任务列表应该显示**实际使用的转场风格**，而不是"随机"这两个字
+- 这样用户可以知道视频实际使用了哪种转场效果
+
+**问题根源**：
+后端在处理"随机"选项时，虽然正确地随机选择了具体的转场风格，但保存任务时使用的是**用户选择的原始值**（空字符串），而不是**系统实际使用的值**（如 'ink'、'zoom' 等）
+
+#### 根本原因
+**任务保存时使用了错误的字段**（server.js 第967行）：
+```javascript
+// ❌ 错误：保存了用户选择的原始值
+const taskForOSS = {
+    // ... 其他字段
+    transition: transition,  // 这里保存的是空字符串或用户选择值
+    // ...
+};
+```
+
+**正确的转场风格处理逻辑**（server.js 第695-706行）：
+```javascript
+// 转场效果映射处理
+let mappedTransition;
+if (!transition || transition === '') {
+    // 如果没有设置转场风格，则随机选择
+    const randomIndex = Math.floor(Math.random() * availableTransitionStyles.length);
+    mappedTransition = availableTransitionStyles[randomIndex];  // ✅ 这才是实际使用的转场风格
+    console.log(`未设置转场风格，随机选择: "${mappedTransition}"`);
+} else {
+    mappedTransition = transitionStyleMap[transition] || transition || 'normal';
 }
 ```
 
-#### 📝 修改文件
-- `components/components.js` - 更新addMessage函数，为管理员消息添加头像结构
-- `components/customer-service.html` - 添加头像相关CSS样式，更新欢迎消息HTML结构
-- `test-kefu-avatar.html` - 创建头像功能测试页面
-
-#### 🎯 视觉效果
-
-**客服消息（带头像）**
-```
-[👤] 您好！欢迎使用萤火AI智能助手！
-     有什么可以帮助您的吗？
-     14:30
-```
-
-**用户消息（无头像）**
-```
-                    这是我的问题 [用户]
-                            14:31
-```
-
-**布局特点**
-- 客服头像始终在左边，消息内容在右边
-- 头像与消息内容顶部对齐，视觉效果更专业
-- 长文本消息时头像位置保持稳定不变
-
-现在客服系统的界面更加专业和美观，用户可以清楚地区分客服回复和自己的消息！🎨
-
-## 🎉 历史更新 - 客服系统404错误修复
-
-**更新日期**: 2025年1月27日
-
-### ✨ 彻底解决客服系统发送消息404错误
-
-针对用户反馈的客服系统发送消息时出现404错误的问题，我们进行了深度分析和彻底修复。
-
-#### 🔧 问题根源分析
-经过详细的服务器日志分析发现：
-
-1. **用户ID格式冲突**: 客服组件生成临时用户ID格式为 `user_1750644891453_x2oil8615`
-2. **数据库查询失败**: API从临时ID中提取数字部分 `1750644891453`，但数据库中不存在此用户ID
-3. **登录状态获取失败**: localStorage中的用户信息获取逻辑存在问题
-4. **错误处理不完善**: 前端缺乏详细的错误提示和用户引导
-
-#### 🚀 全面解决方案
-
-**1. 智能用户ID获取机制**
+#### 修复方案
+**修改任务保存逻辑，使用实际的转场风格**（server.js 第967行）：
 ```javascript
-// 优化前：总是生成临时ID
-window.csCurrentUserId = 'user_' + Date.now() + '_' + randomString;
-
-// 优化后：优先使用登录用户的真实ID
-function getUserId() {
-    // 1. 优先从localStorage获取登录用户真实ID
-    try {
-        var userInfo = localStorage.getItem('user');
-        if (userInfo) {
-            var user = JSON.parse(userInfo);
-            if (user && user.id) {
-                return parseInt(user.id); // 确保返回数字类型
-            }
-        }
-    } catch (error) {
-        console.log('解析用户信息失败: ' + error.message);
-    }
-    
-    // 2. 如果没有登录用户，生成访客ID
-    return 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
+// ✅ 修复：保存实际使用的转场风格
+const taskForOSS = {
+    // ... 其他字段
+    transition: mappedTransition,  // 🔧 修复：保存实际使用的转场风格，而不是用户选择的原始值
+    // ...
+};
 ```
 
-**2. 访客用户友好处理**
-```javascript
-// 检查访客用户，提供友好提示
-if (userId.toString().startsWith('guest_')) {
-    addMessage('抱歉，您需要先登录才能使用客服功能。请点击右上角登录按钮进行登录。', 'admin');
-    return;
-}
+#### 修改文件
+- ✅ `server.js` (第967行)
+  - 修改任务保存逻辑，使用 `mappedTransition` 而不是 `transition`
+  - 确保保存到OSS的任务数据包含实际使用的转场风格
 
-// 确保userId是数字类型
-if (isNaN(userId)) {
-    addMessage('抱歉，您的登录信息有误，请重新登录后再试。', 'admin');
-    return;
-}
+- ✅ `public/js/multi-image-to-video.js` (第1035-1067行)
+  - 前端已有完整的转场风格映射表和显示逻辑
+  - 支持15种转场风格的中文显示
+
+#### 修复效果
+**修复前**：
+```
+多图转视频 (2张图片)
+多图转视频  |  31秒  |  转场: 随机  |  2025-10-17 17:53
+                        ↑ 
+                显示"随机"，用户不知道实际用了什么转场
 ```
 
-**3. 增强错误处理机制**
-```javascript
-// 详细的HTTP错误处理
-.then(function(response) {
-    if (!response.ok) {
-        return response.json().then(function(errorData) {
-            throw new Error('HTTP ' + response.status + ': ' + (errorData.error || errorData.message || response.statusText));
-        });
-    }
-    return response.json();
-})
-
-// 分类错误处理
-.catch(function(error) {
-    if (error.message.includes('404')) {
-        addMessage('客服服务暂时不可用，请稍后重试。', 'admin');
-    } else if (error.message.includes('用户不存在')) {
-        addMessage('抱歉，您的账户信息有误，请重新登录后再试。', 'admin');
-    } else {
-        addMessage('网络连接异常，请检查网络后重试。', 'admin');
-    }
-});
+**修复后**：
+```
+多图转视频 (2张图片)
+多图转视频  |  31秒  |  转场: 水墨  |  2025-10-18 10:25
+                        ↑
+                显示实际使用的转场风格（如"水墨"、"缩放"等）
 ```
 
-**4. 异步用户信息获取**
-```javascript
-// 异步获取用户信息，避免阻塞
-function fetchUserInfoAsync() {
-    var token = localStorage.getItem('token');
-    if (!token) return;
-    
-    fetch('/api/auth/verify', {
-        headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.user && data.user.id) {
-            window.csCurrentUserId = parseInt(data.user.id);
-            localStorage.setItem('user', JSON.stringify(data.user));
-        }
-    });
-}
-```
+#### 用户价值
+- ✅ **透明度提升**：用户可以清楚知道视频实际使用的转场风格
+- ✅ **便于对比**：可以对比不同转场风格的视频效果
+- ✅ **可追溯性**：历史任务记录了实际使用的参数，便于复现
+- ✅ **用户体验**：符合用户直觉，"随机"应该显示最终选定的结果
 
-#### 📝 修改文件
-- `components/customer-service.html` - 优化用户ID获取逻辑，增强错误处理
-- `kefu/客服系统问题解决指南.md` - 更新问题解决文档
+---
 
-#### 🎯 修复效果
+### ✨ 功能优化: 多图转视频任务列表显示转场风格（2025-10-17）
 
-**✅ 登录用户**
-- 自动获取真实用户ID（如：16）
-- 正常发送和接收消息
-- 加载历史对话记录
-- 无缝的客服体验
+**优化类型**: 用户体验改进  
+**重要程度**: 🟢 低  
+**完成状态**: ✅ 已完成
 
-**✅ 未登录用户（访客）**
-- 友好提示需要先登录
-- 不会发送无效的API请求
-- 引导用户进行登录操作
-- 避免404错误的发生
+#### 优化内容
+在**多图转视频功能**的任务列表中，新增显示**镜头转场风格**信息，方便用户查看每个任务使用的转场效果。
 
-**✅ 错误处理**
-- 详细的控制台调试日志
-- 用户友好的错误提示消息
-- 开发者能快速定位问题
-- 网络异常时的优雅降级
+#### 具体实现
+1. **任务列表显示**：
+   - 在任务信息中添加"转场"标签
+   - 使用**蓝色高亮**显示转场风格名称
+   - 支持15种转场风格的中文显示
 
-#### 🔍 技术亮点
-- **多层次用户ID获取**: localStorage → API验证 → 访客ID生成
-- **类型安全**: 确保用户ID为数字类型，避免类型错误
-- **非阻塞认证**: 异步获取用户信息，不影响页面加载
-- **智能错误分类**: 根据错误类型提供相应的用户提示
-- **完整的调试支持**: 详细的日志记录，便于问题排查
-
-#### 🛠️ 故障排除工具
-```javascript
-// 浏览器控制台检查命令
-console.log('用户信息:', localStorage.getItem('user'));
-console.log('Token:', localStorage.getItem('token'));
-console.log('客服用户ID:', window.csCurrentUserId);
-```
-
-```bash
-# API测试命令
-curl -X POST http://localhost:3000/api/kefu/messages \
-  -H "Content-Type: application/json" \
-  -d '{"userId": 16, "message": "测试消息", "type": "user"}'
-```
-
-现在客服系统已完全修复，登录用户可以正常使用客服功能，访客用户会收到友好的登录提示，不再出现404错误！🎉
-
-## 🎉 历史更新 - 简化版导航栏认证优化
-
-**更新日期**: 2025年1月27日
-
-### ✨ 彻底解决简化版导航栏认证跳转问题
-
-针对用户反馈的"登录成功后点击某些功能页面仍会跳转到登录界面"的问题，我们进行了深度分析和全面优化。
-
-#### 🔧 问题根源分析
-经过深入调查发现，问题出现在简化版导航栏的功能页面上：
-
-1. **自动认证检查过于敏感**: `auth-check.js`在页面加载时会自动执行认证检查，网络延迟或localStorage读取问题会导致误跳转
-2. **简化版导航栏缺少用户状态**: 用户无法直观看到登录状态，增加了困惑
-3. **认证检查时机不当**: 页面加载后立即进行认证检查，没有给足够的缓冲时间
-
-#### 🚀 全面解决方案
-
-**1. 优化自动认证检查逻辑**
-- 增加更保守的延迟策略：刚登录成功延迟5秒，从登录页跳转延迟3秒，其他情况延迟2秒
-- 实现带回退机制的认证检查：失败时不强制跳转，而是保留本地状态让用户继续使用
-- 增强容错性：网络错误或超时时不阻止用户使用页面
-
-**2. 简化版导航栏增加用户状态显示**
-- 添加用户名和积分显示
-- 实时显示登录状态（已登录/未登录）
-- 监听localStorage变化，自动更新用户状态
-
-**3. 智能认证检查机制**
-```javascript
-// 带回退机制的认证检查
-async function checkAuthWithFallback() {
-    try {
-        // 本地状态检查 + 服务器验证
-        const isValid = await checkAuth(false); // 不自动重定向
-        
-        if (!isValid) {
-            console.log('服务器认证失败，但保留本地状态，让用户在使用功能时再次验证');
-            // 可选：显示温和的提示而不是强制跳转
-        }
-        
-        return isValid;
-    } catch (error) {
-        console.error('认证检查出错，但不影响页面使用:', error);
-        return true; // 出错时不阻止用户使用页面
-    }
-}
-```
-
-#### 📝 修改文件
-- `public/js/auth-check.js` - 优化自动认证检查逻辑，增加回退机制
-- `components/navbar-simple.html` - 添加用户状态显示和实时更新
-
-#### 🎯 优化效果
-- **用户体验大幅提升**: 登录后不再出现误跳转到登录页面的情况
-- **状态可视化**: 简化版导航栏显示用户登录状态，用户一目了然
-- **智能容错**: 网络问题时不影响正常使用，只在真正需要时才提示重新登录
-- **无缝体验**: 认证检查在后台进行，不干扰用户正常操作
-
-#### 🔍 技术亮点
-- **延迟策略优化**: 根据页面来源智能调整认证检查延迟时间
-- **非阻塞认证**: 认证失败时不立即跳转，保持用户体验流畅
-- **状态同步**: localStorage变化时实时更新导航栏用户状态
-- **容错机制**: 多层次的错误处理，确保系统稳定性
-
-现在用户登录成功后，可以正常访问所有功能页面，不会再出现误跳转的问题！
-
-### 🔄 亚马逊助手页面导航栏组件化更新
-
-**更新日期**: 2025年1月27日
-
-完成了剩余亚马逊助手功能页面的导航栏组件化改造，将以下页面的导航栏更换为统一的简化版组件：
-
-#### 📝 更新页面
-- `public/fba-claim-email.html` - FBA索赔邮件
-- `public/product-comparison.html` - 产品对比  
-- `public/product-improvement-analysis.html` - 选品的改款分析和建议
-
-#### 🔧 改造内容
-1. **移除内联导航栏代码**：删除各页面中的自定义简化导航栏HTML代码
-2. **使用组件化导航栏**：引入统一的 `/components/navbar-simple.html` 组件
-3. **动态加载脚本**：添加组件加载和初始化逻辑
-4. **保持功能完整性**：确保用户状态显示和返回首页功能正常
-
-#### 🎯 统一化效果
-- **维护便利性**：所有亚马逊助手页面现在使用统一的导航栏组件，修改一处即可全局更新
-- **用户体验一致性**：所有功能页面的导航栏样式和功能完全一致
-- **状态同步**：用户登录状态在所有页面实时同步显示
-- **代码简洁性**：减少重复代码，提高代码可维护性
-
-现在所有亚马逊助手功能页面都已完成组件化改造，具备统一的用户界面和完善的认证体验！
-
-## 🎉 最新更新 - 在线客服系统
-
-**更新日期**: 2025年1月27日
-
-### ✨ 全新在线客服功能上线
-
-为了更好地为用户提供支持服务，我们开发了一套完整的在线客服系统，包含用户端和管理员端功能。
-
-### 🔐 客服管理后台登录系统（新增）
-
-**更新日期**: 2025年1月27日
-
-为了确保客服回复消息能够正确记录和管理，我们为客服管理后台添加了完整的登录认证系统：
-
-#### 🚀 新增功能
-- **专用登录页面**: `/adminkefu-login.html` - 专为客服人员设计的登录界面
-- **权限验证**: 只有管理员（isAdmin）或内部用户（isInternal）才能访问客服后台
-- **客服身份记录**: 客服回复的消息现在会记录发送者的adminId
-- **会话管理**: 支持登录状态检查和自动跳转
-- **安全退出**: 提供安全的退出登录功能
-
-#### 🔧 界面改进
-- **客服信息显示**: 管理后台头部显示当前登录客服的姓名、角色和头像
-- **退出登录按钮**: 右上角提供便捷的退出登录按钮
-- **登录状态检查**: 页面加载时自动检查登录状态，未登录自动跳转
-
-#### 💾 数据完整性
-- **消息归属**: 现在每条客服回复都会记录是哪个客服发送的
-- **历史追踪**: 可以追踪不同客服的服务记录
-- **权限控制**: 确保只有授权人员能够访问客服功能
-
-#### 🔗 使用方法
-1. **客服登录**: 访问 `/adminkefu-login.html` 使用管理员账户登录
-2. **权限检查**: 系统自动验证用户是否具有客服权限
-3. **正常使用**: 登录成功后可正常使用所有客服管理功能
-4. **安全退出**: 点击右上角退出按钮安全退出登录
-
-现在客服系统具备了完整的身份认证和消息归属功能，确保每条客服回复都能准确记录！
-
-#### 🔧 系统架构
-- **后端API**: `kefu/kefu.js` - 提供完整的RESTful API接口
-- **客服组件**: `components/customer-service.html` - 可复用的前端组件
-- **管理后台**: `public/adminkefu.html` - 专业的客服管理界面
-- **数据存储**: JSON文件存储，支持扩展到数据库
-
-#### 🚀 功能特点
-
-**用户端功能**：
-- 🎯 **浮动客服按钮**: 固定在页面右下角，一键打开聊天窗口
-- 💬 **实时聊天**: 支持文字消息发送和接收，流畅的对话体验
-- 🔔 **未读提醒**: 红色徽章显示未读消息数量，不错过任何回复
-- 📜 **历史记录**: 自动加载用户的历史对话记录，连续性强
-- 📱 **响应式设计**: 完美适配桌面端和移动端，随时随地使用
-- 👤 **智能识别**: 自动识别登录用户，访客使用临时ID
-
-**管理员功能**：
-- 📊 **消息管理**: 查看所有用户消息，按用户分组显示，一目了然
-- ⚡ **实时回复**: 直接在后台回复用户消息，高效处理用户问题
-- ✅ **状态管理**: 标记消息为已读/未读状态，跟踪处理进度
-- 📈 **统计信息**: 显示总消息数、未读消息、用户数等关键指标
-- 🔍 **消息过滤**: 可按已读/未读状态过滤消息，快速定位
-- 🔄 **自动刷新**: 每30秒自动刷新消息列表，实时掌握最新动态
-
-#### 🎯 使用方法
-
-**用户使用**：
-1. 在任意页面右下角看到紫色客服按钮
-2. 点击按钮打开聊天窗口
-3. 输入问题并发送消息
-4. 等待客服回复，支持历史对话查看
-
-**管理员使用**：
-1. 访问 `/adminkefu.html` 进入管理后台
-2. 查看所有用户消息，按用户分组显示
-3. 在对话框下方直接回复用户消息
-4. 使用过滤器管理已读/未读消息
-5. 查看实时统计数据
-
-#### 📝 技术实现
-
-**API接口**：
-- `GET /api/kefu/messages` - 获取所有消息
-- `GET /api/kefu/messages/:userId` - 获取用户消息
-- `POST /api/kefu/send` - 发送消息
-- `PUT /api/kefu/read/:messageId` - 标记已读
-- `GET /api/kefu/unread-count` - 获取未读数量
-
-**组件集成**：
-```javascript
-// 自动加载客服组件到所有页面
-window.loadCustomerService();
-```
-
-**数据结构**：
-```json
-{
-  "id": 1,
-  "userId": "用户ID",
-  "userName": "用户名", 
-  "message": "消息内容",
-  "isAdmin": false,
-  "timestamp": "2025-01-27T10:00:00.000Z",
-  "status": "unread"
-}
-```
-
-#### 🔮 扩展规划
-- **WebSocket集成**: 实现真正的实时通信
-- **数据库存储**: 支持MySQL/MongoDB等数据库
-- **消息推送**: 邮件/短信通知功能
-- **文件传输**: 支持图片和文件发送
-- **智能客服**: 集成AI自动回复功能
-
-#### 📁 文件结构
-```
-kefu/
-├── kefu.js              # 后端路由和API
-├── messages.json        # 消息存储（自动生成）
-└── README.md           # 详细使用说明
-
-components/
-├── customer-service.html # 客服组件
-└── components.js        # 组件加载器
-
-public/
-└── adminkefu.html       # 管理员后台
-```
-
-现在用户可以通过客服系统获得即时支持，管理员可以高效处理用户问题，大大提升了平台的服务质量！
-
-## 🎉 历史更新 - 登录状态检查优化
-
-**更新日期**: 2025年1月26日
-
-### ✨ 解决登录后误跳转问题
-
-完成了登录状态检查逻辑的全面优化，彻底解决了"用户登录成功后点击功能仍然跳转到登录界面"的问题。
-
-#### 🔧 核心问题分析
-- **localStorage读取延迟**: 登录成功后localStorage可能还未完全写入
-- **网络验证超时**: 原5秒超时时间过短，网络慢时容易验证失败
-- **并发验证冲突**: 多个认证检查同时进行导致状态混乱
-- **缺少重试机制**: 网络波动时没有重试，直接判定为未登录
-- **双重认证冲突**: 部分页面既有自己的认证检查又引入了auth-check.js，造成冲突
-
-#### 🚀 优化方案
-1. **防抖和防并发机制**
-   - 增加防抖时间到3秒，避免重复验证
-   - 添加并发锁，防止多个验证同时进行
-   - 快速重复点击时智能忽略
-
-2. **增强本地验证**
-   - 添加localStorage写入延迟检查
-   - 验证用户信息格式完整性
-   - 优先信任本地状态，减少不必要的服务器请求
-
-3. **改进服务器验证**
-   - 超时时间从5秒增加到8秒
-   - 添加最多2次重试机制
-   - 网络失败时优先信任本地token
-
-4. **智能延迟验证**
-   - 刚登录成功延迟3秒验证，确保状态稳定
-   - 从登录页跳转延迟2秒验证
-   - 其他情况延迟1秒验证，给页面加载时间
-
-#### 📝 修改文件
-- `index.html` - 首页认证检查逻辑优化
-- `public/js/auth-check.js` - 统一认证检查函数优化
-- `public/image-colorization.html` - 移除重复认证检查，修复双重认证冲突
-- `public/virtual-model-shoes.html` - 移除重复认证检查
-- `public/video-subtitle-removal.html` - 移除重复认证检查
-- `public/local-redraw.html` - 移除重复认证检查，修复局部重绘页面跳转问题
-- `public/amazon-video-script.html` - 移除重复认证检查，修复亚马逊视频脚本页面跳转问题
-- `public/credits-usage.html` - 移除重复认证检查，修复积分使用页面跳转问题  
-- `public/diantu.html` - 移除重复认证检查，修复垫图页面跳转问题
-
-#### 🎯 效果提升
-- **稳定性提升90%**: 大幅减少登录后误跳转情况
-- **网络容错性**: 网络不稳定时不会误判为未登录
-- **用户体验**: 登录成功后可以立即正常使用功能
-- **性能优化**: 减少不必要的重复验证请求
-
-#### 🔍 技术细节
-```javascript
-// 防抖和防并发
-if (checkAuthAndRedirect.isChecking) {
-    return; // 避免重复验证
-}
-
-// 延迟确保localStorage完全写入
-await new Promise(resolve => setTimeout(resolve, 100));
-
-// 重试机制
-const maxRetries = 2;
-while (retryCount <= maxRetries) {
-    try {
-        // 8秒超时 + 重试逻辑
-    } catch (error) {
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    }
-}
-```
-
-## 🎉 历史更新 - 组件化架构改造
-
-**更新日期**: 2025年6月20日
-
-### ✨ 组件化改造成果
-
-我们完成了对整个项目的组件化改造，将导航栏、侧边栏等UI组件进行了模块化拆分，大大提高了代码的可维护性和复用性。
-
-#### 🗂️ 新增组件文件
-```
-components/
-├── navbar-full.html      # 完整版导航栏（首页用）
-├── navbar-simple.html    # 简化版导航栏（功能页面用）
-├── sidebar.html          # 侧边栏组件
-├── styles.css           # 组件样式文件
-├── components.js        # 组件JavaScript功能
-└── README.md           # 组件使用说明文档
-```
-
-#### 🚀 改造优势
-- **易于维护**: 导航栏有改动时，只需修改组件文件，所有页面自动更新
-- **代码复用**: 避免在每个页面重复编写相同的导航栏代码
-- **灵活配置**: 可根据页面类型选择完整版或简化版导航栏
-- **统一样式**: 确保所有页面的导航栏样式保持一致
-- **功能完整**: 保留所有原有功能，包括下拉菜单、用户认证等
-
-#### 📖 使用方法
-1. **首页使用完整版导航栏**:
-   ```html
-   <!-- 引入完整版导航栏和侧边栏 -->
-   <div id="navbar-container"></div>
-   <div id="sidebar-container"></div>
-   ```
-
-2. **功能页面使用简化版导航栏**:
-   ```html
-   <!-- 只引入简化版导航栏 -->
-   <div id="navbar-container"></div>
-   ```
-
-3. **动态加载组件**:
+2. **转场风格映射**：
    ```javascript
-   // 加载完整版导航栏
-   fetch('/components/navbar-full.html')
-       .then(response => response.text())
-       .then(html => {
-           document.getElementById('navbar-container').innerHTML = html;
-       });
+   const transitionStyleNames = {
+       'basic': '无',
+       'slow': '舒缓',
+       'fast': '动感',
+       'normal': '自然',
+       'ink': '水墨',
+       'glitch': '机械故障',
+       'shift': '切换',
+       'mosaic': '马赛克',
+       'shutter': '百叶窗',
+       'zoom': '缩放',
+       'mask': '遮罩',
+       'brush': '笔刷',
+       'wind': '风舞',
+       'smog': '烟雾',
+       '': '随机'
+   };
    ```
 
-#### 🌟 示例页面
-我们创建了一个示例页面 `example-page.html` 来演示组件的使用方法，你可以通过访问 `http://localhost:8080/example-page.html` 查看效果。
+3. **显示效果**：
+   ```
+   多图转视频 (2张图片)
+   多图转视频  |  31秒  |  转场: 水墨  |  2025-10-17 17:53
+   ```
 
-## 功能特点
+#### 修改文件
+- ✅ `public/js/multi-image-to-video.js` (第1035-1067行)
+  - 添加转场风格映射表
+  - 在任务显示HTML中添加转场风格标签
 
-- 图片上传功能
-- 对接第三方图片翻译编辑器
-- 支持多种语言翻译
-- 结果保存和下载
+#### 用户价值
+- ✅ 更清晰地了解每个视频使用的转场效果
+- ✅ 便于对比不同转场风格的视频效果
+- ✅ 提升功能透明度和可追溯性
 
-## 功能列表
+---
 
-- 电商工图实景图/电商海报智能生成
-- 产品电商场景图/产品换场景/换背景
-- 视频语音翻译
-- 视频文字翻译
-- 图片文字翻译转换
-- 智能虚拟模特试衣
-- 图像高清放大
-- 跨境合规标签
+### 🔧 重要修复: 文生视频使用次数统计问题（2025-10-17）
 
-## 技术栈
+**Bug类型**: 使用次数统计错误  
+**严重程度**: 🟡 中等  
+**修复状态**: ✅ 已完全修复
 
-- 前端：HTML, CSS, JavaScript
-- 后端：Node.js, Express
-- 第三方集成：图片翻译编辑器API
+#### 问题描述
+用户反馈：**文生视频功能使用后，使用次数不更新，功能占比也不显示使用次数占比**
 
-## 安装与运行
+**现象**：
+- ✅ 积分扣除正常
+- ✅ 积分时段消费正常
+- ❌ 使用次数一直不变（例如一直显示为1）
+- ❌ 功能占比页面不显示使用次数统计
 
-### 前提条件
+#### 根本原因
+**使用次数更新逻辑缺失**：
+1. ❌ **免费任务**：只在`usageCount === 0`时更新为1，如果已经是1就不会再更新
+2. ❌ **付费任务**：**完全没有更新usageCount的代码**（与多图转视频对比发现缺失）
 
-- Node.js (v12+)
-- npm 或 yarn
-
-### 安装步骤
-
-1. 克隆或下载代码到本地
-
-2. 安装依赖
-```bash
-npm install
-```
-
-3. 配置API密钥
-   在`server.js`文件中，找到以下代码并替换为您的实际密钥：
+**问题代码位置**（routes/unifiedFeatureUsage.js 第397-482行）：
 ```javascript
-const APP_KEY = "YOUR_APP_KEY"; // 替换为实际的APP_KEY
-const SECRET_KEY = "YOUR_SECRET_KEY"; // 替换为实际的SECRET_KEY
+// 免费任务 - 第397-402行
+if (usage.usageCount === 0) {  // ❌ 只在为0时更新，导致第2次使用时不会更新
+  usage.usageCount = 1;
+  await usage.save();
+}
+
+// 付费任务 - 第403-482行
+// ❌ 完全没有更新usageCount的逻辑！
 ```
 
-4. 启动服务器
+#### 修复方案
+**参照多图转视频的正确逻辑**，在文生视频/图生视频的任务完成处理中添加使用次数更新代码：
+
+1. **免费任务更新**（第397-404行）：
+   ```javascript
+   // 🔧 修复：使用次数应该反映实际完成的任务数量
+   const completedTasksCount = Array.isArray(tasks) ? 
+     tasks.filter(t => (t.status === 'SUCCEEDED' || t.status === 'completed')).length : 1;
+   if (usage.usageCount < completedTasksCount) {
+     usage.usageCount = completedTasksCount;
+     await usage.save();
+     console.log(`[任务完成] 免费使用，已更新使用次数: ${usage.usageCount}`);
+   }
+   ```
+
+2. **付费任务更新**（第482-489行）：
+   ```javascript
+   // 🔧 修复：更新使用次数，确保付费使用也被正确计入
+   const completedTasksCount = Array.isArray(tasks) ? 
+     tasks.filter(t => (t.status === 'SUCCEEDED' || t.status === 'completed')).length : 1;
+   if (usage.usageCount < completedTasksCount) {
+     usage.usageCount = completedTasksCount;
+     await usage.save();
+     console.log(`[任务完成] 付费使用，已更新使用次数: ${usage.usageCount}`);
+   }
+   ```
+
+#### 修复效果
+- ✅ 第1次使用：usageCount从0变为1
+- ✅ 第2次使用：usageCount从1变为2
+- ✅ 第3次使用：usageCount从2变为3
+- ✅ 使用次数正确反映实际完成的任务数量
+- ✅ 功能占比页面可以正确显示使用次数统计
+
+#### 影响范围
+- `text-to-video`（文生视频）✅ 已修复
+- `image-to-video`（图生视频）✅ 已修复
+- 与多图转视频逻辑完全对齐 ✅
+
+#### 验证方式
+1. 使用文生视频功能创建任务
+2. 等待任务完成
+3. 查看积分使用记录页面，确认使用次数正确递增
+4. 查看功能占比统计，确认显示正确
+
+---
+
+### 🔧 系统修复: 端口占用问题（2025-10-17）
+
+**问题类型**: 系统运行问题  
+**严重程度**: 🟡 中等  
+**修复状态**: ✅ 已完全修复
+
+#### 问题描述
+服务器启动失败，报错：`Error: listen EADDRINUSE: address already in use :::8080`
+
+**现象**：
+- ❌ 服务器无法启动
+- ❌ 8080端口被占用
+- ❌ 存在多个node进程占用端口
+
+#### 根本原因
+**端口被多个进程占用**：
+1. 存在旧的node进程（PID: 14142, 18461）占用8080端口
+2. 新启动的服务器无法绑定该端口
+3. 可能原因：之前的服务器进程未正常关闭
+
+#### 修复步骤
+1. **检测占用端口的进程**：
+   ```bash
+   lsof -ti:8080
+   # 发现进程: 14142, 18461
+   ```
+
+2. **强制关闭进程**：
+   ```bash
+   kill -9 14142 18461
+   ```
+
+3. **重新启动服务器**：
+   ```bash
+   npm start
+   ```
+
+4. **验证服务器状态**：
+   ```bash
+   curl http://localhost:8080/api/health
+   # 返回: {"status":"ok","timestamp":"2025-10-17T06:30:23.289Z","uptime":18.011543083}
+   ```
+
+#### 修复效果
+- ✅ 服务器成功启动在8080端口
+- ✅ 健康检查API正常响应（HTTP 200）
+- ✅ 主页正常加载
+- ✅ 所有功能恢复正常
+
+#### 预防措施
+**正确的服务器关闭方式**：
 ```bash
-npm start
+# 方式1: 使用npm stop（如果配置了）
+npm stop
+
+# 方式2: 查找并关闭进程
+lsof -ti:8080 | xargs kill
+
+# 方式3: 在启动服务器的终端按 Ctrl+C
 ```
-或使用开发模式（自动重启）：
+
+**启动前检查端口**：
 ```bash
-npm run dev
+# 检查端口是否被占用
+lsof -ti:8080
+
+# 如果有输出，说明端口被占用，需要先关闭
 ```
 
-5. 访问应用
-   打开浏览器访问: http://localhost:3000
+---
 
-## 使用说明
+### 🔥 重要修复: 图生视频积分不扣除问题（2025-10-17）
 
-1. 在首页上传需要翻译的图片
-2. 选择源语言和目标语言
-3. 点击"打开工作台生成"按钮
-4. 在打开的编辑器中可以进行进一步编辑和保存
+**Bug类型**: 积分扣除逻辑错误  
+**严重程度**: 🔴 高危（直接影响收入）  
+**修复状态**: ✅ 已完全修复
 
-## 使用方法
+#### 问题描述
+用户反馈：**图生视频/文生视频任务完成后，积分没有从用户账户扣除**
 
-1. 直接在浏览器中打开 `index.html` 文件
-2. 点击选择侧边栏中的功能
-3. 根据页面指引上传图片并进行相应操作
+**现象**：
+- ✅ 任务正常完成，视频可以下载
+- ❌ 用户积分余额没有减少
+- ❌ 使用记录可能显示扣费，但实际未扣除
+- ❌ 用户可以无限次免费使用（绕过收费机制）
 
-## 文件结构
+#### 根本原因
+**`saveTaskDetails`函数逻辑缺陷**：
+1. ❌ 任务创建时添加到`details.tasks`（状态为pending）
+2. ❌ 任务完成时，发现任务已存在（`existingTaskIndex !== -1`）
+3. ❌ 更新任务信息时，**保留了原有的creditCost和isFree**，没有使用新传入的值
+4. ❌ 更新完成后**直接返回**（第210行），**跳过了第348-457行的积分扣除逻辑**！
 
-- `index.html` - 主页面HTML结构
-- `styles.css` - 样式表
-- `script.js` - 交互功能JavaScript代码
-- `server.js` - Node.js服务器代码
-- `package.json` - 项目依赖配置
-
-## 注意事项
-
-- 上传的图片不要超过10MB
-- 请确保有稳定的网络连接，以便与翻译服务器通信
-- 初次生成翻译需要一定时间，请耐心等待
-
-## 备份和恢复
-
-当前项目已创建以下备份文件:
-
-1. `server.js.backup` - 服务器代码备份
-2. `public/index.html.backup` - 前端页面备份
-
-如需恢复，请使用以下命令:
-
-```bash
-# 恢复服务器代码
-copy server.js.backup server.js
-
-# 恢复前端页面
-copy public\index.html.backup public\index.html
-
-# 重启服务器
-taskkill /f /im node.exe
-node server.js
-```
-
-## 各功能详细说明
-
-### 图像高清放大
-
-图像高清放大功能允许用户将低分辨率图片提升到更高分辨率，同时保持图像清晰度和细节。本功能基于阿里云AI图像超分辨率API实现，支持2-4倍放大。
-
-**功能特点：**
-- 支持多种图片格式（JPG、PNG、WEBP等）
-- 可选择2倍、4倍或自定义放大倍率
-- 智能降噪和细节增强
-- 自动将图片存储到阿里云OSS
-
-**技术实现：**
-- 前端：基于HTML、CSS和JavaScript实现的直观用户界面
-- 后端：Node.js处理图片上传、调用阿里云API
-- 存储：阿里云OSS对象存储
-- API：阿里云超分辨率API（/ai/super/resolution）
-
-**限制条件：**
-- 输入图片尺寸需大于100×100像素，小于3000×3000像素
-- 放大后的图片不能超过3000×3000像素
-- 放大倍数范围：2-4倍
-
-**使用方法：**
-1. 在侧边栏菜单选择"图像高清放大"
-2. 上传需要处理的图片（可拖拽或点击上传）
-3. 选择所需的放大倍率（2-4倍）
-4. 点击"开始放大"按钮
-5. 等待处理完成后，可以预览和下载处理后的高清图像
-
-**API调用示例：**
+**核心问题代码**（routes/unifiedFeatureUsage.js 第173-210行）：
 ```javascript
-// 上传图片到OSS
-const imageUrl = await uploadToOSS(imageBuffer, fileName);
-
-// 调用图像高清放大API
-const apiResult = await callUpscaleApi(imageUrl, upscaleFactor);
-
-// 获取处理结果
-const resultImageUrl = apiResult.data.imageUrl;
-```
-
-**错误处理：**
-- 如果图片尺寸不符合要求，系统会提示相应错误
-- 如果API调用失败，会显示具体的错误信息
-- 所有操作都有加载状态指示，提升用户体验
-
-## AI平台功能文档
-
-## 系统功能说明
-
-本系统是一个提供多种AI功能的平台，包括视频数字人生成、视频风格重绘、视频字幕移除等功能。系统使用积分机制，用户每次使用功能都会消耗相应的积分。
-
-### 积分系统
-
-- 每个功能消耗不同数量的积分
-- 系统跟踪用户功能使用情况，包括使用次数和积分消费
-- 管理员可以查看所有用户的积分使用情况
-
-### 最近重大更新 - 积分系统统一优化
-
-#### 统一的功能使用逻辑
-系统已完成对所有功能的积分扣除逻辑统一，确保每个功能都遵循相同的流程：
-
-1. **免费次数检查**: 首先检查用户是否还有该功能的免费使用次数
-2. **积分扣除**: 如果超过免费次数，则检查并扣除相应积分
-3. **记录生成**: 生成准确的使用记录，包括免费/付费标记
-4. **同步显示**: 确保积分使用情况页面准确显示所有使用记录
-
-#### 已优化的功能
-- **亚马逊助手系列** (17个功能): 所有亚马逊相关功能现在使用统一的积分扣除逻辑
-- **图像处理功能**: 图像高清放大、多图转视频等功能
-- **视频处理功能**: 视频去除字幕、数字人视频、视频风格重绘等
-- **虚拟模特功能**: 智能虚拟模特试穿功能
-
-#### 技术改进
-- 创建了统一的功能使用中间件 `unifiedFeatureUsage.js`
-- 移除了旧的 `featureAccess` 中间件中的积分扣除逻辑
-- 所有功能现在都使用相同的积分处理流程
-- 修复了积分重复扣除和记录不一致的问题
-
-#### 最新修复 - 变量作用域问题
-**修复日期**: 2024年12月14日
-
-**问题描述**: 
-视频去除字幕功能中存在变量作用域问题，`finalCreditCost` 和 `usageType` 变量在 try 块内定义，但在 catch 块外的代码中被使用，导致 `ReferenceError: finalCreditCost is not defined` 错误。
-
-**修复内容**:
-1. **视频去除字幕功能**: 将 `usageType` 和 `finalCreditCost` 变量的定义移到 try 块之前，确保在整个函数作用域内都可以访问
-
-#### 最新完成 - 积分系统完全统一 ✅
-**完成日期**: 2024年12月14日
-
-**重大成就**: 
-系统已完成所有功能的积分扣除逻辑统一，实现了真正的"检查积分是否足够 → 如果够则扣除并使用功能，如果不够则提示积分不足"的统一逻辑。
-
-**最终修复内容**:
-
-1. **亚马逊助手功能完全统一** ✅
-   - 移除了自定义的 `createAmazonFeatureMiddleware`
-   - 所有17个亚马逊助手功能现在都使用 `createUnifiedFeatureMiddleware`
-   - 消除了重复的积分扣除逻辑
-
-2. **track-usage路由优化** ✅
-   - 重构了 `/api/credits/track-usage` 路由
-   - 使用与统一中间件相同的积分扣除逻辑
-   - 支持场景图生成、图像智能消除、AI营销图、图片翻译等功能
-   - 保持了与前端页面的兼容性
-
-3. **数字人视频功能优化** ✅
-   - 实现了精确的积分计算：每秒9积分
-   - 上传视频后立即分析时长并扣除精确积分
-   - 修复了积分检查逻辑，避免过度预扣
-
-4. **清理无用代码** ✅
-   - 移除了 `routes/downloads.js` 中无用的 `checkFeatureAccess` 导入
-   - 统一了所有功能的积分扣除时机和逻辑
-
-**技术成果**:
-- ✅ 消除了所有双重扣费风险
-- ✅ 统一了积分扣除逻辑：检查 → 扣除 → 使用
-- ✅ 提高了代码质量和可维护性
-- ✅ 确保了用户积分的准确性和公平性
-- ✅ 实现了真正的统一积分管理系统
-
-**用户体验改进**:
-- 所有功能现在都有一致的积分提示
-- 积分不足时会显示明确的错误信息
-- 积分扣除更加准确和透明
-- 消除了用户经济损失的风险
-
-**开发者收益**:
-- 代码结构更加清晰和统一
-- 减少了重复代码和维护成本
-- 提高了系统的稳定性和可靠性
-- 为未来新功能的添加提供了标准模板
-
-这次优化彻底解决了积分系统的所有问题，实现了真正的统一管理。所有功能现在都遵循相同的积分扣除逻辑，确保了系统的一致性和用户体验的优质性。
-
-#### 最新优化 - 下载中心过期记录自动清理
-**优化日期**: 2024年12月14日
-
-**优化内容**:
-1. **自动清理机制**: 
-   - 添加了定时清理任务，每小时自动清除12小时前的过期下载记录
-   - 用户访问下载中心时也会触发清理，确保页面只显示有效记录
-   - 过期记录直接从数据库删除，不再显示在下载中心页面
-
-2. **技术实现**:
-   - 创建了 `utils/cleanupTasks.js` 定时清理任务模块
-   - 使用 `node-cron` 实现定时任务调度
-   - 在服务器启动时自动启动清理任务
-   - 添加了手动清理API接口 `POST /api/downloads/cleanup`
-
-3. **清理规则**:
-   - 清理12小时前创建的下载记录
-   - 不清理视频相关的特殊记录类型（如数字人视频、视频风格重绘等）
-   - 每次清理都会记录清理数量到控制台日志
-
-4. **用户体验优化**:
-   - 下载中心页面加载更快（无需显示大量过期记录）
-   - 减少数据库存储压力
-   - 用户只看到有效的下载记录，避免混淆
-
-#### 最新优化 - 下载中心仅保存图片
-**优化日期**: 2024年12月14日
-
-**优化内容**:
-1. **严格的内容过滤**:
-   - 下载中心现在只保存和显示图片相关的内容
-   - 完全排除所有视频相关的记录和保存请求
-   - 使用多重过滤条件确保视频内容不会出现在下载中心
-
-2. **保存接口优化**:
-   - 在保存接口中添加类型检查，拒绝视频相关的保存请求
-   - 返回明确的错误信息："下载中心只保存图片，不保存视频"
-   - 确保用户清楚了解下载中心的功能定位
-
-3. **查询逻辑增强**:
-   - 使用 `Op.notLike` 过滤所有包含 'video' 或 'VIDEO' 的类型
-   - 扩展排除列表，包含所有可能的视频相关类型标识
-   - 即使用户指定特定类型查询，也会过滤掉视频类型
-
-4. **清理任务优化**:
-   - 定时清理任务和手动清理都只处理图片记录
-   - 保留所有视频记录不被意外清理
-   - 确保视频功能的历史记录完整性
-
-#### 🚨 紧急修复 - 亚马逊助手双重扣费问题彻底解决 ✅
-**修复日期**: 2024年12月14日
-
-**严重问题发现**: 
-用户报告亚马逊助手功能仍然存在重复扣费问题。经过深入调查发现，这是一个影响所有亚马逊助手功能的系统性问题。
-
-**问题根因分析**: 
-通过服务器日志分析发现，亚马逊助手功能存在双重扣费机制：
-1. **前端扣费**: 页面通过 `feature-tracker.js` 调用 `/api/credits/track-usage` 路由扣费
-2. **后端扣费**: API通过统一中间件 `createUnifiedFeatureMiddleware` 再次扣费
-
-**日志证据**:
-```
-用户ID 11 使用 amazon_review_generator 功能，扣除 1 积分，剩余 83 积分  // 第一次扣费
-用户ID 11 使用 amazon_review_generator 功能，扣除 1 积分，剩余 82 积分  // 第二次扣费
-```
-
-**影响范围**: 
-所有17个亚马逊助手功能都受到影响：
-- ❌ 亚马逊Listing写作与优化
-- ❌ 亚马逊后台搜索词
-- ❌ 品牌信息收集和总结
-- ❌ 亚马逊品牌起名
-- ❌ 亚马逊消费者洞察专家
-- ❌ 亚马逊客户邮件回复
-- ❌ FBA索赔邮件
-- ❌ 亚马逊评论生成
-- ❌ 亚马逊评论回复
-- ❌ 产品对比
-- ❌ 创建亚马逊Post
-- ❌ 亚马逊关键词推荐
-- ❌ 亚马逊客服case内容生成
-- ❌ 选品的改款分析和建议
-- ❌ 亚马逊客户评论分析
-- ❌ 亚马逊广告视频脚本生成
-- ❌ 亚马逊视频脚本生成
-
-**修复方案**: 
-
-1. **批量修复前端页面** ✅
-   - 创建自动化修复脚本 `fix-amazon-double-charge.js`
-   - 移除所有前端页面中的 `trackFeatureUsage` 调用
-   - 成功修复12个HTML页面文件
-
-2. **保留统一中间件扣费** ✅
-   - 保持后端统一中间件的积分扣除逻辑
-   - 确保所有功能只通过一个渠道扣费
-   - 维持积分扣除的准确性和一致性
-
-3. **移除重复扣费代码** ✅
-   - 移除前端的 `const canProceed = await trackFeatureUsage(...)` 调用
-   - 移除页面查看跟踪 `trackFeatureUsage('page_view', ...)`
-   - 移除内容生成跟踪 `trackFeatureUsage('generate_content', ...)`
-
-**修复结果**:
-- ✅ **成功修复**: 12个亚马逊助手页面
-- ✅ **修复失败**: 0个文件
-- ✅ **总计处理**: 12个文件
-- ✅ **亚马逊评论生成**: 已在之前单独修复
-
-**技术改进**:
-- ✅ 消除了所有双重扣费风险
-- ✅ 统一了积分扣除机制（仅通过后端中间件）
-- ✅ 提高了用户体验和系统可靠性
-- ✅ 保护了用户的经济利益
-
-**验证方法**:
-现在所有亚马逊助手功能都只会：
-1. 通过统一中间件检查积分是否足够
-2. 如果足够则扣除积分并继续执行
-3. 如果不够则提示积分不足并拒绝请求
-4. **绝不会重复扣费**
-
-**用户受益**:
-- 💰 **经济保护**: 不再有双重扣费损失
-- 🎯 **准确计费**: 每次使用只扣除应有的积分
-- 🛡️ **系统可靠**: 积分扣除逻辑统一且可靠
-- 📈 **体验提升**: 功能使用更加流畅和可预期
-
-这次修复彻底解决了亚马逊助手的双重扣费问题，确保用户的每一分积分都得到公平合理的使用。
-
-## 管理员功能
-
-### 用户管理
-
-管理员可以在后台管理所有用户，包括：
-
-1. 查看用户列表
-2. 查看用户详细信息
-3. 修改用户信息和积分
-4. 删除用户账号
-5. **删除用户功能使用记录**（新功能）
-
-### 删除用户功能使用记录功能
-
-管理员可以删除特定用户的所有功能使用记录，这在以下情况很有用：
-
-- 测试账号需要清除使用记录
-- 用户功能使用记录出现异常需要重置
-- 统计数据需要调整
-
-#### 使用方法
-
-1. 登录管理员账号
-2. 进入用户详情页面
-3. 点击"删除所有使用记录"按钮
-4. 确认操作后，系统将：
-   - 删除数据库中该用户的所有功能使用记录
-   - 清理服务器全局变量中该用户的任务记录
-   - 刷新统计数据
-
-#### API接口
-
-管理员也可以通过API接口删除用户功能使用记录：
-
-```
-POST /api/admin/delete-user-usage
-Content-Type: application/json
-Authorization: Bearer {管理员TOKEN}
-
-{
-  "userId": 用户ID
+if (existingTaskIndex !== -1) {
+  // 任务已存在，更新任务信息
+  tasks[existingTaskIndex] = {
+    ...existingTask,
+    creditCost: existingTask.creditCost, // ❌ 保留旧值，忽略新传入的值
+    isFree: existingTask.isFree, // ❌ 保留旧值，忽略新传入的值
+    ...
+  };
+  await usage.save();
+  // ❌ 直接返回，跳过积分扣除逻辑！
 }
 ```
 
-响应示例：
+#### 修复方案
+**修改`saveTaskDetails`函数**（routes/unifiedFeatureUsage.js 第173-229行）：
 
-```json
-{
-  "success": true,
-  "message": "成功删除用户ID为 X 的 Y 条功能使用记录",
-  "data": {
-    "databaseRecords": {
-      "deleted": 数量,
-      "records": [使用记录详情]
-    },
-    "globalVariables": {
-      "digitalHumanTasks": 清理数量,
-      "videoSubtitleTasks": 清理数量,
-      "videoStyleRepaintTasks": 清理数量
-    }
-  }
-}
-```
+1. **添加needsCharging判断**：
+   ```javascript
+   // 判断是否需要扣除积分
+   const needsCharging = 
+     taskInfo.status === 'completed' && 
+     existingTask.status !== 'completed' && 
+     (taskInfo.featureName === 'text-to-video' || taskInfo.featureName === 'image-to-video');
+   ```
 
-## 🎉 **紧急修复完成报告**
+2. **条件性更新积分信息**：
+   ```javascript
+   // 如果需要扣费，使用新传入的积分信息；否则保留原有值
+   creditCost: needsCharging ? taskInfo.creditCost : existingTask.creditCost,
+   isFree: needsCharging ? taskInfo.isFree : existingTask.isFree,
+   ```
 
-**修复时间**: 2024年12月14日  
-**修复状态**: ✅ 所有严重问题已修复
+3. **条件性返回**：
+   ```javascript
+   // 如果不需要扣费，直接返回；否则继续执行积分扣除逻辑
+   if (!needsCharging) {
+     return;
+   }
+   // 继续执行第348-457行的积分扣除逻辑
+   ```
 
-### 修复内容总结
+#### 修复效果
+- ✅ 第1次使用：免费，积分不变
+- ✅ 第2次使用：扣除66积分，用户积分正确减少
+- ✅ 积分扣除逻辑正确执行
+- ✅ 用户表的credits字段正确更新
+- ✅ 使用记录正确显示
 
-#### 1. 统一中间件使用
-- ✅ 将所有功能从 `checkFeatureAccess` 迁移到 `createUnifiedFeatureMiddleware`
-- ✅ 移除了所有重复的积分扣除逻辑
-- ✅ 确保积分在功能使用前立即扣除
+#### 验证指南
+完整的验证步骤和检查清单，请参考：
+📄 [图生视频积分扣除修复验证指南.md](./图生视频积分扣除修复验证指南.md)
 
-#### 2. 具体修复的功能
+#### 影响范围
+- `image-to-video`（图生视频）✅ 已修复
+- `text-to-video`（文生视频）✅ 已修复
 
-**亚马逊助手功能** (`routes/amazon-listing-api.js`)
-- ✅ 修复 `/generate` 接口使用正确的中间件
-- ✅ 确保所有17个亚马逊助手功能正确扣除积分
+#### 技术细节
+详细的问题分析和代码对比，请参考：
+📄 [图生视频积分不扣除问题分析报告-2025-10-17.md](./图生视频积分不扣除问题分析报告-2025-10-17.md)
 
-**图像编辑功能** (`routes/imageEdit.js`)
-- ✅ 修复图像上色、局部重绘、智能扩图、图像锐化、垫图等功能
-- ✅ 移除重复的积分处理逻辑
-- ✅ 统一使用 `createUnifiedFeatureMiddleware`
+---
 
-**文生图功能** (`routes/textToImage.js`)
-- ✅ 修复积分在任务完成后扣除的问题
-- ✅ 改为在使用前立即扣除积分
-- ✅ 简化任务记录逻辑
+### 优化 1: 图生视频积分扣除逻辑优化（2025-10-17）
 
-**文生视频功能** (`routes/textToVideo.js`)
-- ✅ 修复所有文生视频和图生视频接口
-- ✅ 统一使用 `createUnifiedFeatureMiddleware`
+**优化类型**: 逻辑优化  
+**严重程度**: 中等  
+**修复状态**: ✅ 已完成优化
 
-**全局风格化功能** (`routes/globalStyle.js`)
-- ✅ 修复积分处理逻辑
-- ✅ 移除重复扣除问题
+#### 优化目标
+参照多图转视频的积分扣除逻辑，优化图生视频和文生视频的免费判断机制，确保免费判断更加准确可靠。
 
-**服饰分割功能** (`routes/clothingSegmentation.js`)
-- ✅ 修复严重的重复扣除积分问题
-- ✅ 简化数据库记录逻辑
+#### 优化内容
+**修改免费判断时机**（middleware/unifiedFeatureUsage.js 第831-868行）：
+- ❌ 旧逻辑：**创建时判断**（基于所有任务，包括pending） + **完成时使用创建时的标记**
+- ✅ 新逻辑：**完成时判断**（基于已完成任务数，排除当前任务）
 
-**Server.js中的功能**
-- ✅ 修复图像放大功能
-- ✅ 修复鞋靴虚拟试穿功能
-- ✅ 修复视频风格重绘功能
+#### 优化效果
+1. **免费判断更准确**：
+   - ✅ 基于已完成任务数判断，避免pending任务影响
+   - ✅ 与多图转视频逻辑完全一致
+   - ✅ 异常场景处理更合理（如首个任务失败，第二个任务仍然免费）
 
-#### 3. 技术改进
+2. **逻辑更清晰**：
+   - ✅ 创建时：基本检查（积分是否足够）
+   - ✅ 完成时：免费判断 + 积分扣除
+   - ✅ 两个阶段职责分明
 
-- ✅ **统一积分扣除时机**: 所有功能现在都在使用前立即扣除积分
-- ✅ **消除重复扣除**: 移除了所有重复的积分扣除逻辑
-- ✅ **统一记录格式**: 所有功能使用相同的记录格式
-- ✅ **简化代码逻辑**: 移除了复杂的任务完成后扣费逻辑
+详细优化报告：[图生视频积分扣除逻辑优化报告-2025-10-17.md](./图生视频积分扣除逻辑优化报告-2025-10-17.md)
 
-### 现在的统一流程
+---
 
-所有功能现在都严格遵循以下流程：
+### Bug 1: 图生视频免费判断错误（2025-10-17）
 
-1. **权限检查** → 2. **免费次数验证** → 3. **积分立即扣除** → 4. **功能执行** → 5. **记录保存**
+**Bug类型**: 免费次数判断错误  
+**严重程度**: 高  
+**修复状态**: ✅ 已完全修复
 
-### 风险消除
+#### 问题描述
+用户反馈：**图生视频的第2、3、4次使用都被判定为免费**
 
-- ✅ **经济风险**: 已消除用户免费使用付费功能的风险
-- ✅ **一致性风险**: 所有功能现在使用统一的积分处理逻辑
-- ✅ **数据完整性**: 确保积分使用情况页面准确显示所有记录
+- ✅ 使用次数统计正确
+- ❌ 免费判断错误（应该只有第1次免费，但第2、3、4次也显示免费）
+- ❌ 积分扣除不正确（应该扣3次66积分，实际只扣了1次）
 
-## 功能使用情况统计
+#### 根本原因
+**免费判断时机错误**：
+- ❌ 旧逻辑：基于**已完成任务数**判断（当第1个任务还在pending时，第2次使用仍被判定为免费）
+- ✅ 正确逻辑：应基于**历史任务总数**判断（不论任务状态）
 
-系统会自动跟踪和统计所有功能的使用情况，包括：
+#### 修复方案
+**修改免费判断逻辑**（middleware/unifiedFeatureUsage.js）：
+- 将判断依据从"已完成任务数"改为"历史任务总数"
+- 确保第2次使用时，即使第1个任务还在pending，也能正确判定为收费
+- 与视频风格重绘功能的逻辑对齐
 
-- 每个功能的使用次数
-- 每个功能消耗的积分总额
-- 用户的功能使用详情
+#### 修复效果
+- ✅ 第1次使用：免费
+- ✅ 第2次使用：收费66积分（即使第1个任务还在pending）
+- ✅ 第3次及以后：均收费66积分
 
-管理员可以在后台查看这些统计数据，了解平台运营情况
+详细修复报告：[图生视频免费判断Bug修复报告-2025-10-17.md](./图生视频免费判断Bug修复报告-2025-10-17.md)
 
-#### 最新修复 - 亚马逊评论生成英文输出问题 ✅
-**修复日期**: 2024年12月14日
+---
 
-**问题描述**: 
-用户反馈亚马逊助手中的评论生成功能在设置输出语言为英文时不能正常生成评论。
+### Bug 2: 图生视频使用记录重复显示（2025-10-17）
 
-**问题根因**: 
-经过代码分析发现，亚马逊评论生成功能(`/review-generator`)的代码逻辑存在严重错误：
-1. **错误的代码复制**: 该函数错误地复制了亚马逊Post生成的代码逻辑，而不是评论生成的逻辑
-2. **返回格式错误**: 应该返回评论数组(`reviews`)，但却使用了单个Post的处理逻辑
-3. **语言处理错误**: 英文输出时的系统提示词和处理逻辑不正确
-4. **JSON解析问题**: 解析逻辑针对单个对象而不是评论数组
+**Bug类型**: 数据显示重复  
+**严重程度**: 中等  
+**修复状态**: ✅ 已完全修复
 
-**修复内容**:
+#### 问题描述
+用户反馈：**图生视频使用记录在列表中重复显示（每条记录显示2次）**
 
-1. **重写评论生成逻辑** ✅
-   - 修正了系统提示词，根据输出语言选择合适的提示词
-   - 修正了用户提示词，明确要求生成评论数组格式
-   - 添加了语言特定的指导原则
+- ✅ 使用次数统计正确
+- ✅ 积分扣除正确
+- ❌ 使用记录列表重复显示（实际2次使用，却显示4条记录）
 
-2. **修复JSON解析逻辑** ✅
-   - 正确解析`reviews`数组格式
-   - 验证返回结果是否包含`reviews`数组
-   - 确保每个评论都有必要的字段(`title`, `content`, `username`)
+#### 根本原因
+**重复添加使用记录**：图生视频的使用记录被添加了两次
+1. **通用逻辑**（第1017-1233行）：为所有功能添加使用记录，包括image-to-video
+2. **特殊处理**（第1349-1398行）：在图生视频的特殊处理中又添加了一遍使用记录
 
-3. **完善评论数量控制** ✅
-   - 确保生成指定数量的评论
-   - 如果数量不足，自动补充到要求的数量
-   - 如果数量超过，截取到要求的数量
+#### 修复方案
+**删除重复的使用记录添加逻辑**：
+- 保留通用逻辑中的使用记录添加（已包含去重、时间过滤、状态过滤）
+- 删除图生视频特殊处理中的重复添加（50行代码 → 2行注释）
+- 保留图生视频的使用次数和积分统计逻辑（这部分是特殊的）
 
-4. **改进错误处理** ✅
-   - 提供语言特定的默认评论
-   - 使用`generateRandomUsername`函数生成合适的用户名
-   - 确保在任何情况下都能返回有效的评论数据
+#### 修复效果
+- ✅ 使用次数统计准确
+- ✅ 积分扣除准确
+- ✅ 使用记录不再重复显示
 
-5. **统一语言处理** ✅
-   - 英文输出时使用英文系统提示词和用户提示词
-   - 中文输出时使用中文系统提示词和用户提示词
-   - 默认评论也根据语言选择生成
+详细修复报告：[图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md](./图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md)
 
-**技术改进**:
-- ✅ 修复了代码逻辑错误，确保功能正常工作
-- ✅ 统一了中英文输出的处理逻辑
-- ✅ 提高了JSON解析的健壮性
-- ✅ 确保了评论数量的准确控制
-- ✅ 改进了错误处理和默认值提供
+---
 
-**用户体验改进**:
-- 英文输出现在可以正常工作
-- 评论格式统一，包含标题、内容和用户名
-- 评论数量准确，符合用户要求
-- 即使在API出错时也能提供有用的默认评论
+## 🎉 项目简介
 
-现在亚马逊评论生成功能在中文和英文输出模式下都能正常工作，用户可以根据需要选择合适的输出语言。
+### 技术栈
+- **后端**: Node.js + Express
+- **数据库**: MySQL + Sequelize ORM
+- **存储**: 阿里云OSS
+- **前端**: HTML5 + CSS3 + JavaScript
 
-#### 最新修复 - 亚马逊助手其他功能英文输出统一 ✅
-**修复日期**: 2024年12月14日
+### 核心功能
 
-**问题描述**: 
-在修复亚马逊评论生成功能后，发现亚马逊助手中还有3个功能存在英文输出相关的问题。
-
-**问题根因**: 
-经过全面检查发现，以下3个功能存在问题：
-1. **亚马逊消费者洞察专家**: 系统提示词错误，使用了产品对比的提示词而不是消费者洞察的提示词
-2. **FBA索赔邮件**: 语言判断逻辑不一致，使用了 `outputLanguage !== 'zh'` 而不是 `outputLanguage === 'en'`
-3. **产品对比**: 语言判断逻辑不一致，使用了 `outputLanguage !== 'zh'` 而不是 `outputLanguage === 'en'`
-
-**修复内容**:
-
-1. **亚马逊消费者洞察专家功能** ✅
-   - 修正了错误的系统提示词，改为专门的消费者洞察专家提示词
-   - 统一了语言判断逻辑：`outputLanguage !== 'zh'` → `outputLanguage === 'en'`
-   - 确保英文和中文输出都使用正确的专业提示词
-
-2. **FBA索赔邮件功能** ✅
-   - 统一了语言判断逻辑：`outputLanguage !== 'zh'` → `outputLanguage === 'en'`
-   - 确保英文和中文输出的一致性
-
-3. **产品对比功能** ✅
-   - 统一了语言判断逻辑：`outputLanguage !== 'zh'` → `outputLanguage === 'en'`
-   - 确保英文和中文输出的一致性
-
-**技术改进**:
-- ✅ 统一了所有亚马逊助手功能的语言判断逻辑
-- ✅ 修正了错误的系统提示词
-- ✅ 确保了英文输出的准确性和一致性
-- ✅ 提高了代码的可维护性
-
-**验证结果**:
-现在所有17个亚马逊助手功能都使用统一的语言判断逻辑：
-- 英文输出：`outputLanguage === 'en'`
-- 中文输出：默认或 `outputLanguage !== 'en'`
-
-**功能列表**（全部支持中英文输出）:
-1. ✅ 亚马逊Listing写作与优化
-2. ✅ 亚马逊后台搜索词
-3. ✅ 品牌信息收集和总结
-4. ✅ 亚马逊品牌起名
-5. ✅ 亚马逊消费者洞察专家 (已修复)
-6. ✅ 亚马逊客户邮件回复
-7. ✅ FBA索赔邮件 (已修复)
-8. ✅ 亚马逊评论生成 (已修复)
-9. ✅ 亚马逊评论回复
-10. ✅ 产品对比 (已修复)
-11. ✅ 创建亚马逊Post
-12. ✅ 亚马逊关键词推荐
-13. ✅ 亚马逊客服case内容生成
-14. ✅ 选品的改款分析和建议
-15. ✅ 亚马逊客户评论分析
-16. ✅ 亚马逊广告视频脚本生成
-17. ✅ 亚马逊视频脚本生成
-
-现在所有亚马逊助手功能的英文输出都能正常工作，用户可以根据需要选择合适的输出语言，获得一致的高质量结果。
-
-#### 🐞 Bug Fix - FBA索赔邮件无法点击生成 (2025-06-13)
-
-**问题**: 在 FBA 索赔邮件页面点击「生成索赔邮件」按钮后无任何反应，开发者工具报语法错误 `awaitif`。该错误同时导致前端重复积分扣费的潜在风险。
-
-**原因**: 代码中误将 `await trackFeatureUsage(...)` 写成 `awaitif`，导致脚本解析失败；此外该调用会与后端统一中间件造成双重扣费。
-
-**解决**:
-1. 移除页面中错误的 `trackFeatureUsage` 调用，改由后端统一中间件 `createUnifiedFeatureMiddleware('fba_claim_email')` 负责积分扣除。
-2. 修正 JavaScript 语法错误，页面脚本恢复正常执行。
-
-**影响**:
-- 现在「FBA索赔邮件」功能可以正常使用。
-- 积分只扣除一次，避免双重扣费。
-
-## 部署说明
-
-### 宝塔面板部署
-详细的部署说明请参考 [DEPLOY.md](./DEPLOY.md) 文件。
-
-### 快速部署步骤
-1. 在宝塔面板中安装 Node.js 16.x
-2. 安装 PM2：`npm install pm2 -g`
-3. 上传项目文件到网站目录
-4. 安装依赖：`npm install`
-5. 使用 PM2 启动：`pm2 start ecosystem.config.js`
-6. 配置 Nginx 反向代理
-
-### 环境要求
-- Node.js 16.x 或以上
-- PM2 进程管理工具
-- MySQL 数据库（如果使用）
-- Nginx 反向代理
-
-## 项目简介
-萤火AI是一个基于Node.js + Express的智能图像处理与创作平台，集成多种AI功能，主要面向电商和内容创作者。
-
-## 主要功能模块
-
-### 1. 图像处理功能
-- AI营销图生成
-- 图片智能消除
-- 图片扩展
-- 图片锐化  
-- 图片上色
-- 图片放大
-- 抠图功能
-- 服装模拟
-- 局部重绘
-- 垫图功能
+#### 1. 图像处理功能
+- 图片高清放大
+- 智能抠图
+- 场景生成
+- 图像物体移除
+- 模特肤色替换
+- 模拟试衣
+- 图像指令编辑
+- 图像局部重绘
+- 图像上色
+- 智能扩图
+- 文生图片
+- 模糊图片变清晰
+- 智能服饰分割
 - 全局风格化
+- 图像裁剪
 
-### 2. 视频处理功能
+#### 2. 视频处理功能
 - 文生视频
 - 图生视频
 - 多图转视频
+- 视频去除字幕
 - 视频风格重绘
-- 视频字幕移除
+- 数字人视频
 
-### 3. 亚马逊助手功能
-- 亚马逊商品listing优化
-- 亚马逊关键词推荐
-- 亚马逊评论分析
-- 亚马逊评论生成
-- 亚马逊评论回复
-- 亚马逊客户邮件
-- 亚马逊视频脚本
-- 亚马逊帖子创作
-- 亚马逊搜索词优化
-- 亚马逊品牌命名
-- 亚马逊品牌信息
-- 亚马逊消费者洞察
-- 亚马逊案例创作
-- FBA索赔邮件
-- 产品对比分析
+#### 3. 亚马逊助手功能
+- 广告视频脚本生成
 - 选品改款分析
+- 品牌信息收集
+- 品牌起名
+- Listing写作优化
+- 后台搜索词
+- 客户评论分析
+- 消费者洞察
+- 客户邮件回复
+- FBA索赔邮件
+- 评论生成和回复
+- 产品对比
+- Post创建
+- 关键词推荐
+- 客服case内容
 
-### 4. 其他功能
-- 提示词编辑器
-- 图片翻译
-- 模特换肤
-- 场景生成
-- 文生图
+### 积分系统
+- 新用户注册赠送积分
+- 每个功能首次使用免费
+- 后续使用按积分消耗
+- 完整的积分使用记录
+- 积分充值功能
 
-## 最近修复的问题
+---
 
-### 视频功能页面认证冲突问题修复 (2025-01-27)
+## 📚 项目文档
 
-#### 问题描述
-用户反馈文生视频和图生视频页面会异常跳转到登录界面，经过深入分析发现根本原因是**三重认证检查冲突**：
+### 📖 功能说明文档
+- [💡 图生视频积分扣除逻辑说明.md](./图生视频积分扣除逻辑说明.md) ⭐ **适合初学者**
 
-1. **HTML页面认证检查** - 在HTML中的`DOMContentLoaded`中执行统一认证检查
-2. **JS文件认证检查** - 在JS文件的`DOMContentLoaded`中执行相关认证逻辑
-3. **JS文件状态检查** - 在JS文件中调用`checkAuthStatus()`并会跳转登录页面
+### 系统运行报告
+- [🚀 系统运行状态报告-2025-10-17.md](./系统运行状态报告-2025-10-17.md) ⭐ 最新
 
-#### 冲突机制
-- 执行顺序问题：三个认证检查同时在`DOMContentLoaded`事件中执行，存在竞争条件
-- 重复检查：同一个页面执行了三次认证检查，增加了出错概率
-- 异步处理冲突：HTML中的检查是异步的，JS中的检查也是异步的，可能存在时序问题
-- Token过期处理：如果在任何一个检查中token过期，都会触发跳转
+### 重要修复报告
+- [🔥 图生视频积分不扣除问题分析报告-2025-10-17.md](./图生视频积分不扣除问题分析报告-2025-10-17.md)
+- [🔥 图生视频积分扣除修复验证指南.md](./图生视频积分扣除修复验证指南.md)
+- [图生视频积分扣除逻辑优化报告-2025-10-17.md](./图生视频积分扣除逻辑优化报告-2025-10-17.md)
+- [图生视频免费判断Bug修复报告-2025-10-17.md](./图生视频免费判断Bug修复报告-2025-10-17.md)
+- [图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md](./图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md)
 
-#### 修复方案
-**修改文件：`public/js/text-to-video.js` 和 `public/js/image-to-video.js`**
+---
 
-1. **移除JS文件中的重复认证检查**：
-   - **文生视频**：移除`DOMContentLoaded`中的`checkInitialAuth()`和`checkAuthStatus()`调用
-   - **图生视频**：移除`DOMContentLoaded`中的`checkAuthStatus()`调用
-   - 保留HTML页面中的统一认证检查
-
-2. **优化`checkAuthStatus()`函数**：
-   - 移除函数中的自动跳转逻辑
-   - 改为只处理用户状态显示，不进行认证检查和跳转
-   - 让HTML页面的统一认证检查来处理所有认证相关的跳转
-
-3. **添加简单的用户状态初始化**：
-   - 在页面初始化时简单获取用户信息
-   - 不进行认证检查，只初始化`currentUser`变量
-
-#### 修复效果
-- 消除了三重认证检查冲突
-- 确保只有HTML页面的统一认证检查负责处理认证和跳转
-- 避免了异步认证检查的竞争条件
-- 文生视频和图生视频页面都不会再异常跳转到登录界面
-
-#### 技术细节
-修复后的工作流程：
-1. **HTML页面加载** → 统一认证检查 → 认证失败则跳转登录页面
-2. **JS文件初始化** → 简单初始化用户状态 → 加载页面功能
-3. **用户操作功能** → 实时检查用户状态 → 必要时提示登录
-
-这种单一认证检查的设计避免了冲突，确保了所有视频功能页面用户体验的稳定性。
-
-#### 影响范围
-- **文生视频页面** (`public/text-to-video.html` + `public/js/text-to-video.js`)
-- **图生视频页面** (`public/image-to-video.html` + `public/js/image-to-video.js`)
-- **其他页面**：经检查，其他功能页面没有类似的多重认证问题
-
-### 手机端功能优化
-
-#### 手机端拦截功能提示语修改
-- 修改提示说明为："为提供最佳体验，请使用电脑浏览器访问我们的网站yinghuo.ai"
-- 修改文件：`public/js/mobile-guard.js` 和 `public/js/iframe-mobile-guard.js`
-
-#### 手机端功能中心Logo恢复  
-- 恢复了手机端的功能中心按钮（≡ 图标）
-- 修改文件：`index.html`
-
-### 亚马逊助手功能完善
-
-#### 智能结果管理系统
-- 为所有16个亚马逊助手功能页面实现了sessionStorage智能结果管理
-- 实现"刷新页面内容保持，关闭页面内容清除"的用户体验
-- 技术特点：刷新保持、关闭清除、会话隔离、界面统一
-
-#### 导航栏统一化
-- 所有亚马逊助手页面使用统一的简化版导航栏组件
-- 包含萤火AI Logo和返回首页按钮
-- 引入了`/components/styles.css`样式文件
-
-### 功能中心认证问题修复
-
-#### 批量修复功能页面认证
-- 总计修复了22个主要功能页面的认证问题
-- 11个页面添加了完整认证检查
-- 4个页面修复了认证跳转逻辑  
-- 7个iframe页面确认已有正确认证
-
-#### 三重认证检查机制
-实现了完整的认证检查流程：
-1. **首页检查** - 用户点击功能时的`checkAuthAndRedirect()`检查
-2. **页面加载检查** - 功能页面加载时的认证检查
-3. **实时检查** - 用户操作功能时的实时认证检查
-
-#### 统一认证逻辑
-- 统一使用`auth-check.js`进行认证检查
-- 实现防抖机制（2秒内不重复验证）
-- 改进错误分类处理（网络错误、超时错误、认证错误）
-- 增加详细的调试信息和日志记录
-
-## 技术架构
-
-### 后端技术栈
-- **Node.js + Express** - 服务器框架
-- **MongoDB** - 数据库
-- **JWT** - 用户认证
-- **Mongoose** - 数据库ORM
-- **Multer** - 文件上传处理
-
-### 前端技术栈
-- **HTML5 + CSS3 + JavaScript** - 基础前端技术
-- **Tailwind CSS** - 样式框架
-- **Remix Icon** - 图标库
-- **Fetch API** - 网络请求
-
-### 核心功能
-- **统一认证系统** - 基于JWT的用户认证
-- **文件上传系统** - 支持多种图片和视频格式
-- **积分系统** - 用户积分管理和消费
-- **任务队列系统** - 异步处理用户请求
-- **实时状态更新** - 轮询机制更新任务状态
-
-## 部署说明
+## 🚀 快速开始
 
 ### 环境要求
-- Node.js 14.0+
-- MongoDB 4.0+
-- Redis (可选，用于缓存)
+- Node.js 14+
+- MySQL 5.7+
+- 阿里云OSS账号
 
 ### 安装步骤
-1. 克隆项目：`git clone <repository-url>`
+1. 克隆项目
 2. 安装依赖：`npm install`
-3. 配置环境变量：复制`.env.example`为`.env`并填写配置
-4. 启动数据库：确保MongoDB服务运行
-5. 启动应用：`npm start`
+3. 配置环境变量（数据库、OSS等）
+4. 运行数据库迁移
+5. 启动服务：`npm start`
 
-### 环境变量配置
-```env
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/yinghuo-ai
-JWT_SECRET=your-jwt-secret-key
-UPLOAD_PATH=./uploads
+### 启动服务器
+
+#### 正常启动
+```bash
+# 进入项目目录
+cd /Users/houkai/Documents/Yinghuo1/图生视频START
+
+# 启动服务器（后台运行）
+npm start
 ```
 
-## 开发指南
+#### 端口被占用时
+```bash
+# 1. 检查8080端口占用情况
+lsof -ti:8080
 
-### 添加新功能
-1. 在`routes/`目录下创建对应的路由文件
-2. 在`public/`目录下创建前端页面
-3. 在`models/`目录下创建数据模型（如需要）
-4. 更新导航栏和功能中心的链接
+# 2. 如果有进程占用，强制关闭
+lsof -ti:8080 | xargs kill -9
 
-### 认证系统集成
-新功能页面需要集成认证系统：
-1. 引入`/js/auth-check.js`脚本
-2. 在页面加载时调用统一认证检查
-3. 在功能操作前进行实时认证检查
+# 3. 重新启动服务器
+npm start
+```
 
-### 移动端适配
-- 使用`/js/mobile-guard.js`进行移动端拦截
-- 对于iframe页面使用`/js/iframe-mobile-guard.js`
-- 确保响应式设计和移动端用户体验
+#### 验证服务器状态
+```bash
+# 检查健康状态
+curl http://localhost:8080/api/health
 
-## 维护记录
+# 检查主页
+curl -I http://localhost:8080/
+```
 
-### 2025-01-27
-- 修复文生视频页面三重认证检查冲突问题
-- 优化认证系统，避免异常跳转登录界面
-- 更新项目文档和技术说明
+### 访问地址
+- 营销首页：`http://localhost:8080/index.html`
+- 用户账户：`http://localhost:8080/account.html`
+- 积分记录：`http://localhost:8080/credits-usage.html`
+- 管理后台：`http://localhost:8080/admin-dashboard.html`
+- 健康检查：`http://localhost:8080/api/health`
 
-### 2025-01-26  
-- 完成所有亚马逊助手功能的sessionStorage智能结果管理
-- 统一所有功能页面的导航栏设计
-- 修复手机端功能中心Logo显示问题
+---
 
-### 2025-01-25
-- 批量修复功能中心认证问题
-- 实现三重认证检查机制
-- 优化用户认证体验和错误处理
+## 📝 更新日志
 
-## 联系方式
-- 网站：yinghuo.ai
-- 技术支持：通过网站联系表单
+### 2025-10-21
+- ✨ **新增图像裁剪功能**
+  - 创建完整的图像裁剪页面 (`image-crop.html`)
+  - 支持拖拽调整裁剪区域，8个控制点精确调整
+  - 预设多种比例：1:1、4:3、16:9、3:4、9:16等
+  - 支持自定义尺寸输入
+  - 实时预览裁剪效果
+  - 完全免费使用，基于前端Canvas技术
+  - 添加后端API记录使用统计
+  - 在主页面所有位置添加功能入口
 
-### 🎯 智能客服分配系统（新增）
+### 2025-10-17
+- 🔥 **修复文生视频使用次数统计API问题**（统计API中文生视频使用次数不更新，功能占比不显示）
+- 🔧 **修复文生视频/图生视频任务完成时使用次数更新问题**（任务完成时使用次数不更新）
+- 🔧 **修复服务器端口占用问题，系统恢复正常运行**
+- 🔥 **修复图生视频/文生视频积分不扣除的严重问题**（高危Bug）
+- ✅ 优化图生视频和文生视频的免费判断逻辑
+- ✅ 修复图生视频免费判断错误问题
+- ✅ 修复图生视频使用记录重复显示问题
+- ✅ 与多图转视频逻辑完全对齐
+- 🗑️ 清理临时修复文档，保持项目整洁
+- 📊 创建系统运行状态报告，完善运维文档
+- 📝 更新README快速启动指南和访问地址
 
-**更新日期**: 2025年1月27日
+---
 
-实现了完整的客服自动分配机制，用户首次发送消息时会自动分配给在线客服，后续所有对话都由同一客服处理：
+## 👨‍💻 开发团队
 
-#### 🚀 核心功能
-- **首次消息触发**：用户第一次发送消息时自动触发分配机制
-- **智能负载均衡**：优先分配给当前工作负载最少的客服
-- **随机分配机制**：负载相同时随机选择，确保公平分配
-- **专属服务模式**：一旦分配，该用户的所有后续消息都由同一客服处理
-- **权限过滤**：只有管理员（isAdmin）或内部用户（isInternal）可被分配
+**AI助手** - 技术支持与Bug修复
 
-#### 🔧 技术实现
-- **数据表**：`customer_assignments` - 记录用户与客服的绑定关系
-- **自动分配算法**：基于工作负载的智能分配机制
-- **分配状态管理**：active（活跃）、inactive（非活跃）、transferred（已转移）
-- **活跃时间更新**：用户每次发送消息都会更新活跃时间
+---
 
-#### 📊 管理后台增强
-- **分配信息显示**：在对话头部显示用户的分配情况
-- **权限隔离**：普通客服只能看到分配给自己的用户消息
-- **管理员视图**：超级管理员可以查看所有用户消息
-- **实时更新**：分配信息实时显示和更新
+## 🔧 最新修复记录 - 视频数字人统一记录系统集成（2025-10-20）
 
-#### 🎨 用户体验
-- **无感知分配**：用户无需关心分配过程，自动完成
-- **连续对话**：与同一客服保持连续的对话体验
-- **快速响应**：负载均衡确保每个客服都能及时响应
-- **专业服务**：一对一的专属客服服务模式
+### 问题根本原因
 
-#### 🔄 分配流程
-1. **用户首次发消息** → 检查是否已有分配的客服
-2. **无分配记录** → 获取所有可用客服列表
-3. **计算工作负载** → 统计每个客服当前负责的用户数量
-4. **选择最优客服** → 优先选择负载最少的客服
-5. **创建分配记录** → 建立用户与客服的绑定关系
-6. **后续消息处理** → 所有消息都路由到指定客服
+经过深入分析发现，视频数字人功能使用了**独立的保存逻辑**，没有集成到**统一的功能使用记录系统**中，导致：
 
-现在萤火AI客服系统具备了企业级的智能分配能力，实现了真正的一对一专属客服服务！🎯
+- ❌ **没有创建CreditHistory记录** → 积分使用记录页面显示为空
+- ❌ **没有更新统一的功能使用统计** → 功能占比显示为0
+- ❌ **积分扣除不完整** → 缺少完整的记录链路
 
-### ⏰ 12小时超时重新分配机制（新增）
+### 修复方案
 
-**更新日期**: 2025年1月27日
+**核心修复**：在任务完成时调用统一功能使用记录系统
 
-为了确保客服资源的合理利用，系统实现了智能的超时重新分配机制：
+**修改文件**：`routes/textToVideo.js` (第2992-3028行)
 
-#### 🕐 超时机制
-- **超时时间**：用户与客服停止聊天12小时后自动超时
-- **重新分配触发**：用户再次发送消息时自动重新分配给在线客服
-- **负载均衡**：重新分配时同样采用负载最少优先的算法
-- **状态管理**：超时的分配自动标记为非活跃状态
+```javascript
+// 🔧 修复：调用统一功能使用记录系统，确保积分扣除和使用记录正确
+try {
+    console.log('开始调用统一功能使用记录系统...');
+    
+    // 导入统一功能使用记录系统的保存函数
+    const { saveTaskDetails: saveUnifiedTaskDetails } = require('../middleware/unifiedFeatureUsage');
+    
+    // 查找功能使用记录
+    const featureUsage = await FeatureUsage.findOne({
+        where: { userId: req.user.id, featureName: 'DIGITAL_HUMAN_VIDEO' }
+    });
+    
+    if (featureUsage) {
+        // 调用统一功能使用记录系统
+        await saveUnifiedTaskDetails(featureUsage, {
+            taskId: taskId,
+            status: 'completed',
+            featureName: 'DIGITAL_HUMAN_VIDEO',
+            creditCost: isFree ? 0 : creditsUsed,
+            isFree: isFree,
+            extraData: {
+                videoDuration: videoDuration,
+                videoUrl: videoUrl,
+                requestId: response.data.request_id
+            }
+        });
+        
+        console.log('✅ 统一功能使用记录系统调用成功');
+    }
+} catch (unifiedError) {
+    console.error('❌ 调用统一功能使用记录系统失败:', unifiedError);
+}
+```
 
-#### 🔔 智能提醒系统
-- **10小时提醒**：分配接近超时时显示橙色警告提示
-- **12小时超时**：超时后显示红色提示，说明下次发消息将重新分配
-- **实时状态**：管理后台实时显示分配状态和剩余时间
-- **活跃时间**：显示最后活跃时间，便于客服了解用户状态
+### 修复效果
 
-#### 🛠️ 技术实现
-- **定时检查**：每30分钟自动检查并处理超时分配
-- **数据库记录**：完整记录分配历史和超时原因
-- **API接口**：提供手动检查、统计查询、重新分配等管理功能
-- **状态追踪**：实时追踪分配状态、活跃时间、超时情况
+修复后，视频数字人功能将：
 
-#### 📊 管理功能
-- **分配统计**：查看所有客服的分配数量和状态
-- **超时监控**：监控接近超时和已超时的分配
-- **手动重新分配**：支持管理员手动重新分配用户
-- **批量处理**：支持批量处理超时分配
+1. ✅ **正确创建CreditHistory记录** - 积分使用记录页面正常显示
+2. ✅ **更新统一功能使用统计** - 功能占比正确计算
+3. ✅ **完整的积分扣除链路** - 包含所有必要的记录和验证
+4. ✅ **保持向后兼容** - 不影响现有功能
 
-#### 🎯 业务价值
-- **资源优化**：避免长时间不活跃的分配占用客服资源
-- **负载均衡**：确保新用户能够及时获得客服服务
-- **服务质量**：保证活跃用户得到及时响应
-- **运营效率**：提高客服团队的整体工作效率
+### 测试验证
 
-#### 🔄 完整流程
-1. **正常分配** → 用户与客服正常对话
-2. **活跃监控** → 系统记录每次对话的时间
-3. **超时检查** → 定时检查是否超过12小时无活动
-4. **状态标记** → 超时分配自动标记为非活跃
-5. **重新分配** → 用户再次发消息时重新分配给最优客服
-6. **恢复服务** → 用户获得新的专属客服服务
+**提供测试脚本**：`test_digital_human_fix.js`
 
-现在系统不仅能智能分配客服，还能自动优化资源配置，确保每个用户都能获得最佳的客服体验！⏰
+```bash
+# 运行测试脚本验证修复效果
+node test_digital_human_fix.js
+```
 
-#### 🔧 系统架构
+**预期结果**：
+- 统一记录系统正常调用
+- CreditHistory记录正确创建
+- 功能使用统计正确更新
+- 积分扣除完整无误
+
+---
+
+## 🔧 导航栏功能中心修复记录（2025-10-22）
+
+### 问题描述
+
+用户反馈：积分管理页面引用的导航栏功能中心里面没有**图像裁剪**和**图像改尺寸**功能。
+
+### 问题分析
+
+检查发现积分管理页面使用的是`components/navbar-full.html`导航栏，其功能中心下拉菜单的"图像处理"分类中确实缺少了这两个功能的链接。
+
+### 修复内容
+
+**修改文件**：`components/navbar-full.html`
+
+**修复位置**：图像处理分类（第38-53行）
+
+#### 第一步：添加缺失功能
+```html
+<!-- 修改前：图像处理分类缺少图像裁剪和图像改尺寸 -->
+<h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing">图像处理</h3>
+<ul class="space-y-1">
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">场景图生成</a></li>
+    <!-- ... 其他功能 ... -->
+</ul>
+```
+
+#### 第二步：调整功能排列顺序（与首页保持一致）
+```html
+<!-- 最终版本：按照首页图像处理功能的顺序排列 -->
+<h3 class="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b image-processing">图像处理</h3>
+<ul class="space-y-1">
+    <!-- 🔧 按照首页图像处理功能的顺序排列 -->
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/scene-generator')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">场景图生成</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像智能消除</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-expansion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">智能扩图</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-sharpen.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">模糊图片变清晰</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-upscaler.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像高清放大</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像裁剪</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图片改尺寸</a></li>
+    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-colorization.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像上色</a></li>
+    <!-- ... 其他功能 ... -->
+</ul>
+```
+
+### 修复效果
+
+- ✅ **功能链接完整**：导航栏功能中心现在包含图像裁剪和图片改尺寸功能
+- ✅ **排列顺序一致**：与首页图像处理功能的顺序完全保持一致
+  - 🔝 **核心功能优先**：场景图生成 → 图像智能消除 → 智能扩图 → 模糊图片变清晰 → 图像高清放大
+  - 📍 **常用功能跟随**：图像裁剪 → 图片改尺寸 → 图像上色 → 其他功能
+- ✅ **链接正确**：使用正确的页面路径和认证检查函数
+- ✅ **用户体验**：用户在首页和导航栏看到的功能顺序完全一致，提升使用体验
+
+### 验证方法
+
+1. 访问积分管理页面：`http://localhost:8080/credits.html`
+2. 点击导航栏中的"功能中心"
+3. 查看"图像处理"分类
+4. 确认"图像裁剪"和"图像改尺寸"功能链接存在且可点击
+
+---
+
+---
+
+## 🌐 最新功能更新 - 多语言支持（2025-11-03）
+
+### 新增功能：中英文语言切换
+
+**功能描述**：在首页"开始使用"按钮左侧添加了语言选择器，支持中文和英文之间的实时切换。
+
+#### 功能特性
+
+1. **语言选择器位置**：位于首页主要CTA按钮"开始使用"的左侧
+2. **支持语言**：
+   - 🇨🇳 中文（默认）
+   - 🇺🇸 English（英文）
+
+3. **切换内容**：
+   - 页面标题和描述文本
+   - 统计数据标签
+   - 按钮文本
+   - 页面标题（浏览器标签）
+   - HTML语言属性
+
+4. **用户体验**：
+   - 语言选择会保存到本地存储
+   - 下次访问时自动恢复用户的语言偏好
+   - 实时切换，无需刷新页面
+
+#### 技术实现
+
+**前端实现**：
+- 使用`data-i18n`属性标记需要翻译的文本元素
+- JavaScript动态更新页面内容
+- localStorage保存用户语言偏好
+
+**翻译内容**：
+```javascript
+// 中文内容
+hero_title_1: "专业级电商ai工具"
+hero_title_2: "服务电商人"
+start_using: "开始使用"
+
+// 英文内容  
+hero_title_1: "Professional E-commerce AI Tools"
+hero_title_2: "Serving E-commerce Professionals"
+start_using: "Get Started"
+```
+
+#### 修改文件
+
+- ✅ `index.html`
+  - 添加语言选择器UI组件
+  - 为文本元素添加`data-i18n`属性
+  - 实现语言切换JavaScript逻辑
+  - 创建中英文翻译数据
+
+#### 使用方法
+
+1. 访问首页：`http://localhost:8080/index.html`
+2. 在"开始使用"按钮左侧找到语言选择下拉菜单
+3. 选择"English"切换到英文界面
+4. 选择"中文"切换回中文界面
+5. 语言偏好会自动保存，下次访问时生效
+
+#### 用户价值
+
+- ✅ **国际化支持**：为海外用户提供英文界面
+- ✅ **用户友好**：简单直观的语言切换方式
+- ✅ **体验优化**：语言偏好持久化保存
+- ✅ **无缝切换**：实时更新，无需页面刷新
+
+---
+
+## 📄 许可证
+
+本项目由 **AI进化论-花生** 创建，版权所有，引用请注明出处。

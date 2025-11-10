@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>下载中心 - 萤火AI</title>
+    <title data-translate="page.download_center_title">下载中心 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
+    <script src="../translations.js"></script>
     <style>
         /* 自定义滚动条 */
         ::-webkit-scrollbar {
@@ -98,23 +99,27 @@
     <div id="navbar-full"></div>
 
     <!-- 主内容区域 -->
-    <div class="container mx-auto p-5 overflow-auto" style="margin-top: 60px;">
-            <div class="flex justify-between items-center mb-4">
-                <h1 class="text-2xl font-bold">下载中心</h1>
-                
-                <!-- 搜索框 -->
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        id="search-input" 
-                        placeholder="搜索..." 
-                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="ri-search-line text-gray-400"></i>
-                    </div>
-                </div>
+    <div class="container mx-auto px-4 py-8" style="margin-top: 60px;">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6" data-translate="download_center.title">下载中心</h1>
+        
+        <!-- 工具栏 -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex space-x-2">
+                <!-- 视图切换按钮 -->
+                <button id="grid-view-btn" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-md flex items-center text-sm" data-translate="download_center.grid_view">
+                    <i class="ri-grid-fill mr-1"></i> 网格
+                </button>
+                <button id="list-view-btn" class="hover:bg-gray-100 text-gray-500 px-3 py-1 rounded-md flex items-center text-sm" data-translate="download_center.list_view">
+                    <i class="ri-list-check mr-1"></i> 列表
+                </button>
             </div>
+            
+            <!-- 搜索框 -->
+            <div class="relative">
+                <input id="search-input" type="text" data-translate-placeholder="download_center.search_placeholder" placeholder="搜索图片..." class="border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:border-indigo-500">
+                <i class="ri-search-line absolute left-3 top-3 text-gray-400"></i>
+            </div>
+        </div>
             
             <!-- 过期提示信息 -->
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
@@ -124,7 +129,7 @@
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-yellow-700">
-                            <strong>温馨提示：</strong> 下载中心的图片和视频仅保存12小时，请及时下载保存到本地。
+                            <strong data-translate="download_center.warm_tip">温馨提示：</strong> <span data-translate="download_center.expiration_notice">下载中心的图片和视频仅保存12小时，请及时下载保存到本地。</span>
                         </p>
                     </div>
                 </div>
@@ -135,64 +140,67 @@
                 <!-- 标签切换 -->
                 <div class="flex space-x-2 flex-wrap gap-2">
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-indigo-600 text-white text-sm" data-tab="all">
-                        全部图片
+                        <span data-translate="download_center.all_images">全部图片</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图片翻译">
-                        图片翻译
+                        <span data-translate="download_center.image_translation">图片翻译</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="营销图生成">
-                        营销图生成
+                        <span data-translate="download_center.ai_marketing">营销图生成</span>
                     </button>
-                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="商品换背景">
-                        商品换背景
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="智能抠图">
+                        <span data-translate="download_center.smart_cutout">智能抠图</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="场景图生成">
-                        场景图生成
+                        <span data-translate="download_center.scene_generation">场景图生成</span>
                     </button>
-                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像智能消除">
-                        图像智能消除
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="智能消除">
+                        <span data-translate="download_center.smart_removal">智能消除</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="模特换肤">
-                        模特换肤
+                        <span data-translate="download_center.model_replacement">模特换肤</span>
                     </button>
-                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="模拟试衣">
-                        模拟试衣
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="虚拟试衣">
+                        <span data-translate="download_center.virtual_try_on">虚拟试衣</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="智能扩图">
-                        智能扩图
+                        <span data-translate="download_center.smart_expansion">智能扩图</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="模糊图片变清晰">
-                        模糊图片变清晰
+                        <span data-translate="feature.blur_to_clear">模糊图片变清晰</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像上色">
-                        图像上色
+                        <span data-translate="download_center.image_colorization">图像上色</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="全局风格化">
-                        全局风格化
+                        <span data-translate="download_center.global_stylization">全局风格化</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="垫图">
-                        垫图
+                        <span data-translate="download_center.background_removal">垫图</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="局部重绘">
-                        局部重绘
+                        <span data-translate="download_center.model_weight">局部重绘</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="智能服饰分割">
-                        智能服饰分割
+                        <span data-translate="download_center.smart_segmentation">智能服饰分割</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="文生图片">
-                        文生图片
+                        <span data-translate="download_center.text_to_image">文生图片</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像高清放大">
-                        图像高清放大
+                        <span data-translate="download_center.image_upscaling">图像高清放大</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="指令编辑">
-                        指令编辑
+                        <span data-translate="download_center.image_editing">指令编辑</span>
+                    </button>
+                    <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像编辑">
+                        图像编辑
                     </button>
                 </div>
                 
                 <!-- 视图切换 -->
                 <div class="flex items-center space-x-3 mt-2 sm:mt-0">
-                    <span class="text-sm text-gray-500">视图:</span>
+                    <span class="text-sm text-gray-500" data-translate="download_center.view">视图:</span>
                     <button id="grid-view-btn" class="p-1.5 rounded bg-indigo-100 text-indigo-700">
                         <i class="ri-grid-fill text-lg"></i>
                     </button>
@@ -201,11 +209,11 @@
                     </button>
                     <button id="select-all-btn" class="ml-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg">
                         <i class="ri-checkbox-multiple-line mr-1"></i>
-                        全选
+                        <span data-translate="download_center.select_all">全选</span>
                     </button>
                     <button id="delete-selected-btn" class="hidden px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-600 rounded-lg">
                         <i class="ri-delete-bin-line mr-1"></i>
-                        删除所选
+                        <span data-translate="download_center.delete_selected">删除所选</span>
                     </button>
                 </div>
             </div>
@@ -243,7 +251,7 @@
             <!-- 无数据提示 -->
             <div id="no-data" class="hidden text-center py-10">
                 <i class="ri-image-line text-gray-300 text-6xl mb-2"></i>
-                <p class="text-gray-500 text-lg">暂无图片记录</p>
+                <p class="text-gray-500 text-lg" data-translate="download_center.no_images">暂无图片记录</p>
             </div>
             
             <!-- 分页控件 -->
@@ -261,7 +269,27 @@
         let selectedItems = new Set();
         
         // 当页面加载完成后执行
+        // 监听语言变化事件（来自主页面的语言选择器）
+        document.addEventListener('languageChanged', function(event) {
+            const newLanguage = event.detail.language;
+            console.log('下载中心页面：接收到语言切换事件', newLanguage);
+            updatePageText(newLanguage);
+        });
+
+        // 监听localStorage变化（跨标签页语言同步）
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'language' && event.newValue) {
+                console.log('下载中心页面：检测到跨标签页语言变化', event.newValue);
+                updatePageText(event.newValue);
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化语言
+            const currentLanguage = getCurrentLanguage();
+            console.log('下载中心页面初始化，当前语言:', currentLanguage);
+            updatePageText(currentLanguage);
+            
             // 加载历史记录
             await loadImageHistory();
             
@@ -523,11 +551,21 @@
                     return;
                 }
                 
-                // 保存所有图片数据
+                // 保存所有图片数据，并过滤掉已过期的图片
                 allImages = data.results.map(item => ({
                     ...item,
                     id: item.id.toString()
-                }));
+                })).filter(item => {
+                    // 计算剩余时间
+                    const createdAt = new Date(item.createdAt || Date.now());
+                    const expiresAt = new Date(createdAt.getTime() + 12 * 60 * 60 * 1000);
+                    const now = new Date();
+                    const hoursLeft = Math.max(0, Math.floor((expiresAt - now) / (60 * 60 * 1000)));
+                    const minutesLeft = Math.max(0, Math.floor(((expiresAt - now) % (60 * 60 * 1000)) / (60 * 1000)));
+                    
+                    // 只保留未过期的图片
+                    return !(hoursLeft === 0 && minutesLeft === 0);
+                });
                 
                 console.log('处理后的图片数据:', allImages.length);
                 
@@ -684,11 +722,14 @@
             
             // 将功能代码映射为可读的中文名称
             switch (processType) {
-                case 'IMAGE_EXPANSION':
+                case 'image-expansion':
                     processType = '智能扩图';
                     break;
                 case 'IMAGE_SHARPENING':
                     processType = '模糊图片变清晰';
+                    break;
+                case 'QWEN_IMAGE_EDIT':
+                    displayType = '图像编辑';
                     break;
                 case 'IMAGE_COLORIZATION':
                     processType = '图像上色';
@@ -712,11 +753,11 @@
                 // 保留其他已有的功能名称
                 case '图片翻译':
                 case '营销图生成':
-                case '商品换背景':
+                case '智能抠图':
                 case '场景图生成':
-                case '图像智能消除':
+                case '智能消除':
                 case '模特换肤':
-                case '模拟试衣':
+                case '虚拟试衣':
                 case '全局风格化':
                     break;
                 default:
@@ -821,11 +862,14 @@
             
             // 将功能代码映射为可读的中文名称
             switch (processType) {
-                case 'IMAGE_EXPANSION':
+                case 'image-expansion':
                     processType = '智能扩图';
                     break;
                 case 'IMAGE_SHARPENING':
                     processType = '模糊图片变清晰';
+                    break;
+                case 'QWEN_IMAGE_EDIT':
+                    processType = '图像编辑';
                     break;
                 case 'IMAGE_COLORIZATION':
                     processType = '图像上色';
@@ -849,11 +893,11 @@
                 // 保留其他已有的功能名称
                 case '图片翻译':
                 case '营销图生成':
-                case '商品换背景':
+                case '智能抠图':
                 case '场景图生成':
-                case '图像智能消除':
+                case '智能消除':
                 case '模特换肤':
-                case '模拟试衣':
+                case '虚拟试衣':
                 case '全局风格化':
                     break;
                 default:
@@ -964,7 +1008,7 @@
                     }
                     
                     switch (displayType) {
-                        case 'IMAGE_EXPANSION':
+                        case 'image-expansion':
                             displayType = '智能扩图';
                             break;
                         case 'IMAGE_SHARPENING':
@@ -1073,7 +1117,7 @@
             
             // 将功能代码映射为可读的中文名称
             switch (processType) {
-                case 'IMAGE_EXPANSION':
+                case 'image-expansion':
                     processType = '智能扩图';
                     break;
                 case 'IMAGE_SHARPENING':
@@ -1100,6 +1144,7 @@
                     break;
                 case 'IMAGE_UPSCALER':
                 case 'IMAGE_UPSCALING':
+                case '图像高清放大':
                     processType = '图像高清放大';
                     break;
                 case 'PROMPT_EDITOR':
@@ -1110,16 +1155,16 @@
                 // 保留其他已有的功能名称
                 case '图片翻译':
                 case '营销图生成':
-                case '商品换背景':
+                case '智能抠图':
                 case '场景图生成':
-                case '图像智能消除':
+                case '智能消除':
                 case '模特换肤':
-                case '模拟试衣':
+                case '虚拟试衣':
                 case '全局风格化':
-                case '图像高清放大':
                 case '指令编辑':
                 case '图像指令编辑':
-                    processType = '指令编辑';
+                case '图像编辑':
+                    processType = processType;
                     break;
                 default:
                     // 如果是其他未知类型，保持原样
@@ -1143,17 +1188,7 @@
                         <h3 class="text-xl font-semibold mb-4">${processType}</h3>
                         
                         <div class="flex flex-col md:flex-row gap-4">
-                            ${originalImageUrl ? `
                             <div class="flex-1">
-                                <p class="text-sm text-gray-500 mb-2">原图:</p>
-                                <div class="border rounded-lg overflow-hidden">
-                                    <img src="${originalImageUrl}" alt="原图" class="w-full">
-                                </div>
-                            </div>
-                            ` : ''}
-                            
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-500 mb-2">处理后:</p>
                                 <div class="border rounded-lg overflow-hidden">
                                     <img src="${processedImageUrl}" alt="处理后图片" class="w-full">
                                 </div>
@@ -1240,6 +1275,91 @@
 
     <!-- 组件加载脚本 -->
     <script>
+        // 更新页面文本
+        // 获取当前语言
+        function getCurrentLanguage() {
+            return localStorage.getItem('language') || 'zh';
+        }
+
+        // 获取翻译文本
+        function getTranslation(key, language) {
+            const lang = language || getCurrentLanguage();
+            return translations[lang][key] || key;
+        }
+
+        function updatePageText(language) {
+            console.log('更新下载中心页面文本，语言:', language);
+            
+            // 更新页面标题
+            const pageTitle = document.querySelector('h1');
+            if (pageTitle) {
+                pageTitle.textContent = getTranslation('download_center.title', language);
+            }
+            
+            // 更新视图切换按钮
+            const gridViewBtn = document.querySelector('[data-view="grid"]');
+            if (gridViewBtn) {
+                gridViewBtn.textContent = getTranslation('download_center.grid_view', language);
+            }
+            
+            const listViewBtn = document.querySelector('[data-view="list"]');
+            if (listViewBtn) {
+                listViewBtn.textContent = getTranslation('download_center.list_view', language);
+            }
+            
+            // 更新温馨提示
+            const warningText = document.querySelector('.warning-message p');
+            if (warningText) {
+                warningText.textContent = getTranslation('download_center.warning', language);
+            }
+            
+            // 更新"正在加载"文本
+            const loadingText = document.querySelector('.loading span');
+            if (loadingText) {
+                loadingText.textContent = language === 'en' ? 'Loading...' : '正在加载...';
+            }
+            
+            // 更新分类标签
+            const categoryButtons = document.querySelectorAll('[data-translate]');
+            categoryButtons.forEach(btn => {
+                const translateKey = btn.getAttribute('data-translate');
+                if (translateKey) {
+                    btn.textContent = getTranslation(translateKey, language);
+                }
+            });
+            
+            // 更新空状态文本
+            const emptyState = document.querySelector('.empty-state h3');
+            if (emptyState) {
+                emptyState.textContent = getTranslation('download_center.no_images', language);
+            }
+
+            // 更新搜索框占位符
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.placeholder = getTranslation('download_center.search_placeholder', language);
+            }
+
+            // 更新页面标题
+            if (language === 'en') {
+                document.title = 'Download Center - Firefly AI';
+                document.documentElement.lang = 'en';
+            } else {
+                document.title = '下载中心 - 萤火AI';
+                document.documentElement.lang = 'zh-CN';
+            }
+        }
+
+        // 更新占位符文本
+        function updatePlaceholders(language) {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                const placeholderKey = 'download_center.search_placeholder';
+                const placeholderText = getTranslation(placeholderKey, language);
+                searchInput.placeholder = placeholderText;
+            }
+        }
+
         // 异步加载完整版导航栏组件
         fetch('/components/navbar-full.html')
             .then(response => response.text())
@@ -1249,6 +1369,22 @@
                 // 加载组件JavaScript
                 const script = document.createElement('script');
                 script.src = '/components/components.js';
+                script.onload = function() {
+                    // 初始化语言系统
+                    initializeLanguageSelector();
+                    
+                    // 监听语言变化事件
+                    document.addEventListener('languageChanged', function(event) {
+                        const language = event.detail.language;
+                        updatePageText(language);
+                        updatePlaceholders(language);
+                    });
+                    
+                    // 初始化页面语言
+                    const currentLanguage = getCurrentLanguage();
+                    updatePageText(currentLanguage);
+                    updatePlaceholders(currentLanguage);
+                };
                 document.head.appendChild(script);
             })
             .catch(error => {

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能扩图 - 修复版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            pointer-events: auto !important;
+            z-index: 10 !important;
+            user-select: none;
+        }
+        
+        .upload-area:hover {
+            border-color: #6366f1;
+            background-color: #f8faff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+        
+        .upload-area:active {
+            transform: translateY(0);
+        }
+        
+        .upload-area.dragover {
+            border-color: #6366f1;
+            background-color: #f0f4ff;
+        }
+        
+        /* 确保文件输入不可见但可访问 */
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 20;
+        }
+        
+        /* 滑块样式 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: linear-gradient(to right, #4f46e5, #818cf8);
+            border-radius: 10px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #ffffff;
+            border: 2px solid #4f46e5;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #ffffff;
+            border: 2px solid #4f46e5;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        /* 加载动画 */
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 上传内容居中样式 */
+        .upload-area .upload-content {
+            pointer-events: none;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        }
+        
+        .upload-area .upload-content i {
+            display: block;
+            margin: 0 auto;
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-area .upload-content p {
+            margin: 0;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-indigo-600">萤火AI - 智能扩图</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900">返回首页</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="container mx-auto py-8 px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <!-- 左侧：上传图片和提示词 -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">扩图设置</h2>
+                
+                <!-- 上传区域 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">上传图片</label>
+                    <div id="upload-area" class="upload-area h-36 flex flex-col items-center justify-center mb-2 bg-gray-50 relative">
+                        <input type="file" id="image-upload" class="file-input" accept="image/*">
+                        <div class="upload-content">
+                            <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
+                            <p class="text-gray-500 text-center text-sm px-2">点击或者拖动文件到这区域来上传</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">图片大小最小为512×512像素，最大不超过2048×2048像素。</p>
+                </div>
+                
+                <!-- 提示词输入 -->
+                <div class="mb-6">
+                    <label for="prompt" class="block text-sm font-medium text-gray-700 mb-1">提示词</label>
+                    <textarea id="prompt" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请描述您希望在扩展区域看到的内容，例如：蓝天白云，延伸城市景观等。"></textarea>
+                    <p class="mt-1 text-xs text-gray-500">详细、具体的描述可以获得更好的效果</p>
+                </div>
+                
+                <!-- 扩展方向控制 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">扩展方向与比例控制</label>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="flex justify-between text-sm text-gray-600">
+                                <span>向左扩展</span>
+                                <span id="left-value">1</span>
+                            </label>
+                            <input type="range" id="left-expand" min="1" max="2" value="1" step="0.5" class="w-full">
+                        </div>
+                        
+                        <div>
+                            <label class="flex justify-between text-sm text-gray-600">
+                                <span>向右扩展</span>
+                                <span id="right-value">1</span>
+                            </label>
+                            <input type="range" id="right-expand" min="1" max="2" value="1" step="0.5" class="w-full">
+                        </div>
+                        
+                        <div>
+                            <label class="flex justify-between text-sm text-gray-600">
+                                <span>向上扩展</span>
+                                <span id="up-value">1</span>
+                            </label>
+                            <input type="range" id="up-expand" min="1" max="2" value="1" step="0.5" class="w-full">
+                        </div>
+
+                        <div>
+                            <label class="flex justify-between text-sm text-gray-600">
+                                <span>向下扩展</span>
+                                <span id="down-value">1</span>
+                            </label>
+                            <input type="range" id="down-expand" min="1" max="2" value="1" step="0.5" class="w-full">
+                        </div>
+                    </div>
+                    
+                    <p class="mt-2 text-xs text-gray-500">拖动滑块调整各个方向的扩展比例（1-2倍，步长0.5）</p>
+                </div>
+                
+                <!-- 生成按钮 -->
+                <div class="pt-4">
+                    <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        <i class="ri-image-add-line mr-2"></i>
+                        <span id="generate-text">生成扩图</span>
+                        <div id="generate-spinner" class="loading-spinner ml-2 hidden"></div>
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500">
+                        图像生成需要10-20秒，消耗7积分
+                    </p>
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium">
+                        请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 右侧：效果展示 -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- 效果展示部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">效果展示</h2>
+                
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 原始图像 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-3">原始图像</h3>
+                            <div id="original-image-container" class="bg-gray-100 rounded-md flex items-center justify-center overflow-hidden" style="min-height: 200px;">
+                                <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="原始图片">
+                                <p id="original-image-placeholder" class="text-gray-500 text-center px-4">上传图片后将在这里显示</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 生成结果 -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-800 mb-3">生成结果</h3>
+                            <div id="result-image-container" class="bg-gray-100 rounded-md flex items-center justify-center overflow-hidden" style="min-height: 200px;">
+                                <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="生成结果">
+                                <p id="result-image-placeholder" class="text-gray-500 text-center px-4">生成结果将在这里显示</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div id="image-actions" class="mt-4 hidden">
+                        <div class="flex space-x-2 justify-end">
+                            <button id="download-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md text-sm flex items-center">
+                                <i class="ri-download-line mr-1"></i> 下载图片
+                            </button>
+                            <button id="save-to-downloads-btn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm flex items-center">
+                                <i class="ri-save-line mr-1"></i> 保存到下载中心
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 生成历史部分 -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">生成历史</h2>
+                        <button id="refresh-history-btn" class="text-indigo-600 hover:text-indigo-800">
+                            <i class="ri-refresh-line text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <p class="text-gray-500 col-span-full text-center py-4">暂无历史记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载中遮罩 -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <div class="flex flex-col items-center">
+                <div class="loading-spinner mb-4"></div>
+                <p id="loading-message" class="text-lg font-medium">处理中，请耐心等待...</p>
+                <p class="text-sm text-gray-500 mt-2">处理时间约为5-10秒</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('智能扩图页面开始初始化...');
+            
+            // 检查登录状态函数
+            async function checkLoginStatus() {
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.log('用户未登录');
+                    return false;
+                }
+                return true;
+            }
+            
+            // DOM元素
+            const uploadArea = document.getElementById('upload-area');
+            const imageUpload = document.getElementById('image-upload');
+            const originalImage = document.getElementById('original-image');
+            const originalImagePlaceholder = document.getElementById('original-image-placeholder');
+            const resultImage = document.getElementById('result-image');
+            const resultImagePlaceholder = document.getElementById('result-image-placeholder');
+            const generateBtn = document.getElementById('generate-btn');
+            const generateText = document.getElementById('generate-text');
+            const generateSpinner = document.getElementById('generate-spinner');
+            const promptInput = document.getElementById('prompt');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingMessage = document.getElementById('loading-message');
+            const downloadBtn = document.getElementById('download-btn');
+            const saveToDownloadsBtn = document.getElementById('save-to-downloads-btn');
+            const imageActions = document.getElementById('image-actions');
+            
+            // 滑块元素
+            const leftScale = document.getElementById('left-expand');
+            const rightScale = document.getElementById('right-expand');
+            const topScale = document.getElementById('up-expand');
+            const bottomScale = document.getElementById('down-expand');
+            const leftScaleValue = document.getElementById('left-value');
+            const rightScaleValue = document.getElementById('right-value');
+            const topScaleValue = document.getElementById('up-value');
+            const bottomScaleValue = document.getElementById('down-value');
+            
+            console.log('DOM元素检查:', {
+                uploadArea: !!uploadArea,
+                imageUpload: !!imageUpload,
+                originalImage: !!originalImage,
+                resultImage: !!resultImage,
+                generateBtn: !!generateBtn
+            });
+            
+            // 检查用户登录状态
+            const isLoggedIn = await checkLoginStatus();
+            console.log('登录状态:', isLoggedIn);
+            
+            // 更新滑块值显示
+            function updateScaleValueDisplay() {
+                leftScaleValue.textContent = leftScale.value;
+                rightScaleValue.textContent = rightScale.value;
+                topScaleValue.textContent = topScale.value;
+                bottomScaleValue.textContent = bottomScale.value;
+            }
+            
+            // 更新生成按钮状态
+            function updateGenerateButtonState() {
+                const prompt = promptInput.value.trim();
+                const hasImage = originalImage.src && !originalImage.classList.contains('hidden');
+                
+                if (!prompt) {
+                    generateBtn.disabled = true;
+                    generateText.textContent = '请先输入提示词';
+                } else if (!hasImage) {
+                    generateBtn.disabled = true;
+                    generateText.textContent = '请先上传图片';
+                } else {
+                    generateBtn.disabled = false;
+                    generateText.textContent = '生成扩图';
+                }
+            }
+            
+            // 处理图片文件
+            function handleImageFile(file) {
+                console.log('处理文件:', file.name, file.type, file.size);
+                
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    alert('请上传图片文件！支持的格式包括JPG、PNG和WEBP');
+                    return;
+                }
+                
+                // 检查文件大小
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('图片大小不能超过10MB！');
+                    return;
+                }
+                
+                // 创建预览并检查图片尺寸
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = function() {
+                        console.log('图片加载成功:', img.width, 'x', img.height);
+                        
+                        // 检查图片尺寸
+                        if (img.width < 512 || img.height < 512) {
+                            alert('图片尺寸太小，请上传最小512×512像素的图片');
+                            return;
+                        }
+                        
+                        if (img.width > 2048 || img.height > 2048) {
+                            alert('图片尺寸过大，请上传不超过2048×2048像素的图片');
+                            return;
+                        }
+                        
+                        // 显示原始图片
+                        originalImage.src = event.target.result;
+                        originalImage.classList.remove('hidden');
+                        originalImagePlaceholder.classList.add('hidden');
+                        
+                        // 重置结果区域
+                        resultImage.classList.add('hidden');
+                        resultImagePlaceholder.classList.remove('hidden');
+                        imageActions.classList.add('hidden');
+                        
+                        // 更新生成按钮状态
+                        updateGenerateButtonState();
+                        
+                        console.log('图片预览显示成功');
+                    };
+                    img.onerror = function() {
+                        console.error('图片加载失败');
+                        alert('图片加载失败，请重新上传');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.onerror = () => {
+                    console.error('文件读取失败');
+                    alert('读取文件失败，请重新上传');
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // 事件监听器设置
+            console.log('开始设置事件监听器...');
+            
+            // 文件输入变化事件
+            imageUpload.addEventListener('change', (e) => {
+                console.log('文件选择变化事件触发');
+                const file = e.target.files[0];
+                if (file) {
+                    console.log('选择的文件:', file.name);
+                    handleImageFile(file);
+                }
+            });
+            
+            // 点击上传区域
+            uploadArea.addEventListener('click', (e) => {
+                console.log('点击上传区域事件触发');
+                // 不阻止默认行为，让文件输入处理点击
+            });
+            
+            // 拖拽事件
+            uploadArea.addEventListener('dragenter', (e) => {
+                console.log('拖拽进入');
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                console.log('拖拽悬停');
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                console.log('拖拽离开');
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                console.log('文件拖拽释放');
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                
+                if (file && file.type.startsWith('image/')) {
+                    console.log('拖拽上传文件:', file.name);
+                    handleImageFile(file);
+                } else {
+                    console.log('拖拽文件不是图片格式');
+                    alert('请上传图片文件！');
+                }
+            });
+            
+            // 滑块事件
+            [leftScale, rightScale, topScale, bottomScale].forEach(slider => {
+                slider.addEventListener('input', updateScaleValueDisplay);
+            });
+            
+            // 提示词输入事件
+            promptInput.addEventListener('input', updateGenerateButtonState);
+            promptInput.addEventListener('blur', updateGenerateButtonState);
+            
+            // 生成按钮事件
+            generateBtn.addEventListener('click', async () => {
+                console.log('生成按钮点击');
+                
+                const prompt = promptInput.value.trim();
+                
+                if (!originalImage.src || originalImage.classList.contains('hidden')) {
+                    alert('请先上传图片！');
+                    return;
+                }
+                
+                if (!prompt) {
+                    alert('请输入提示词！描述您希望在扩展区域看到的内容。');
+                    promptInput.focus();
+                    return;
+                }
+                
+                // 显示加载状态
+                generateBtn.disabled = true;
+                generateSpinner.classList.remove('hidden');
+                generateText.textContent = '处理中...';
+                
+                // 显示加载遮罩
+                loadingOverlay.classList.remove('hidden');
+                loadingMessage.textContent = '正在处理图像，请稍候...';
+                
+                try {
+                    // 模拟处理过程
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    // 模拟成功结果
+                    const mockResultUrl = originalImage.src; // 这里应该是真实的处理结果
+                    
+                    // 显示结果
+                    resultImage.src = mockResultUrl;
+                    resultImage.classList.remove('hidden');
+                    resultImagePlaceholder.classList.add('hidden');
+                    imageActions.classList.remove('hidden');
+                    
+                    console.log('处理完成');
+                    
+                } catch (error) {
+                    console.error('处理失败:', error);
+                    alert('处理失败，请重试');
+                } finally {
+                    // 恢复按钮状态
+                    generateBtn.disabled = false;
+                    generateSpinner.classList.add('hidden');
+                    generateText.textContent = '生成扩图';
+                    
+                    // 隐藏加载遮罩
+                    loadingOverlay.classList.add('hidden');
+                }
+            });
+            
+            // 下载按钮事件
+            downloadBtn.addEventListener('click', () => {
+                if (resultImage.src) {
+                    const link = document.createElement('a');
+                    link.href = resultImage.src;
+                    link.download = 'expanded_image.jpg';
+                    link.click();
+                }
+            });
+            
+            // 保存到下载中心按钮事件
+            saveToDownloadsBtn.addEventListener('click', async () => {
+                try {
+                    const resultData = {
+                        originalImageUrl: originalImage.src,
+                        processedImageUrl: resultImage.src,
+                        processTime: new Date().toISOString(),
+                        processType: '智能扩图',
+                        description: `智能扩图结果 - 提示词: ${promptInput.value.trim()}`
+                    };
+                    
+                    const response = await fetch('/api/save-result', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify(resultData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('保存失败');
+                    }
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('已成功保存到下载中心！');
+                    } else {
+                        throw new Error(result.message || '保存失败');
+                    }
+                } catch (error) {
+                    alert(`保存失败: ${error.message}`);
+                }
+            });
+            
+            // 初始化
+            updateScaleValueDisplay();
+            updateGenerateButtonState();
+            
+            console.log('智能扩图页面初始化完成');
+        });
+    </script>
+</body>
+</html> 

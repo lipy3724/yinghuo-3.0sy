@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的账户 - 萤火AI</title>
+    <title data-translate="page.account_title">我的账户 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
@@ -178,20 +178,20 @@
     <div class="page-container">
         <div class="card p-8 fade-in">
             <div class="flex items-center justify-between mb-8">
-                <h1 class="text-2xl font-bold text-gray-900">我的账户</h1>
+                <h1 class="text-2xl font-bold text-gray-900" data-translate="account.title">我的账户</h1>
                 <div class="text-sm text-gray-500 flex items-center">
                     <i class="ri-shield-check-line mr-1.5 text-indigo-500"></i>
-                    <span>账户安全</span>
+                    <span data-translate="account.security">账户安全</span>
                 </div>
             </div>
 
             <div class="hidden" id="message-box"></div>
 
             <div class="tabs-header mb-6">
-                <button class="tab-button active" data-tab="profile">
+                <button class="tab-button active" data-tab="profile" data-translate="account.basic_info">
                     基本信息
                 </button>
-                <button class="tab-button" data-tab="password">
+                <button class="tab-button" data-tab="password" data-translate="account.change_password">
                     修改密码
                 </button>
             </div>
@@ -200,17 +200,17 @@
             <div id="profile-tab" class="tab-content">
                 <form id="profile-form">
                     <div class="form-group">
-                        <label for="username" class="form-label">用户名</label>
+                        <label for="username" class="form-label" data-translate="account.username">用户名</label>
                         <input type="text" id="username" name="username" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="masked-phone" class="form-label">手机号</label>
+                        <label for="masked-phone" class="form-label" data-translate="account.phone">手机号</label>
                         <input type="text" id="masked-phone" name="masked-phone" class="form-control" readonly>
-                        <p class="form-hint">手机号码不可修改</p>
+                        <p class="form-hint" data-translate="account.phone_readonly">手机号码不可修改</p>
                     </div>
                     <button type="submit" class="btn btn-primary mt-4">
                         <i class="ri-save-line mr-1.5"></i>
-                        保存修改
+                        <span data-translate="account.save_changes">保存修改</span>
                     </button>
                 </form>
             </div>
@@ -219,21 +219,21 @@
             <div id="password-tab" class="tab-content hidden">
                 <form id="password-form">
                     <div class="form-group">
-                        <label for="current-password" class="form-label">当前密码</label>
+                        <label for="current-password" class="form-label" data-translate="account.current_password">当前密码</label>
                         <input type="password" id="current-password" name="currentPassword" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="new-password" class="form-label">新密码</label>
+                        <label for="new-password" class="form-label" data-translate="account.new_password">新密码</label>
                         <input type="password" id="new-password" name="newPassword" class="form-control" required minlength="6">
-                        <p class="form-hint">密码长度至少6位</p>
+                        <p class="form-hint" data-translate="account.password_min_length">密码长度至少6位</p>
                     </div>
                     <div class="form-group">
-                        <label for="confirm-password" class="form-label">确认新密码</label>
+                        <label for="confirm-password" class="form-label" data-translate="account.confirm_password">确认新密码</label>
                         <input type="password" id="confirm-password" name="confirmPassword" class="form-control" required minlength="6">
                     </div>
                     <button type="submit" class="btn btn-primary mt-4">
                         <i class="ri-lock-password-line mr-1.5"></i>
-                        更新密码
+                        <span data-translate="account.update_password">更新密码</span>
                     </button>
                 </form>
             </div>
@@ -337,7 +337,7 @@
             const username = document.getElementById('username').value;
             
             if (!username.trim()) {
-                showMessage('用户名不能为空', 'error');
+                showMessage(getTranslation('account.username_required'), 'error');
                 return;
             }
             
@@ -354,7 +354,7 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    showMessage('个人信息更新成功');
+                    showMessage(getTranslation('account.profile_updated'));
                     
                     // 更新本地存储的用户信息
                     const userInfo = JSON.parse(localStorage.getItem('user'));
@@ -381,7 +381,7 @@
             const confirmPassword = document.getElementById('confirm-password').value;
             
             if (newPassword !== confirmPassword) {
-                showMessage('两次输入的新密码不一致', 'error');
+                showMessage(getTranslation('account.password_mismatch'), 'error');
                 return;
             }
             
@@ -401,7 +401,7 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    showMessage('密码修改成功');
+                    showMessage(getTranslation('account.password_updated'));
                     document.getElementById('password-form').reset();
                 } else {
                     showMessage(data.message || '密码修改失败，请重试', 'error');
@@ -442,6 +442,47 @@
         });
     </script>
 
+    <!-- 多语言支持脚本 -->
+    <script src="/translations.js"></script>
+    <script>
+        // 多语言支持函数
+        function getTranslation(key) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+        }
+
+        function updatePageLanguage() {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 更新页面标题
+            document.title = getTranslation('page.account_title');
+            
+            // 更新所有带有 data-translate 属性的元素
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = getTranslation(key);
+                
+                if (element.tagName === 'TITLE') {
+                    element.textContent = translation;
+                } else if (element.tagName === 'INPUT' && element.hasAttribute('placeholder')) {
+                    element.placeholder = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            });
+        }
+
+        // 监听语言变化
+        window.addEventListener('languageChanged', function() {
+            updatePageLanguage();
+        });
+
+        // 页面加载时应用语言设置
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePageLanguage();
+        });
+    </script>
+
     <!-- 组件加载脚本 -->
     <script>
         // 异步加载完整版导航栏组件
@@ -453,6 +494,10 @@
                 // 加载组件JavaScript
                 const script = document.createElement('script');
                 script.src = '/components/components.js';
+                script.onload = function() {
+                    // 组件加载完成后，应用语言设置
+                    updatePageLanguage();
+                };
                 document.head.appendChild(script);
             })
             .catch(error => {

@@ -1,0 +1,747 @@
+const express = require('express');
+const router = express.Router();
+const axios = require('axios');
+const https = require('https');
+const { protect } = require('../middleware/auth');
+
+// 通义万相API配置
+const API_KEY = process.env.DASHSCOPE_API_KEY || 'sk-a53c9eb917ce49558997c6bc0edac820';
+const API_BASE_URL = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis';
+const TASK_API_URL = 'https://dashscope.aliyuncs.com/api/v1/tasks';
+
+// 创建axios实例
+const axiosInstance = axios.create({
+  httpsAgent: new https.Agent({ keepAlive: true, family: 4 })
+});
+
+// 图像缓存
+const imageCache = new Map();
+
+/**
+ * @route   POST /api/image-edit/create
+ * @desc    创建图像编辑任务（指令编辑界面使用）
+ * @access  私有
+ */
+router.post('/create', protect, async (req, res) => {
+  try {
+    const { prompt, imageUrl } = req.body;
+    
+    if (!prompt || !imageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少必要参数：prompt 和 imageUrl'
+      });
+    }
+    
+    // 构建通义万相API请求数据
+    const requestData = {
+      model: "wanx2.1-imageedit",
+      input: {
+        base_image_url: imageUrl,
+        prompt: prompt,
+        function: "stylization_all"
+      },
+      parameters: {
+        n: 1
+      }
+    };
+    
+    // 直接调用create-task逻辑
+    return await createTaskAndRespond(requestData, req, res);
+  } catch (error) {
+    console.error('创建指令编辑任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '创建任务失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/image-edit/create-fallback
+ * @desc    创建图像编辑任务（不需要认证的备用接口）
+ * @access  公开
+ */
+router.post('/create-fallback', async (req, res) => {
+  try {
+    const { prompt, imageUrl } = req.body;
+    
+    if (!prompt || !imageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少必要参数：prompt 和 imageUrl'
+      });
+    }
+    
+    // 构建通义万相API请求数据
+    const requestData = {
+      model: "wanx2.1-imageedit",
+      input: {
+        base_image_url: imageUrl,
+        prompt: prompt,
+        function: "stylization_all"
+      },
+      parameters: {
+        n: 1
+      }
+    };
+    
+    // 直接调用create-task逻辑（不需要认证）
+    return await createTaskAndRespondFallback(requestData, req, res);
+  } catch (error) {
+    console.error('创建指令编辑任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '创建任务失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/image-edit/create-task
+ * @desc    创建图像编辑任务
+ * @access  私有
+ */
+router.post('/create-task', protect, async (req, res) => {
+  try {
+    const requestData = req.body;
+    const userId = req.user.id;
+    
+    console.log(`创建图像编辑任务: 用户ID=${userId}, 功能=${requestData.input?.function || 'general_edit'}`);
+    console.log(`请求数据:`, JSON.stringify({
+      model: requestData.model,
+      function: requestData.input?.function,
+      prompt: requestData.input?.prompt?.substring(0, 50) + (requestData.input?.prompt?.length > 50 ? '...' : '')
+    }));
+    
+    // 检查是否是垫图功能
+    const isDiantu = requestData.input?.function === 'control_cartoon_feature';
+    if (isDiantu) {
+      console.log(`检测到垫图功能请求: 用户ID=${userId}`);
+    }
+    
+    // 调用创建任务
+    const response = await createTask(requestData);
+    
+    // 生成唯一任务ID
+    const taskId = response.data.output?.task_id || `edit-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
+    // 保存任务信息到全局变量
+    if (!global.imageEditTasks) {
+      global.imageEditTasks = {};
+    }
+    
+    global.imageEditTasks[taskId] = {
+      userId: userId,
+      creditCost: 0, // 暂时不扣除积分
+      hasChargedCredits: false,
+      timestamp: new Date(),
+      imageUrl: requestData.input?.base_image_url,
+      prompt: requestData.input?.prompt,
+      function: requestData.input?.function || 'general_edit'
+    };
+    
+    console.log(`图片编辑任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}`);
+    
+    // 如果是垫图功能，保存到FeatureUsage
+    if (isDiantu) {
+      try {
+        const { FeatureUsage } = require('../models/FeatureUsage');
+        const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
+        
+        console.log(`保存垫图任务到FeatureUsage: 用户ID=${userId}, 任务ID=${taskId}`);
+        
+        // 查找或创建FeatureUsage记录
+        let [usage, created] = await FeatureUsage.findOrCreate({
+          where: {
+            userId: userId,
+            featureName: 'DIANTU'
+          },
+          defaults: {
+            usageCount: 0,
+            lastUsedAt: new Date(),
+            resetDate: new Date().toISOString().split('T')[0],
+            credits: 0,
+            details: JSON.stringify({ tasks: [] })
+          }
+        });
+        
+        console.log(`FeatureUsage记录${created ? '已创建' : '已存在'}: ID=${usage.id}`);
+        
+        // 保存任务详情
+        await saveTaskDetails(usage, {
+          taskId: taskId,
+          status: 'PENDING',
+          timestamp: new Date().toISOString(),
+          extraData: {
+            imageUrl: requestData.input?.base_image_url,
+            prompt: requestData.input?.prompt
+          }
+        });
+        
+        console.log(`垫图任务详情已保存到FeatureUsage: 任务ID=${taskId}`);
+      } catch (saveError) {
+        console.error('保存垫图任务到FeatureUsage失败:', saveError);
+        // 继续执行，不中断流程
+      }
+    }
+    
+    return res.json({
+      success: true,
+      output: {
+        task_id: taskId
+      }
+    });
+  } catch (error) {
+    console.error('创建任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '创建任务失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/image-edit/task-status/:taskId
+ * @desc    查询任务状态
+ * @access  私有
+ */
+router.get('/task-status/:taskId', protect, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    // 验证taskId格式
+    if (!taskId || typeof taskId !== 'string' || taskId.trim() === '') {
+      return res.status(400).json({
+        success: false, 
+        message: '任务ID无效'
+      });
+    }
+    
+    // 从全局变量中查找任务
+    const task = global.imageEditTasks?.[taskId];
+    if (!task) {
+      return res.status(404).json({
+        success: false, 
+        message: '任务不存在'
+      });
+    }
+    
+    // 检查任务是否属于当前用户
+    if (task.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false, 
+        message: '无权访问此任务'
+      });
+    }
+    
+    // 检查缓存中是否有结果
+    const cachedResult = imageCache.get(taskId);
+    if (cachedResult && cachedResult.expiresAt > new Date()) {
+      console.log(`从缓存中获取任务 ${taskId} 的结果`);
+      return res.json({
+        success: true, 
+        status: 'SUCCEEDED',
+        resultUrl: cachedResult.url,
+        cached: true
+      });
+    }
+    
+    // 缓存中没有结果，调用通义万相API查询任务状态
+    try {
+      const statusResponse = await queryTaskStatus(taskId);
+      
+      // 获取任务状态
+      const taskStatus = statusResponse.data.output?.task_status;
+      
+      if (taskStatus === 'SUCCEEDED') {
+        // 任务成功完成，获取结果URL
+        let resultUrl = getResultUrl(statusResponse);
+        
+        if (resultUrl) {
+          // 将结果URL缓存起来
+          imageCache.set(taskId, {
+            url: resultUrl,
+            timestamp: new Date(),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24小时过期
+          });
+        }
+        
+        // 返回结果
+        return res.json({
+          success: true, 
+          status: 'SUCCEEDED',
+          resultUrl: resultUrl,
+          output: statusResponse.data.output
+        });
+      } else if (taskStatus === 'FAILED') {
+        // 任务失败
+        return res.json({
+          success: false, 
+          status: 'FAILED',
+          message: statusResponse.data.output?.message || '任务处理失败',
+          output: statusResponse.data.output
+        });
+      } else {
+        // 任务仍在处理中
+        return res.json({
+          success: true, 
+          status: taskStatus || 'PENDING',
+          message: '任务处理中',
+          output: statusResponse.data.output
+        });
+      }
+    } catch (error) {
+      console.error(`查询任务 ${taskId} 状态失败:`, error);
+      return res.status(500).json({
+        success: false, 
+        message: '查询任务状态失败: ' + error.message
+      });
+    }
+  } catch (error) {
+    console.error('查询任务状态失败:', error);
+    return res.status(500).json({
+      success: false, 
+      message: '查询任务状态失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/image-edit/status/:taskId
+ * @desc    查询任务状态（兼容旧版API）
+ * @access  私有
+ */
+router.get('/status/:taskId', protect, async (req, res) => {
+  try {
+    // 直接复用task-status接口的逻辑
+    return await router.handle(req, res, {
+      path: `/api/image-edit/task-status/${req.params.taskId}`,
+      method: 'GET'
+    });
+  } catch (error) {
+    console.error('查询任务状态失败:', error);
+    return res.status(500).json({
+      success: false, 
+      message: '查询任务状态失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/image-expansion/status/:taskId
+ * @desc    智能扩图专用任务状态查询接口
+ * @access  私有
+ */
+router.get('/image-expansion/status/:taskId', protect, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    // 验证taskId格式
+    if (!taskId || typeof taskId !== 'string' || taskId.trim() === '') {
+      return res.status(400).json({
+        success: false, 
+        message: '任务ID无效'
+      });
+    }
+    
+    // 从全局变量中查找任务
+    const task = global.imageEditTasks?.[taskId];
+    if (!task) {
+      return res.status(404).json({
+        success: false, 
+        message: '任务不存在'
+      });
+    }
+    
+    // 检查任务是否属于当前用户
+    if (task.userId && task.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false, 
+        message: '无权访问此任务'
+      });
+    }
+    
+    // 检查任务是否已经超时
+    const taskCreationTime = task.timestamp ? new Date(task.timestamp) : new Date();
+    const currentTime = new Date();
+    const taskAgeInMinutes = (currentTime - taskCreationTime) / (1000 * 60);
+    
+    // 如果任务已经创建超过10分钟，则视为超时
+    if (taskAgeInMinutes > 10) {
+      console.log(`任务 ${taskId} 已超时 (${taskAgeInMinutes.toFixed(2)}分钟)`);
+      
+      return res.json({
+        success: false, 
+        status: 'TIMEOUT',
+        message: '任务处理超时，请重试或联系客服'
+      });
+    }
+    
+    // 检查缓存中是否有结果
+    const cachedResult = imageCache.get(taskId);
+    if (cachedResult && cachedResult.expiresAt > new Date()) {
+      console.log(`从缓存中获取任务 ${taskId} 的结果`);
+      return res.json({
+        success: true, 
+        status: 'SUCCEEDED',
+        resultUrl: cachedResult.url,
+        cached: true
+      });
+    }
+    
+    // 缓存中没有结果，调用通义万相API查询任务状态
+    try {
+      const statusResponse = await queryTaskStatus(taskId);
+      
+      // 获取任务状态
+      const taskStatus = statusResponse.data.output?.task_status;
+      
+      if (taskStatus === 'SUCCEEDED') {
+        // 任务成功完成，获取结果URL
+        let resultUrl = getResultUrl(statusResponse);
+        
+        if (resultUrl) {
+          // 将结果URL缓存起来
+          imageCache.set(taskId, {
+            url: resultUrl,
+            timestamp: new Date(),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24小时过期
+          });
+        }
+        
+        // 返回结果
+        return res.json({
+          success: true, 
+          status: 'SUCCEEDED',
+          resultUrl: resultUrl,
+          output: statusResponse.data.output
+        });
+      } else if (taskStatus === 'FAILED') {
+        // 任务失败
+        return res.json({
+          success: false, 
+          status: 'FAILED',
+          message: statusResponse.data.output?.message || '任务处理失败',
+          output: statusResponse.data.output
+        });
+      } else {
+        // 任务仍在处理中
+        return res.json({
+          success: true, 
+          status: taskStatus || 'PENDING',
+          message: '任务处理中',
+          output: statusResponse.data.output
+        });
+      }
+    } catch (error) {
+      console.error(`查询任务 ${taskId} 状态失败:`, error);
+      return res.status(500).json({
+        success: false, 
+        message: '查询任务状态失败: ' + error.message
+      });
+    }
+  } catch (error) {
+    console.error('查询任务状态失败:', error);
+    return res.status(500).json({
+      success: false, 
+      message: '查询任务状态失败: ' + error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/image-expansion/create
+ * @desc    创建智能扩图任务
+ * @access  私有
+ */
+router.post('/image-expansion/create', protect, async (req, res) => {
+  try {
+    const { prompt, imageUrl, leftScale, rightScale, topScale, bottomScale, negativePrompt, quality } = req.body;
+    
+    if (!imageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少必要参数：imageUrl'
+      });
+    }
+    
+    // 验证扩展比例参数
+    const maxScale = 2;
+    if ((leftScale && leftScale > maxScale) || 
+        (rightScale && rightScale > maxScale) || 
+        (topScale && topScale > maxScale) || 
+        (bottomScale && bottomScale > maxScale)) {
+      return res.status(400).json({
+        success: false,
+        message: `扩展比例不能超过${maxScale}倍`
+      });
+    }
+    
+    // 构建通义万相API请求数据
+    const requestData = {
+      model: "wanx2.1-imageedit",
+      input: {
+        base_image_url: imageUrl,
+        prompt: prompt || "延续图像内容",
+        function: "expand",
+        negative_prompt: negativePrompt || "模糊, 扭曲, 变形, 低质量"
+      },
+      parameters: {
+        n: 1,
+        left_scale: leftScale || 0.5,
+        right_scale: rightScale || 0.5,
+        top_scale: topScale || 0.5,
+        bottom_scale: bottomScale || 0.5,
+        quality: quality || "standard"
+      }
+    };
+    
+    console.log('创建智能扩图任务:', JSON.stringify(requestData, null, 2));
+    
+    // 调用创建任务
+    const response = await createTask(requestData);
+    
+    // 获取当前用户ID
+    const userId = req.user.id;
+    
+    // 生成唯一任务ID
+    const taskId = response.data.output?.task_id || `expand-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
+    // 保存任务信息到全局变量
+    if (!global.imageEditTasks) {
+      global.imageEditTasks = {};
+    }
+    
+    global.imageEditTasks[taskId] = {
+      userId: userId,
+      creditCost: 1, // 扩图功能消耗1积分
+      hasChargedCredits: false,
+      timestamp: new Date(),
+      imageUrl: imageUrl,
+      prompt: prompt || "延续图像内容",
+      function: "expand"
+    };
+    
+    console.log(`智能扩图任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}`);
+    
+    return res.json({
+      success: true,
+      taskId: taskId,
+      message: '任务创建成功，正在处理中'
+    });
+  } catch (error) {
+    console.error('创建智能扩图任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '创建任务失败: ' + error.message
+    });
+  }
+});
+
+// 创建任务并响应（带认证）
+async function createTaskAndRespond(requestData, req, res) {
+  try {
+    const response = await createTask(requestData);
+    
+    // 获取当前用户ID
+    const userId = req.user.id;
+    
+    // 生成唯一任务ID
+    const taskId = response.data.output?.task_id || `edit-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
+    // 保存任务信息到全局变量
+    if (!global.imageEditTasks) {
+      global.imageEditTasks = {};
+    }
+    
+    global.imageEditTasks[taskId] = {
+      userId: userId,
+      creditCost: 0, // 暂时不扣除积分
+      hasChargedCredits: false,
+      timestamp: new Date(),
+      imageUrl: requestData.input?.base_image_url,
+      prompt: requestData.input?.prompt,
+      function: requestData.input?.function || 'general_edit'
+    };
+    
+    console.log(`图片编辑任务信息已保存: 用户ID=${userId}, 任务ID=${taskId}`);
+    
+    return res.json({
+      success: true,
+      taskId: taskId,
+      message: '任务创建成功，正在处理中'
+    });
+  } catch (error) {
+    console.error('创建任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '创建任务失败: ' + error.message
+    });
+  }
+}
+
+// 创建任务并响应（不需要认证）
+async function createTaskAndRespondFallback(requestData, req, res) {
+  try {
+    const response = await createTask(requestData);
+    
+    // 生成唯一任务ID
+    const taskId = response.data.output?.task_id || `edit-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+    
+    // 保存任务信息到全局变量
+    if (!global.imageEditTasks) {
+      global.imageEditTasks = {};
+    }
+    
+    global.imageEditTasks[taskId] = {
+      userId: null, // 无用户ID
+      creditCost: 0, // 暂时不扣除积分
+      hasChargedCredits: false,
+      timestamp: new Date(),
+      imageUrl: requestData.input?.base_image_url,
+      prompt: requestData.input?.prompt,
+      function: requestData.input?.function || 'general_edit'
+    };
+    
+    console.log(`图片编辑任务信息已保存（无认证）: 任务ID=${taskId}`);
+    
+    return res.json({
+      success: true,
+      taskId: taskId,
+      message: '任务创建成功，正在处理中'
+    });
+  } catch (error) {
+    console.error('创建任务失败:', error);
+    return res.status(500).json({
+      success: false,
+      message: '创建任务失败: ' + error.message
+    });
+  }
+}
+
+// 创建任务
+async function createTask(requestData) {
+  try {
+    console.log('准备发送到通义万相的数据:', JSON.stringify(requestData, null, 2));
+    
+    // 准备请求头
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+      'X-DashScope-Async': 'enable' // 启用异步模式
+    };
+    
+    // 增加超时控制
+    const timeout = 20000; // 20秒超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      // 发送创建任务请求
+      const response = await axiosInstance.post(API_BASE_URL, requestData, { 
+        headers,
+        signal: controller.signal,
+        timeout: timeout
+      });
+      
+      clearTimeout(timeoutId);
+      console.log('通义万相API响应:', response.status, JSON.stringify(response.data, null, 2));
+      
+      // 检查响应是否包含错误信息
+      if (response.data.output?.task_status === 'FAILED') {
+        console.error('任务创建失败:', response.data.output);
+        throw new Error(response.data.output.message || '任务创建失败');
+      }
+      
+      return { status: response.status, data: response.data };
+    } catch (requestError) {
+      clearTimeout(timeoutId);
+      if (requestError.name === 'AbortError' || requestError.code === 'ECONNABORTED') {
+        console.error(`任务创建请求超时 (${timeout}ms)`);
+        throw new Error('任务创建请求超时，请稍后再试');
+      }
+      throw requestError;
+    }
+  } catch (error) {
+    console.error('创建任务失败:', error);
+    if (error.response) {
+      console.error('API错误响应:', error.response.status, error.response.data);
+    }
+    throw error;
+  }
+}
+
+// 查询任务状态
+async function queryTaskStatus(taskId) {
+  try {
+    console.log('查询任务状态:', taskId);
+    
+    // 准备请求头
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`
+    };
+    
+    // 增加超时控制
+    const timeout = 15000; // 15秒超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await axiosInstance.get(`${TASK_API_URL}/${taskId}`, { 
+        headers,
+        signal: controller.signal,
+        timeout: timeout
+      });
+      
+      clearTimeout(timeoutId);
+      console.log('任务状态查询响应:', response.status, JSON.stringify(response.data, null, 2));
+      
+      return { status: response.status, data: response.data };
+    } catch (requestError) {
+      clearTimeout(timeoutId);
+      if (requestError.name === 'AbortError' || requestError.code === 'ECONNABORTED') {
+        console.error(`任务状态查询超时 (${timeout}ms)`, taskId);
+        throw new Error('任务状态查询超时，请稍后再试');
+      }
+      throw requestError;
+    }
+  } catch (error) {
+    console.error('查询任务状态失败:', error);
+    if (error.response) {
+      console.error('API错误响应:', error.response.status, error.response.data);
+    }
+    throw error;
+  }
+}
+
+// 获取结果URL
+function getResultUrl(statusResponse) {
+  try {
+    // 优先检查images字段(新版API)
+    if (statusResponse.data.output?.images && statusResponse.data.output.images.length > 0) {
+      const resultImageUrl = statusResponse.data.output.images[0].url;
+      if (resultImageUrl && resultImageUrl.trim() !== '') {
+        return resultImageUrl;
+      }
+    }
+    
+    // 然后检查results字段(旧版API)
+    const resultsList = statusResponse.data.output?.results || [];
+    if (resultsList.length > 0) {
+      // 找出成功的结果
+      const successResults = resultsList.filter(result => result.url && result.url.trim() !== '');
+      if (successResults.length > 0) {
+        return successResults[0].url;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('获取结果URL失败:', error);
+    return null;
+  }
+}
+
+module.exports = router;

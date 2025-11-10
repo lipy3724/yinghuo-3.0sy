@@ -259,10 +259,18 @@
                 <!-- 分页控件 -->
                 <div id="pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
                     <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <p id="pagination-info" class="text-sm text-gray-700">
+                        <div class="flex items-center">
+                            <p id="pagination-info" class="text-sm text-gray-700 mr-4">
                                 显示第 <span class="font-medium">1</span> 到 <span class="font-medium">10</span> 条，共 <span class="font-medium">0</span> 条记录
                             </p>
+                            <div class="flex items-center">
+                                <label for="page-size-select" class="text-sm text-gray-600 mr-2">每页显示:</label>
+                                <select id="page-size-select" class="border border-gray-300 rounded-md text-sm py-1 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="10">10</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="分页">
@@ -704,13 +712,20 @@
                 }
             });
             
-            // 创建管理员按钮事件 - 已删除
+            // 页面大小选择事件
+            document.getElementById('page-size-select').addEventListener('change', function() {
+                pageSize = parseInt(this.value);
+                currentPage = 1; // 重置为第一页
+                loadUsers(roleSort !== 'none'); // 如果正在使用角色排序，保持排序状态
+            });
             
             // 编辑用户表单提交事件
             document.getElementById('edit-user-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 updateUser();
             });
+            
+            // 创建管理员按钮事件 - 已删除
             
             // 创建管理员表单提交事件
             document.getElementById('create-admin-form').addEventListener('submit', function(e) {
@@ -796,6 +811,7 @@
         let totalPages = 1;
         let roleSort = 'none'; // 'admin-first', 'internal-first', 'normal-first', 'none'
         let currentViewingUserId = null; // 当前正在查看会话的用户ID
+        let allSortedUsers = null; // 保存所有排序后的用户
         
         // 检查管理员登录状态
         function checkAdminAuth() {
@@ -876,8 +892,10 @@
                 updateRoleSortIcon('');
             }
             
-            // 重新加载用户列表
-            loadUsers();
+            // 如果选择了排序方式，获取所有用户并排序
+            // 如果选择了无排序，则使用正常分页
+            currentPage = 1; // 重置为第一页
+            loadUsers(roleSort !== 'none');
         }
         
         // 更新角色排序图标和提示
@@ -898,7 +916,7 @@
         }
         
         // 加载用户列表
-        async function loadUsers() {
+        async function loadUsers(getAllUsers = false) {
             const token = localStorage.getItem('adminAuthToken');
             const search = document.getElementById('search-input').value.trim();
             
@@ -907,13 +925,13 @@
                 document.getElementById('user-list').innerHTML = `
                     <tr>
                         <td colspan="10" class="px-6 py-4 text-center text-gray-500">
-                            加载中...
+                            <i class="ri-loader-4-line animate-spin inline-block mr-2"></i> 加载中...
                         </td>
                     </tr>
                 `;
                 
-                // 构建API请求URL
-                let url = `/api/admin/users?page=${currentPage}&limit=${pageSize}`;
+                // 构建API请求URL - 如果需要全局排序，获取所有用户
+                let url = `/api/admin/users?page=${currentPage}&limit=${getAllUsers ? 10000 : pageSize}`;
                 if (search) {
                     url += `&search=${encodeURIComponent(search)}`;
                 }
@@ -936,13 +954,39 @@
                     
                     // 更新分页信息
                     totalPages = pagination.totalPages || 1;
-                    updatePagination(pagination);
                     
                     // 根据当前排序类型对用户进行排序
                     const sortedUsers = sortUsersByRole(users, roleSort);
                     
+                    // 如果是全局排序，需要分页显示
+                    let displayUsers;
+                    if (getAllUsers) {
+                        // 将所有排序后的用户保存到全局变量
+                        allSortedUsers = sortedUsers;
+                        
+                        // 计算当前页面应该显示的用户
+                        const startIndex = (currentPage - 1) * pageSize;
+                        const endIndex = startIndex + pageSize;
+                        displayUsers = allSortedUsers.slice(startIndex, endIndex);
+                        
+                        // 更新分页信息以反映排序后的总页数
+                        const newTotalPages = Math.ceil(allSortedUsers.length / pageSize);
+                        totalPages = newTotalPages; // 更新全局变量
+                        
+                        updateCustomPagination({
+                            total: allSortedUsers.length,
+                            page: currentPage,
+                            limit: pageSize,
+                            totalPages: newTotalPages
+                        });
+                    } else {
+                        allSortedUsers = null; // 清除全局变量
+                        displayUsers = sortedUsers;
+                        updatePagination(pagination);
+                    }
+                    
                     // 渲染用户列表
-                    renderUsers(sortedUsers);
+                    renderUsers(displayUsers);
                 } else {
                     throw new Error(result.message || '获取用户列表失败');
                 }
@@ -968,12 +1012,94 @@
             }
         }
         
+        // 更新自定义分页信息（用于全局排序后的分页）
+        function updateCustomPagination(pagination) {
+            const { total, page, limit, totalPages } = pagination;
+            
+            // 更新分页信息文本
+            const start = total > 0 ? (page - 1) * limit + 1 : 0;
+            const end = Math.min(page * limit, total);
+            
+            document.getElementById('pagination-info').innerHTML = `
+                显示第 <span class="font-medium">${start}</span> 到 <span class="font-medium">${end}</span> 条，
+                共 <span class="font-medium">${total}</span> 条记录
+            `;
+            
+            // 更新页码
+            document.getElementById('page-numbers').innerHTML = `${page} / ${totalPages}`;
+            
+            // 设置上一页/下一页按钮状态
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+            
+            prevButton.disabled = page <= 1;
+            nextButton.disabled = page >= totalPages;
+            
+            prevButton.classList.toggle('opacity-50', page <= 1);
+            nextButton.classList.toggle('opacity-50', page >= totalPages);
+            
+            // 清除现有的事件监听器，防止重复绑定
+            const newPrevButton = prevButton.cloneNode(true);
+            const newNextButton = nextButton.cloneNode(true);
+            prevButton.parentNode.replaceChild(newPrevButton, prevButton);
+            nextButton.parentNode.replaceChild(newNextButton, nextButton);
+            
+            // 添加新的事件监听器
+            newPrevButton.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    if (allSortedUsers) {
+                        // 使用已排序的用户数据，直接重新分页显示
+                        const startIndex = (currentPage - 1) * pageSize;
+                        const endIndex = startIndex + pageSize;
+                        const displayUsers = allSortedUsers.slice(startIndex, endIndex);
+                        renderUsers(displayUsers);
+                        
+                        // 更新分页信息
+                        updateCustomPagination({
+                            total: allSortedUsers.length,
+                            page: currentPage,
+                            limit: pageSize,
+                            totalPages: Math.ceil(allSortedUsers.length / pageSize)
+                        });
+                    } else {
+                        // 没有排序，重新从服务器加载
+                        loadUsers(false);
+                    }
+                }
+            });
+            
+            newNextButton.addEventListener('click', function() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    if (allSortedUsers) {
+                        // 使用已排序的用户数据，直接重新分页显示
+                        const startIndex = (currentPage - 1) * pageSize;
+                        const endIndex = startIndex + pageSize;
+                        const displayUsers = allSortedUsers.slice(startIndex, endIndex);
+                        renderUsers(displayUsers);
+                        
+                        // 更新分页信息
+                        updateCustomPagination({
+                            total: allSortedUsers.length,
+                            page: currentPage,
+                            limit: pageSize,
+                            totalPages: Math.ceil(allSortedUsers.length / pageSize)
+                        });
+                    } else {
+                        // 没有排序，重新从服务器加载
+                        loadUsers(false);
+                    }
+                }
+            });
+        }
+        
         // 渲染用户列表
         function renderUsers(users) {
             const userList = document.getElementById('user-list');
             userList.innerHTML = '';
             
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 userList.innerHTML = `
                     <tr>
                         <td colspan="10" class="px-6 py-4 text-center text-gray-500">
