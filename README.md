@@ -37,6 +37,374 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 
 ## 🐛 最新Bug修复与优化记录
 
+### 🐛 Bug修复: 视频去水印/Logo功能进度条回退问题（2025-01-XX）
+
+**修改类型**: Bug修复  
+**严重程度**: 🟡 用户体验问题  
+**修改状态**: ✅ 已完成
+
+#### 问题描述
+
+用户在使用**视频去水印/Logo**功能时，进度条会先显示一段进度（如20%），然后突然回退到较低的值（如2%），给用户造成处理进度倒退的错觉，影响用户体验。
+
+#### 问题原因
+
+1. **进度变量初始化问题**：在 `checkTaskStatus` 函数中，`progress` 变量被初始化为 0，而不是从进度条元素中读取当前值
+2. **进度计算逻辑缺陷**：当服务器没有返回进度时，代码使用 `progress += 2` 从 0 开始递增，忽略了之前已经设置的进度值（如20%）
+3. **进度不同步**：提交任务成功后，进度条被设置为 20%，但 `checkTaskStatus` 函数中的 `progress` 变量从 0 开始，导致进度不同步
+
+#### 修复内容
+
+**修改文件：** 
+- `public/video-logo-removal.html`
+
+1. **修复进度变量初始化**：
+   - 在 `checkTaskStatus` 函数开始时，从进度条元素中读取当前进度值
+   - 修改前：`let progress = 0;`
+   - 修改后：`let progress = parseFloat(progressBar.style.width) || 0;`
+
+2. **改进进度计算逻辑**：
+   - 当服务器没有返回进度时，从当前进度条的实际值继续递增，而不是从变量值开始
+   - 使用 `Math.max(currentProgress, progress)` 确保进度不会回退
+   - 修改前：`progress += 2;`
+   - 修改后：
+     ```javascript
+     const currentProgress = parseFloat(progressBar.style.width) || progress;
+     progress = Math.max(currentProgress, progress) + 2;
+     ```
+
+#### 修复效果
+
+- ✅ **进度条不再回退**：进度条会从当前值继续递增，不会出现回退现象
+- ✅ **进度同步**：进度条显示的值与内部变量值保持一致
+- ✅ **用户体验提升**：用户看到的是平滑递增的进度，不会产生困惑
+
+#### 技术细节
+
+- 进度条更新流程：
+  1. 提交任务成功后，进度条设置为 20%
+  2. `checkTaskStatus` 函数从进度条读取当前值（20%）
+  3. 每次轮询时，如果服务器返回进度，使用服务器进度
+  4. 如果服务器没有返回进度，从当前进度条值继续递增（20% → 22% → 24% ...）
+  5. 确保进度值不会回退，使用 `Math.max()` 保证单调递增
+
+#### 使用说明
+
+1. **正常使用**：
+   - 上传视频并提交处理请求
+   - 进度条会从 20% 开始，平滑递增到 95%
+   - 不会出现进度回退的情况
+
+2. **进度显示**：
+   - 如果服务器返回了实际进度，使用服务器进度
+   - 如果服务器没有返回进度，使用客户端估算进度（每5秒增加2%）
+
+#### 影响范围
+
+- 影响功能：视频去水印/Logo功能的进度显示
+- 影响用户：所有使用视频去水印功能的用户
+- 修复状态：✅ 已完全修复
+
+---
+
+### 🐛 Bug修复: 视频去水印/Logo功能下载按钮无法下载视频问题（2025-01-XX）
+
+**修改类型**: Bug修复  
+**严重程度**: 🔴 功能缺陷  
+**修改状态**: ✅ 已完成
+
+#### 问题描述
+
+用户在使用**视频去水印/Logo**功能时，点击预览区域或生成历史中的"下载视频"按钮后，显示"无法从网站上提取文件"的错误提示，无法正常下载处理后的视频。
+
+#### 问题原因
+
+1. **`currentTask` 可能为 null**：当用户从历史记录中查看已完成的任务时，`currentTask` 变量可能为 null，导致 `currentTask?.taskId` 返回 `undefined`
+2. **下载URL无效**：当 `taskId` 为空时，下载URL变成 `/api/video-logo-removal/download/`，这是无效的URL
+3. **下载方式不当**：使用简单的 `<a>` 标签点击下载，无法正确处理错误响应和流式数据
+4. **历史记录下载按钮缺少认证**：历史记录中的下载按钮使用简单的 `<a>` 标签，没有添加认证token，导致下载失败
+5. **服务器端函数未导入**：`routes/videoLogoRemovalOptimized.js` 文件中调用了 `sanitizeFileName` 函数，但没有从 `utils/fileNameUtils.js` 导入该函数，导致服务器返回 500 错误
+
+#### 修复内容
+
+**修改文件：** 
+- `public/video-logo-removal.html`
+- `routes/videoLogoRemovalOptimized.js`
+
+1. **修改 `displayVideo` 函数**：
+   - 添加 `taskId` 参数，允许外部传入任务ID
+   - 优先使用传入的 `taskId`，其次使用 `currentTask?.taskId`
+   - 如果 `taskId` 不可用，使用备用方案（`/api/download` 代理下载）
+
+2. **改进下载实现**：
+   - 使用 `fetch` API 替代简单的 `<a>` 标签点击
+   - 添加 Authorization header 以支持认证
+   - 正确处理错误响应，显示友好的错误提示
+   - 从响应头中提取文件名（`Content-Disposition`）
+   - 使用 `blob()` 和 `URL.createObjectURL()` 处理流式数据
+   - 添加多层备用方案，确保下载功能可用
+
+3. **更新调用方式**：
+   - 在 `checkTaskStatus` 函数中调用 `displayVideo` 时传递 `taskId` 参数
+
+4. **修复历史记录下载按钮**：
+   - 将历史记录中的 `<a>` 标签改为 `<button>` 标签，添加 `history-download-btn` 类
+   - 添加 `data-task-id` 和 `data-video-url` 属性存储任务信息
+   - 在 `renderHistory` 函数中添加事件监听器，处理下载逻辑
+   - 使用与预览区域相同的下载实现，包括认证、错误处理和备用方案
+   - 添加下载状态提示（"下载中..."），防止重复点击
+
+5. **修复服务器端函数导入问题**：
+   - 在 `routes/videoLogoRemovalOptimized.js` 中导入 `sanitizeFileName` 函数
+   - 从 `utils/fileNameUtils.js` 正确导入 `sanitizeFileName`，解决服务器 500 错误
+
+#### 修复效果
+
+- ✅ **下载功能正常**：无论 `currentTask` 是否存在，都能正确下载视频
+- ✅ **错误处理改进**：提供清晰的错误提示和备用下载方案
+- ✅ **文件名正确**：从服务器响应头中获取正确的文件名
+- ✅ **服务器端修复**：修复了 `sanitizeFileName` 函数未导入的问题，解决了服务器 500 错误
+- ✅ **用户体验提升**：下载过程更加稳定可靠
+
+#### 技术细节
+
+- 下载流程：
+  1. 优先使用 `/api/video-logo-removal/download/:taskId` API（推荐方式）
+  2. 如果 `taskId` 不可用，使用 `/api/download` 代理下载（备用方案）
+  3. 如果以上都失败，尝试在新窗口打开视频URL（最终备用方案）
+
+- 下载实现：
+  - 使用 `fetch` API 获取视频流
+  - 使用 `response.blob()` 将流转换为 Blob
+  - 使用 `URL.createObjectURL()` 创建临时URL
+  - 使用 `<a>` 标签触发下载
+  - 下载完成后清理临时URL
+
+#### 使用说明
+
+1. **预览区域下载**：
+   - 处理完视频后，点击预览区域下方的"下载视频"按钮
+   - 系统会自动使用最佳方式下载视频
+
+2. **历史记录下载**：
+   - 在生成历史中，点击已完成任务下方的"下载"按钮
+   - 系统会自动使用最佳方式下载视频
+
+3. **下载流程**：
+   - 系统会自动使用最佳方式下载视频
+   - 如果下载失败，系统会尝试备用方案
+   - 下载的文件名会自动包含 `_logo_removed` 后缀
+
+#### 影响范围
+
+- 影响功能：视频去水印/Logo功能的下载功能
+- 影响用户：所有使用视频去水印功能的用户
+- 修复状态：✅ 已完全修复
+
+---
+
+### 🐛 Bug修复: 视频去水印/Logo功能处理后仍有水印问题（2025-01-XX）
+
+**修改类型**: Bug修复  
+**严重程度**: 🔴 功能缺陷  
+**修改状态**: ✅ 已完成
+
+#### 问题描述
+
+用户在使用**视频去水印/Logo**功能时，处理后的视频仍然存在水印和Logo，无法完全去除。
+
+#### 问题原因
+
+1. **前端未强制要求选择水印区域**：用户可以不选择水印区域就提交任务
+2. **后端未验证水印区域参数**：后端代码允许不传递水印区域参数
+3. **阿里云API无法自动检测**：当没有指定`Boxes`参数时，阿里云EraseVideoLogo API可能无法准确识别和去除水印，特别是对于文字水印
+
+#### 修复内容
+
+**修改文件：** 
+- `public/video-logo-removal.html`
+- `routes/videoLogoRemovalOptimized.js`
+
+1. **前端强制要求选择水印区域**：
+   - 在提交任务时检查`logoBoxes.length === 0`，如果为空则提示用户必须选择水印区域
+   - 改进提示信息，明确告知用户必须手动选择水印区域才能获得最佳效果
+   - 在水印区域设置标签上添加红色星号（*）表示必填
+
+2. **后端添加水印区域参数验证**：
+   - 检查`req.body.logoBoxes`是否存在，如果不存在则返回400错误
+   - 验证`logoBoxes`是否为非空数组
+   - 验证每个水印区域的参数格式（x, y, w, h）和坐标范围（0-1之间）
+
+3. **改进用户提示**：
+   - 在界面上添加醒目的提示信息，告知用户必须选择水印区域
+   - 使用红色和橙色文字强调重要性
+
+#### 修复效果
+
+- ✅ **强制选择水印区域**：用户必须至少选择一个水印区域才能提交任务
+- ✅ **参数验证**：后端严格验证水印区域参数，确保格式正确
+- ✅ **用户体验改进**：清晰的提示信息帮助用户正确使用功能
+- ✅ **去水印效果提升**：通过指定准确的水印区域，阿里云API能够更准确地去除水印
+
+#### 技术细节
+
+- 前端验证：在`submitBtn.addEventListener('click')`中添加`logoBoxes.length === 0`检查
+- 后端验证：在解析`logoBoxes`参数后，验证数组长度、参数格式和坐标范围
+- 坐标系统：使用相对坐标（0-1之间），x, y表示左上角位置，w, h表示宽度和高度
+
+#### 使用说明
+
+1. 上传视频文件
+2. **必须**在视频预览区域点击并拖拽选择要去除的水印区域（至少1个，最多2个）
+3. 调整水印区域的位置和大小，确保完全覆盖水印
+4. 点击"开始去除水印"按钮提交任务
+
+#### 影响范围
+
+- 影响功能：视频去水印/Logo功能
+- 影响用户：所有使用视频去水印功能的用户
+- 修复状态：✅ 已完全修复
+
+---
+
+### 🐛 Bug修复: 视频去水印/Logo功能上传视频失败问题（2025-01-XX）
+
+**修改类型**: Bug修复  
+**严重程度**: 🔴 严重错误  
+**修改状态**: ✅ 已完成
+
+#### 问题描述
+
+用户在使用**视频去水印/Logo**功能时，上传视频后点击"开始去除水印"按钮，出现以下错误：
+- 错误信息：`提交任务失败:上传视频到OSS失败: uploadVideoToOSS is not a function`
+- 服务器返回：`500 Internal Server Error`
+- 错误位置：`routes/videoLogoRemovalOptimized.js:316`
+
+#### 问题原因
+
+`routes/videoLogoRemovalOptimized.js` 文件试图从 `../utils/ossUtils` 导入 `uploadVideoToOSS` 函数，但该函数在 `utils/ossUtils.js` 中并不存在，导致运行时错误。
+
+#### 修复内容
+
+**修改文件：** `utils/ossUtils.js`
+
+1. **添加 `uploadVideoToOSS` 函数**：
+```javascript
+/**
+ * 上传视频文件到OSS
+ * @param {Buffer} buffer 视频文件的Buffer内容
+ * @param {String} ossPath OSS中的存储路径
+ * @param {String} mimetype 视频文件的MIME类型（可选）
+ * @returns {Promise<String>} 上传成功后的访问URL
+ */
+async function uploadVideoToOSS(buffer, ossPath, mimetype) {
+  // 实现代码...
+}
+```
+
+2. **更新模块导出**：
+```javascript
+module.exports = {
+  getOSSClient,
+  uploadToOSS,
+  uploadVideoToOSS,  // 新增
+  deleteFromOSS,
+  getSignedUrl
+};
+```
+
+#### 修复效果
+
+- ✅ **功能恢复**：视频去水印功能可以正常上传视频到OSS
+- ✅ **错误消除**：`uploadVideoToOSS is not a function` 错误已解决
+- ✅ **接口兼容**：函数签名与路由文件中的调用方式完全匹配
+- ✅ **错误处理**：添加了完善的错误处理和日志记录
+
+#### 技术细节
+
+- 函数接受三个参数：`buffer`（视频文件Buffer）、`ossPath`（OSS存储路径）、`mimetype`（可选，MIME类型）
+- 使用 OSS 客户端的 `put` 方法上传文件
+- 支持设置 Content-Type 头部
+- 返回上传成功后的可访问URL
+
+#### 影响范围
+
+- 影响功能：视频去水印/Logo功能
+- 影响用户：所有使用视频去水印功能的用户
+- 修复状态：✅ 已完全修复
+
+---
+
+### 🔧 功能优化: 视频去水印/Logo生成历史仅显示24小时内最新一条记录（2025-01-XX）
+
+**修改类型**: 功能优化  
+**严重程度**: 🟢 性能优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+根据用户需求，优化**视频去水印/Logo**功能的生成历史显示逻辑，现在仅显示24小时内的最新一条记录，减少历史记录加载量，提升页面性能。
+
+#### 具体修改
+
+**修改文件：** `services/videoLogoRemovalService.js`
+
+**修改方法：** `getUserTasks` 方法
+
+```javascript
+// 修改前
+static async getUserTasks(userId, limit = 20, offset = 0) {
+  const { count, rows } = await VideoLogoRemovalTask.findAndCountAll({
+    where: { userId },
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset
+  });
+  // ...
+}
+
+// 修改后
+static async getUserTasks(userId, limit = 20, offset = 0) {
+  // 计算24小时前的时间
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  
+  // 查询24小时内的记录，只返回最新的一条
+  const { count, rows } = await VideoLogoRemovalTask.findAndCountAll({
+    where: { 
+      userId,
+      createdAt: {
+        [require('sequelize').Op.gte]: twentyFourHoursAgo
+      }
+    },
+    order: [['createdAt', 'DESC']],
+    limit: 1, // 只返回最新的一条
+    offset: 0 // 从第一条开始
+  });
+  // ...
+}
+```
+
+#### 修复效果
+
+- ✅ **历史记录限制**：仅显示24小时内的记录
+- ✅ **性能优化**：只返回最新一条记录，减少数据传输量
+- ✅ **用户体验**：页面加载更快，历史记录更聚焦
+- ✅ **数据库查询优化**：减少查询数据量，提升查询效率
+
+#### 影响范围
+
+- 影响功能：视频去水印/Logo生成历史
+- 影响用户：所有使用视频去水印功能的用户
+- 显示变化：从显示所有历史记录改为仅显示24小时内最新一条
+
+#### 技术说明
+
+- 使用 Sequelize 的 `Op.gte` 操作符过滤24小时内的记录
+- 通过 `limit: 1` 限制只返回最新的一条记录
+- 保持 API 接口兼容性，不影响前端调用
+
+---
+
 ### 🔧 配置修改: 图片放大功能最大支持尺寸调整（2025-10-22）
 
 **修改类型**: 功能配置调整  
@@ -2158,6 +2526,76 @@ if (existingTaskIndex !== -1) {
 - [图生视频积分扣除逻辑优化报告-2025-10-17.md](./图生视频积分扣除逻辑优化报告-2025-10-17.md)
 - [图生视频免费判断Bug修复报告-2025-10-17.md](./图生视频免费判断Bug修复报告-2025-10-17.md)
 - [图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md](./图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md)
+
+---
+
+## 🔗 GitHub 协作说明
+
+### 仓库信息
+- **GitHub仓库地址**: `https://github.com/lipy3724/yinghuo-3.0sy.git`
+- **当前分支**: `main`
+- **连接状态**: ✅ 已连接
+
+### 团队协作流程
+
+#### 1. 获取最新代码（拉取同事的更新）
+```bash
+# 进入项目目录
+cd "/Users/houkai/Documents/视频数字人START 2"
+
+# 拉取远程最新代码
+git pull origin main
+```
+
+#### 2. 提交本地更改（推送你的更新）
+```bash
+# 查看更改状态
+git status
+
+# 添加更改的文件
+git add .
+
+# 提交更改（请填写有意义的提交信息）
+git commit -m "描述你的更改内容"
+
+# 推送到GitHub
+git push origin main
+```
+
+#### 3. 处理冲突（如果出现）
+如果拉取时出现冲突：
+```bash
+# 1. 先拉取最新代码
+git pull origin main
+
+# 2. 如果有冲突，Git会提示哪些文件有冲突
+# 3. 手动解决冲突后，执行：
+git add .
+git commit -m "解决合并冲突"
+git push origin main
+```
+
+#### 4. 查看远程更新（不合并）
+```bash
+# 只查看远程有什么更新，不合并到本地
+git fetch origin
+
+# 查看远程和本地的差异
+git log HEAD..origin/main
+```
+
+### 常用命令
+- `git status` - 查看当前状态
+- `git pull origin main` - 拉取并合并远程更新
+- `git push origin main` - 推送本地更改到远程
+- `git log --oneline -10` - 查看最近10次提交记录
+- `git diff` - 查看未提交的更改内容
+
+### 注意事项
+1. ⚠️ **推送前先拉取**：在推送你的更改之前，建议先执行 `git pull` 获取最新代码
+2. ⚠️ **提交信息要清晰**：使用有意义的提交信息，方便团队协作
+3. ⚠️ **不要强制推送**：避免使用 `git push --force`，除非你确定不会影响其他人的工作
+4. ⚠️ **定期同步**：建议每天开始工作前先拉取最新代码
 
 ---
 

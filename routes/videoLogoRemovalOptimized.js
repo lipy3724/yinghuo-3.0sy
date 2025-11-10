@@ -5,7 +5,7 @@ const path = require('path');
 const { protect } = require('../middleware/auth');
 const { createUnifiedFeatureMiddleware } = require('../middleware/unifiedFeatureUsage');
 const { uploadVideoToOSS } = require('../utils/ossUtils');
-const { FileNameOptimizer, generateSafeOSSPath } = require('../utils/fileNameUtils');
+const { FileNameOptimizer, generateSafeOSSPath, sanitizeFileName } = require('../utils/fileNameUtils');
 const axios = require('axios');
 const VideoLogoRemovalService = require('../services/videoLogoRemovalService');
 const { VideoLogoRemovalTask } = require('../models/VideoLogoRemovalTask');
@@ -275,15 +275,53 @@ router.post('/submit', protect,
             });
         }
         
-        // 解析标志区域参数
+        // 解析标志区域参数（必需）
         let logoBoxes = [];
         try {
             if (req.body.logoBoxes) {
                 logoBoxes = JSON.parse(req.body.logoBoxes);
                 console.log('🎯 解析到的标志区域:', logoBoxes);
+            } else {
+                // 如果没有提供水印区域，返回错误
+                return res.status(400).json({
+                    success: false,
+                    message: '请至少选择一个水印区域。在视频预览区域点击并拖拽来选择要去除的水印区域。'
+                });
             }
         } catch (parseError) {
             console.warn('⚠️ 解析标志区域参数失败:', parseError.message);
+            return res.status(400).json({
+                success: false,
+                message: '水印区域参数格式错误，请重新选择水印区域'
+            });
+        }
+        
+        // 验证水印区域参数
+        if (!Array.isArray(logoBoxes) || logoBoxes.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: '请至少选择一个水印区域。在视频预览区域点击并拖拽来选择要去除的水印区域。'
+            });
+        }
+        
+        // 验证每个区域参数格式
+        for (let i = 0; i < logoBoxes.length; i++) {
+            const box = logoBoxes[i];
+            if (!box || typeof box.x !== 'number' || typeof box.y !== 'number' || 
+                typeof box.w !== 'number' || typeof box.h !== 'number') {
+                return res.status(400).json({
+                    success: false,
+                    message: `水印区域 ${i + 1} 参数格式错误，请重新选择`
+                });
+            }
+            // 验证坐标范围（0-1之间）
+            if (box.x < 0 || box.x > 1 || box.y < 0 || box.y > 1 ||
+                box.w <= 0 || box.w > 1 || box.h <= 0 || box.h > 1) {
+                return res.status(400).json({
+                    success: false,
+                    message: `水印区域 ${i + 1} 坐标超出范围，请重新选择`
+                });
+            }
         }
         
         // 智能优化文件名
