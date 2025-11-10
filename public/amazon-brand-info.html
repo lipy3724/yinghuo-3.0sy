@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>品牌信息收集和总结 - 萤火AI</title>
+    <title data-translate="brand_info.page_title">品牌信息收集和总结 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -212,10 +213,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">品牌信息收集和总结</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="brand_info.main_title">品牌信息收集和总结</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="brand-info-collector" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入品牌名称，AI将为您收集和总结品牌的相关信息，包括品牌定位、目标受众、产品线等。</p>
+                    <p class="text-gray-600 mb-4" data-translate="brand_info.description">输入品牌名称，AI将为您收集和总结品牌的相关信息，包括品牌定位、目标受众、产品线等。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -223,12 +224,12 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="brand_info.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>提供精确的品牌名称以获取更准确的信息</li>
-                                    <li>可以添加品牌的行业类别以提高相关性</li>
-                                    <li>选择适合目标市场的语言</li>
-                                    <li>生成的内容将涵盖品牌的各方面信息</li>
+                                    <li data-translate="brand_info.tip1">提供精确的品牌名称以获取更准确的信息</li>
+                                    <li data-translate="brand_info.tip2">可以添加品牌的行业类别以提高相关性</li>
+                                    <li data-translate="brand_info.tip3">选择适合目标市场的语言</li>
+                                    <li data-translate="brand_info.tip4">生成的内容将涵盖品牌的各方面信息</li>
                                 </ul>
                             </div>
                         </div>
@@ -236,25 +237,25 @@
                     
                     <form id="brandInfoForm">
                         <div class="mb-5">
-                            <label for="brandName" class="block text-gray-700 font-medium mb-2">品牌名称 <span class="text-red-500">*</span></label>
-                            <input type="text" id="brandName" name="brandName" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="例如：Apple, Nike, Amazon">
+                            <label for="brandName" class="block text-gray-700 font-medium mb-2"><span data-translate="brand_info.brand_name_required">品牌名称</span> <span class="text-red-500">*</span></label>
+                            <input type="text" id="brandName" name="brandName" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required data-translate="brand_info.brand_name_placeholder" placeholder="例如：Apple, Nike, Amazon">
                         </div>
                         
                         <div class="mb-5">
-                            <label for="industryCategory" class="block text-gray-700 font-medium mb-2">行业类别 (可选)</label>
-                            <input type="text" id="industryCategory" name="industryCategory" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：科技、服装、电商">
+                            <label for="industryCategory" class="block text-gray-700 font-medium mb-2" data-translate="brand_info.industry_category_optional">行业类别 (可选)</label>
+                            <input type="text" id="industryCategory" name="industryCategory" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate="brand_info.industry_category_placeholder" placeholder="例如：科技、服装、电商">
                         </div>
                         
                         <div class="mb-5">
-                            <label for="outputLanguage" class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label for="outputLanguage" class="block text-gray-700 font-medium mb-2" data-translate="brand_info.output_language">输出语言</label>
                             <div class="flex items-center space-x-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="form-radio h-5 w-5 text-indigo-600" checked>
-                                    <span class="ml-2 text-gray-700">中文</span>
+                                    <span class="ml-2 text-gray-700" data-translate="brand_info.language_zh">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="form-radio h-5 w-5 text-indigo-600">
-                                    <span class="ml-2 text-gray-700">英文</span>
+                                    <span class="ml-2 text-gray-700" data-translate="brand_info.language_en">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -262,7 +263,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateBrandInfoButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-store-line mr-2"></i>
-                                收集品牌信息
+                                <span data-translate="brand_info.collect_button">收集品牌信息</span>
                             </button>
                         </div>
                     </form>
@@ -273,7 +274,7 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">品牌信息总结</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2" data-translate="brand_info.summary_title">品牌信息总结</h2>
                 
                 <div id="brandInfoContainer" class="space-y-4">
                     <!-- 品牌信息内容将在这里动态生成 -->
@@ -282,11 +283,11 @@
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        <span id="copyButtonText">复制内容</span>
+                        <span id="copyButtonText" data-translate="brand_info.copy_content">复制内容</span>
                     </button>
                     <button type="button" id="regenerateButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        <span id="regenerateButtonText">重新生成</span>
+                        <span id="regenerateButtonText" data-translate="brand_info.regenerate">重新生成</span>
                     </button>
                 </div>
             </div>
@@ -296,8 +297,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-store-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">品牌信息将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"收集品牌信息"按钮开始收集</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="brand_info.empty_state_title">品牌信息将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="brand_info.empty_state_desc">填写左侧表单并点击"收集品牌信息"按钮开始收集</p>
                 </div>
             </div>
         </div>
@@ -305,7 +306,7 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在收集和分析品牌信息，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="brand_info.processing">正在收集和分析品牌信息，请稍候...</p>
             </div>
         </div>
     </div>
@@ -374,19 +375,20 @@
                             
                             // 恢复各个信息部分
                             const sections = [
-                                { key: 'foundingInfo', title: '品牌成立信息', titleEn: 'Founding Information' },
-                                { key: 'background', title: '品牌背景和特点', titleEn: 'Brand Background & Characteristics' },
-                                { key: 'marketPosition', title: '行业地位', titleEn: 'Market Position' },
-                                { key: 'topProducts', title: '畅销产品', titleEn: 'Top-Selling Products' },
-                                { key: 'salesData', title: '销售数据', titleEn: 'Sales Data' },
-                                { key: 'brandEvaluation', title: '品牌评价', titleEn: 'Brand Evaluation' }
+                                { key: 'foundingInfo', titleKey: 'brand_info.founding_info', titleEnKey: 'brand_info.founding_info_en' },
+                                { key: 'background', titleKey: 'brand_info.background', titleEnKey: 'brand_info.background_en' },
+                                { key: 'marketPosition', titleKey: 'brand_info.market_position', titleEnKey: 'brand_info.market_position_en' },
+                                { key: 'topProducts', titleKey: 'brand_info.top_products', titleEnKey: 'brand_info.top_products_en' },
+                                { key: 'salesData', titleKey: 'brand_info.sales_data', titleEnKey: 'brand_info.sales_data_en' },
+                                { key: 'brandEvaluation', titleKey: 'brand_info.brand_evaluation', titleEnKey: 'brand_info.brand_evaluation_en' }
                             ];
                             
                             sections.forEach(section => {
                                 if (results.data[section.key]) {
                                     const sectionTitle = document.createElement('h4');
                                     sectionTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                                    sectionTitle.textContent = isChinese ? section.title : section.titleEn;
+                                    const titleKey = isChinese ? section.titleKey : section.titleEnKey;
+                                    sectionTitle.textContent = typeof translate === 'function' ? translate(titleKey) : (isChinese ? '品牌成立信息' : 'Founding Information');
                                     
                                     const sectionContent = document.createElement('div');
                                     sectionContent.className = 'text-gray-700 mb-4';
@@ -462,9 +464,9 @@
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
                 const loadingLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
-                processingText.textContent = loadingLanguage === 'en' ? 
-                    'Collecting and analyzing brand information, please wait...' : 
-                    '正在收集和分析品牌信息，请稍候...';
+                processingText.textContent = typeof translate === 'function' 
+                    ? translate('brand_info.processing') 
+                    : (loadingLanguage === 'en' ? 'Collecting and analyzing brand information, please wait...' : '正在收集和分析品牌信息，请稍候...');
                 
                 try {
                     // 获取表单数据
@@ -485,7 +487,10 @@
                     const result = await response.json();
                     
                     if (!response.ok) {
-                        throw new Error(result.error || '收集品牌信息失败');
+                        const errorMsg = typeof translate === 'function' 
+                            ? translate('brand_info.collection_failed') 
+                            : '收集品牌信息失败';
+                        throw new Error(result.error || errorMsg);
                     }
                     
                     // 清空品牌信息容器
@@ -545,7 +550,9 @@
                         if (result.data.foundingInfo) {
                             const foundingTitle = document.createElement('h4');
                             foundingTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                            foundingTitle.textContent = formData.outputLanguage === 'en' ? 'Founding Information' : '品牌成立信息';
+                            foundingTitle.textContent = typeof translate === 'function' 
+                                ? (formData.outputLanguage === 'en' ? translate('brand_info.founding_info_en') : translate('brand_info.founding_info'))
+                                : (formData.outputLanguage === 'en' ? 'Founding Information' : '品牌成立信息');
                             
                             const foundingContent = document.createElement('div');
                             foundingContent.className = 'text-gray-700 mb-4';
@@ -559,7 +566,9 @@
                         if (result.data.background) {
                             const backgroundTitle = document.createElement('h4');
                             backgroundTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                            backgroundTitle.textContent = formData.outputLanguage === 'en' ? 'Brand Background & Characteristics' : '品牌背景和特点';
+                            backgroundTitle.textContent = typeof translate === 'function' 
+                                ? (formData.outputLanguage === 'en' ? translate('brand_info.background_en') : translate('brand_info.background'))
+                                : (formData.outputLanguage === 'en' ? 'Brand Background & Characteristics' : '品牌背景和特点');
                             
                             const backgroundContent = document.createElement('div');
                             backgroundContent.className = 'text-gray-700 mb-4';
@@ -573,7 +582,9 @@
                         if (result.data.marketPosition) {
                             const positionTitle = document.createElement('h4');
                             positionTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                            positionTitle.textContent = formData.outputLanguage === 'en' ? 'Market Position' : '行业地位';
+                            positionTitle.textContent = typeof translate === 'function' 
+                                ? (formData.outputLanguage === 'en' ? translate('brand_info.market_position_en') : translate('brand_info.market_position'))
+                                : (formData.outputLanguage === 'en' ? 'Market Position' : '行业地位');
                             
                             const positionContent = document.createElement('div');
                             positionContent.className = 'text-gray-700 mb-4';
@@ -587,7 +598,9 @@
                         if (result.data.topProducts) {
                             const productsTitle = document.createElement('h4');
                             productsTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                            productsTitle.textContent = formData.outputLanguage === 'en' ? 'Top-Selling Products' : '畅销产品';
+                            productsTitle.textContent = typeof translate === 'function' 
+                                ? (formData.outputLanguage === 'en' ? translate('brand_info.top_products_en') : translate('brand_info.top_products'))
+                                : (formData.outputLanguage === 'en' ? 'Top-Selling Products' : '畅销产品');
                             
                             const productsContent = document.createElement('div');
                             productsContent.className = 'text-gray-700 mb-4';
@@ -601,7 +614,9 @@
                         if (result.data.salesData) {
                             const salesTitle = document.createElement('h4');
                             salesTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                            salesTitle.textContent = formData.outputLanguage === 'en' ? 'Sales Data' : '销售数据';
+                            salesTitle.textContent = typeof translate === 'function' 
+                                ? (formData.outputLanguage === 'en' ? translate('brand_info.sales_data_en') : translate('brand_info.sales_data'))
+                                : (formData.outputLanguage === 'en' ? 'Sales Data' : '销售数据');
                             
                             const salesContent = document.createElement('div');
                             salesContent.className = 'text-gray-700 mb-4';
@@ -615,7 +630,9 @@
                         if (result.data.brandEvaluation) {
                             const evaluationTitle = document.createElement('h4');
                             evaluationTitle.className = 'font-semibold text-lg text-gray-800 mt-4 mb-2';
-                            evaluationTitle.textContent = formData.outputLanguage === 'en' ? 'Brand Evaluation' : '品牌评价';
+                            evaluationTitle.textContent = typeof translate === 'function' 
+                                ? (formData.outputLanguage === 'en' ? translate('brand_info.brand_evaluation_en') : translate('brand_info.brand_evaluation'))
+                                : (formData.outputLanguage === 'en' ? 'Brand Evaluation' : '品牌评价');
                             
                             const evaluationContent = document.createElement('div');
                             evaluationContent.className = 'text-gray-700 mb-4';
@@ -633,9 +650,10 @@
                         // 如果没有品牌信息内容，显示提示信息
                         const noBrandInfoMsg = document.createElement('p');
                         noBrandInfoMsg.className = 'text-gray-600 text-center py-4';
-                        noBrandInfoMsg.textContent = formData.outputLanguage === 'en' ? 
-                            'Could not collect brand information. Please try providing a more specific brand name or industry category.' : 
-                            '未能收集到品牌信息，请尝试提供更精确的品牌名称或行业类别。';
+                        const noInfoKey = formData.outputLanguage === 'en' ? 'brand_info.no_brand_info_en' : 'brand_info.no_brand_info';
+                        noBrandInfoMsg.textContent = typeof translate === 'function' 
+                            ? translate(noInfoKey)
+                            : (formData.outputLanguage === 'en' ? 'Could not collect brand information. Please try providing a more specific brand name or industry category.' : '未能收集到品牌信息，请尝试提供更精确的品牌名称或行业类别。');
                         brandInfoContainer.appendChild(noBrandInfoMsg);
                     }
                     
@@ -656,7 +674,10 @@
                     
                 } catch (error) {
                     console.error('收集品牌信息出错:', error);
-                    alert(`收集失败: ${error.message}`);
+                    const errorMessage = typeof translate === 'function' 
+                        ? `${translate('brand_info.collection_failed')}: ${error.message}`
+                        : `收集失败: ${error.message}`;
+                    alert(errorMessage);
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -690,10 +711,8 @@
                         
                         // 显示复制成功提示
                         const originalText = copyButton.innerHTML;
-                        const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
-                        copyButton.innerHTML = outputLanguage === 'en' ? 
-                            '<i class="ri-check-line mr-1"></i>Copied' : 
-                            '<i class="ri-check-line mr-1"></i>已复制';
+                        const copiedText = typeof translate === 'function' ? translate('brand_info.copied') : '已复制';
+                        copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>' + copiedText;
                         copyButton.classList.add('bg-green-500', 'text-white');
                         copyButton.classList.remove('text-indigo-600', 'bg-white');
                         
@@ -704,7 +723,7 @@
                         }, 2000);
                     } catch (err) {
                         console.error('复制失败:', err);
-                        alert('复制失败，请手动选择内容复制');
+                        alert(typeof translate === 'function' ? translate('brand_info.copy_failed') : '复制失败，请手动选择内容复制');
                     }
                     
                     // 清除选择
@@ -730,10 +749,8 @@
                         brandNameInput.value = titleElement.textContent;
                     } else {
                         // 如果没有找到品牌名称，显示错误提示
-                        const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
-                        alert(outputLanguage === 'en' ? 
-                            'Brand name is required. Please enter a brand name.' : 
-                            '品牌名称是必要参数。请输入品牌名称。');
+                        const errorKey = typeof translate === 'function' ? translate('brand_info.brand_name_required_error') : '品牌名称是必要参数。请输入品牌名称。';
+                        alert(errorKey);
                         return;
                     }
                 }
@@ -760,25 +777,23 @@
             
             // 更新界面文本语言
             function updateUILanguage() {
-                const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
-                const copyButtonText = document.getElementById('copyButtonText');
-                const regenerateButtonText = document.getElementById('regenerateButtonText');
-                const generateButton = document.getElementById('generateBrandInfoButton');
-                
-                if (outputLanguage === 'en') {
-                    copyButtonText.textContent = 'Copy Content';
-                    regenerateButtonText.textContent = 'Regenerate';
-                    generateButton.innerHTML = '<i class="ri-store-line mr-2"></i>Collect Brand Info';
-                } else {
-                    copyButtonText.textContent = '复制内容';
-                    regenerateButtonText.textContent = '重新生成';
-                    generateButton.innerHTML = '<i class="ri-store-line mr-2"></i>收集品牌信息';
+                // translations.js 会自动更新所有带有 data-translate 属性的元素
+                // 这里只需要更新动态文本（如果有的话）
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
                 }
             }
             
             // 监听语言选择变化
             document.querySelectorAll('input[name="outputLanguage"]').forEach(radio => {
                 radio.addEventListener('change', updateUILanguage);
+            });
+            
+            // 监听语言切换事件（从home页面切换语言时触发）
+            document.addEventListener('languageChanged', function(event) {
+                console.log('品牌信息收集页面：语言已切换为', event.detail.language);
+                // translations.js 会自动更新所有带有 data-translate 属性的元素
+                updateUILanguage();
             });
             
             // 初始化时调用

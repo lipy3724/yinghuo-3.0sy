@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>选品的改款分析和建议 - 萤火AI</title>
+    <title data-translate="product_improvement.page_title">选品的改款分析和建议 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -392,43 +393,43 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">选品的改款分析和建议</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="product_improvement.main_title">选品的改款分析和建议</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <!-- 表单区域 -->
                 <form id="analysis-form" class="space-y-4">
-                    <p class="text-gray-600 mb-6">请输入产品的标题内容、五点描述和Description，系统将为您提供专业的改款分析和建议。</p>
+                    <p class="text-gray-600 mb-6" data-translate="product_improvement.description">请输入产品的标题内容、五点描述和Description，系统将为您提供专业的改款分析和建议。</p>
                     
                     <div class="mb-4">
-                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">标题内容 <span class="text-red-500">*</span></label>
-                        <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品标题">
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1"><span data-translate="product_improvement.title_label">标题内容</span> <span class="text-red-500">*</span></label>
+                        <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate="product_improvement.title_placeholder" placeholder="请输入产品标题">
                     </div>
                     
                     <div class="mb-4">
-                        <label for="bulletPoints" class="block text-sm font-medium text-gray-700 mb-1">五点描述 <span class="text-red-500">*</span></label>
-                        <textarea id="bulletPoints" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品的五点描述，每点一行"></textarea>
+                        <label for="bulletPoints" class="block text-sm font-medium text-gray-700 mb-1"><span data-translate="product_improvement.bullet_points_label">五点描述</span> <span class="text-red-500">*</span></label>
+                        <textarea id="bulletPoints" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate="product_improvement.bullet_points_placeholder" placeholder="请输入产品的五点描述，每点一行"></textarea>
                     </div>
                     
                     <div class="mb-4">
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea id="description" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="请输入产品的详细描述（选填）"></textarea>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1" data-translate="product_improvement.description_label">Description</label>
+                        <textarea id="description" rows="5" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" data-translate="product_improvement.description_placeholder" placeholder="请输入产品的详细描述（选填）"></textarea>
                     </div>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">语言</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="product_improvement.language_label">语言</label>
                         <div class="flex space-x-4">
                             <label class="inline-flex items-center">
                                 <input type="radio" name="language" value="zh" class="form-radio text-indigo-600" checked>
-                                <span class="ml-2">中文</span>
+                                <span class="ml-2" data-translate="product_improvement.language_zh">中文</span>
                             </label>
                             <label class="inline-flex items-center">
                                 <input type="radio" name="language" value="en" class="form-radio text-indigo-600">
-                                <span class="ml-2">英文</span>
+                                <span class="ml-2" data-translate="product_improvement.language_en">英文</span>
                             </label>
                         </div>
                     </div>
                     
                     <button type="button" id="generate-btn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        生成改款分析和建议
+                        <span data-translate="product_improvement.generate_button">生成改款分析和建议</span>
                     </button>
                 </form>
             </div>
@@ -438,21 +439,21 @@
         <div class="right-panel">
             <div id="initial-content" class="h-full flex flex-col items-center justify-center text-center p-8">
                 <i class="ri-line-chart-line text-6xl text-indigo-200 mb-4"></i>
-                <h2 class="text-2xl font-semibold text-gray-700 mb-2">选品的改款分析和建议</h2>
-                <p class="text-gray-500 max-w-lg">请在左侧输入产品的标题内容、五点描述和Description，点击"生成改款分析和建议"按钮开始分析。</p>
+                <h2 class="text-2xl font-semibold text-gray-700 mb-2" data-translate="product_improvement.initial_title">选品的改款分析和建议</h2>
+                <p class="text-gray-500 max-w-lg" data-translate="product_improvement.initial_desc">请在左侧输入产品的标题内容、五点描述和Description，点击"生成改款分析和建议"按钮开始分析。</p>
             </div>
             
             <div id="loading-content" class="loading hidden">
                 <div class="spinner text-indigo-600 mb-4"></div>
-                <p class="text-gray-600">正在生成改款分析和建议，请稍候...</p>
+                <p class="text-gray-600" data-translate="product_improvement.processing">正在生成改款分析和建议，请稍候...</p>
             </div>
             
             <div id="result-content" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">产品现状分析</h3>
+                        <h3 class="text-xl font-bold text-indigo-700" data-translate="product_improvement.product_analysis_title">产品现状分析</h3>
                         <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="productAnalysis">
-                            <i class="ri-file-copy-line"></i> 复制
+                            <i class="ri-file-copy-line"></i> <span data-translate="product_improvement.copy">复制</span>
                         </button>
                     </div>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
@@ -462,9 +463,9 @@
                 
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">改款建议</h3>
+                        <h3 class="text-xl font-bold text-indigo-700" data-translate="product_improvement.improvement_suggestions_title">改款建议</h3>
                         <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="improvementSuggestions">
-                            <i class="ri-file-copy-line"></i> 复制
+                            <i class="ri-file-copy-line"></i> <span data-translate="product_improvement.copy">复制</span>
                         </button>
                     </div>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
@@ -474,9 +475,9 @@
                 
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">市场竞争分析</h3>
+                        <h3 class="text-xl font-bold text-indigo-700" data-translate="product_improvement.competition_analysis_title">市场竞争分析</h3>
                         <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="competitionAnalysis">
-                            <i class="ri-file-copy-line"></i> 复制
+                            <i class="ri-file-copy-line"></i> <span data-translate="product_improvement.copy">复制</span>
                         </button>
                     </div>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
@@ -486,9 +487,9 @@
                 
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-xl font-bold text-indigo-700">改款后预期效果</h3>
+                        <h3 class="text-xl font-bold text-indigo-700" data-translate="product_improvement.expected_results_title">改款后预期效果</h3>
                         <button class="copy-section-btn text-gray-500 hover:text-gray-700" data-section="expectedResults">
-                            <i class="ri-file-copy-line"></i> 复制
+                            <i class="ri-file-copy-line"></i> <span data-translate="product_improvement.copy">复制</span>
                         </button>
                     </div>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white">
@@ -499,22 +500,22 @@
                 <div class="flex justify-end gap-3">
                     <button type="button" id="copyAllButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制全部
+                        <span data-translate="product_improvement.copy_all">复制全部</span>
                     </button>
 
                     <button type="button" id="newAnalysisButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        重新分析
+                        <span data-translate="product_improvement.new_analysis">重新分析</span>
                     </button>
                 </div>
             </div>
             
             <div id="error-content" class="hidden">
                 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                    <p><i class="ri-error-warning-line mr-2"></i> <span id="error-message">生成失败，请稍后再试。</span></p>
+                    <p><i class="ri-error-warning-line mr-2"></i> <span id="error-message" data-translate="product_improvement.error_message">生成失败，请稍后再试。</span></p>
                 </div>
                 <button id="try-again-btn" class="mt-4 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    重新尝试
+                    <span data-translate="product_improvement.try_again">重新尝试</span>
                 </button>
             </div>
         </div>
@@ -908,10 +909,10 @@
             
             // 获取字段标签
             const fieldLabels = {
-                productAnalysis: isChinese ? '产品现状分析' : 'Product Analysis',
-                improvementSuggestions: isChinese ? '改款建议' : 'Improvement Suggestions',
-                competitionAnalysis: isChinese ? '市场竞争分析' : 'Competition Analysis',
-                expectedResults: isChinese ? '改款后预期效果' : 'Expected Results'
+                productAnalysis: typeof translate === 'function' ? translate('product_improvement.product_analysis_title') : (isChinese ? '产品现状分析' : 'Product Analysis'),
+                improvementSuggestions: typeof translate === 'function' ? translate('product_improvement.improvement_suggestions_title') : (isChinese ? '改款建议' : 'Improvement Suggestions'),
+                competitionAnalysis: typeof translate === 'function' ? translate('product_improvement.competition_analysis_title') : (isChinese ? '市场竞争分析' : 'Competition Analysis'),
+                expectedResults: typeof translate === 'function' ? translate('product_improvement.expected_results_title') : (isChinese ? '改款后预期效果' : 'Expected Results')
             };
             
             // 处理特殊情况：如果具体建议是一个数组
@@ -945,7 +946,8 @@
             // 格式化并填充结果数据
             const fields = ['productAnalysis', 'improvementSuggestions', 'competitionAnalysis', 'expectedResults'];
             fields.forEach(field => {
-                let value = data[field] || (isChinese ? '无数据' : 'No data');
+                const noDataText = typeof translate === 'function' ? translate('product_improvement.no_data') : (isChinese ? '无数据' : 'No data');
+                let value = data[field] || noDataText;
                 
                 // 根据字段类型进行特殊处理
                 if (field === 'improvementSuggestions') {
@@ -1050,8 +1052,8 @@
             });
             
             // 更新复制全部按钮文本
-            document.getElementById('copyAllButton').innerHTML = 
-                `<i class="ri-file-copy-line mr-1"></i> ${isChinese ? '复制全部' : 'Copy All'}`;
+            const copyAllText = typeof translate === 'function' ? translate('product_improvement.copy_all') : (isChinese ? '复制全部' : 'Copy All');
+            document.getElementById('copyAllButton').innerHTML = `<i class="ri-file-copy-line mr-1"></i> ${copyAllText}`;
             
             // 注释掉这里的trackFeatureUsage调用，因为在API调用时已经扣费
             // 特性追踪 - 使用已加载的feature-tracker.js
@@ -1079,13 +1081,13 @@
             
             // 验证输入
             if (!title) {
-                alert(outputLanguage === 'en' ? 'Please enter product title' : '请输入产品标题');
+                alert(typeof translate === 'function' ? translate('product_improvement.title_required') : (outputLanguage === 'en' ? 'Please enter product title' : '请输入产品标题'));
                 document.getElementById('title').focus();
                 return;
             }
             
             if (!bulletPoints) {
-                alert(outputLanguage === 'en' ? 'Please enter product bullet points' : '请输入产品五点描述');
+                alert(typeof translate === 'function' ? translate('product_improvement.bullet_points_required') : (outputLanguage === 'en' ? 'Please enter product bullet points' : '请输入产品五点描述'));
                 document.getElementById('bulletPoints').focus();
                 return;
             }
@@ -1097,7 +1099,8 @@
                 // 获取认证令牌
                 const authToken = localStorage.getItem('authToken');
                 if (!authToken) {
-                    showError(outputLanguage === 'en' ? 'You need to log in to use this feature' : '您需要登录才能使用此功能');
+                    const loginMsg = typeof translate === 'function' ? translate('product_improvement.login_required') : (outputLanguage === 'en' ? 'You need to log in to use this feature' : '您需要登录才能使用此功能');
+                    showError(loginMsg);
                     return;
                 }
                 
@@ -1161,7 +1164,10 @@
                         showResult(processedData);
                         return;
                     } else {
-                        throw new Error(alternativeResult.error || (outputLanguage === 'en' ? 'Generation failed' : '生成失败'));
+                        const errorMsg = typeof translate === 'function' 
+                            ? translate('product_improvement.generation_failed')
+                            : (outputLanguage === 'en' ? 'Generation failed' : '生成失败');
+                        throw new Error(alternativeResult.error || errorMsg);
                     }
                 }
                 
@@ -1179,34 +1185,36 @@
                     }
                     
                     showResult(processedData);
-                } else {
-                    // 检查是否有API返回的具体错误信息
-                    let errorMsg = result.error || '';
-                    
-                    // 检查是否包含账户余额不足的提示
-                    if (errorMsg.includes('欠费') || errorMsg.includes('余额不足') || errorMsg.includes('insufficient')) {
-                        errorMsg = outputLanguage === 'en' 
-                            ? 'API account balance insufficient. Please contact the administrator.' 
-                            : 'API账户余额不足，请联系管理员充值后重试。';
                     } else {
-                        errorMsg = errorMsg || (outputLanguage === 'en' ? 'Generation failed, please try again later' : '生成失败，请稍后再试');
+                        // 检查是否有API返回的具体错误信息
+                        let errorMsg = result.error || '';
+                        
+                        // 检查是否包含账户余额不足的提示
+                        if (errorMsg.includes('欠费') || errorMsg.includes('余额不足') || errorMsg.includes('insufficient')) {
+                            errorMsg = typeof translate === 'function' 
+                                ? translate('product_improvement.api_balance_insufficient')
+                                : (outputLanguage === 'en' ? 'API account balance insufficient. Please contact the administrator.' : 'API账户余额不足，请联系管理员充值后重试。');
+                        } else {
+                            errorMsg = errorMsg || (typeof translate === 'function' 
+                                ? translate('product_improvement.generation_failed_retry')
+                                : (outputLanguage === 'en' ? 'Generation failed, please try again later' : '生成失败，请稍后再试'));
+                        }
+                        
+                        showError(errorMsg);
                     }
-                    
-                    showError(errorMsg);
-                }
             } catch (error) {
                 console.error('API调用失败:', error);
                 
                 // 检查是否是账户余额不足错误
                 let errorMessage = '';
                 if (error.message && error.message.includes('429')) {
-                    errorMessage = outputLanguage === 'en' 
-                        ? 'API account balance insufficient. Please contact the administrator.' 
-                        : 'API账户余额不足，请联系管理员充值后重试。';
+                    errorMessage = typeof translate === 'function' 
+                        ? translate('product_improvement.api_balance_insufficient')
+                        : (outputLanguage === 'en' ? 'API account balance insufficient. Please contact the administrator.' : 'API账户余额不足，请联系管理员充值后重试。');
                 } else {
-                    errorMessage = outputLanguage === 'en' 
-                        ? 'Server connection failed, please try again later' 
-                        : '服务器连接失败，请稍后再试';
+                    errorMessage = typeof translate === 'function' 
+                        ? translate('product_improvement.server_connection_failed')
+                        : (outputLanguage === 'en' ? 'Server connection failed, please try again later' : '服务器连接失败，请稍后再试');
                 }
                 
                 showError(errorMessage);
@@ -1529,7 +1537,8 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
                 
                 if (copyTextToClipboard(sectionText)) {
                     const originalText = this.innerHTML;
-                    this.innerHTML = '<i class="ri-check-line"></i> 已复制';
+                    const copiedText = typeof translate === 'function' ? translate('product_improvement.copied') : '已复制';
+                    this.innerHTML = `<i class="ri-check-line"></i> ${copiedText}`;
                     setTimeout(() => {
                         this.innerHTML = originalText;
                     }, 2000);
@@ -1539,21 +1548,39 @@ Expected Outcome: 40% increase in applicable scenarios, 30% improvement in user 
         
         // 绑定复制全部内容按钮事件
         document.getElementById('copyAllButton').addEventListener('click', function() {
+            const isChinese = document.querySelector('input[name="language"]:checked').value !== 'en';
+            const sectionLabels = {
+                productAnalysis: typeof translate === 'function' ? translate('product_improvement.section_product_analysis') : (isChinese ? '产品现状分析：' : 'Product Analysis:'),
+                improvementSuggestions: typeof translate === 'function' ? translate('product_improvement.section_improvement_suggestions') : (isChinese ? '改款建议：' : 'Improvement Suggestions:'),
+                competitionAnalysis: typeof translate === 'function' ? translate('product_improvement.section_competition_analysis') : (isChinese ? '市场竞争分析：' : 'Competition Analysis:'),
+                expectedResults: typeof translate === 'function' ? translate('product_improvement.section_expected_results') : (isChinese ? '改款后预期效果：' : 'Expected Results:')
+            };
+            
             const allSections = [
-                '产品现状分析：\n' + (document.getElementById('productAnalysis').getAttribute('data-raw-text') || document.getElementById('productAnalysis').textContent) + '\n\n',
-                '改款建议：\n' + (document.getElementById('improvementSuggestions').getAttribute('data-raw-text') || document.getElementById('improvementSuggestions').textContent) + '\n\n',
-                '市场竞争分析：\n' + (document.getElementById('competitionAnalysis').getAttribute('data-raw-text') || document.getElementById('competitionAnalysis').textContent) + '\n\n',
-                '改款后预期效果：\n' + (document.getElementById('expectedResults').getAttribute('data-raw-text') || document.getElementById('expectedResults').textContent)
+                sectionLabels.productAnalysis + '\n' + (document.getElementById('productAnalysis').getAttribute('data-raw-text') || document.getElementById('productAnalysis').textContent) + '\n\n',
+                sectionLabels.improvementSuggestions + '\n' + (document.getElementById('improvementSuggestions').getAttribute('data-raw-text') || document.getElementById('improvementSuggestions').textContent) + '\n\n',
+                sectionLabels.competitionAnalysis + '\n' + (document.getElementById('competitionAnalysis').getAttribute('data-raw-text') || document.getElementById('competitionAnalysis').textContent) + '\n\n',
+                sectionLabels.expectedResults + '\n' + (document.getElementById('expectedResults').getAttribute('data-raw-text') || document.getElementById('expectedResults').textContent)
             ];
             
             const allText = allSections.join('');
             
             if (copyTextToClipboard(allText)) {
                 const originalText = this.innerHTML;
-                this.innerHTML = '<i class="ri-check-line"></i> 已复制全部内容';
+                const copiedAllText = typeof translate === 'function' ? translate('product_improvement.copy_all_copied') : (isChinese ? '已复制全部内容' : 'All content copied');
+                this.innerHTML = `<i class="ri-check-line"></i> ${copiedAllText}`;
                 setTimeout(() => {
                     this.innerHTML = originalText;
                 }, 2000);
+            }
+        });
+        
+        // 监听语言切换事件（从home页面切换语言时触发）
+        document.addEventListener('languageChanged', function(event) {
+            console.log('选品改款分析页面：语言已切换为', event.detail.language);
+            // translations.js 会自动更新所有带有 data-translate 属性的元素
+            if (typeof updatePageText === 'function') {
+                updatePageText();
             }
         });
     </script>

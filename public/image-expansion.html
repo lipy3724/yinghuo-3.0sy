@@ -2257,25 +2257,45 @@
     <!-- 多语言支持脚本 -->
     <script src="/translations.js"></script>
     <script>
-        // 多语言支持函数
+        // 兼容性：保留getTranslation函数供现有代码使用，但内部使用标准的translate函数
         function getTranslation(key) {
+            if (typeof translate === 'function') {
+                return translate(key);
+            }
+            // 如果translations.js还没加载，使用fallback
             const currentLang = localStorage.getItem('language') || 'zh';
-            return translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
+            return translations && translations[currentLang] && translations[currentLang][key] ? translations[currentLang][key] : key;
         }
         
         // 将翻译函数暴露到全局，供其他模块使用
         window.getTranslation = getTranslation;
 
+        // 监听语言切换事件（从home页面切换语言时触发）
+        document.addEventListener('languageChanged', function(event) {
+            console.log('智能扩图页面：语言已切换为', event.detail ? event.detail.language : localStorage.getItem('language'));
+            // translations.js 会自动更新所有带有 data-translate 属性的元素
+            if (typeof updatePageText === 'function') {
+                updatePageText();
+            } else {
+                // 如果updatePageText不存在，手动更新
+                updatePageLanguage();
+            }
+        });
+
         function updatePageLanguage() {
             const currentLang = localStorage.getItem('language') || 'zh';
             
             // 更新页面标题
-            document.title = getTranslation('page.image_expansion_title');
+            if (typeof translate === 'function') {
+                document.title = translate('page.image_expansion_title');
+            } else {
+                document.title = getTranslation('page.image_expansion_title');
+            }
             
             // 更新所有带有 data-translate 属性的元素
             document.querySelectorAll('[data-translate]').forEach(element => {
                 const key = element.getAttribute('data-translate');
-                const translation = getTranslation(key);
+                const translation = typeof translate === 'function' ? translate(key) : getTranslation(key);
                 
                 if (element.tagName === 'TITLE') {
                     element.textContent = translation;
@@ -2289,28 +2309,24 @@
             // 更新所有带有 data-translate-placeholder 属性的元素
             document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
                 const key = element.getAttribute('data-translate-placeholder');
-                const translation = getTranslation(key);
+                const translation = typeof translate === 'function' ? translate(key) : getTranslation(key);
                 element.placeholder = translation;
             });
         }
 
-        // 监听语言变化
-        window.addEventListener('languageChanged', function() {
-            updatePageLanguage();
-        });
-
-        // 页面加载时应用语言设置
-        document.addEventListener('DOMContentLoaded', function() {
-            updatePageLanguage();
-        });
-
-        // URL参数语言设置
-        const urlParams = new URLSearchParams(window.location.search);
-        const langParam = urlParams.get('lang');
-        if (langParam) {
-            const language = langParam === 'en-us' ? 'en' : 'zh';
-            localStorage.setItem('language', language);
-            updatePageLanguage();
+        // 页面加载时初始化翻译
+        // 等待translations.js加载完成
+        if (typeof translate === 'function' && typeof updatePageText === 'function') {
+            updatePageText();
+        } else {
+            // 如果translations.js还没加载完成，等待一下
+            setTimeout(() => {
+                if (typeof translate === 'function' && typeof updatePageText === 'function') {
+                    updatePageText();
+                } else {
+                    updatePageLanguage();
+                }
+            }, 100);
         }
     </script>
 </body>

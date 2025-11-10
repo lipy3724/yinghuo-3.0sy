@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>积分管理 - 萤火AI</title>
+    <title data-translate="page.credits_title">积分管理 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
@@ -147,7 +147,7 @@
 
     <div class="max-w-4xl mx-auto mt-8 px-4" style="margin-top: 88px;">
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h1 class="text-2xl font-bold mb-6">积分管理</h1>
+            <h1 class="text-2xl font-bold mb-6" data-translate="page.credits_management">积分管理</h1>
 
             <div class="hidden" id="message-box"></div>
 
@@ -155,13 +155,13 @@
             <div class="bg-indigo-50 p-6 rounded-lg mb-6">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-700">积分余额</h2>
-                        <p class="text-3xl font-bold text-indigo-600 mt-2"><span id="user-credits">0</span> 积分</p>
-                        <p class="text-sm text-gray-500 mt-1">上次充值: <span id="last-recharge-time">从未充值</span></p>
+                        <h2 class="text-lg font-semibold text-gray-700" data-translate="credits.balance">积分余额</h2>
+                        <p class="text-3xl font-bold text-indigo-600 mt-2"><span id="user-credits">0</span> <span data-translate="credits.unit">积分</span></p>
+                        <p class="text-sm text-gray-500 mt-1"><span data-translate="credits.last_recharge">上次充值</span>: <span id="last-recharge-time" data-translate="credits.never_recharged">从未充值</span></p>
                     </div>
                     <button id="recharge-btn" class="btn-primary flex items-center">
                         <i class="ri-add-circle-line mr-1"></i>
-                        充值积分
+                        <span data-translate="credits.recharge_button">充值积分</span>
                     </button>
                 </div>
             </div>
@@ -169,68 +169,68 @@
             <!-- 充值表单 (默认隐藏) -->
             <div id="recharge-form-container" class="hidden bg-white rounded-lg p-6 mb-8 border border-gray-200">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-medium text-gray-800">积分充值</h2>
+                    <h2 class="text-xl font-medium text-gray-800" data-translate="credits.recharge_title">积分充值</h2>
                     <button type="button" id="cancel-recharge" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <i class="ri-close-line text-xl"></i>
                     </button>
                 </div>
                 <form id="recharge-form" class="space-y-6">
                     <div class="form-group">
-                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-3">充值金额</label>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-3" data-translate="credits.recharge_amount">充值金额</label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="800">
-                                <div class="text-gray-800 font-medium mb-1">99元</div>
-                                <div class="text-indigo-600 font-bold">800积分</div>
-                                <div class="text-xs text-gray-500 mt-1">¥0.12/积分</div>
+                                <div class="text-gray-800 font-medium mb-1">99<span data-translate="currency.yuan">元</span></div>
+                                <div class="text-indigo-600 font-bold">800<span data-translate="credits.unit">积分</span></div>
+                                <div class="text-xs text-gray-500 mt-1">¥0.12/<span data-translate="credits.unit">积分</span></div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
                             <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="3980">
-                                <div class="text-gray-800 font-medium mb-1">399元</div>
-                                <div class="text-indigo-600 font-bold">3980积分</div>
-                                <div class="text-xs text-gray-500 mt-1">¥0.10/积分</div>
+                                <div class="text-gray-800 font-medium mb-1">399<span data-translate="currency.yuan">元</span></div>
+                                <div class="text-indigo-600 font-bold">3980<span data-translate="credits.unit">积分</span></div>
+                                <div class="text-xs text-gray-500 mt-1">¥0.10/<span data-translate="credits.unit">积分</span></div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
                             <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="6730">
-                                <div class="text-gray-800 font-medium mb-1">599元</div>
-                                <div class="text-indigo-600 font-bold">6730积分</div>
-                                <div class="text-xs text-gray-500 mt-1">¥0.09/积分</div>
+                                <div class="text-gray-800 font-medium mb-1">599<span data-translate="currency.yuan">元</span></div>
+                                <div class="text-indigo-600 font-bold">6730<span data-translate="credits.unit">积分</span></div>
+                                <div class="text-xs text-gray-500 mt-1">¥0.09/<span data-translate="credits.unit">积分</span></div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
                             <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="12500">
-                                <div class="text-gray-800 font-medium mb-1">999元</div>
-                                <div class="text-indigo-600 font-bold">12500积分</div>
-                                <div class="text-xs text-gray-500 mt-1">¥0.08/积分</div>
+                                <div class="text-gray-800 font-medium mb-1">999<span data-translate="currency.yuan">元</span></div>
+                                <div class="text-indigo-600 font-bold">12500<span data-translate="credits.unit">积分</span></div>
+                                <div class="text-xs text-gray-500 mt-1">¥0.08/<span data-translate="credits.unit">积分</span></div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
                             <button type="button" class="amount-option group relative overflow-hidden rounded-xl border border-transparent bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all py-4 px-3 text-center" data-amount="350">
-                                <div class="text-gray-800 font-medium mb-1">59元</div>
-                                <div class="text-indigo-600 font-bold">350积分</div>
-                                <div class="text-xs text-gray-500 mt-1">¥0.17/积分</div>
+                                <div class="text-gray-800 font-medium mb-1">59<span data-translate="currency.yuan">元</span></div>
+                                <div class="text-indigo-600 font-bold">350<span data-translate="credits.unit">积分</span></div>
+                                <div class="text-xs text-gray-500 mt-1">¥0.17/<span data-translate="credits.unit">积分</span></div>
                                 <div class="absolute inset-0 border-2 border-indigo-500 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity"></div>
                             </button>
                         </div>
                         <input type="hidden" id="amount" name="amount" value="">
                     </div>
                     <div class="form-group">
-                        <label class="block text-sm font-medium text-gray-700 mb-3">支付方式</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-3" data-translate="credits.payment_method">支付方式</label>
                         <div class="grid grid-cols-1 gap-3">
                             <button type="button" class="payment-method flex items-center justify-center py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors active" data-method="alipay">
                                 <i class="ri-alipay-line text-blue-500 text-xl mr-2"></i>
-                                <span class="font-medium">支付宝</span>
+                                <span class="font-medium" data-translate="payment.alipay">支付宝</span>
                             </button>
                         </div>
                         <input type="hidden" id="payment-method" name="paymentMethod" value="alipay">
                     </div>
                     <div class="pt-4">
                         <button type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white font-medium rounded-xl shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
-                            确认充值
+                            <span data-translate="credits.confirm_recharge">确认充值</span>
                         </button>
                     </div>
                 </form>
             </div>
 
             <!-- 功能价格列表 -->
-            <h2 class="text-xl font-semibold mb-4">功能价格列表</h2>
+            <h2 class="text-xl font-semibold mb-4" data-translate="credits.pricing_list">功能价格列表</h2>
             <div id="pricing-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <!-- 价格列表项将通过JS动态生成 -->
                 <div class="animate-pulse">
@@ -242,13 +242,13 @@
                 <div class="bg-white p-4 rounded shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center">
                         <div>
-                            <h3 class="font-semibold">视频风格重绘</h3>
-                            <p class="text-sm text-gray-500">免费试用: 0次</p>
+                            <h3 class="font-semibold" data-translate="feature.video_style_repaint">视频风格重绘</h3>
+                            <p class="text-sm text-gray-500"><span data-translate="credits.free_trial">免费试用</span>: 0<span data-translate="credits.times">次</span></p>
                         </div>
                         <div class="text-right">
-                            <p class="text-indigo-600 font-bold">540P：3积分/秒</p>
-                            <p class="text-indigo-600 font-bold">720P：6积分/秒</p>
-                            <p class="text-xs text-gray-500">不同分辨率价格不同，按实际选择计费</p>
+                            <p class="text-indigo-600 font-bold">540P：3<span data-translate="credits.unit">积分</span>/<span data-translate="time.second">秒</span></p>
+                            <p class="text-indigo-600 font-bold">720P：6<span data-translate="credits.unit">积分</span>/<span data-translate="time.second">秒</span></p>
+                            <p class="text-xs text-gray-500" data-translate="credits.resolution_pricing_note">不同分辨率价格不同，按实际选择计费</p>
                         </div>
                     </div>
                 </div>
@@ -257,6 +257,9 @@
         </div>
     </div>
 
+    <!-- 多语言支持脚本 -->
+    <script src="/translations.js"></script>
+    
     <script>
         // 异步加载完整版导航栏
         async function loadNavbar() {
@@ -392,9 +395,71 @@
             }
         }
         
-        // 功能名称本地化
+        // 功能名称本地化 - 使用翻译对象
         function formatFeatureName(name) {
-            const featureNames = {
+            // 获取当前语言
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 功能名称到翻译键的映射
+            const featureNameMap = {
+                'image-upscaler': 'feature.image_upscaling',
+                'marketing-images': 'feature.marketing_image',
+                'cutout': 'feature.smart_cutout',
+                'translate': 'feature.image_translation',
+                'scene-generator': 'feature.scene_generator',
+                'image-removal': 'feature.smart_removal',
+                'model-skin-changer': 'feature.model_skin_change',
+                'clothing-simulation': 'feature.virtual_try_on',
+                'text-to-video': 'text-to-video',
+                'image-to-video': 'image-to-video',
+                'IMAGE_EDIT': 'feature.instruction_editing',
+                'LOCAL_REDRAW': 'feature.local_redraw',
+                'IMAGE_COLORIZATION': 'feature.image_colorization',
+                'image-expansion': 'feature.smart_expansion',
+                'VIRTUAL_SHOE_MODEL': 'VIRTUAL_SHOE_MODEL',
+                'TEXT_TO_IMAGE': 'feature.text_to_image',
+                'IMAGE_SHARPENING': 'feature.blur_to_clear',
+                'CLOTH_SEGMENTATION': 'feature.smart_clothing_segmentation',
+                'GLOBAL_STYLE': 'feature.global_stylization',
+                'VIRTUAL_MODEL_VTON': 'VIRTUAL_MODEL_VTON',
+                'VIDEO_SUBTITLE_REMOVER': 'VIDEO_SUBTITLE_REMOVER',
+                'MULTI_IMAGE_TO_VIDEO': 'MULTI_IMAGE_TO_VIDEO',
+                'DIGITAL_HUMAN_VIDEO': 'DIGITAL_HUMAN_VIDEO',
+                'VIDEO_STYLE_REPAINT': 'feature.video_style_repaint',
+                'DIANTU': 'feature.padding_image',
+                'IMAGE_RESIZE': 'IMAGE_RESIZE',
+                'IMAGE_CROP': 'IMAGE_CROP',
+                'amazon_video_script': 'amazon_video_script',
+                'product_improvement_analysis': 'product_improvement_analysis',
+                'amazon_brand_info': 'amazon_brand_info',
+                'amazon_brand_naming': 'amazon_brand_naming',
+                'amazon_listing': 'amazon_listing',
+                'amazon_search_term': 'amazon_search_term',
+                'amazon_review_analysis': 'amazon_review_analysis',
+                'amazon_consumer_insights': 'amazon_consumer_insights',
+                'amazon_customer_email': 'amazon_customer_email',
+                'fba_claim_email': 'fba_claim_email',
+                'amazon_review_generator': 'amazon_review_generator',
+                'amazon_review_response': 'amazon_review_response',
+                'product_comparison': 'product_comparison',
+                'amazon_post_creator': 'amazon_post_creator',
+                'amazon_keyword_recommender': 'amazon_keyword_recommender',
+                'amazon_case_creator': 'amazon_case_creator',
+                'QWEN_IMAGE_EDIT': 'QWEN_IMAGE_EDIT',
+                'VIDEO_FACE_SWAP': 'VIDEO_FACE_SWAP',
+                'VIDEO_LOGO_REMOVAL': 'VIDEO_LOGO_REMOVAL'
+            };
+            
+            // 获取翻译键
+            const translationKey = featureNameMap[name];
+            
+            // 如果存在翻译键，尝试从翻译对象获取
+            if (translationKey && typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][translationKey]) {
+                return translations[currentLang][translationKey];
+            }
+            
+            // 如果没有翻译，使用中文默认值
+            const defaultNames = {
                 'image-upscaler': '图像高清放大',
                 'marketing-images': 'AI营销图生成',
                 'cutout': '商品换背景',
@@ -421,7 +486,7 @@
                 'VIDEO_STYLE_REPAINT': '视频风格重绘',
                 'DIANTU': '垫图',
                 'IMAGE_RESIZE': '图片改尺寸',
-                 'IMAGE_CROP': '图像裁剪',
+                'IMAGE_CROP': '图像裁剪',
                 'amazon_video_script': '亚马逊广告视频脚本生成',
                 'product_improvement_analysis': '选品的改款分析和建议',
                 'amazon_brand_info': '品牌信息收集和总结',
@@ -443,19 +508,43 @@
                 'VIDEO_LOGO_REMOVAL': '视频去水印/logo'
             };
             
-            return featureNames[name] || name;
+            return defaultNames[name] || name;
+        }
+        
+        // 获取翻译文本的辅助函数
+        function getTranslationText(key, defaultText) {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            if (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][key]) {
+                return translations[currentLang][key];
+            }
+            return defaultText;
         }
         
         // 渲染价格列表
         function renderPricingList() {
             const pricingList = document.getElementById('pricing-list');
+            const currentLang = localStorage.getItem('language') || 'zh';
             
             if (featurePricing.length === 0) {
-                pricingList.innerHTML = '<p class="text-gray-500">暂无价格信息</p>';
+                const noPriceText = currentLang === 'en' ? 'No pricing information' : '暂无价格信息';
+                pricingList.innerHTML = `<p class="text-gray-500">${noPriceText}</p>`;
                 return;
             }
             
             pricingList.innerHTML = '';
+            
+            // 获取翻译文本
+            const unlimitedText = getTranslationText('credits.unlimited', '无限制');
+            const freeTrialText = getTranslationText('credits.free_trial', '免费试用');
+            const timesText = getTranslationText('credits.times', '次');
+            const creditsText = getTranslationText('credits.unit', '积分');
+            const secondText = getTranslationText('time.second', '秒');
+            const perTimeText = currentLang === 'en' ? 'per time' : '/次';
+            const perSecondText = currentLang === 'en' ? 'per second' : '/秒';
+            const lessThan30SecText = currentLang === 'en' ? 'Less than 30 seconds counted as 30 seconds' : '不满30秒按30秒计算';
+            const videoDurationText = currentLang === 'en' ? 'Charged by video duration, rounded up' : '按视频时长计费，向上取整';
+            const standardModeText = currentLang === 'en' ? 'Standard Mode' : '标准模式';
+            const proModeText = currentLang === 'en' ? 'Pro Mode' : '专业模式';
             
             featurePricing.forEach(feature => {
                 // 跳过 VIDEO_STYLE_REPAINT（单独处理）
@@ -472,11 +561,11 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">30 积分/30秒</p>
-                                <p class="text-xs text-gray-500">不满30秒按30秒计算</p>
+                                <p class="text-indigo-600 font-bold">30 ${creditsText}/30${secondText}</p>
+                                <p class="text-xs text-gray-500">${lessThan30SecText}</p>
                             </div>
                         </div>
                     `;
@@ -485,11 +574,11 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">5 积分/30秒</p>
-                                <p class="text-xs text-gray-500">不满30秒按30秒计算</p>
+                                <p class="text-indigo-600 font-bold">5 ${creditsText}/30${secondText}</p>
+                                <p class="text-xs text-gray-500">${lessThan30SecText}</p>
                             </div>
                         </div>
                     `;
@@ -498,23 +587,25 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">9 积分/秒</p>
+                                <p class="text-indigo-600 font-bold">9 ${creditsText}${perSecondText}</p>
                             </div>
                         </div>
                     `;
                 } else if (feature.name === 'VIRTUAL_MODEL_VTON') {
+                    const modelVton10Text = currentLang === 'en' ? 'Model vton1.0' : '模型vton1.0';
+                    const modelVton15Text = currentLang === 'en' ? 'Model vton1.5' : '模型vton1.5';
                     card.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">模型vton1.0/40积分</p>
-                                <p class="text-indigo-600 font-bold">模型vton1.5/45积分</p>
+                                <p class="text-indigo-600 font-bold">${modelVton10Text}/40${creditsText}</p>
+                                <p class="text-indigo-600 font-bold">${modelVton15Text}/45${creditsText}</p>
                             </div>
                         </div>
                     `;
@@ -523,38 +614,37 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">66 积分/次</p>
+                                <p class="text-indigo-600 font-bold">66 ${creditsText}${perTimeText}</p>
                             </div>
                         </div>
                     `;
                 } else if (feature.name === 'QWEN_IMAGE_EDIT') {
-                    // 🆕 特殊处理QWEN_IMAGE_EDIT功能的积分显示
+                    const perImageText = currentLang === 'en' ? 'per image' : '/张';
                     card.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">7 积分/张</p>
+                                <p class="text-indigo-600 font-bold">7 ${creditsText}${perImageText}</p>
                             </div>
                         </div>
                     `;
                 } else if (feature.name === 'VIDEO_FACE_SWAP') {
-                    // 🆕 特殊处理视频换人功能的积分显示
                     card.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">标准模式：8积分/秒</p>
-                                <p class="text-indigo-600 font-bold">专业模式：10积分/秒</p>
-                                <p class="text-xs text-gray-500">按视频时长计费，向上取整</p>
+                                <p class="text-indigo-600 font-bold">${standardModeText}：8${creditsText}${perSecondText}</p>
+                                <p class="text-indigo-600 font-bold">${proModeText}：10${creditsText}${perSecondText}</p>
+                                <p class="text-xs text-gray-500">${videoDurationText}</p>
                             </div>
                         </div>
                     `;
@@ -563,10 +653,10 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h3 class="font-semibold">${localName}</h3>
-                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? '无限制' : `免费试用: ${feature.freeUsage}次`}</p>
+                                <p class="text-sm text-gray-500">${feature.freeUsage >= 999999 ? unlimitedText : `${freeTrialText}: ${feature.freeUsage}${timesText}`}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-indigo-600 font-bold">${feature.creditCost} 积分/次</p>
+                                <p class="text-indigo-600 font-bold">${feature.creditCost} ${creditsText}${perTimeText}</p>
                             </div>
                         </div>
                     `;
@@ -577,16 +667,17 @@
             // 在这里插入"视频风格重绘"卡片
             const repaintCard = document.createElement('div');
             repaintCard.className = 'bg-white p-4 rounded shadow-sm border border-gray-200';
+            const repaintName = formatFeatureName('VIDEO_STYLE_REPAINT');
             repaintCard.innerHTML = `
                 <div class="flex justify-between items-center">
                     <div>
-                        <h3 class="font-semibold">视频风格重绘</h3>
-                        <p class="text-sm text-gray-500">免费试用: 0次</p>
+                        <h3 class="font-semibold">${repaintName}</h3>
+                        <p class="text-sm text-gray-500">${freeTrialText}: 0${timesText}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-indigo-600 font-bold">540P：3积分/秒</p>
-                        <p class="text-indigo-600 font-bold">720P：6积分/秒</p>
-                        <p class="text-xs text-gray-500">不同分辨率价格不同，按实际选择计费</p>
+                        <p class="text-indigo-600 font-bold">540P：3${creditsText}${perSecondText}</p>
+                        <p class="text-indigo-600 font-bold">720P：6${creditsText}${perSecondText}</p>
+                        <p class="text-xs text-gray-500">${getTranslationText('credits.resolution_pricing_note', '不同分辨率价格不同，按实际选择计费')}</p>
                     </div>
                 </div>
             `;
@@ -602,6 +693,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 检查用户是否已登录
             if (!checkAuth()) return;
+            
+            // 初始化语言切换功能
+            initLanguageSupport();
             
             // 加载用户积分信息
             loadCreditsInfo();
@@ -691,6 +785,125 @@
                 loadCreditsInfo();
             }, 30000);
         });
+        
+        // 初始化语言支持
+        function initLanguageSupport() {
+            // 等待 translations.js 和 components.js 加载完成
+            const checkComponents = setInterval(() => {
+                if (typeof translations !== 'undefined') {
+                    clearInterval(checkComponents);
+                    
+                    // 获取当前语言（从 localStorage 或 URL 参数）
+                    let currentLang = localStorage.getItem('language') || 'zh';
+                    
+                    // 检查 URL 参数中的语言设置
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const langParam = urlParams.get('lang');
+                    if (langParam) {
+                        // 转换语言格式：zh-cn -> zh, en-us -> en
+                        if (langParam === 'zh-cn') {
+                            currentLang = 'zh';
+                        } else if (langParam === 'en-us') {
+                            currentLang = 'en';
+                        }
+                        // 保存到 localStorage
+                        localStorage.setItem('language', currentLang);
+                    }
+                    
+                    // 更新页面语言属性
+                    document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+                    
+                    // 更新 translations.js 中的 currentLanguage 变量
+                    if (typeof currentLanguage !== 'undefined') {
+                        currentLanguage = currentLang;
+                    }
+                    
+                    // 更新页面文本 - 使用 translations.js 中的 updatePageText 函数
+                    if (typeof updatePageText === 'function') {
+                        // translations.js 中的 updatePageText 不需要参数，它会自动从 localStorage 读取语言
+                        // 但需要先更新 currentLanguage 变量
+                        if (typeof currentLanguage !== 'undefined') {
+                            currentLanguage = currentLang;
+                        }
+                        updatePageText();
+                    } else {
+                        // 手动更新所有带有 data-translate 属性的元素
+                        const elements = document.querySelectorAll('[data-translate]');
+                        elements.forEach(element => {
+                            const key = element.getAttribute('data-translate');
+                            if (translations[currentLang] && translations[currentLang][key]) {
+                                if (element.tagName === 'TITLE') {
+                                    document.title = translations[currentLang][key];
+                                } else {
+                                    element.textContent = translations[currentLang][key];
+                                }
+                            }
+                        });
+                    }
+                    
+                    // 更新页面标题
+                    const titleKey = 'page.credits_title';
+                    if (translations[currentLang] && translations[currentLang][titleKey]) {
+                        document.title = translations[currentLang][titleKey];
+                    } else {
+                        document.title = currentLang === 'en' ? 'Credits Management - YingHuo AI' : '积分管理 - 萤火AI';
+                    }
+                    
+                    // 监听语言变化事件
+                    document.addEventListener('languageChanged', function(event) {
+                        const newLang = event.detail.language;
+                        document.documentElement.lang = newLang === 'en' ? 'en' : 'zh-CN';
+                        
+                        // 更新 translations.js 中的 currentLanguage 变量
+                        if (typeof currentLanguage !== 'undefined') {
+                            currentLanguage = newLang;
+                        }
+                        
+                        // 更新页面文本
+                        if (typeof updatePageText === 'function') {
+                            // 先更新 currentLanguage 变量
+                            if (typeof currentLanguage !== 'undefined') {
+                                currentLanguage = newLang;
+                            }
+                            updatePageText();
+                        } else {
+                            // 手动更新所有带有 data-translate 属性的元素
+                            const elements = document.querySelectorAll('[data-translate]');
+                            elements.forEach(element => {
+                                const key = element.getAttribute('data-translate');
+                                if (translations[newLang] && translations[newLang][key]) {
+                                    if (element.tagName === 'TITLE') {
+                                        document.title = translations[newLang][key];
+                                    } else {
+                                        element.textContent = translations[newLang][key];
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // 重新渲染价格列表以应用新语言
+                        if (featurePricing.length > 0) {
+                            renderPricingList();
+                        }
+                        
+                        // 更新页面标题
+                        const titleKey = 'page.credits_title';
+                        if (translations[newLang] && translations[newLang][titleKey]) {
+                            document.title = translations[newLang][titleKey];
+                        } else {
+                            document.title = newLang === 'en' ? 'Credits Management - YingHuo AI' : '积分管理 - 萤火AI';
+                        }
+                    });
+                    
+                    console.log('语言支持初始化完成，当前语言:', currentLang);
+                }
+            }, 100);
+            
+            // 如果 5 秒后仍未加载完成，停止检查
+            setTimeout(() => {
+                clearInterval(checkComponents);
+            }, 5000);
+        }
         
         // 初始化充值表单
         function initRechargeForm() {

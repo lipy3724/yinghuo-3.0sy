@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>亚马逊关键词推荐 - 萤火AI</title>
+    <title data-translate="keyword_recommender.page_title">亚马逊关键词推荐 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="/feature-tracker.js"></script>
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -195,10 +196,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">亚马逊关键词推荐</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="keyword_recommender.main_title">亚马逊关键词推荐</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="keyword-form-container">
-                    <p class="text-gray-600 mb-4">输入产品描述，AI将根据您的描述生成相关的亚马逊流行关键词。</p>
+                    <p class="text-gray-600 mb-4" data-translate="keyword_recommender.description">输入产品描述，AI将根据您的描述生成相关的亚马逊流行关键词。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -206,7 +207,7 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <p class="text-sm text-indigo-700">
+                                <p class="text-sm text-indigo-700" data-translate="keyword_recommender.info_text">
                                     输入详细的产品描述，AI会围绕产品信息生成30个亚马逊流行词（修饰后的名词）。
                                 </p>
                             </div>
@@ -215,26 +216,26 @@
                     
                     <form id="keywordForm">
                         <div class="mb-5">
-                            <label for="productDescription" class="block text-gray-700 font-medium mb-2">产品描述 <span class="text-red-500">*</span></label>
-                            <textarea id="productDescription" name="productDescription" rows="6" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required placeholder="请详细描述您的产品特点、功能、用途等"></textarea>
+                            <label for="productDescription" class="block text-gray-700 font-medium mb-2"><span data-translate="keyword_recommender.product_description_label">产品描述</span> <span class="text-red-500">*</span></label>
+                            <textarea id="productDescription" name="productDescription" rows="6" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required data-translate="keyword_recommender.product_description_placeholder" placeholder="请详细描述您的产品特点、功能、用途等"></textarea>
                         </div>
                         
                         <div class="mb-5">
-                            <label for="outputLanguage" class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label for="outputLanguage" class="block text-gray-700 font-medium mb-2" data-translate="keyword_recommender.output_language_label">输出语言</label>
                             <div class="flex items-center space-x-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="form-radio text-indigo-600" checked>
-                                    <span class="ml-2">中文</span>
+                                    <span class="ml-2" data-translate="keyword_recommender.language_zh">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="form-radio text-indigo-600">
-                                    <span class="ml-2">英文</span>
+                                    <span class="ml-2" data-translate="keyword_recommender.language_en">英文</span>
                                 </label>
                             </div>
                         </div>
                         
                         <button type="submit" id="generateBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 flex items-center justify-center btn-primary">
-                            <span>生成关键词</span>
+                            <span data-translate="keyword_recommender.generate_button">生成关键词</span>
                             <div id="loadingSpinner" class="loading-spinner ml-2"></div>
                         </button>
                     </form>
@@ -246,16 +247,16 @@
         <div class="right-panel">
             <div class="bg-white p-6 rounded-lg shadow-md slide-in">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800">关键词推荐结果</h2>
+                    <h2 class="text-lg font-semibold text-gray-800" data-translate="keyword_recommender.results_title">关键词推荐结果</h2>
                     <button id="copyAllBtn" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-md transition duration-300 flex items-center" disabled>
                         <i class="ri-file-copy-line mr-1"></i>
-                        <span>复制全部</span>
+                        <span data-translate="keyword_recommender.copy_all">复制全部</span>
                     </button>
                 </div>
                 
                 <div id="resultPlaceholder" class="flex flex-col items-center justify-center h-64 text-gray-400">
                     <i class="ri-search-line text-5xl mb-2"></i>
-                    <p>请在左侧输入产品描述并生成关键词</p>
+                    <p data-translate="keyword_recommender.placeholder_text">请在左侧输入产品描述并生成关键词</p>
                 </div>
                 
                 <div id="keywordsContainer" class="hidden">
@@ -268,7 +269,7 @@
     </div>
 
     <!-- 复制成功提示 -->
-    <div id="copySuccess" class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg hidden">
+    <div id="copySuccess" class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg hidden" data-translate="keyword_recommender.copy_success">
         复制成功！
     </div>
 
@@ -329,7 +330,8 @@
             const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
             
             if (!productDescription) {
-                alert('请输入产品描述');
+                const msg = typeof translate === 'function' ? translate('keyword_recommender.description_required') : (outputLanguage === 'en' ? 'Please enter product description' : '请输入产品描述');
+                alert(msg);
                 return;
             }
             
@@ -337,12 +339,22 @@
             document.getElementById('loadingSpinner').style.display = 'block';
             document.getElementById('generateBtn').disabled = true;
             
+            // 获取认证令牌
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
+                const loginMsg = typeof translate === 'function' ? translate('keyword_recommender.login_required') : (outputLanguage === 'en' ? 'You need to log in to use this feature' : '您需要登录才能使用此功能');
+                alert(loginMsg);
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+                return;
+            }
+            
             // 调用API
             fetch('/api/amazon-listing/keyword-recommender', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('authToken')
+                        'Authorization': 'Bearer ' + authToken
                     },
                     body: JSON.stringify({
                         productDescription,
@@ -351,7 +363,12 @@
                 })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('请求失败');
+                        if (response.status === 429) {
+                            const errorMsg = typeof translate === 'function' ? translate('keyword_recommender.api_balance_insufficient') : (outputLanguage === 'en' ? 'API account balance insufficient. Please contact the administrator.' : 'API账户余额不足，请联系管理员充值后重试。');
+                            throw new Error(errorMsg);
+                        }
+                        const errorMsg = typeof translate === 'function' ? translate('keyword_recommender.request_error') : (outputLanguage === 'en' ? 'Request failed' : '请求失败');
+                        throw new Error(errorMsg);
                     }
                     return response.json();
                 })
@@ -364,12 +381,17 @@
                         
                         // 特性追踪
                     } else {
-                        alert('生成失败: ' + (data.error || '未知错误'));
+                        const errorMsg = typeof translate === 'function' ? translate('keyword_recommender.generation_failed') : (outputLanguage === 'en' ? 'Generation failed' : '生成失败');
+                        alert(errorMsg + ': ' + (data.error || (outputLanguage === 'en' ? 'Unknown error' : '未知错误')));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('请求出错: ' + error.message);
+                    let errorMessage = error.message;
+                    if (!errorMessage || errorMessage === '请求失败' || errorMessage === 'Request failed') {
+                        errorMessage = typeof translate === 'function' ? translate('keyword_recommender.server_connection_failed') : (outputLanguage === 'en' ? 'Server connection failed, please try again later' : '服务器连接失败，请稍后再试');
+                    }
+                    alert((typeof translate === 'function' ? translate('keyword_recommender.request_error') : (outputLanguage === 'en' ? 'Request error' : '请求出错')) + ': ' + errorMessage);
                 })
                 .finally(() => {
                     // 隐藏加载状态
@@ -434,9 +456,11 @@
             } else {
                 // 显示无结果状态
                 resultPlaceholder.classList.remove('hidden');
+                const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                const noKeywordsText = typeof translate === 'function' ? translate('keyword_recommender.no_keywords') : (outputLanguage === 'en' ? 'Failed to generate keywords, please try a more detailed product description' : '未能生成关键词，请尝试更详细的产品描述');
                 resultPlaceholder.innerHTML = `
                     <i class="ri-error-warning-line text-5xl mb-2 text-yellow-500"></i>
-                    <p>未能生成关键词，请尝试更详细的产品描述</p>
+                    <p>${noKeywordsText}</p>
                 `;
                 keywordsContainer.classList.add('hidden');
                 copyAllBtn.disabled = true;
@@ -449,7 +473,9 @@
                 showCopySuccess();
             }).catch(err => {
                 console.error('复制失败:', err);
-                alert('复制失败，请手动复制');
+                const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                const copyFailedMsg = typeof translate === 'function' ? translate('keyword_recommender.copy_failed') : (outputLanguage === 'en' ? 'Copy failed, please copy manually' : '复制失败，请手动复制');
+                alert(copyFailedMsg);
             });
         }
 
@@ -462,19 +488,48 @@
                 showCopySuccess();
             }).catch(err => {
                 console.error('复制失败:', err);
-                alert('复制失败，请手动复制');
+                const outputLanguage = document.querySelector('input[name="outputLanguage"]:checked').value;
+                const copyFailedMsg = typeof translate === 'function' ? translate('keyword_recommender.copy_failed') : (outputLanguage === 'en' ? 'Copy failed, please copy manually' : '复制失败，请手动复制');
+                alert(copyFailedMsg);
             });
         }
 
         // 显示复制成功提示
         function showCopySuccess() {
             const copySuccess = document.getElementById('copySuccess');
+            if (typeof translate === 'function') {
+                copySuccess.textContent = translate('keyword_recommender.copy_success');
+            }
             copySuccess.classList.remove('hidden');
             
             setTimeout(() => {
                 copySuccess.classList.add('hidden');
             }, 2000);
         }
+        
+        // 监听语言切换事件（从home页面切换语言时触发）
+        document.addEventListener('languageChanged', function(event) {
+            console.log('亚马逊关键词推荐页面：语言已切换为', event.detail.language);
+            // translations.js 会自动更新所有带有 data-translate 属性的元素
+            if (typeof updatePageText === 'function') {
+                updatePageText();
+            }
+        });
+        
+        // 页面加载时初始化翻译
+        document.addEventListener('DOMContentLoaded', function() {
+            // 等待translations.js加载完成
+            if (typeof translate === 'function' && typeof updatePageText === 'function') {
+                updatePageText();
+            } else {
+                // 如果translations.js还没加载完成，等待一下
+                setTimeout(() => {
+                    if (typeof translate === 'function' && typeof updatePageText === 'function') {
+                        updatePageText();
+                    }
+                }, 100);
+            }
+        });
     </script>
 </body>
 </html> 

@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>产品对比 - 萤火AI</title>
+    <title data-translate="product_comparison.page_title">产品对比 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
     <script src="/feature-tracker.js"></script>
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -206,10 +207,10 @@
     <div class="page-container">
         <!-- 左侧表单面板 -->
         <div class="left-panel">
-            <h1 class="text-2xl font-bold text-indigo-700 mb-4">产品对比</h1>
+            <h1 class="text-2xl font-bold text-indigo-700 mb-4" data-translate="product_comparison.main_title">产品对比</h1>
             <div class="bg-white p-6 rounded-lg shadow-md mb-4 fade-in">
                 <div id="product-comparison" class="tab-content">
-                    <p class="text-gray-600 mb-4">输入您的产品信息和竞品信息，AI将为您生成详细的产品对比分析，帮助您了解产品优势和改进空间。结果将以表格形式呈现，更加直观清晰。</p>
+                    <p class="text-gray-600 mb-4" data-translate="product_comparison.description">输入您的产品信息和竞品信息，AI将为您生成详细的产品对比分析，帮助您了解产品优势和改进空间。结果将以表格形式呈现，更加直观清晰。</p>
                     
                     <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-md mb-6">
                         <div class="flex items-start">
@@ -217,12 +218,12 @@
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-medium text-indigo-700">使用提示</h3>
+                                <h3 class="font-medium text-indigo-700" data-translate="product_comparison.usage_tips">使用提示</h3>
                                 <ul class="list-disc ml-5 mt-2 text-sm text-indigo-700">
-                                    <li>详细描述您的产品特点、价格、材质、尺寸、品牌口碑等信息</li>
-                                    <li>同样详细描述竞品的相关信息</li>
-                                    <li>可以添加您特别关注的对比点</li>
-                                    <li>系统会生成表格式对比分析和针对性改进建议</li>
+                                    <li data-translate="product_comparison.tip1">详细描述您的产品特点、价格、材质、尺寸、品牌口碑等信息</li>
+                                    <li data-translate="product_comparison.tip2">同样详细描述竞品的相关信息</li>
+                                    <li data-translate="product_comparison.tip3">可以添加您特别关注的对比点</li>
+                                    <li data-translate="product_comparison.tip4">系统会生成表格式对比分析和针对性改进建议</li>
                                 </ul>
                             </div>
                         </div>
@@ -230,30 +231,30 @@
                     
                     <form id="productComparisonForm">
                         <div class="mb-5">
-                            <label for="yourProduct" class="block text-gray-700 font-medium mb-2">您的产品信息 <span class="text-red-500">*</span></label>
+                            <label for="yourProduct" class="block text-gray-700 font-medium mb-2"><span data-translate="product_comparison.your_product_required">您的产品信息</span> <span class="text-red-500">*</span></label>
                             <textarea id="yourProduct" name="yourProduct" rows="6" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
                         </div>
                         
                         <div class="mb-5">
-                            <label for="competitorProduct" class="block text-gray-700 font-medium mb-2">竞品产品信息 <span class="text-red-500">*</span></label>
+                            <label for="competitorProduct" class="block text-gray-700 font-medium mb-2"><span data-translate="product_comparison.competitor_product_required">竞品产品信息</span> <span class="text-red-500">*</span></label>
                             <textarea id="competitorProduct" name="competitorProduct" rows="6" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required></textarea>
                         </div>
                         
                         <div class="mb-5">
-                            <label for="focusPoints" class="block text-gray-700 font-medium mb-2">特别关注的对比点 <span class="text-gray-500">(选填)</span></label>
+                            <label for="focusPoints" class="block text-gray-700 font-medium mb-2"><span data-translate="product_comparison.focus_points_optional">特别关注的对比点</span> <span class="text-gray-500" data-translate="product_comparison.optional">(选填)</span></label>
                             <input type="text" id="focusPoints" name="focusPoints" class="form-input w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                         
                         <div class="mb-5">
-                            <label class="block text-gray-700 font-medium mb-2">输出语言</label>
+                            <label class="block text-gray-700 font-medium mb-2" data-translate="product_comparison.output_language">输出语言</label>
                             <div class="flex gap-4">
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="zh" class="text-indigo-600 focus:ring-indigo-500" checked>
-                                    <span class="ml-2">中文</span>
+                                    <span class="ml-2" data-translate="product_comparison.language_zh">中文</span>
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input type="radio" name="outputLanguage" value="en" class="text-indigo-600 focus:ring-indigo-500">
-                                    <span class="ml-2">英文</span>
+                                    <span class="ml-2" data-translate="product_comparison.language_en">英文</span>
                                 </label>
                             </div>
                         </div>
@@ -261,7 +262,7 @@
                         <div class="flex justify-end">
                             <button type="submit" id="generateComparisonButton" class="btn-primary inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <i class="ri-contrast-2-line mr-2"></i>
-                                生成产品对比
+                                <span data-translate="product_comparison.generate_button">生成产品对比</span>
                             </button>
                         </div>
                     </form>
@@ -272,11 +273,11 @@
         <!-- 右侧结果面板 -->
         <div class="right-panel">
             <div id="resultContainer" class="hidden bg-white p-6 rounded-lg shadow-md slide-in">
-                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">产品对比分析</h2>
+                <h2 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2" data-translate="product_comparison.analysis_title">产品对比分析</h2>
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-table-line mr-2 text-indigo-500"></i>产品特性对比
+                        <i class="ri-table-line mr-2 text-indigo-500"></i><span data-translate="product_comparison.feature_comparison">产品特性对比</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white overflow-x-auto">
                         <div id="featureComparisonResult" class="text-gray-800"></div>
@@ -285,7 +286,7 @@
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-bar-chart-grouped-line mr-2 text-indigo-500"></i>优劣势分析
+                        <i class="ri-bar-chart-grouped-line mr-2 text-indigo-500"></i><span data-translate="product_comparison.strengths_weaknesses">优劣势分析</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white overflow-x-auto">
                         <div id="strengthsWeaknessesResult" class="text-gray-800"></div>
@@ -294,7 +295,7 @@
                 
                 <div class="mb-6">
                     <h3 class="font-medium text-gray-700 mb-2 flex items-center">
-                        <i class="ri-lightbulb-line mr-2 text-indigo-500"></i>改进建议
+                        <i class="ri-lightbulb-line mr-2 text-indigo-500"></i><span data-translate="product_comparison.improvement_suggestions">改进建议</span>
                     </h3>
                     <div class="result-card border border-gray-200 rounded-lg p-4 bg-gray-50 hover:bg-white overflow-x-auto">
                         <div id="improvementSuggestionsResult" class="text-gray-800"></div>
@@ -304,11 +305,11 @@
                 <div class="flex justify-end gap-3">
                     <button type="button" id="copyButton" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-file-copy-line mr-1"></i>
-                        复制分析结果
+                        <span data-translate="product_comparison.copy_result">复制分析结果</span>
                     </button>
                     <button type="button" id="newComparisonButton" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300">
                         <i class="ri-refresh-line mr-1"></i>
-                        创建新对比
+                        <span data-translate="product_comparison.new_comparison">创建新对比</span>
                     </button>
                 </div>
             </div>
@@ -318,8 +319,8 @@
                     <div class="text-indigo-400 text-6xl mb-4">
                         <i class="ri-scales-line"></i>
                     </div>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">您的产品对比分析将显示在这里</h3>
-                    <p class="text-gray-500">填写左侧表单并点击"生成产品对比"按钮开始创建</p>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2" data-translate="product_comparison.empty_state_title">您的产品对比分析将显示在这里</h3>
+                    <p class="text-gray-500" data-translate="product_comparison.empty_state_desc">填写左侧表单并点击"生成产品对比"按钮开始创建</p>
                 </div>
             </div>
         </div>
@@ -327,7 +328,7 @@
         <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg shadow-lg w-80 flex flex-col items-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-700" id="processingText">正在分析产品信息，请稍候...</p>
+                <p class="text-gray-700" id="processingText" data-translate="product_comparison.processing">正在分析产品信息，请稍候...</p>
             </div>
         </div>
     </div>
@@ -451,7 +452,7 @@
                 
                 // 显示加载中
                 loadingOverlay.classList.remove('hidden');
-                processingText.textContent = '正在分析产品信息并生成对比结果，请稍候...';
+                processingText.textContent = typeof translate === 'function' ? translate('product_comparison.processing_detailed') : '正在分析产品信息并生成对比结果，请稍候...';
                 
                 try {
                     // 已由后端统一中间件处理积分，无需前端重复检查，避免扣费两次
@@ -530,7 +531,10 @@
                     
                 } catch (error) {
                     console.error('生成产品对比出错:', error);
-                    alert(`生成失败: ${error.message}`);
+                    const errorMessage = typeof translate === 'function' 
+                        ? `${translate('product_comparison.generation_failed')}: ${error.message}`
+                        : `生成失败: ${error.message}`;
+                    alert(errorMessage);
                     loadingOverlay.classList.add('hidden');
                 }
             });
@@ -550,12 +554,15 @@
                 const improvementSuggestions = document.getElementById('improvementSuggestionsResult').innerHTML;
                 
                 // 组合HTML内容
+                const featureTitle = typeof translate === 'function' ? translate('product_comparison.feature_comparison_title') : '产品特性对比';
+                const strengthsTitle = typeof translate === 'function' ? translate('product_comparison.strengths_weaknesses_title') : '优劣势分析';
+                const suggestionsTitle = typeof translate === 'function' ? translate('product_comparison.improvement_suggestions_title') : '改进建议';
                 tempContainer.innerHTML = `
-                    <h3>产品特性对比</h3>
+                    <h3>${featureTitle}</h3>
                     ${featureComparison}
-                    <h3>优劣势分析</h3>
+                    <h3>${strengthsTitle}</h3>
                     ${strengthsWeaknesses}
-                    <h3>改进建议</h3>
+                    <h3>${suggestionsTitle}</h3>
                     ${improvementSuggestions}
                 `;
                 
@@ -572,7 +579,8 @@
                     
                     // 显示复制成功提示
                     const originalText = copyButton.innerHTML;
-                    copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+                    const copiedText = typeof translate === 'function' ? translate('product_comparison.copied') : '已复制';
+                    copyButton.innerHTML = '<i class="ri-check-line mr-1"></i>' + copiedText;
                     copyButton.classList.add('bg-green-500', 'text-white');
                     copyButton.classList.remove('text-indigo-600', 'bg-white');
                     
@@ -583,7 +591,7 @@
                     }, 2000);
                 } catch (err) {
                     console.error('复制失败:', err);
-                    alert('复制失败，请手动选择内容复制');
+                    alert(typeof translate === 'function' ? translate('product_comparison.copy_failed') : '复制失败，请手动选择内容复制');
                 }
                 
                 // 清除选择
@@ -633,6 +641,16 @@
             
             // 窗口大小改变时调整布局
             window.addEventListener('resize', handleResponsiveLayout);
+            
+            // 监听语言切换事件
+            document.addEventListener('languageChanged', function(event) {
+                console.log('产品对比页面：语言已切换为', event.detail.language);
+                // translations.js 会自动更新所有带有 data-translate 属性的元素
+                // 这里只需要更新动态文本
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+            });
         });
     </script>
 </body>
