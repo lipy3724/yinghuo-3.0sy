@@ -194,7 +194,7 @@
                         <span data-translate="download_center.image_editing">指令编辑</span>
                     </button>
                     <button class="tab-btn px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm" data-tab="图像编辑">
-                        图像编辑
+                        <span data-translate="download_center.qwen_image_edit">图像编辑</span>
                     </button>
                 </div>
                 
@@ -236,10 +236,10 @@
                     <thead>
                         <tr class="bg-gray-50 text-left">
                             <th class="p-3 border-b"><input type="checkbox" id="select-all-table"></th>
-                            <th class="p-3 border-b">图片</th>
-                            <th class="p-3 border-b">处理类型</th>
-                            <th class="p-3 border-b">时间</th>
-                            <th class="p-3 border-b">操作</th>
+                            <th class="p-3 border-b"><span data-translate="download_center.table_image">图片</span></th>
+                            <th class="p-3 border-b"><span data-translate="download_center.table_processing_type">处理类型</span></th>
+                            <th class="p-3 border-b"><span data-translate="download_center.table_time">时间</span></th>
+                            <th class="p-3 border-b"><span data-translate="download_center.table_operation">操作</span></th>
                         </tr>
                     </thead>
                     <tbody id="image-table-body">
@@ -274,6 +274,7 @@
             const newLanguage = event.detail.language;
             console.log('下载中心页面：接收到语言切换事件', newLanguage);
             updatePageText(newLanguage);
+            updatePlaceholders(newLanguage);
         });
 
         // 监听localStorage变化（跨标签页语言同步）
@@ -281,14 +282,18 @@
             if (event.key === 'language' && event.newValue) {
                 console.log('下载中心页面：检测到跨标签页语言变化', event.newValue);
                 updatePageText(event.newValue);
+                updatePlaceholders(event.newValue);
             }
         });
 
         document.addEventListener('DOMContentLoaded', async function() {
-            // 初始化语言
+            // 初始化语言 - 优先从localStorage读取，如果没有则使用默认值'zh'
             const currentLanguage = getCurrentLanguage();
             console.log('下载中心页面初始化，当前语言:', currentLanguage);
+            
+            // 立即更新页面文本
             updatePageText(currentLanguage);
+            updatePlaceholders(currentLanguage);
             
             // 加载历史记录
             await loadImageHistory();
@@ -1296,42 +1301,78 @@
                 pageTitle.textContent = getTranslation('download_center.title', language);
             }
             
-            // 更新视图切换按钮
-            const gridViewBtn = document.querySelector('[data-view="grid"]');
-            if (gridViewBtn) {
-                gridViewBtn.textContent = getTranslation('download_center.grid_view', language);
+            // 更新视图切换按钮（工具栏中的按钮）
+            const gridViewBtnToolbar = document.getElementById('grid-view-btn');
+            if (gridViewBtnToolbar) {
+                const icon = gridViewBtnToolbar.querySelector('i');
+                const text = gridViewBtnToolbar.childNodes[gridViewBtnToolbar.childNodes.length - 1];
+                if (text && text.nodeType === Node.TEXT_NODE) {
+                    text.textContent = ' ' + getTranslation('download_center.grid_view', language);
+                } else {
+                    // 如果没有文本节点，创建一个
+                    const textNode = document.createTextNode(' ' + getTranslation('download_center.grid_view', language));
+                    gridViewBtnToolbar.appendChild(textNode);
+                }
             }
             
-            const listViewBtn = document.querySelector('[data-view="list"]');
-            if (listViewBtn) {
-                listViewBtn.textContent = getTranslation('download_center.list_view', language);
+            const listViewBtnToolbar = document.getElementById('list-view-btn');
+            if (listViewBtnToolbar) {
+                const icon = listViewBtnToolbar.querySelector('i');
+                const text = listViewBtnToolbar.childNodes[listViewBtnToolbar.childNodes.length - 1];
+                if (text && text.nodeType === Node.TEXT_NODE) {
+                    text.textContent = ' ' + getTranslation('download_center.list_view', language);
+                } else {
+                    // 如果没有文本节点，创建一个
+                    const textNode = document.createTextNode(' ' + getTranslation('download_center.list_view', language));
+                    listViewBtnToolbar.appendChild(textNode);
+                }
             }
             
             // 更新温馨提示
-            const warningText = document.querySelector('.warning-message p');
-            if (warningText) {
-                warningText.textContent = getTranslation('download_center.warning', language);
+            const warmTip = document.querySelector('[data-translate="download_center.warm_tip"]');
+            if (warmTip) {
+                warmTip.textContent = getTranslation('download_center.warm_tip', language);
+            }
+            
+            const expirationNotice = document.querySelector('[data-translate="download_center.expiration_notice"]');
+            if (expirationNotice) {
+                expirationNotice.textContent = getTranslation('download_center.expiration_notice', language);
             }
             
             // 更新"正在加载"文本
             const loadingText = document.querySelector('.loading span');
             if (loadingText) {
-                loadingText.textContent = language === 'en' ? 'Loading...' : '正在加载...';
+                loadingText.textContent = getTranslation('download_center.loading', language);
             }
             
-            // 更新分类标签
-            const categoryButtons = document.querySelectorAll('[data-translate]');
-            categoryButtons.forEach(btn => {
-                const translateKey = btn.getAttribute('data-translate');
-                if (translateKey) {
-                    btn.textContent = getTranslation(translateKey, language);
+            // 更新所有带有data-translate属性的元素
+            const translateElements = document.querySelectorAll('[data-translate]');
+            translateElements.forEach(element => {
+                const translateKey = element.getAttribute('data-translate');
+                if (translateKey && translations[language] && translations[language][translateKey]) {
+                    // 如果元素内部有span标签，更新span的文本
+                    const span = element.querySelector('span');
+                    if (span) {
+                        span.textContent = getTranslation(translateKey, language);
+                    } else {
+                        element.textContent = getTranslation(translateKey, language);
+                    }
+                }
+            });
+            
+            // 更新所有带有data-translate-placeholder属性的元素
+            const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+            placeholderElements.forEach(element => {
+                const translateKey = element.getAttribute('data-translate-placeholder');
+                if (translateKey && translations[language] && translations[language][translateKey]) {
+                    element.placeholder = getTranslation(translateKey, language);
                 }
             });
             
             // 更新空状态文本
-            const emptyState = document.querySelector('.empty-state h3');
-            if (emptyState) {
-                emptyState.textContent = getTranslation('download_center.no_images', language);
+            const noDataText = document.querySelector('#no-data p');
+            if (noDataText) {
+                noDataText.textContent = getTranslation('download_center.no_images', language);
             }
 
             // 更新搜索框占位符
@@ -1340,7 +1381,7 @@
                 searchInput.placeholder = getTranslation('download_center.search_placeholder', language);
             }
 
-            // 更新页面标题
+            // 更新页面标题和语言属性
             if (language === 'en') {
                 document.title = 'Download Center - Firefly AI';
                 document.documentElement.lang = 'en';
@@ -1370,20 +1411,18 @@
                 const script = document.createElement('script');
                 script.src = '/components/components.js';
                 script.onload = function() {
-                    // 初始化语言系统
-                    initializeLanguageSelector();
+                    // 初始化语言系统（如果函数存在）
+                    if (typeof initializeLanguageSelector === 'function') {
+                        initializeLanguageSelector();
+                    }
                     
-                    // 监听语言变化事件
-                    document.addEventListener('languageChanged', function(event) {
-                        const language = event.detail.language;
-                        updatePageText(language);
-                        updatePlaceholders(language);
-                    });
-                    
-                    // 初始化页面语言
+                    // 初始化页面语言（确保在导航栏加载后也应用语言设置）
                     const currentLanguage = getCurrentLanguage();
                     updatePageText(currentLanguage);
                     updatePlaceholders(currentLanguage);
+                    
+                    // 监听语言变化事件（确保不会重复绑定）
+                    // 注意：这个事件监听器已经在上面定义过了，这里不需要重复绑定
                 };
                 document.head.appendChild(script);
             })
