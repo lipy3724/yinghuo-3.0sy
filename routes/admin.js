@@ -475,7 +475,8 @@ router.get('/statistics', protect, checkAdmin, async (req, res) => {
       'product_comparison': '产品对比',
       'amazon_post_creator': '创建亚马逊Post',
       'amazon_keyword_recommender': '亚马逊关键词推荐',
-      'amazon_case_creator': '亚马逊客服case内容'
+      'amazon_case_creator': '亚马逊客服case内容',
+      'VIDEO_FACE_FUSION': '视频换脸'
     };
     
     usages.forEach(usage => {
@@ -788,7 +789,8 @@ router.get('/feature-usage', protect, checkAdmin, async (req, res) => {
       'DIANTU': '垫图',
       'IMAGE_CROP': '图像裁剪',
       'IMAGE_RESIZE': '图片改尺寸',
-      'QWEN_IMAGE_EDIT': '图像编辑'
+      'QWEN_IMAGE_EDIT': '图像编辑',
+      'VIDEO_FACE_FUSION': '视频换脸'
     };
     
     const responseData = {

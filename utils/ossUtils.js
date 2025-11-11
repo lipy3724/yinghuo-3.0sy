@@ -208,28 +208,28 @@ async function uploadVideoToOSS(fileOrBuffer, ossPath, mimetype) {
     } else {
       // 方式2：接收buffer、ossPath和mimetype
       const buffer = fileOrBuffer;
-      
-      if (!buffer) {
-        throw new Error('视频文件buffer不存在');
-      }
+    
+    if (!buffer) {
+      throw new Error('视频文件buffer不存在');
+    }
       
       if (!ossPath) {
         throw new Error('OSS路径不能为空');
       }
-      
-      console.log(`正在上传视频到OSS路径: ${ossPath}, 大小: ${buffer.length} bytes`);
-      
-      // 构建上传选项
-      const putOptions = {};
-      if (mimetype) {
-        putOptions.headers = {
-          'Content-Type': mimetype
-        };
-      }
-      
-      const result = await client.put(ossPath, buffer, putOptions);
-      console.log(`视频上传成功，URL: ${result.url}`);
-      return result.url;
+    
+    console.log(`正在上传视频到OSS路径: ${ossPath}, 大小: ${buffer.length} bytes`);
+    
+    // 构建上传选项
+    const putOptions = {};
+    if (mimetype) {
+      putOptions.headers = {
+        'Content-Type': mimetype
+      };
+    }
+    
+    const result = await client.put(ossPath, buffer, putOptions);
+    console.log(`视频上传成功，URL: ${result.url}`);
+    return result.url;
     }
   } catch (error) {
     console.error('上传视频到OSS失败:', error);

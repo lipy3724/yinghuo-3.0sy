@@ -74,7 +74,7 @@ async function initVideoLogoRemovalOptimizations() {
                 // 关键索引不存在，尝试添加（但捕获可能的错误）
                 try {
                     console.log('🔧 尝试添加taskId唯一索引...');
-                    await VideoLogoRemovalTask.sync({ alter: true });
+        await VideoLogoRemovalTask.sync({ alter: true });
                     console.log('✅ 索引添加成功');
                 } catch (syncError) {
                     // 如果是索引数量超限错误，检查索引是否真的不存在
@@ -141,7 +141,7 @@ async function initVideoLogoRemovalOptimizations() {
                 throw innerError;
             }
         } else {
-            throw error;
+        throw error;
         }
     }
 }
