@@ -8,6 +8,43 @@ const videoLogoRemovalJobs = require('../jobs/videoLogoRemovalJobs');
 const sequelize = require('../config/db');
 
 /**
+ * 检查表是否存在
+ */
+async function tableExists(tableName) {
+    try {
+        const [results] = await sequelize.query(`
+            SELECT TABLE_NAME 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = '${tableName}'
+        `);
+        return results.length > 0;
+    } catch (error) {
+        console.error('检查表是否存在失败:', error);
+        return false;
+    }
+}
+
+/**
+ * 检查索引是否存在
+ */
+async function indexExists(tableName, indexName) {
+    try {
+        const [results] = await sequelize.query(`
+            SELECT INDEX_NAME 
+            FROM INFORMATION_SCHEMA.STATISTICS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = '${tableName}' 
+            AND INDEX_NAME = '${indexName}'
+        `);
+        return results.length > 0;
+    } catch (error) {
+        console.error('检查索引是否存在失败:', error);
+        return false;
+    }
+}
+
+/**
  * 初始化视频去标志功能优化
  */
 async function initVideoLogoRemovalOptimizations() {
@@ -18,10 +55,50 @@ async function initVideoLogoRemovalOptimizations() {
         console.log('📊 设置数据库模型关联关系...');
         setupAssociations();
         
-        // 2. 同步数据库表结构
+        // 2. 同步数据库表结构（使用更安全的策略）
         console.log('🗄️ 同步数据库表结构...');
-        await VideoLogoRemovalTask.sync({ alter: true });
-        console.log('✅ 数据库表结构同步完成');
+        const tableName = 'video_logo_removal_tasks';
+        const exists = await tableExists(tableName);
+        
+        if (!exists) {
+            // 表不存在，创建表
+            console.log('📋 表不存在，创建新表...');
+            await VideoLogoRemovalTask.sync({ force: false });
+            console.log('✅ 表创建完成');
+        } else {
+            // 表已存在，检查关键索引是否存在
+            console.log('📋 表已存在，检查关键索引...');
+            const taskIdIndexExists = await indexExists(tableName, 'video_logo_removal_tasks_task_id');
+            
+            if (!taskIdIndexExists) {
+                // 关键索引不存在，尝试添加（但捕获可能的错误）
+                try {
+                    console.log('🔧 尝试添加taskId唯一索引...');
+                    await VideoLogoRemovalTask.sync({ alter: true });
+                    console.log('✅ 索引添加成功');
+                } catch (syncError) {
+                    // 如果是索引数量超限错误，检查索引是否真的不存在
+                    if (syncError.original && syncError.original.code === 'ER_TOO_MANY_KEYS') {
+                        console.warn('⚠️ 表索引数量已达上限，跳过自动同步');
+                        // 再次检查索引是否存在（可能已经存在但sync检测不到）
+                        const recheck = await indexExists(tableName, 'video_logo_removal_tasks_task_id');
+                        if (recheck) {
+                            console.log('✅ taskId索引已存在，继续执行');
+                        } else {
+                            console.warn('⚠️ taskId索引不存在，但无法自动添加（索引数量超限）');
+                            console.warn('⚠️ 建议手动检查并优化表的索引结构');
+                        }
+                    } else {
+                        // 其他错误，重新抛出
+                        throw syncError;
+                    }
+                }
+            } else {
+                console.log('✅ 关键索引已存在，跳过同步');
+            }
+        }
+        
+        console.log('✅ 数据库表结构检查完成');
         
         // 3. 迁移现有全局变量数据到数据库（如果存在）
         await migrateExistingTasks();
@@ -46,7 +123,26 @@ async function initVideoLogoRemovalOptimizations() {
         
     } catch (error) {
         console.error('❌ 初始化视频去标志功能优化失败:', error);
-        throw error;
+        // 如果是索引相关的错误，记录警告但不阻止启动
+        if (error.original && error.original.code === 'ER_TOO_MANY_KEYS') {
+            console.error('⚠️ 数据库表索引数量超限，但功能仍可正常使用');
+            console.error('⚠️ 建议手动优化表的索引结构');
+            // 继续执行其他初始化步骤
+            try {
+                await migrateExistingTasks();
+                videoLogoRemovalJobs.start();
+                return {
+                    success: true,
+                    message: '视频去标志功能优化初始化完成（索引警告）',
+                    jobStatus: videoLogoRemovalJobs.getStatus(),
+                    warning: '表索引数量超限，建议优化索引结构'
+                };
+            } catch (innerError) {
+                throw innerError;
+            }
+        } else {
+            throw error;
+        }
     }
 }
 

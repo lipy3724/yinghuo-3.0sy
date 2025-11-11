@@ -475,6 +475,8 @@ app.use('/api/upscale', require('./routes/upscale'));
 app.use('/api/aliyun', require('./routes/aliyun-api'));
 // 添加视频换人路由
 app.use('/api/video-face-swap', require('./routes/videoFaceSwap'));
+// 添加视频换脸路由（通用视频人脸融合）
+app.use('/api/video-face-fusion', require('./routes/videoFaceFusion'));
 
 // 视频去水印/logo功能路由
 // 使用优化版本的视频去标志路由

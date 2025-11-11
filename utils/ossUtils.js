@@ -4,6 +4,7 @@
 const OSS = require('ali-oss');
 const config = require('../config/index');
 const axios = require('axios');
+const path = require('path');
 
 // OSS客户端实例
 let ossClient = null;
@@ -161,39 +162,75 @@ async function deleteFromOSS(ossPath) {
 
 /**
  * 上传视频文件到OSS
- * @param {Buffer} buffer 视频文件的Buffer内容
- * @param {String} ossPath OSS中的存储路径
- * @param {String} mimetype 视频文件的MIME类型（可选）
+ * 支持两种调用方式：
+ * 1. uploadVideoToOSS(file) - 接收multer文件对象
+ * 2. uploadVideoToOSS(buffer, ossPath, mimetype) - 接收buffer、路径和MIME类型
+ * @param {Object|Buffer} fileOrBuffer - multer文件对象或Buffer
+ * @param {String} [ossPath] - OSS中的存储路径（仅当第一个参数是Buffer时使用）
+ * @param {String} [mimetype] - 视频文件的MIME类型（仅当第一个参数是Buffer时使用）
  * @returns {Promise<String>} 上传成功后的访问URL
  */
-async function uploadVideoToOSS(buffer, ossPath, mimetype) {
+async function uploadVideoToOSS(fileOrBuffer, ossPath, mimetype) {
   try {
     const client = getOSSClient();
-    
     if (!client) {
       console.error('上传视频到OSS失败: OSS客户端未初始化');
       throw new Error('OSS客户端未初始化，请检查OSS配置');
     }
     
-    if (!buffer) {
-      throw new Error('视频文件buffer不存在');
-    }
-    
-    console.log(`正在上传视频到OSS路径: ${ossPath}, 大小: ${buffer.length} bytes`);
-    
-    // 构建上传选项
-    const putOptions = {};
-    if (mimetype) {
-      putOptions.headers = {
-        'Content-Type': mimetype
+    // 判断是文件对象还是Buffer
+    if (fileOrBuffer && fileOrBuffer.buffer) {
+      // 方式1：接收multer文件对象
+      const file = fileOrBuffer;
+      
+      if (!file.buffer) {
+        throw new Error('视频文件buffer不存在');
+      }
+      
+      // 生成OSS路径
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const ext = path.extname(file.originalname || '.mp4');
+      const finalOssPath = `videos/${timestamp}-${randomStr}${ext}`;
+      
+      console.log(`正在上传视频到OSS路径: ${finalOssPath}, 大小: ${file.buffer.length} bytes`);
+      
+      // 构建上传选项
+      const putOptions = {
+        headers: {
+          'Content-Type': file.mimetype || 'video/mp4'
+        }
       };
+      
+      const result = await client.put(finalOssPath, file.buffer, putOptions);
+      console.log(`视频上传成功，URL: ${result.url}`);
+      return result.url;
+    } else {
+      // 方式2：接收buffer、ossPath和mimetype
+      const buffer = fileOrBuffer;
+      
+      if (!buffer) {
+        throw new Error('视频文件buffer不存在');
+      }
+      
+      if (!ossPath) {
+        throw new Error('OSS路径不能为空');
+      }
+      
+      console.log(`正在上传视频到OSS路径: ${ossPath}, 大小: ${buffer.length} bytes`);
+      
+      // 构建上传选项
+      const putOptions = {};
+      if (mimetype) {
+        putOptions.headers = {
+          'Content-Type': mimetype
+        };
+      }
+      
+      const result = await client.put(ossPath, buffer, putOptions);
+      console.log(`视频上传成功，URL: ${result.url}`);
+      return result.url;
     }
-    
-    const result = await client.put(ossPath, buffer, putOptions);
-    
-    // 返回可访问的URL
-    console.log(`视频上传成功，URL: ${result.url}`);
-    return result.url;
   } catch (error) {
     console.error('上传视频到OSS失败:', error);
     throw new Error(`上传视频到OSS失败: ${error.message}`);
@@ -267,11 +304,81 @@ function getSignedUrl(ossPath, expireSeconds = 3600) {
   }
 }
 
+/**
+ * 上传图片文件到OSS（接收multer文件对象）
+ * @param {Object} file - multer文件对象（包含buffer、originalname、mimetype等）
+ * @returns {Promise<String>} 上传成功后的访问URL
+ */
+async function uploadImageToOSS(file) {
+  try {
+    if (!file || !file.buffer) {
+      throw new Error('图片文件对象无效');
+    }
+    
+    const client = getOSSClient();
+    if (!client) {
+      console.error('上传图片到OSS失败: OSS客户端未初始化');
+      throw new Error('OSS客户端未初始化，请检查OSS配置');
+    }
+    
+    // 生成OSS路径
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const ext = path.extname(file.originalname || '.jpg');
+    const ossPath = `images/${timestamp}-${randomStr}${ext}`;
+    
+    console.log(`正在上传图片到OSS路径: ${ossPath}, 大小: ${file.buffer.length} bytes`);
+    
+    // 构建上传选项
+    const putOptions = {
+      headers: {
+        'Content-Type': file.mimetype || 'image/jpeg'
+      }
+    };
+    
+    const result = await client.put(ossPath, file.buffer, putOptions);
+    console.log(`图片上传成功，URL: ${result.url}`);
+    return result.url;
+  } catch (error) {
+    console.error('上传图片到OSS失败:', error);
+    throw new Error(`上传图片到OSS失败: ${error.message}`);
+  }
+}
+
+
+/**
+ * 上传视频换脸/换人结果到OSS（从URL下载并上传）
+ * @param {String} videoUrl - 源视频URL（阿里云返回的临时URL）
+ * @param {String} userId - 用户ID
+ * @param {String} taskId - 任务ID
+ * @returns {Promise<String>} 上传成功后的访问URL
+ */
+async function uploadVideoFaceSwapResultToOSS(videoUrl, userId, taskId) {
+  try {
+    if (!videoUrl) {
+      throw new Error('视频URL不能为空');
+    }
+    
+    // 生成OSS路径
+    const ossPath = `video-face-swap/${userId}/${taskId}_result.mp4`;
+    
+    // 使用已有的uploadVideoFromUrlToOSS函数
+    const result = await uploadVideoFromUrlToOSS(videoUrl, ossPath);
+    console.log(`视频换脸结果已上传到OSS: ${result.url}`);
+    return result.url;
+  } catch (error) {
+    console.error('上传视频换脸结果到OSS失败:', error);
+    throw new Error(`上传视频换脸结果到OSS失败: ${error.message}`);
+  }
+}
+
 module.exports = {
   getOSSClient,
   uploadToOSS,
   uploadVideoToOSS,
   deleteFromOSS,
   getSignedUrl,
-  uploadVideoFromUrlToOSS
+  uploadVideoFromUrlToOSS,
+  uploadImageToOSS,
+  uploadVideoFaceSwapResultToOSS
 };

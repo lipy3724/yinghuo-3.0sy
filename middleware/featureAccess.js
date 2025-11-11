@@ -129,6 +129,21 @@ const FEATURES = {
     },
     freeUsage: 0 // 🔧 修改：视频换人功能无免费次数，所有使用都收费
   }, // 视频换人功能 - 标准模式8积分/秒，专业模式10积分/秒
+  'VIDEO_FACE_FUSION': {
+    creditCost: (payload) => {
+      // 通用视频人脸融合功能，根据视频时长计算积分消耗
+      // 计费规则：1积分/秒
+      const videoDuration = payload && payload.videoDuration ? parseFloat(payload.videoDuration) : 1; // 默认1秒
+      const ratePerSecond = 1; // 1积分/秒
+      
+      // 先将视频时长向上取整，再乘以费率
+      const totalCredits = Math.ceil(videoDuration) * ratePerSecond;
+      console.log(`视频人脸融合积分计算: 时长=${videoDuration}秒, 向上取整=${Math.ceil(videoDuration)}秒, 费率=${ratePerSecond}积分/秒, 总积分=${totalCredits}`);
+      
+      return totalCredits;
+    },
+    freeUsage: 0 // 视频人脸融合功能无免费次数，所有使用都收费
+  }, // 通用视频人脸融合功能 - 1积分/秒
   'VIDEO_LOGO_REMOVAL': { 
     creditCost: (payload) => {
       // 视频去水印/logo功能，在任务完成后根据实际视频时长计费

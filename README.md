@@ -37,6 +37,49 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 
 ## 🐛 最新Bug修复与优化记录
 
+### ⚙️ 配置修改: 视频换脸功能计费规则调整为1积分/秒（2025-11-03）
+
+**修改类型**: 计费规则调整  
+**严重程度**: 🟢 配置优化  
+**修改状态**: ✅ 已完成
+
+#### 修改内容
+
+将视频换脸（VIDEO_FACE_FUSION）功能的计费规则从 **10积分/秒** 调整为 **1积分/秒**。
+
+#### 修改文件
+
+1. ✅ `middleware/featureAccess.js`
+   - 修改 `VIDEO_FACE_FUSION` 功能的 `ratePerSecond` 从 10 改为 1
+   - 更新注释说明为"1积分/秒"
+
+2. ✅ `middleware/unifiedFeatureUsage.js`
+   - 修改任务完成时的计费逻辑，`ratePerSecond` 从 10 改为 1
+   - 更新注释说明为"1积分/秒"
+
+#### 计费逻辑
+
+- **计费方式**: 按视频时长计费，时长向上取整
+- **费率**: 1积分/秒
+- **扣费时机**: 任务完成时扣除积分（创建任务时不预扣）
+- **示例**: 
+  - 5.2秒视频 → 计费6积分（向上取整）
+  - 10秒视频 → 计费10积分
+
+#### 影响范围
+
+- ✅ 新创建的视频换脸任务将按照新费率（1积分/秒）计费
+- ✅ 已创建但未完成的任务，在完成时将按照新费率计费
+- ✅ 不影响已完成的任务
+
+#### 验证方法
+
+1. 创建一个视频换脸任务
+2. 等待任务完成
+3. 检查积分扣除情况，确认按照1积分/秒计算
+
+---
+
 ### 🔧 配置修改: 图片放大功能最大支持尺寸调整（2025-10-22）
 
 **修改类型**: 功能配置调整  
@@ -2117,6 +2160,7 @@ if (existingTaskIndex !== -1) {
 - 视频去除字幕
 - 视频风格重绘
 - 数字人视频
+- 视频换脸（通用视频人脸融合）
 
 #### 3. 亚马逊助手功能
 - 广告视频脚本生成
@@ -2158,6 +2202,624 @@ if (existingTaskIndex !== -1) {
 - [图生视频积分扣除逻辑优化报告-2025-10-17.md](./图生视频积分扣除逻辑优化报告-2025-10-17.md)
 - [图生视频免费判断Bug修复报告-2025-10-17.md](./图生视频免费判断Bug修复报告-2025-10-17.md)
 - [图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md](./图生视频使用记录重复显示Bug修复报告-最终版-2025-10-17.md)
+
+---
+
+## 🔄 视频换脸功能：阿里云官方调用步骤 vs 萤火AI实现对比
+
+### 阿里云官方调用步骤
+
+根据阿里云通用视频人脸融合API文档，官方调用流程为：
+
+#### 第一步：提交任务
+- **接口**：`MergeVideoFace`
+- **Endpoint**：`https://videoenhan.cn-shanghai.aliyuncs.com`
+- **功能**：提交视频人脸融合任务
+- **返回**：任务ID（RequestId）
+
+**阿里云API请求参数**（REST API格式）：
+```
+Action=MergeVideoFace
+&VideoURL=http://viapi-test.oss-cn-shanghai.aliyuncs.com/viapi-3.0domepic/videoenhan/MergeVideoFace/MergeVideoFace1.mp4
+&ReferenceURL=http://viapi-test.oss-cn-shanghai.aliyuncs.com/viapi-3.0domepic/videoenhan/MergeVideoFace/MergeVideoFace-pic1.png
+&AddWatermark=true
+&Enhance=false
+&WatermarkType=EN
+&公共请求参数
+```
+
+**参数说明**：
+- **VideoURL**（必选）：输入视频的URL地址，建议使用上海区域OSS链接
+  - 支持格式：MP4、AVI、MKV、MOV、FLV、TS、MPG
+  - 文件大小：≤120MB
+  - 分辨率：>360x360 且 <1920x1920 像素
+  - 时长：≤300秒
+  - 仅支持恒定帧率视频
+  - URL地址：不能包含中文字符
+- **ReferenceURL**（必选）：参考图片URL地址，用于指定要融合的人脸
+  - 图片格式：JPEG、JPG、PNG
+  - 图片分辨率：≥128x128 且 ≤4000x4000 像素
+  - 图片大小：≤20MB
+  - URL地址：不能包含中文字符
+- **AddWatermark**（可选）：是否添加水印，默认True（Boolean类型）
+- **Enhance**（可选）：是否启用人脸美化增强，默认False（Boolean类型）
+- **WatermarkType**（可选）：水印类型，EN（英文，默认）或CN（中文）
+
+#### 第二步：查询结果
+- **接口**：`GetAsyncJobResult`
+- **功能**：根据任务ID查询任务执行状态和结果
+- **说明**：
+  - 如果任务还在处理中，可稍等一段时间后再进行查询
+  - 当同一个任务还未处理完时，建议不要重复提交任务
+
+### 萤火AI实现流程
+
+萤火AI在阿里云官方API基础上，增加了文件管理、任务管理、积分系统等封装层：
+
+#### 第一步：创建任务（POST `/api/video-face-fusion/create`）
+
+**萤火AI的额外处理**：
+1. ✅ **文件上传验证**：验证文件格式、大小、分辨率、时长
+2. ✅ **文件上传到OSS**：将用户上传的视频和图片上传到阿里云OSS
+3. ✅ **文件名安全处理**：确保OSS文件名不包含中文字符（阿里云API要求）
+4. ✅ **积分扣除**：根据视频时长计算并扣除用户积分
+5. ✅ **调用阿里云API**：使用OSS文件URL调用`MergeVideoFace`接口
+6. ✅ **任务信息存储**：将任务信息（包括萤火AI的taskId和阿里云的jobId）保存到OSS
+
+**萤火AI请求参数与阿里云API参数对应关系**：
+
+| 萤火AI参数 | 阿里云API参数 | 类型 | 必选 | 默认值 | 说明 |
+|-----------|-------------|------|------|--------|------|
+| `video` (File) | `VideoURL` | String | ✅ | - | 视频文件（上传后转换为OSS URL） |
+| `image` (File) | `ReferenceURL` | String | ✅ | - | 人脸参考图片（上传后转换为OSS URL） |
+| `addWatermark` | `AddWatermark` | Boolean | ❌ | `true` | 是否添加水印 |
+| `enhance` | `Enhance` | Boolean | ❌ | `false` | 是否启用人脸美化增强 |
+| `watermarkType` | `WatermarkType` | String | ❌ | `"EN"` | 水印类型：`"EN"`（英文）或`"CN"`（中文） |
+| `videoDuration` | - | Number | ✅ | - | 视频时长（秒，用于计费计算，不传递给阿里云） |
+
+**说明**：
+- ✅ **完全符合阿里云标准**：萤火AI使用阿里云SDK（`@alicloud/videoenhan20200320`）调用API，SDK会自动将驼峰式参数（如`videoURL`）转换为阿里云API所需的大写开头参数（如`VideoURL`）
+- ✅ **文件上传处理**：萤火AI接收文件上传，自动上传到OSS并获取URL，然后传递给阿里云API
+- ✅ **参数类型转换**：FormData会将布尔值转换为字符串，萤火AI会自动转换回布尔值传递给阿里云API
+
+**返回数据**（完全参照阿里云MergeVideoFace接口格式，同时保持向后兼容）：
+
+**阿里云标准格式**（完全符合阿里云标准）：
+```json
+{
+  "RequestId": "萤火AI生成的任务ID（对应阿里云RequestId）",
+  "Data": {},
+  "Message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI生成的任务ID",
+  "aliyunJobId": "阿里云返回的JobId（RequestId）",
+  "message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：创建任务时只返回`RequestId`和`Message`，不包含`Data`字段，与阿里云官方文档完全一致
+- ✅ **异步接口说明**：Message明确说明这是异步接口，需要通过RequestId调用GetAsyncJobResult接口查询结果
+- ✅ **向后兼容**：同时返回原有字段（`success`、`taskId`、`aliyunJobId`、`message`），确保现有前端代码正常工作
+
+#### 第二步：查询任务状态（GET `/api/video-face-fusion/status/:taskId`）
+
+**萤火AI的额外处理**：
+1. ✅ **任务信息读取**：从OSS读取任务信息（包括阿里云jobId）
+2. ✅ **调用阿里云查询API**：使用阿里云jobId调用`GetAsyncJobResult`接口
+3. ✅ **结果处理**：
+   - 如果任务完成，将结果视频从阿里云下载并上传到萤火AI的OSS
+   - 更新任务状态为"已完成"
+   - 保存任务详情到统一功能使用记录系统
+4. ✅ **返回统一格式**：返回阿里云标准格式，同时保持向后兼容
+
+**返回数据**（完全参照阿里云GetAsyncJobResult接口格式，同时保持向后兼容）：
+
+**任务完成时（完全符合阿里云标准格式）**：
+```json
+{
+  "RequestId": "萤火AI的任务ID",
+  "Data": {
+    "Status": "PROCESS_SUCCESS",
+    "JobId": "阿里云返回的JobId（创建任务时返回的RequestId）",
+    "Result": "{\"VideoURL\":\"处理后的视频URL（永久保存，非临时URL）\"}"
+  },
+  "Message": "任务处理完成",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI的任务ID",
+  "status": "completed",
+  "videoUrl": "处理后的视频URL（永久保存，非临时URL）",
+  "progress": 100,
+  "message": "任务处理完成"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：`Data`中包含`Status`、`JobId`和`Result`字段，`Data.Result`为JSON字符串格式，需要解析后才能获取`VideoURL`
+- ✅ **JobId字段**：创建任务时返回的JobId（对应阿里云返回的RequestId），用于标识任务
+- ✅ **VideoURL字段**：萤火AI返回的是永久保存的URL（已上传到萤火AI OSS），而非临时URL
+
+**任务处理中时（完全符合阿里云标准格式）**：
+```json
+{
+  "RequestId": "萤火AI的任务ID",
+  "Data": {
+    "Status": "PROCESS_RUNNING",
+    "JobId": "阿里云返回的JobId（创建任务时返回的RequestId）"
+  },
+  "Message": "任务处理中",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI的任务ID",
+  "status": "processing",
+  "progress": 50,
+  "message": "任务处理中"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：处理中时`Data`包含`Status`和`JobId`字段，不包含`Result`字段
+- ✅ **向后兼容**：同时返回`progress`字段，方便前端显示进度
+
+**任务失败时（完全符合阿里云标准格式）**：
+```json
+{
+  "RequestId": "萤火AI的任务ID",
+  "Data": {
+    "Status": "PROCESS_FAILED",
+    "JobId": "阿里云返回的JobId（创建任务时返回的RequestId）"
+  },
+  "Message": "任务处理失败",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI的任务ID",
+  "status": "failed",
+  "message": "任务处理失败"
+}
+```
+
+#### 前端轮询机制
+
+**前端实现**：
+- 使用`setInterval`每5秒查询一次任务状态
+- 最多轮询240次（20分钟）
+- 自动更新UI显示处理进度
+- 任务完成后自动显示结果视频
+
+**代码位置**：
+```454:506:public/video-face-fusion.html
+// 轮询任务状态
+function startPolling(taskId) {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+
+    let attempts = 0;
+    const maxAttempts = 240; // 最多20分钟
+
+    pollingInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) {
+            clearInterval(pollingInterval);
+            statusText.textContent = '处理超时，请手动刷新查看结果';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/video-face-fusion/status/${taskId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.status === 'completed') {
+                    clearInterval(pollingInterval);
+                    processingInfo.classList.add('hidden');
+                    resultVideo.src = result.videoUrl;
+                    resultVideo.classList.remove('hidden');
+                    generateBtn.disabled = false;
+                    loadTasks();
+                } else if (result.status === 'failed') {
+                    clearInterval(pollingInterval);
+                    processingInfo.classList.add('hidden');
+                    resultPlaceholder.classList.remove('hidden');
+                    generateBtn.disabled = false;
+                    alert('处理失败: ' + (result.message || '未知错误'));
+                } else {
+                    statusText.textContent = `处理中... (${attempts * 5}秒)`;
+                }
+            }
+        } catch (error) {
+            console.error('查询状态失败:', error);
+            if (attempts >= 10) {
+                clearInterval(pollingInterval);
+                statusText.textContent = '网络异常，请手动刷新查看结果';
+            }
+        }
+    }, 5000); // 每5秒查询一次
+}
+```
+
+### 请求参数详细对比
+
+#### 阿里云官方 MergeVideoFace 接口
+
+| 参数名称 | 类型 | 是否必选 | 示例值 | 描述 |
+|---------|------|---------|--------|------|
+| **Action** | String | ✅ 是 | `MergeVideoFace` | 系统定义参数，固定值 |
+| **VideoURL** | String | ✅ 是 | `http://viapi-test.oss-cn-shanghai.aliyuncs.com/...` | 输入视频的URL地址，建议使用上海区域OSS链接 |
+| **ReferenceURL** | String | ✅ 是 | `http://viapi-test.oss-cn-shanghai.aliyuncs.com/...` | 参考图片URL地址，用于指定要融合的人脸 |
+| **AddWatermark** | Boolean | ❌ 否 | `True` | 是否添加水印，默认`True` |
+| **Enhance** | Boolean | ❌ 否 | `False` | 是否启用人脸美化增强，默认`False` |
+| **WatermarkType** | String | ❌ 否 | `EN` | 水印类型，`EN`（英文，默认）或`CN`（中文） |
+
+**ReferenceURL 输入限制**：
+- 图片格式：JPEG、JPG、PNG
+- 图片分辨率：≥128x128 且 ≤4000x4000 像素
+- 图片大小：≤20MB
+- URL地址：不能包含中文字符
+
+**返回数据**：
+- `RequestId`：请求的唯一ID（用于后续查询任务状态）
+- `Data`：返回结果数据（需要调用`GetAsyncJobResult`接口获取）
+  - `VideoURL`：处理后的视频URL（临时地址，有效期30分钟）
+
+#### 萤火AI `/api/video-face-fusion/create` 接口
+
+| 参数名称 | 类型 | 是否必选 | 示例值 | 描述 |
+|---------|------|---------|--------|------|
+| **video** | File | ✅ 是 | `FormData文件对象` | 视频文件（通过FormData上传） |
+| **image** | File | ✅ 是 | `FormData文件对象` | 人脸参考图片（通过FormData上传） |
+| **addWatermark** | String | ❌ 否 | `"true"` | 是否添加水印，默认`"true"`（对应阿里云AddWatermark参数） |
+| **enhance** | String | ❌ 否 | `"false"` | 是否启用人脸美化增强，默认`"false"`（对应阿里云Enhance参数） |
+| **watermarkType** | String | ❌ 否 | `"EN"` | 水印类型，`"EN"`（英文，默认）或`"CN"`（中文）（对应阿里云WatermarkType参数） |
+| **videoDuration** | Number | ✅ 是 | `10.5` | 视频时长（秒），用于计费计算 |
+
+**萤火AI的文件验证规则**：
+
+**视频文件**：
+- 支持格式：MP4、AVI、MKV、MOV、FLV、TS、MPG
+- 文件大小：≤120MB
+- 分辨率：>360x360 且 <1920x1920 像素
+- 时长：≤300秒
+- URL限制：自动处理文件名，确保不包含中文字符
+
+**图片文件**：
+- 支持格式：JPEG、JPG、PNG
+- 文件大小：≤20MB
+- 分辨率：≥128x128 且 ≤4000x4000 像素
+- URL限制：自动处理文件名，确保不包含中文字符
+
+**返回数据**（完全参照阿里云MergeVideoFace接口格式，同时保持向后兼容）：
+
+**阿里云标准格式**（完全符合阿里云标准）：
+```json
+{
+  "RequestId": "萤火AI生成的任务ID（对应阿里云RequestId）",
+  "Data": {},
+  "Message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI生成的任务ID",
+  "aliyunJobId": "阿里云返回的JobId（RequestId）",
+  "message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：创建任务时只返回`RequestId`和`Message`，不包含`Data`字段，与阿里云官方文档完全一致
+- ✅ **异步接口说明**：Message明确说明这是异步接口，需要通过RequestId调用GetAsyncJobResult接口查询结果
+- ✅ **向后兼容**：同时返回原有字段（`success`、`taskId`、`aliyunJobId`、`message`），确保现有前端代码正常工作
+
+### 返回数据格式对比
+
+#### 阿里云 MergeVideoFace 接口返回格式
+
+**创建任务时**（根据阿里云官方文档）：
+```json
+{
+  "RequestId": "DEF90E76-B62D-45EF-8835-CA3C83842B18",
+  "Message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。"
+}
+```
+
+**说明**：
+- `RequestId`：请求的唯一ID，用于后续查询任务状态（作为jobId参数）
+- `Message`：提示信息，说明这是异步调用，需要通过RequestId调用GetAsyncJobResult接口查询结果
+- **注意**：创建任务时**不包含`Data`字段**，只有在查询任务状态时（GetAsyncJobResult接口）才会返回`Data`字段
+
+#### 阿里云 GetAsyncJobResult 接口返回格式
+
+**任务完成时**：
+```json
+{
+  "RequestId": "43A0AEB6-45F4-4138-8E89-E1A5D63200E3",
+  "Data": {
+    "Status": "PROCESS_SUCCESS",
+    "JobId": "186AC396-0EEC-46F1-AAA1-BF3585227427",
+    "Result": "{\"VideoURL\":\"http://vibktprfx-prod-prod-aic-gd-cn-shanghai.oss-cn-shanghai.aliyuncs.com/video-face-fusion/A657011C-82B4-4705-A5DB-69B18B7CE89D.mp4?Expires=1606378308&OSSAccessKeyId=LTAI****************&Signature=Hl3cq5XedTGCscOSr0OGVxAS2o****\"}"
+  }
+}
+```
+
+**说明**：
+- `RequestId`：本次查询请求的唯一ID
+- `Data.Status`：任务状态（`PROCESS_SUCCESS`、`PROCESS_RUNNING`、`PROCESS_FAILED`）
+- `Data.JobId`：创建任务时返回的JobId（对应创建任务时返回的RequestId），用于标识任务
+- `Data.Result`：JSON字符串，需要反序列化后获取`VideoURL`
+- `Data.Result.VideoURL`：处理后的视频URL地址（**临时地址，有效期30分钟**）
+- `Message`：状态消息（可选）
+
+**重要提示**：
+- 阿里云返回的`VideoURL`是临时地址，有效期为30分钟
+- 过期后将无法访问，需要在30分钟内下载文件转存到自己的OSS或其他存储空间
+
+#### 萤火AI返回格式（完全参照阿里云格式，同时保持向后兼容）
+
+**创建任务时**（完全符合阿里云标准）：
+```json
+{
+  "RequestId": "萤火AI生成的任务ID",
+  "Message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI生成的任务ID",
+  "aliyunJobId": "阿里云返回的JobId（RequestId）",
+  "message": "该调用为异步调用，任务已提交成功，请以 requestId 的值作为jobId 参数调用同类目下 GetAsyncJobResult 接口查询任务执行状态和结果。"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：创建任务时只返回`RequestId`和`Message`，不包含`Data`字段，与阿里云官方文档完全一致
+- ✅ **异步接口说明**：Message明确说明这是异步接口，需要通过RequestId调用GetAsyncJobResult接口查询结果
+- ✅ **向后兼容**：同时返回原有字段（`success`、`taskId`、`aliyunJobId`、`message`），确保现有前端代码正常工作
+
+**查询任务状态时（任务完成）**（完全符合阿里云标准）：
+```json
+{
+  "RequestId": "萤火AI的任务ID",
+  "Data": {
+    "Status": "PROCESS_SUCCESS",
+    "JobId": "阿里云返回的JobId（创建任务时返回的RequestId）",
+    "Result": "{\"VideoURL\":\"处理后的视频URL（永久保存，非临时URL）\"}"
+  },
+  "Message": "任务处理完成",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI的任务ID",
+  "status": "completed",
+  "videoUrl": "处理后的视频URL（永久保存，非临时URL）",
+  "progress": 100,
+  "message": "任务处理完成"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：`Data`中包含`Status`、`JobId`和`Result`字段，`Data.Result`为JSON字符串格式，需要解析后才能获取`VideoURL`
+- ✅ **JobId字段**：创建任务时返回的JobId（对应阿里云返回的RequestId），用于标识任务
+- ✅ **VideoURL字段**：萤火AI返回的是永久保存的URL（已上传到萤火AI OSS），而非临时URL（阿里云返回的是临时URL，有效期30分钟）
+
+**查询任务状态时（任务处理中）**（完全符合阿里云标准）：
+```json
+{
+  "RequestId": "萤火AI的任务ID",
+  "Data": {
+    "Status": "PROCESS_RUNNING",
+    "JobId": "阿里云返回的JobId（创建任务时返回的RequestId）"
+  },
+  "Message": "任务处理中",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI的任务ID",
+  "status": "processing",
+  "progress": 50,
+  "message": "任务处理中"
+}
+```
+
+**说明**：
+- ✅ **完全符合阿里云标准**：处理中时`Data`只包含`Status`字段，不包含`Result`字段
+- ✅ **向后兼容**：同时返回`progress`字段，方便前端显示进度
+
+**查询任务状态时（任务失败）**（完全符合阿里云标准）：
+```json
+{
+  "RequestId": "萤火AI的任务ID",
+  "Data": {
+    "Status": "PROCESS_FAILED"
+  },
+  "Message": "任务处理失败",
+  
+  // 向后兼容字段
+  "success": true,
+  "taskId": "萤火AI的任务ID",
+  "status": "failed",
+  "message": "任务处理失败"
+}
+```
+
+**主要区别**：
+1. ✅ **完全符合阿里云标准格式**：创建任务时只返回`RequestId`和`Message`（不包含`Data`字段），查询时`Data.Result`为JSON字符串格式
+2. ✅ **VideoURL字段**：萤火AI返回的是永久保存的URL（已上传到萤火AI OSS），而非临时URL（阿里云返回的是临时URL，有效期30分钟）
+3. ✅ **向后兼容**：同时返回原有字段（`success`、`taskId`、`status`、`videoUrl`、`progress`、`message`），确保现有前端代码正常工作
+4. ✅ **Progress字段**：萤火AI额外提供进度百分比（在向后兼容字段中），方便前端显示
+
+### 主要区别对比
+
+| 对比项 | 阿里云官方 | 萤火AI实现 |
+|--------|-----------|-----------|
+| **文件输入方式** | 需要提供OSS URL地址 | ✅ 直接上传文件，自动处理OSS上传 |
+| **文件验证** | 需要用户自己验证文件格式、大小、分辨率 | ✅ 前端和后端双重验证，自动检查所有限制 |
+| **文件名处理** | 要求URL不能包含中文，需要用户自己处理 | ✅ 自动生成安全文件名，确保不包含中文 |
+| **任务ID** | 使用阿里云的RequestId作为JobId | ✅ 使用萤火AI自己的taskId，内部映射阿里云jobId |
+| **返回数据格式** | 创建任务：RequestId、Message（不包含Data）<br>查询任务：RequestId、Data、Message | ✅ 完全符合阿里云标准格式，同时保持向后兼容 |
+| **VideoURL** | 临时URL（有效期30分钟） | ✅ 永久URL（已上传到萤火AI OSS） |
+| **积分系统** | 无 | ✅ 集成积分扣除和使用记录（1积分/秒） |
+| **结果存储** | 返回临时URL（有效期30分钟） | ✅ 结果视频自动上传到萤火AI OSS，永久保存 |
+| **任务管理** | 无 | ✅ 任务列表、任务查询、任务删除 |
+| **状态查询** | 需要用户自己实现轮询 | ✅ 前端自动轮询（每5秒），自动更新UI |
+| **错误处理** | 需要用户自己处理 | ✅ 统一的错误处理和用户友好的提示 |
+| **参数格式** | 直接API调用，JSON格式 | ✅ RESTful接口，FormData文件上传 |
+
+### ✅ 总结：萤火AI与阿里云标准的完全对齐
+
+萤火AI视频换脸功能已**完全符合阿里云通用视频人脸融合API标准**，具体对齐情况如下：
+
+#### 1. 接口参数完全对齐
+
+| 萤火AI实现 | 阿里云标准 | 对齐状态 |
+|-----------|-----------|---------|
+| 使用阿里云SDK（`@alicloud/videoenhan20200320`） | REST API调用 | ✅ **完全对齐** |
+| `videoURL` → `VideoURL` | `VideoURL` | ✅ SDK自动转换 |
+| `referenceURL` → `ReferenceURL` | `ReferenceURL` | ✅ SDK自动转换 |
+| `addWatermark` → `AddWatermark` | `AddWatermark` | ✅ SDK自动转换 |
+| `enhance` → `Enhance` | `Enhance` | ✅ SDK自动转换 |
+| `watermarkType` → `WatermarkType` | `WatermarkType` | ✅ SDK自动转换 |
+| Endpoint: `videoenhan.cn-shanghai.aliyuncs.com` | 相同 | ✅ **完全一致** |
+
+#### 2. 返回数据格式完全对齐
+
+**创建任务接口**（MergeVideoFace）：
+- ✅ `RequestId`：完全符合阿里云标准
+- ✅ `Message`：使用阿里云标准消息格式
+- ✅ **不包含`Data`字段**：根据阿里云官方文档，创建任务时只返回`RequestId`和`Message`，不包含`Data`字段
+
+**查询任务状态接口**：
+- ✅ `RequestId`：完全符合阿里云标准
+- ✅ `Data.Status`：使用阿里云标准状态值（`PROCESS_SUCCESS`、`PROCESS_RUNNING`、`PROCESS_FAILED`）
+- ✅ `Data.Result`：为JSON字符串格式，与阿里云完全一致
+- ✅ `Message`：使用阿里云标准消息格式
+
+#### 3. 额外增强功能（不影响标准对齐）
+
+萤火AI在完全符合阿里云标准的基础上，提供了以下增强功能：
+
+1. ✅ **文件上传处理**：自动处理文件上传到OSS，用户无需手动上传
+2. ✅ **文件验证**：自动验证文件格式、大小、分辨率、时长等限制
+3. ✅ **文件名安全处理**：自动生成安全文件名，确保不包含中文字符
+4. ✅ **结果永久存储**：将结果视频从临时URL下载并上传到萤火AI OSS，提供永久URL
+5. ✅ **积分系统**：集成积分扣除和使用记录系统
+6. ✅ **任务管理**：提供任务列表、查询、删除等管理功能
+7. ✅ **向后兼容**：保持原有字段，确保现有前端代码正常工作
+
+#### 4. 技术实现说明
+
+- ✅ **SDK使用**：使用阿里云官方SDK（`@alicloud/videoenhan20200320`），确保参数格式完全正确
+- ✅ **参数转换**：SDK自动将驼峰式参数（如`videoURL`）转换为阿里云API所需的大写开头参数（如`VideoURL`）
+- ✅ **类型转换**：自动处理FormData字符串到布尔值的转换
+- ✅ **错误处理**：统一的错误处理和用户友好的提示信息
+
+#### 5. 兼容性保证
+
+- ✅ **向后兼容**：所有接口同时返回阿里云标准格式和原有字段，确保现有前端代码无需修改即可正常工作
+- ✅ **标准对齐**：完全符合阿里云通用视频人脸融合API规范，可以直接替换使用
+- ✅ **文档完善**：详细的参数说明和返回格式说明，便于开发者理解和使用
+
+**结论**：萤火AI视频换脸功能已**完全符合阿里云通用视频人脸融合API标准**，可以直接作为阿里云API的封装层使用，同时提供了更多便捷功能和更好的用户体验。
+
+### 技术实现细节
+
+#### 1. 文件上传和验证
+```483:650:routes/videoFaceFusion.js
+/**
+ * @route   POST /api/video-face-fusion/create
+ * @desc    创建视频人脸融合任务（基于阿里云MergeVideoFace接口）
+ */
+router.post('/create', protect, 
+    memoryUpload.fields([
+        { name: 'video', maxCount: 1 },
+        { name: 'image', maxCount: 1 }
+    ]),
+    createUnifiedFeatureMiddleware('VIDEO_FACE_FUSION'), 
+    async (req, res) => {
+        // 文件验证
+        // 文件上传到OSS
+        // 调用阿里云API
+        // 保存任务信息
+    }
+);
+```
+
+#### 2. 阿里云API调用封装
+```222:310:routes/videoFaceFusion.js
+/**
+ * 调用阿里云通用视频人脸融合API (MergeVideoFace)
+ * 
+ * 对应阿里云API参数：
+ * - Action: MergeVideoFace (系统定义参数，固定值)
+ * - VideoURL: 输入视频的URL地址
+ * - ReferenceURL: 参考图片URL地址
+ * - AddWatermark: 是否添加水印，默认True
+ * - Enhance: 是否启用人脸美化增强，默认False
+ * - WatermarkType: 水印类型，EN（英文，默认）或CN（中文）
+ */
+async function callAliyunMergeVideoFace(videoUrl, referenceUrl, addWatermark = true, enhance = false, watermarkType = 'EN') {
+    // 检查URL中文字符
+    // 创建阿里云客户端
+    // 调用MergeVideoFace接口
+    // 返回jobId
+}
+```
+
+#### 3. 任务状态查询封装
+```326:412:routes/videoFaceFusion.js
+/**
+ * 查询阿里云任务状态（GetAsyncJobResult接口）
+ * 
+ * 对应阿里云API：
+ * - 接口：GetAsyncJobResult
+ * - 功能：根据任务ID查询任务执行状态和结果
+ */
+async function queryAliyunTaskStatus(jobId) {
+    // 调用GetAsyncJobResult接口
+    // 解析返回结果
+    // 返回统一格式的状态数据
+}
+```
+
+#### 4. 结果视频处理
+```720:760:routes/videoFaceFusion.js
+// 如果任务完成，保存结果并更新任务状态
+if (Status === 'PROCESS_SUCCESS' || Status === 'SUCCEEDED') {
+    if (VideoUrl) {
+        // 上传结果视频到OSS
+        const resultUrl = await uploadVideoFaceSwapResultToOSS(VideoUrl, userId, taskId);
+        
+        // 更新任务数据
+        taskData.status = 'completed';
+        taskData.resultUrl = resultUrl;
+        taskData.completedAt = new Date().toISOString();
+        await saveTaskToOSS(userId, taskData);
+        
+        // 保存任务详情到统一功能使用记录系统
+    }
+}
+```
+
+### 优势总结
+
+萤火AI的实现相比直接调用阿里云API，提供了以下优势：
+
+1. ✅ **用户体验优化**：用户无需了解OSS、API调用等技术细节
+2. ✅ **完整的文件验证**：前端和后端双重验证，确保文件符合要求
+3. ✅ **自动文件管理**：自动上传、自动存储结果
+4. ✅ **任务持久化**：任务信息永久保存，可随时查看历史记录
+5. ✅ **积分系统集成**：统一的积分扣除和使用记录
+6. ✅ **错误处理完善**：统一的错误提示和处理机制
+7. ✅ **UI自动化**：前端自动轮询，自动更新状态，无需用户手动刷新
 
 ---
 

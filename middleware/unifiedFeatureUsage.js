@@ -110,6 +110,14 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
         console.log(`视频换人功能 - 需要${creditCost}积分，仅做权限检查，任务完成时才扣除`);
       }
       
+      // 特殊处理视频换脸功能（通用视频人脸融合）- 只检查积分是否足够，但不扣除（任务完成时才扣除）
+      const isVideoFaceFusion = featureName === 'VIDEO_FACE_FUSION';
+      if (isVideoFaceFusion) {
+        // 计算实际所需积分，用于权限检查
+        creditCost = featureConfig.creditCost(req.body);
+        console.log(`视频换脸功能 - 需要${creditCost}积分，仅做权限检查，任务完成时才扣除`);
+      }
+      
       // 特殊处理局部重绘功能 - 只检查积分是否足够，但不扣除（任务完成时才扣除）
       const isLocalRedraw = featureName === 'LOCAL_REDRAW';
       
@@ -359,7 +367,7 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
         if (!alreadyCharged) {
           // 对于视频去除字幕功能、局部重绘功能和视频换人功能，在任务提交阶段不扣除积分
           // 修复：视频去水印/logo 也属于延迟计费，提交阶段不扣费
-          if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoFaceSwap && !isVideoLogoRemoval) {
+          if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoFaceSwap && !isVideoFaceFusion && !isVideoLogoRemoval) {
             // 扣除积分
             user.credits -= creditCost;
             await user.save();
@@ -381,6 +389,7 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
             if (isVideoSubtitleRemover) featureDisplayName = '视频去除字幕';
             else if (isLocalRedraw) featureDisplayName = '局部重绘';
             else if (isVideoFaceSwap) featureDisplayName = '视频换人';
+            else if (isVideoFaceFusion) featureDisplayName = '视频换脸';
             else if (isVideoLogoRemoval) featureDisplayName = '视频去水印';
             console.log(`用户ID ${userId} 使用${featureDisplayName}功能，需要 ${creditCost} 积分，暂不扣除，任务完成后再扣费`);
           }
@@ -401,7 +410,7 @@ const createUnifiedFeatureMiddleware = (featureName, options = {}) => {
       if (!alreadyCharged && featureName !== 'MULTI_IMAGE_TO_VIDEO') {
         // 对于延迟计费的功能，使用次数将在saveTaskDetails中正确累积
         // 修复：视频去水印/logo 也是延迟计费，创建时不增加 usageCount
-        if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoStyleRepaint && !isTextToVideo && !isImageToVideo && !isVideoFaceSwap && !isVideoLogoRemoval) {
+        if (!isVideoSubtitleRemover && !isLocalRedraw && !isVideoStyleRepaint && !isTextToVideo && !isImageToVideo && !isVideoFaceSwap && !isVideoFaceFusion && !isVideoLogoRemoval) {
           usage.usageCount += 1;
           usage.lastUsedAt = new Date();
           await usage.save();
@@ -664,10 +673,11 @@ async function saveTaskDetails(usage, taskInfo) {
       }
     }
     
-    // 🔧 重要修复：对于视频去字幕功能、视频数字人功能和视频换人功能，需要正确更新使用次数和积分统计
+    // 🔧 重要修复：对于视频去字幕功能、视频数字人功能、视频换人功能和视频换脸功能，需要正确更新使用次数和积分统计
     if (taskInfo.featureName === 'VIDEO_SUBTITLE_REMOVER' || usage.featureName === 'VIDEO_SUBTITLE_REMOVER' ||
         taskInfo.featureName === 'DIGITAL_HUMAN_VIDEO' || usage.featureName === 'DIGITAL_HUMAN_VIDEO' ||
-        taskInfo.featureName === 'VIDEO_FACE_SWAP' || usage.featureName === 'VIDEO_FACE_SWAP') {
+        taskInfo.featureName === 'VIDEO_FACE_SWAP' || usage.featureName === 'VIDEO_FACE_SWAP' ||
+        taskInfo.featureName === 'VIDEO_FACE_FUSION' || usage.featureName === 'VIDEO_FACE_FUSION') {
       // 计算总任务数和总积分消费
       const totalTasks = details.tasks.length;
       const totalCredits = details.tasks.reduce((sum, task) => sum + (task.creditCost || 0), 0);
@@ -683,6 +693,7 @@ async function saveTaskDetails(usage, taskInfo) {
       else if (featureName === 'VIDEO_SUBTITLE_REMOVER') featureDisplayName = '视频去字幕';
       else if (featureName === 'VIDEO_LOGO_REMOVAL') featureDisplayName = '视频去水印';
       else if (featureName === 'VIDEO_FACE_SWAP') featureDisplayName = '视频换人';
+      else if (featureName === 'VIDEO_FACE_FUSION') featureDisplayName = '视频换脸';
       console.log(`✅ ${featureDisplayName}功能统计更新: 总任务数=${totalTasks}, 总积分=${totalCredits}`);
       
       // 移除这里的CreditHistory.create调用，因为handleTaskCompletion函数已经处理了积分扣除和记录
@@ -973,9 +984,16 @@ if (featureName === 'LOCAL_REDRAW') {
   
   // 设置任务的免费状态和积分消耗
   taskInfo.isFree = isFreeUsage;
+} else if (featureName === 'VIDEO_FACE_FUSION') {
+  // 🔧 视频换脸功能：无免费次数，所有使用都收费
+  isFreeUsage = false;
+  console.log(`[任务完成] 视频换脸功能免费判断: 无免费次数，当前任务收费`);
+  
+  // 设置任务的免费状态和积分消耗
+  taskInfo.isFree = isFreeUsage;
   if (!isFreeUsage) {
     // 积分消耗已在上面的actualCreditCost计算中处理
-    console.log(`[任务完成] 视频换人功能设置为付费使用`);
+    console.log(`[任务完成] 视频换脸功能设置为付费使用`);
   }
 } else {
   isFreeUsage = taskInfo.isFree || false;
@@ -1028,15 +1046,16 @@ if (featureName === 'LOCAL_REDRAW') {
           || taskInfo.extraData?.videoDuration 
           || taskInfo.videoDuration 
           || 1; // 默认1秒
-        const serviceMode = taskInfo.metadata?.serviceMode 
-          || taskInfo.extraData?.serviceMode 
-          || taskInfo.serviceMode 
-          || 'wan-std'; // 默认标准模式
-        
-        const ratePerSecond = serviceMode === 'wan-pro' ? 10 : 8;
-        actualCreditCost = Math.ceil(videoDuration * ratePerSecond);
-        
-        console.log(`[任务完成] 视频换人功能按秒计费: 任务ID=${taskInfo.taskId}, 时长=${videoDuration}秒, 模式=${serviceMode}, 费率=${ratePerSecond}积分/秒, 总积分=${actualCreditCost}`);
+      } else if (featureName === 'VIDEO_FACE_FUSION') {
+        // 🔧 视频换脸功能在任务完成时才扣除积分 - 按秒计费
+        // 从任务信息中获取视频时长
+        const videoDuration = taskInfo.metadata?.videoDuration 
+          || taskInfo.extraData?.videoDuration 
+          || taskInfo.videoDuration 
+          || 1; // 默认1秒
+        const ratePerSecond = 1; // 1积分/秒
+        actualCreditCost = Math.ceil(videoDuration) * ratePerSecond;
+        console.log(`[任务完成] 视频换脸功能在任务完成时扣费: 任务ID=${taskInfo.taskId}, 时长=${videoDuration}秒, 积分=${actualCreditCost}`);
       } else if (featureName === 'IMAGE_EDIT') {
         // 🔧 图像编辑功能按生成图片数量计费，在创建时已扣费，任务完成时不再扣费
         actualCreditCost = 0;

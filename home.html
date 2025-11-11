@@ -1431,6 +1431,7 @@
                                     <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.diantu">垫图</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_resizer">图片改尺寸</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_crop">图像裁剪</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/qwen-image-edit.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像编辑</a></li>
                                 </ul>
                             </div>
                             <!-- 模特/服饰类 -->
@@ -1461,6 +1462,8 @@
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.digital_human_video">视频数字人</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.video_subtitle_remover">视频去除字幕</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-logo-removal.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.video_logo_removal">视频去水印/Logo</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-face-swap.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.video_face_swap">视频换人</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-face-fusion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">视频换脸</a></li>
                                 </ul>
                             </div>
                             <!-- 亚马逊助手 -->
@@ -1665,6 +1668,10 @@
                             <input type="checkbox" data-feature="图像裁剪" data-icon="ri-crop-line" data-bg="bg-teal-100" data-color="text-teal-500" data-url="/image-crop.html">
                             <span data-i18n="feature.image_crop">图像裁剪</span>
                         </label>
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="图像编辑" data-icon="ri-edit-line" data-bg="bg-orange-100" data-color="text-orange-500" data-url="/qwen-image-edit.html">
+                            <span>图像编辑</span>
+                        </label>
                     </div>
                 </div>
                 
@@ -1750,6 +1757,14 @@
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="视频去水印/Logo" data-icon="ri-water-flash-line" data-bg="bg-teal-100" data-color="text-teal-500" data-url="/video-logo-removal.html">
                         <span data-i18n="feature.video_logo_removal">视频去水印/Logo</span>
+                        </label>
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="视频换人" data-icon="ri-user-swap-line" data-bg="bg-pink-100" data-color="text-pink-500" data-url="/video-face-swap.html">
+                        <span data-i18n="feature.video_face_swap">视频换人</span>
+                        </label>
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="视频换脸" data-icon="ri-face-recognition-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/video-face-fusion.html">
+                        <span>视频换脸</span>
                         </label>
                 </div>
             </div>
@@ -2402,6 +2417,8 @@
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/digital-human-video.html')" class="mobile-feature-item">视频数字人</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-subtitle-remover.html')" class="mobile-feature-item">视频去除字幕</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-logo-removal.html')" class="mobile-feature-item" data-i18n="feature.video_logo_removal">视频去水印/Logo</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-face-swap.html')" class="mobile-feature-item" data-i18n="feature.video_face_swap">视频换人</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/video-face-fusion.html')" class="mobile-feature-item">视频换脸</a>
                     </div>
                 </div>
                 
@@ -3091,6 +3108,8 @@
                 '视频风格重绘': 'feature.video_style_transfer',
                 '视频数字人': 'feature.digital_human_video',
                 '视频去除字幕': 'feature.video_subtitle_remover',
+                '视频去水印/Logo': 'feature.video_logo_removal',
+                '视频换人': 'feature.video_face_swap',
                 'Listing写作与优化': 'feature.amazon_listing_optimization',
                 '后台搜索词': 'feature.amazon_search_terms',
                 '客户评论分析': 'feature.amazon_review_analysis',
@@ -3573,6 +3592,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 "feature.multi_image_to_video": "多图转视频",
                 "feature.video_style_repaint": "视频风格重绘",
                 "feature.digital_human_video": "视频数字人",
+                "feature.video_logo_removal": "视频去水印/Logo",
+                "feature.video_face_swap": "视频换人",
                 "feature.amazon_listing": "Listing写作与优化",
                 "feature.amazon_search_term": "后台搜索词",
                 "feature.consumer_insights": "消费者洞察",
@@ -3622,6 +3643,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 "desc.image_translation": "上传图片，AI智能识别并翻译内容，支持多语言翻译",
                 "desc.text_to_image": "输入文字描述，AI自动生成精美图片内容",
                 "desc.video_subtitle_remover": "智能去除视频中的字幕",
+                "desc.video_logo_removal": "智能去除视频中的水印和Logo",
+                "desc.video_face_swap": "将视频中的角色替换为指定图片中的人物，保持原始动作和表情",
                 "desc.image_expansion": "智能扩展图片边界，保持自然过渡",
                 "desc.product_background_change": "智能消除，一键替换商品背景，突显产品特色",
                 "desc.local_redraw": "精确编辑图片局部区域",
@@ -3718,6 +3741,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 "feature.multi_image_to_video": "Multi-Image to Video",
                 "feature.video_style_repaint": "Video Style Transfer",
                 "feature.digital_human_video": "Digital Human Video",
+                "feature.video_logo_removal": "Video Watermark/Logo Removal",
+                "feature.video_face_swap": "Video Face Swap",
                 "feature.amazon_listing": "Amazon Listing Optimization",
                 "feature.amazon_search_term": "Amazon Search Terms",
                 "feature.consumer_insights": "Consumer Insights",
@@ -3767,6 +3792,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 "desc.image_translation": "Upload images, AI intelligently recognizes and translates content, supports multilingual translation",
                 "desc.text_to_image": "Enter text description, AI automatically generates beautiful image content",
                 "desc.video_subtitle_remover": "Intelligently remove subtitles from videos",
+                "desc.video_logo_removal": "Intelligently remove watermarks and logos from videos",
+                "desc.video_face_swap": "Replace characters in videos with people from specified images while maintaining original movements and expressions",
                 "desc.image_expansion": "Intelligently expand image boundaries while maintaining natural transitions",
                 "desc.product_background_change": "Smart removal, one-click background replacement, highlight product features",
                 "desc.local_redraw": "Precisely edit local areas of images",
