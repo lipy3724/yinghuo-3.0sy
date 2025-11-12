@@ -193,6 +193,64 @@ const translations = {
         'credits_usage.credits': '积分',
         'credits_usage.chart_label': '积分使用量',
         
+        // 登录页面
+        'page.login_title': '用户登录 - 萤火AI',
+        'login.password_login_tab': '密码登录',
+        'login.captcha_login_tab': '验证码登录',
+        'login.account_label': '账号',
+        'login.password_label': '密码',
+        'login.account_placeholder': '请输入用户名或手机号',
+        'login.password_placeholder': '请输入密码',
+        'login.submit': '登录',
+        'login.submitting': '登录中...',
+        'login.success': '登录成功!',
+        'login.policy_prefix': '登录即表示您同意',
+        'login.service_agreement': '《服务协议》',
+        'login.and': '和',
+        'login.privacy_policy': '《隐私政策》',
+        'login.no_account': '没有账号？',
+        'login.register_now': '立即注册',
+        'login.forgot_password': '忘记密码？',
+        'login.failed': '登录失败，请重试',
+        'login.error_prefix': '登录时发生错误: ',
+        'login.ban.title': '账号已被封禁',
+        'login.ban.reason_label': '封禁原因：',
+        'login.ban.status_label': '封禁状态：',
+        'login.ban.default_reason': '违反用户协议',
+        'login.ban.default_status': '永久封禁',
+        'login.ban.close': '我知道了',
+        
+        // 注册页面
+        'page.register_title': '用户注册 - 萤火AI',
+        'register.username_label': '用户名',
+        'register.username_placeholder': '请设置用户名',
+        'register.phone_label': '手机号',
+        'register.phone_placeholder': '请输入手机号',
+        'register.password_label': '密码',
+        'register.password_placeholder': '请设置密码',
+        'register.confirm_password_label': '确认密码',
+        'register.confirm_password_placeholder': '请再次输入密码',
+        'register.code_label': '验证码',
+        'register.code_placeholder': '请输入验证码',
+        'register.send_code': '获取验证码',
+        'register.retry_suffix': '秒后重试',
+        'register.register_button': '注册',
+        'register.registering': '注册中...',
+        'register.agree_prefix': '注册即表示您同意',
+        'register.have_account': '已有账号？',
+        'register.login_now': '立即登录',
+        'register.message.code_sent': '验证码已发送到您的手机',
+        'register.error.username_short': '用户名至少需要3个字符',
+        'register.error.password_short': '密码至少需要6个字符',
+        'register.error.password_mismatch': '两次输入的密码不一致',
+        'register.error.invalid_phone': '请输入有效的手机号',
+        'register.error.missing_code': '请输入验证码',
+        'register.error.agreement_required': '请阅读并同意服务协议和隐私政策',
+        'register.error.failed': '注册失败，请重试',
+        'register.error.sending_code_failed': '发送验证码失败，请重试',
+        'register.error.sending_code_error': '发送验证码时发生错误，请稍后重试',
+        'register.error.register_error': '注册时发生错误，请稍后重试',
+        
         // 积分管理页面
         'page.credits_management': '积分管理',
         'credits.balance': '积分余额',
@@ -2003,6 +2061,64 @@ const translations = {
         'credits_usage.credits': 'Credits',
         'credits_usage.chart_label': 'Credits Usage',
         
+        // 登录页面
+        'page.login_title': 'User Login - Yinghuo AI',
+        'login.password_login_tab': 'Password Login',
+        'login.captcha_login_tab': 'Verification Code Login',
+        'login.account_label': 'Account',
+        'login.password_label': 'Password',
+        'login.account_placeholder': 'Enter username or phone number',
+        'login.password_placeholder': 'Enter password',
+        'login.submit': 'Login',
+        'login.submitting': 'Logging in...',
+        'login.success': 'Logged in!',
+        'login.policy_prefix': 'By logging in you agree to',
+        'login.service_agreement': 'Service Agreement',
+        'login.and': 'and',
+        'login.privacy_policy': 'Privacy Policy',
+        'login.no_account': "Don't have an account?",
+        'login.register_now': 'Register Now',
+        'login.forgot_password': 'Forgot Password?',
+        'login.failed': 'Login failed, please try again',
+        'login.error_prefix': 'An error occurred during login: ',
+        'login.ban.title': 'Account Banned',
+        'login.ban.reason_label': 'Reason: ',
+        'login.ban.status_label': 'Status: ',
+        'login.ban.default_reason': 'Violated user agreement',
+        'login.ban.default_status': 'Permanent Ban',
+        'login.ban.close': 'Got it',
+        
+        // Register page
+        'page.register_title': 'User Registration - YINGHUO AI',
+        'register.username_label': 'Username',
+        'register.username_placeholder': 'Set a username',
+        'register.phone_label': 'Phone',
+        'register.phone_placeholder': 'Enter phone number',
+        'register.password_label': 'Password',
+        'register.password_placeholder': 'Set a password',
+        'register.confirm_password_label': 'Confirm Password',
+        'register.confirm_password_placeholder': 'Re-enter password',
+        'register.code_label': 'Verification Code',
+        'register.code_placeholder': 'Enter the code',
+        'register.send_code': 'Send Code',
+        'register.retry_suffix': 's to retry',
+        'register.register_button': 'Register',
+        'register.registering': 'Registering...',
+        'register.agree_prefix': 'By registering, you agree to the',
+        'register.have_account': 'Already have an account?',
+        'register.login_now': 'Login Now',
+        'register.message.code_sent': 'The verification code has been sent to your phone',
+        'register.error.username_short': 'Username must be at least 3 characters',
+        'register.error.password_short': 'Password must be at least 6 characters',
+        'register.error.password_mismatch': 'The two passwords do not match',
+        'register.error.invalid_phone': 'Please enter a valid phone number',
+        'register.error.missing_code': 'Please enter the verification code',
+        'register.error.agreement_required': 'Please agree to the Service Agreement and Privacy Policy',
+        'register.error.failed': 'Registration failed, please try again',
+        'register.error.sending_code_failed': 'Failed to send code, please try again',
+        'register.error.sending_code_error': 'An error occurred while sending the code, please try later',
+        'register.error.register_error': 'An error occurred during registration, please try later',
+        
         // 积分管理页面
         'page.credits_management': 'Credits Management',
         'credits.balance': 'Credit Balance',
@@ -3721,32 +3837,78 @@ function switchLanguage(lang) {
     updatePageText();
     
     // 触发语言变化事件
-    window.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }));
+    const evt = new CustomEvent('languageChanged', { detail: { language: lang } });
+    // 同时派发到 window 和 document，保证所有监听方都能收到
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(evt);
+    }
+    if (typeof document !== 'undefined' && typeof document.dispatchEvent === 'function') {
+        document.dispatchEvent(evt);
+    }
     
-    // 更新语言选择器状态
-    document.querySelectorAll('.language-option').forEach(option => {
-        option.classList.remove('active');
-        if (option.getAttribute('data-lang') === lang) {
-            option.classList.add('active');
+    // 更新语言选择器状态（多次尝试，确保语言选择器已加载）
+    function updateLanguageSelector() {
+        const languageOptions = document.querySelectorAll('.language-option');
+        if (languageOptions.length > 0) {
+            languageOptions.forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-lang') === lang) {
+                    option.classList.add('active');
+                }
+            });
+        } else {
+            // 如果语言选择器还没加载，延迟重试
+            setTimeout(updateLanguageSelector, 100);
         }
-    });
+    }
+    updateLanguageSelector();
+    
+    // 更新价格列表（如果存在 renderPricingList 函数）
+    if (typeof renderPricingList === 'function') {
+        setTimeout(() => {
+            renderPricingList();
+        }, 50);
+    }
 }
 
 // 初始化翻译系统
 function initializeTranslations() {
     updatePageText();
     
-    // 设置语言选择器状态
-    document.querySelectorAll('.language-option').forEach(option => {
-        if (option.getAttribute('data-lang') === currentLanguage) {
-            option.classList.add('active');
+    // 设置语言选择器状态（多次尝试，确保语言选择器已加载）
+    function setupLanguageSelector() {
+        const languageOptions = document.querySelectorAll('.language-option');
+        if (languageOptions.length > 0) {
+            languageOptions.forEach(option => {
+                // 移除所有 active 类
+                option.classList.remove('active');
+                // 为当前语言添加 active 类
+                if (option.getAttribute('data-lang') === currentLanguage) {
+                    option.classList.add('active');
+                }
+                
+                // 绑定点击事件（避免重复绑定）
+                if (!option.hasAttribute('data-listener-bound')) {
+                    option.addEventListener('click', function() {
+                        const lang = this.getAttribute('data-lang');
+                        switchLanguage(lang);
+                    });
+                    option.setAttribute('data-listener-bound', 'true');
+                }
+            });
+        } else {
+            // 如果语言选择器还没加载，延迟重试
+            setTimeout(setupLanguageSelector, 100);
         }
-        
-        option.addEventListener('click', function() {
-            const lang = this.getAttribute('data-lang');
-            switchLanguage(lang);
-        });
-    });
+    }
+    setupLanguageSelector();
+    
+    // 更新价格列表（如果存在 renderPricingList 函数）
+    if (typeof renderPricingList === 'function') {
+        setTimeout(() => {
+            renderPricingList();
+        }, 50);
+    }
 }
 
 // 页面加载完成后初始化

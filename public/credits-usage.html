@@ -93,92 +93,261 @@
                 // 加载组件JavaScript
                 const script = document.createElement('script');
                 script.src = '/components/components.js';
+                script.onload = function() {
+                    // 初始化语言系统（如果函数存在）
+                    if (typeof initializeLanguageSelector === 'function') {
+                        initializeLanguageSelector();
+                    }
+                    
+                    // 初始化页面语言（确保在导航栏加载后也应用语言设置）
+                    const currentLanguage = getCurrentLanguage();
+                    // 先使用translations.js中的统一函数更新所有data-translate元素
+                    if (typeof updatePageText === 'function') {
+                        updatePageText();
+                    }
+                    // 然后更新积分使用情况页面的特殊元素
+                    updateCreditsUsagePageText(currentLanguage);
+                    
+                    // 监听语言变化事件（确保不会重复绑定）
+                    // 注意：这个事件监听器已经在上面定义过了，这里不需要重复绑定
+                };
                 document.head.appendChild(script);
             })
             .catch(error => {
                 console.error('加载导航栏组件失败:', error);
             });
 
-        // 初始化语言支持
-        function initLanguageSupport() {
-            // 等待 translations.js 加载完成
-            const checkTranslations = setInterval(() => {
-                if (typeof translations !== 'undefined') {
-                    clearInterval(checkTranslations);
-                    
-                    // 获取当前语言（从 localStorage 或 URL 参数）
-                    let currentLang = localStorage.getItem('language') || 'zh';
-                    
-                    // 检查 URL 参数中的语言设置
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const langParam = urlParams.get('lang');
-                    if (langParam) {
-                        // 转换语言格式：zh-cn -> zh, en-us -> en
-                        if (langParam === 'zh-cn') {
-                            currentLang = 'zh';
-                        } else if (langParam === 'en-us') {
-                            currentLang = 'en';
-                        }
-                        // 保存到 localStorage
-                        localStorage.setItem('language', currentLang);
-                    }
-                    
-                    // 更新页面语言属性
-                    document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
-                    
-                    // 更新页面文本
-                    updatePageText(currentLang);
-                    
-                    // 监听语言变化事件
-                    document.addEventListener('languageChanged', function(event) {
-                        const newLang = event.detail.language;
-                        document.documentElement.lang = newLang === 'en' ? 'en' : 'zh-CN';
-                        updatePageText(newLang);
-                        
-                        // 重新渲染图表和列表以应用新语言
-                        if (usageData && usageData.chartData) {
-                            renderUsageChart();
-                            renderFeaturePieChart();
-                            renderFeatureList();
-                            renderUsageRecords();
-                        }
-                    });
-                }
-            }, 100);
+        // 获取当前语言
+        function getCurrentLanguage() {
+            return localStorage.getItem('language') || 'zh';
         }
-        
-        // 更新页面文本
-        function updatePageText(lang) {
-            if (typeof translations === 'undefined' || !translations[lang]) {
+
+        // 获取翻译文本
+        function getTranslation(key, language) {
+            const lang = language || getCurrentLanguage();
+            if (typeof translations !== 'undefined' && translations[lang] && translations[lang][key]) {
+                return translations[lang][key];
+            }
+            return key;
+        }
+
+        // 更新积分使用情况页面的特殊元素（图表和列表）
+        function updateCreditsUsagePageText(language) {
+            console.log('更新积分使用情况页面特殊元素，语言:', language);
+            
+            // 确保 localStorage 已更新（双重保险）
+            localStorage.setItem('language', language);
+            
+            // 确保 translations.js 中的 currentLanguage 变量已更新
+            if (typeof currentLanguage !== 'undefined') {
+                currentLanguage = language;
+                console.log('updateCreditsUsagePageText: 已更新 currentLanguage 为', language);
+            }
+            
+            // 验证 translations 对象是否可用
+            const currentLang = localStorage.getItem('language') || 'zh';
+            if (typeof translations === 'undefined' || !translations[currentLang]) {
+                console.warn('updateCreditsUsagePageText: translations 对象尚未准备好，等待后重试');
+                setTimeout(() => updateCreditsUsagePageText(language), 200);
                 return;
             }
             
-            const t = translations[lang];
+            console.log('updateCreditsUsagePageText: translations 对象已准备好，开始重新渲染');
             
-            // 更新所有带有 data-translate 属性的元素
-            const elements = document.querySelectorAll('[data-translate]');
-            elements.forEach(element => {
-                const key = element.getAttribute('data-translate');
-                if (t[key]) {
-                    if (element.tagName === 'TITLE') {
-                        document.title = t[key];
-                    } else {
-                        element.textContent = t[key];
-                    }
+            // 重新渲染图表和列表以应用新语言
+            // 即使数据未完全加载，也尝试重新渲染（如果数据存在）
+            if (usageData) {
+                // 如果有图表数据，重新渲染图表
+                if (usageData.chartData) {
+                    console.log('重新渲染使用趋势图表，当前语言:', currentLang);
+                    renderUsageChart();
                 }
-            });
-            
-            // 更新页面标题
-            if (t['page.credits_usage_title']) {
-                document.title = t['page.credits_usage_title'];
+                
+                // 如果有功能使用数据，重新渲染饼图和列表
+                if (usageData.featureUsage) {
+                    console.log('重新渲染功能使用占比饼图和列表，当前语言:', currentLang);
+                    renderFeaturePieChart();
+                    renderFeatureList();
+                }
+                
+                // 如果有使用记录，重新渲染记录列表
+                if (usageData.usageRecords) {
+                    console.log('重新渲染使用记录列表，当前语言:', currentLang);
+                    renderUsageRecords();
+                }
+                
+                console.log('updateCreditsUsagePageText: 所有图表和列表重新渲染完成');
+            } else {
+                console.log('数据尚未加载，跳过图表和列表的重新渲染');
             }
         }
+
+        // 当页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('积分使用页面：DOM加载完成，开始初始化');
+            
+            // 初始化语言 - 优先从localStorage读取，如果没有则使用默认值'zh'
+            const currentLanguage = getCurrentLanguage();
+            console.log('积分使用情况页面初始化，当前语言:', currentLanguage);
+            
+            // 等待translations.js加载完成后再更新
+            const checkTranslations = setInterval(() => {
+                if (typeof updatePageText === 'function' && typeof translations !== 'undefined') {
+                    clearInterval(checkTranslations);
+                    // 先使用translations.js中的统一函数更新所有data-translate元素
+                    updatePageText();
+                    // 然后更新积分使用情况页面的特殊元素
+                    updateCreditsUsagePageText(currentLanguage);
+                }
+            }, 100);
+            
+            // 如果5秒后仍未加载完成，直接使用自定义函数
+            setTimeout(() => {
+                clearInterval(checkTranslations);
+                if (typeof updatePageText !== 'function') {
+                    updateCreditsUsagePageText(currentLanguage);
+                }
+            }, 5000);
+            
+            // 等待认证检查完成后再初始化用户界面
+            const waitForAuth = () => {
+                // 检查是否正在进行认证检查
+                if (window.isAuthChecking) {
+                    console.log('积分使用页面：等待认证检查完成...');
+                    setTimeout(waitForAuth, 500);
+                    return;
+                }
+                
+                // 检查认证状态
+                const authToken = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                
+                if (authToken && userInfo) {
+                    console.log('积分使用页面：认证完成，开始初始化');
+                    initializeUserUI();
+                } else {
+                    console.log('积分使用页面：用户未登录，等待认证检查...');
+                    setTimeout(waitForAuth, 500);
+                }
+            };
+            
+            // 延迟启动，确保auth-check.js有时间完成认证
+            setTimeout(waitForAuth, 2000);
+        });
+
+        // 监听语言变化事件（来自主页面的语言选择器）
+        document.addEventListener('languageChanged', function(event) {
+            const newLanguage = event.detail.language;
+            console.log('积分使用情况页面：接收到语言切换事件', newLanguage);
+            
+            // 确保 localStorage 已更新
+            localStorage.setItem('language', newLanguage);
+            
+            // 更新 translations.js 中的 currentLanguage 变量（关键！）
+            if (typeof currentLanguage !== 'undefined') {
+                currentLanguage = newLanguage;
+                console.log('积分使用情况页面：已更新 currentLanguage 变量为', newLanguage);
+            }
+            
+            // 更新页面语言属性
+            document.documentElement.lang = newLanguage === 'en' ? 'en' : 'zh-CN';
+            
+            // 先使用translations.js中的统一函数更新所有data-translate元素
+            if (typeof updatePageText === 'function') {
+                console.log('积分使用情况页面：调用 updatePageText() 更新基础文本');
+                updatePageText();
+            }
+            
+            // 重新获取后端数据（按新语言返回名称与描述）
+            loadUsageData();
+            
+            // 等待一小段时间确保 translations 对象已更新，然后更新积分使用情况页面的特殊元素（图表和列表）
+            setTimeout(() => {
+                console.log('积分使用情况页面：开始更新图表和列表，当前语言:', localStorage.getItem('language'));
+                updateCreditsUsagePageText(newLanguage);
+            }, 100);
+        });
+        
+        // 兼容性：同时监听 window 上的语言变化事件
+        window.addEventListener('languageChanged', function(event) {
+            const newLanguage = event.detail.language;
+            console.log('积分使用情况页面（window）：接收到语言切换事件', newLanguage);
+            
+            // 确保 localStorage 已更新
+            localStorage.setItem('language', newLanguage);
+            
+            // 更新 translations.js 中的 currentLanguage 变量
+            if (typeof currentLanguage !== 'undefined') {
+                currentLanguage = newLanguage;
+                console.log('积分使用情况页面（window）：已更新 currentLanguage 变量为', newLanguage);
+            }
+            
+            // 更新页面语言属性
+            document.documentElement.lang = newLanguage === 'en' ? 'en' : 'zh-CN';
+            
+            // 更新基础文案
+            if (typeof updatePageText === 'function') {
+                console.log('积分使用情况页面（window）：调用 updatePageText() 更新基础文本');
+                updatePageText();
+            }
+            
+            // 重新获取后端数据并刷新图表/列表
+            loadUsageData();
+            setTimeout(() => {
+                console.log('积分使用情况页面（window）：开始更新图表和列表，当前语言:', localStorage.getItem('language'));
+                updateCreditsUsagePageText(newLanguage);
+            }, 100);
+        });
+
+        // 监听localStorage变化（跨标签页语言同步）
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'language' && event.newValue) {
+                console.log('积分使用情况页面：检测到跨标签页语言变化', event.newValue);
+                
+                // 更新 translations.js 中的 currentLanguage 变量（关键！）
+                if (typeof currentLanguage !== 'undefined') {
+                    currentLanguage = event.newValue;
+                    console.log('积分使用情况页面：已更新 currentLanguage 变量为', event.newValue);
+                }
+                
+                // 更新页面语言属性
+                document.documentElement.lang = event.newValue === 'en' ? 'en' : 'zh-CN';
+                
+                // 先使用translations.js中的统一函数更新所有data-translate元素
+                if (typeof updatePageText === 'function') {
+                    console.log('积分使用情况页面：调用 updatePageText() 更新基础文本');
+                    updatePageText();
+                }
+                
+                // 重新获取后端数据（按新语言返回名称与描述）
+                loadUsageData();
+                
+                // 等待一小段时间确保 translations 对象已更新，然后更新积分使用情况页面的特殊元素（图表和列表）
+                setTimeout(() => {
+                    console.log('积分使用情况页面：开始更新图表和列表，当前语言:', localStorage.getItem('language'));
+                    updateCreditsUsagePageText(event.newValue);
+                }, 100);
+            }
+        });
         
         // 获取翻译文本
         function t(key, defaultValue = '') {
             const currentLang = localStorage.getItem('language') || 'zh';
             if (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][key]) {
                 return translations[currentLang][key];
+            }
+            // 语言感知的兜底文案，避免在英文环境下回退到中文默认值
+            const englishFallbacks = {
+                'credits_usage.times': 'times',
+                'credits_usage.free': 'Free',
+                'credits_usage.credits': 'Credits',
+                'credits_usage.loading': 'Loading...',
+                'credits_usage.load_failed': 'Load failed',
+                'credits_usage.no_feature_data': 'No feature usage records',
+                'credits_usage.no_chart_data': 'No credits usage yet'
+            };
+            if (currentLang === 'en') {
+                return englishFallbacks[key] || (defaultValue || key);
             }
             return defaultValue || key;
         }
@@ -219,10 +388,11 @@
                     throw new Error('用户未登录');
                 }
                 
-                console.log(`积分使用页面：开始请求API /api/credits/usage?days=${days}`);
+                const lang = localStorage.getItem('language') || 'zh';
+                console.log(`积分使用页面：开始请求API /api/credits/usage?days=${days}&lang=${lang}`);
                 
                 // 调用API获取积分使用数据
-                const response = await fetch(`/api/credits/usage?days=${days}`, {
+                const response = await fetch(`/api/credits/usage?days=${days}&lang=${lang}`, {
                     headers: {
                         'Authorization': `Bearer ${authToken}`
                     }
@@ -373,7 +543,14 @@
         
         // 渲染使用趋势图表
         function renderUsageChart() {
-            const ctx = document.getElementById('usage-chart').getContext('2d');
+            const canvas = document.getElementById('usage-chart');
+            const ctx = canvas.getContext('2d');
+            
+            // 如果已存在 Chart 实例，先销毁它（用于语言切换时重新渲染）
+            if (canvas.chart && typeof canvas.chart.destroy === 'function') {
+                canvas.chart.destroy();
+                canvas.chart = null;
+            }
             
             // 检查是否有数据
             const hasData = usageData.chartData?.data?.some(value => value > 0);
@@ -391,7 +568,7 @@
             }
             
             // 有数据时正常绘制图表
-            new Chart(ctx, {
+            canvas.chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: usageData.chartData.labels,
@@ -423,7 +600,14 @@
         
         // 渲染功能使用占比饼图
         function renderFeaturePieChart() {
-            const ctx = document.getElementById('feature-pie-chart').getContext('2d');
+            const canvas = document.getElementById('feature-pie-chart');
+            const ctx = canvas.getContext('2d');
+            
+            // 如果已存在 Chart 实例，先销毁它（用于语言切换时重新渲染）
+            if (canvas.chart && typeof canvas.chart.destroy === 'function') {
+                canvas.chart.destroy();
+                canvas.chart = null;
+            }
             
             // 检查是否有数据
             if (!usageData.featureUsage || usageData.featureUsage.length === 0) {
@@ -608,7 +792,7 @@
                 total: validData.reduce((sum, item) => sum + item.usageCount, 0)
             });
             
-            new Chart(ctx, {
+            canvas.chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: validData.map(item => getFeatureName(item.name)),
@@ -721,6 +905,25 @@
         function getFeatureName(featureName) {
             // 获取当前语言
             const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 尝试通过 translations 反向查找键（当传入的是“展示用名称”而不是代码键/中文名时）
+            function findKeyByDisplayName(name) {
+                if (typeof translations === 'undefined') return null;
+                
+                // 在中文表中找：值等于传入名称 → 拿到相同 key
+                if (translations.zh) {
+                    for (const [key, value] of Object.entries(translations.zh)) {
+                        if (value === name) return key;
+                    }
+                }
+                // 在英文表中找：值等于传入名称 → 拿到相同 key
+                if (translations.en) {
+                    for (const [key, value] of Object.entries(translations.en)) {
+                        if (value === name) return key;
+                    }
+                }
+                return null;
+            }
             
             // 中文名称到翻译键的映射（后端返回的是中文名称）
             const chineseNameToTranslationKey = {
@@ -836,17 +1039,17 @@
                 translationKey = englishKeyToTranslationKey[featureName];
             }
             
+            // 如果仍找不到，尝试基于 translations 的“值反查键”
+            if (!translationKey) {
+                translationKey = findKeyByDisplayName(featureName);
+            }
+            
             // 如果存在翻译键，尝试从翻译对象获取
             if (translationKey && typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][translationKey]) {
                 return translations[currentLang][translationKey];
             }
             
-            // 如果是中文语言，直接返回原名称
-            if (currentLang === 'zh') {
-                return featureName;
-            }
-            
-            // 如果是英文语言但没有翻译，返回原名称（可能是英文键名）
+            // 找不到映射时，回退为原名称（保持原有行为）
             return featureName;
         }
         
@@ -861,7 +1064,7 @@
             
             const currentLang = localStorage.getItem('language') || 'zh';
             
-            // 如果是中文语言，只需要翻译功能名称
+            // 如果是中文语言，除中文描述外，也要把英文描述转成中文
             if (currentLang === 'zh') {
                 // 匹配"使用XXX功能"的模式（中文）
                 const matchCN = description.match(/使用(.+?)功能/);
@@ -869,6 +1072,21 @@
                     const featureName = matchCN[1];
                     const translatedFeatureName = getFeatureName(featureName);
                     return description.replace(featureName, translatedFeatureName);
+                }
+                
+                // 匹配英文 "Used XXX feature" → 转中文
+                const matchEN = description.match(/Used (.+?) feature/i);
+                if (matchEN) {
+                    const featureName = matchEN[1];
+                    const translatedFeatureName = getFeatureName(featureName);
+                    return `使用${translatedFeatureName}功能`;
+                }
+                
+                // 匹配英文 "Processed X-second video" → 转中文
+                const videoEN = description.match(/Processed\s+(\d+)-second\s+video/i);
+                if (videoEN) {
+                    const seconds = videoEN[1];
+                    return `处理${seconds}秒视频`;
                 }
                 return description;
             }
@@ -977,38 +1195,6 @@
             });
         }
         
-        // 页面加载时检查登录状态
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('积分使用页面：DOM加载完成，开始初始化');
-            
-            // 初始化语言支持
-            initLanguageSupport();
-            
-            // 等待认证检查完成后再初始化
-            const waitForAuth = () => {
-                // 检查是否正在进行认证检查
-                if (window.isAuthChecking) {
-                    console.log('积分使用页面：等待认证检查完成...');
-                    setTimeout(waitForAuth, 500);
-                    return;
-                }
-                
-                // 检查认证状态
-                const authToken = localStorage.getItem('authToken');
-                const userInfo = localStorage.getItem('user');
-                
-                if (authToken && userInfo) {
-                    console.log('积分使用页面：认证完成，开始初始化');
-                    initializeUserUI();
-                } else {
-                    console.log('积分使用页面：用户未登录，等待认证检查...');
-                    setTimeout(waitForAuth, 500);
-                }
-            };
-            
-            // 延迟启动，确保auth-check.js有时间完成认证
-            setTimeout(waitForAuth, 2000);
-        });
     </script>
 </body>
 </html> 

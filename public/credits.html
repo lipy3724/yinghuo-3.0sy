@@ -268,10 +268,129 @@
                 const html = await response.text();
                 document.getElementById('navbar-full').innerHTML = html;
                 
-                // 加载导航栏的JavaScript功能
-                const script = document.createElement('script');
-                script.src = '/components/components.js';
-                document.head.appendChild(script);
+                // 检查 components.js 是否已经加载
+                const existingScript = document.querySelector('script[src="/components/components.js"]');
+                const isScriptLoaded = existingScript && (typeof initializeComponents === 'function' || typeof window.ComponentsJS !== 'undefined');
+                
+                // 初始化语言选择器的函数
+                function initLanguageSelector() {
+                    console.log('🔵 开始初始化语言选择器...');
+                    
+                    // 多次尝试初始化，确保navbar HTML已经完全渲染
+                    let retryCount = 0;
+                    const maxRetries = 10;
+                    
+                    function tryInitialize() {
+                        // 检查语言选项是否存在
+                        const languageOptions = document.querySelectorAll('.language-option');
+                        
+                        if (languageOptions.length > 0) {
+                            // 语言选项已存在，可以初始化
+                            console.log('🔵 找到语言选项，开始初始化语言选择器...');
+                            
+                            // 使用 translations.js 中的 initializeTranslations 函数
+                            if (typeof initializeTranslations === 'function') {
+                                console.log('🔵 调用 initializeTranslations 函数...');
+                                initializeTranslations();
+                                
+                                // 确保导航栏文本也被翻译
+                                if (typeof updatePageText === 'function') {
+                                    console.log('🔵 更新导航栏文本...');
+                                    updatePageText();
+                                }
+                                
+                                console.log('✅ 语言选择器初始化完成');
+                            } else {
+                                // 如果 initializeTranslations 不存在，手动初始化
+                                console.log('⚠️ initializeTranslations 函数未找到，手动初始化...');
+                                languageOptions.forEach(option => {
+                                    const lang = option.getAttribute('data-lang');
+                                    if (lang === (localStorage.getItem('language') || 'zh')) {
+                                        option.classList.add('active', 'bg-purple-50', 'text-purple-600');
+                                    }
+                                    
+                                    // 确保选项可以接收点击事件
+                                    option.style.pointerEvents = 'auto';
+                                    option.style.cursor = 'pointer';
+                                    
+                                    // 移除旧的事件监听器（通过克隆节点）
+                                    const newOption = option.cloneNode(true);
+                                    option.parentNode.replaceChild(newOption, option);
+                                    
+                                    // 绑定点击事件
+                                    newOption.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        
+                                        const selectedLanguage = this.getAttribute('data-lang');
+                                        console.log('🔄 用户选择了新语言:', selectedLanguage);
+                                        
+                                        if (!selectedLanguage) {
+                                            console.error('❌ 语言选项没有data-lang属性');
+                                            return;
+                                        }
+                                        
+                                        // 使用 translations.js 中的 switchLanguage 函数
+                                        if (typeof switchLanguage === 'function') {
+                                            switchLanguage(selectedLanguage);
+                                            console.log('✅ 语言切换完成');
+                                        } else {
+                                            console.error('❌ switchLanguage 函数未找到');
+                                        }
+                                    });
+                                });
+                                
+                                // 手动更新导航栏文本
+                                if (typeof updatePageText === 'function') {
+                                    console.log('🔵 手动更新导航栏文本...');
+                                    updatePageText();
+                                }
+                                
+                                console.log('✅ 手动初始化语言选择器完成');
+                            }
+                        } else if (retryCount < maxRetries) {
+                            // 语言选项还未加载，继续重试
+                            retryCount++;
+                            console.log(`⚠️ 语言选项未找到，${100 * retryCount}ms后重试 (${retryCount}/${maxRetries})`);
+                            setTimeout(tryInitialize, 100 * retryCount);
+                        } else {
+                            console.error('❌ 语言选项未找到，已达到最大重试次数');
+                        }
+                    }
+                    
+                    // 开始尝试初始化
+                    setTimeout(tryInitialize, 200);
+                }
+                
+                // 监听语言变化事件，更新导航栏
+                window.addEventListener('languageChanged', function(event) {
+                    console.log('🔄 检测到语言变化事件，更新导航栏文本...');
+                    if (typeof updatePageText === 'function') {
+                        updatePageText();
+                        console.log('✅ 导航栏文本已更新');
+                    }
+                });
+                
+                if (isScriptLoaded) {
+                    console.log('✅ components.js 已经加载，直接初始化语言选择器');
+                    initLanguageSelector();
+                } else {
+                    // 加载导航栏的JavaScript功能
+                    const script = document.createElement('script');
+                    script.src = '/components/components.js';
+                    
+                    // 等待脚本加载完成后再初始化
+                    script.onload = function() {
+                        console.log('✅ components.js 加载完成');
+                        initLanguageSelector();
+                    };
+                    
+                    script.onerror = function() {
+                        console.error('❌ 加载 components.js 失败');
+                    };
+                    
+                    document.head.appendChild(script);
+                }
             } catch (error) {
                 console.error('加载导航栏失败:', error);
             }
