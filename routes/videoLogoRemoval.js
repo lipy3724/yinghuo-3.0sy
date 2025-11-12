@@ -526,53 +526,24 @@ router.get('/status/:taskId', protect, async (req, res) => {
                         // OSS存储异常不影响主流程
                     });
                 
-                // 🔧 任务完成时扣除积分（按新的计费规则：5积分/30秒，不满30秒按30秒计算）
-                if (!taskInfo.creditProcessed && !taskInfo.isFree) {
+                // 🔒 改为服务层统一扣费（带幂等保护），避免在路由与服务层重复扣费
+                (async () => {
                     try {
-                        // 获取视频时长（这里需要从阿里云API或其他方式获取）
-                        // 暂时使用默认时长，实际应该从API结果中获取
-                        const videoDuration = aliyunData.VideoDuration || 30; // 默认30秒
-                        
-                        // 计算积分：5积分/30秒，不满30秒按30秒计算
-                        const billingUnits = Math.ceil(videoDuration / 30);
-                        const totalCredits = billingUnits * 5;
-                        
-                        console.log(`💰 视频去水印积分计算: 视频时长=${videoDuration}秒, 计费单位=${billingUnits}个30秒, 总积分=${totalCredits}`);
-                        
-                        // 调用统一功能使用记录系统扣除积分
-                        const { saveTaskDetails } = require('../middleware/unifiedFeatureUsage');
-                        const { FeatureUsage } = require('../models/FeatureUsage');
-                        
-                        // 查找功能使用记录
-                        const featureUsage = await FeatureUsage.findOne({
-                            where: { userId: userId, featureName: 'VIDEO_LOGO_REMOVAL' }
-                        });
-                        
-                        if (featureUsage) {
-                            await saveTaskDetails(featureUsage, {
-                                taskId: taskId,
-                                status: 'completed',
-                                featureName: 'VIDEO_LOGO_REMOVAL',
-                                creditCost: totalCredits,
-                                isFree: false,
-                                extraData: {
-                                    videoDuration: videoDuration,
-                                    billingUnits: billingUnits,
-                                    resultVideoUrl: resultVideoUrl,
-                                    aliyunTaskId: taskInfo.aliyunTaskId
-                                }
-                            });
-                            
-                            // 标记积分已处理，避免重复扣除
+                        const dbTask = await VideoLogoRemovalTask.findOne({ where: { taskId } });
+                        if (dbTask && !dbTask.creditProcessed && !dbTask.isFree) {
+                            // 同步视频时长（若阿里云返回了时长）
+                            if (aliyunData.VideoDuration && !dbTask.videoDuration) {
+                                dbTask.videoDuration = aliyunData.VideoDuration;
+                            }
+                            await VideoLogoRemovalService.processCredits(dbTask);
+                            // 同步内存态，减少再次进入本逻辑的概率
                             taskInfo.creditProcessed = true;
-                            taskInfo.actualCreditCost = totalCredits;
-                            
-                            console.log('✅ 视频去水印积分扣除成功:', totalCredits);
+                            taskInfo.actualCreditCost = dbTask.actualCreditCost;
                         }
-                    } catch (creditError) {
-                        console.error('❌ 扣除积分失败:', creditError);
+                    } catch (svcErr) {
+                        console.error('❌ 服务层处理积分失败（已跳过，避免影响主流程）:', svcErr);
                     }
-                }
+                })();
                 
             } catch (parseError) {
                 console.error('❌ 解析任务结果失败:', parseError);

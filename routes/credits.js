@@ -2064,7 +2064,8 @@ function getLocalFeatureName(featureName) {
     'amazon_case_creator': '亚马逊客服case内容',
     'QWEN_IMAGE_EDIT': '图像编辑',
     'IMAGE_CROP': '图像裁剪',
-    'IMAGE_RESIZE': '图片改尺寸'
+    'IMAGE_RESIZE': '图片改尺寸',
+    'VIDEO_FACE_FUSION': '视频换脸'
   };
   
   return featureNames[featureName] || featureName;
