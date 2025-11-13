@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
+    <!-- PayPal JavaScript SDK 将动态加载 -->
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -149,8 +150,6 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h1 class="text-2xl font-bold mb-6" data-translate="page.credits_management">积分管理</h1>
 
-            <div class="hidden" id="message-box"></div>
-
             <!-- 积分概览 -->
             <div class="bg-indigo-50 p-6 rounded-lg mb-6">
                 <div class="flex justify-between items-center">
@@ -212,15 +211,18 @@
                         <input type="hidden" id="amount" name="amount" value="">
                     </div>
                     <div class="form-group">
-                        <label class="block text-sm font-medium text-gray-700 mb-3" data-translate="credits.payment_method">支付方式</label>
-                        <div class="grid grid-cols-1 gap-3">
+                        <div class="grid grid-cols-2 gap-3">
                             <button type="button" class="payment-method flex items-center justify-center py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors active" data-method="alipay">
                                 <i class="ri-alipay-line text-blue-500 text-xl mr-2"></i>
                                 <span class="font-medium" data-translate="payment.alipay">支付宝</span>
                             </button>
+                            <button type="button" class="payment-method flex items-center justify-center py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors" data-method="paypal">
+                                <span class="font-medium">PayPal</span>
+                            </button>
                         </div>
                         <input type="hidden" id="payment-method" name="paymentMethod" value="alipay">
                     </div>
+                    <div class="hidden" id="message-box"></div>
                     <div class="pt-4">
                         <button type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white font-medium rounded-xl shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
                             <span data-translate="credits.confirm_recharge">确认充值</span>
@@ -405,6 +407,57 @@
         let userCredits = 0;
         let featurePricing = [];
         const messageBox = document.getElementById('message-box');
+        let paypalSDKLoaded = false; // PayPal SDK加载状态
+        
+        // 动态加载PayPal SDK
+        async function loadPayPalSDK() {
+            try {
+                // 从后端获取PayPal配置
+                const response = await fetch('/api/credits/paypal/config');
+                
+                // 检查响应状态
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        console.error('PayPal配置接口不存在，请检查服务器路由配置');
+                    } else if (response.status === 503) {
+                        console.warn('PayPal服务未配置，PayPal支付功能将不可用');
+                    } else {
+                        console.error('获取PayPal配置失败，状态码:', response.status);
+                    }
+                    paypalSDKLoaded = false;
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.clientId) {
+                    const clientId = data.data.clientId;
+                    
+                    // 动态创建PayPal SDK脚本
+                    const script = document.createElement('script');
+                    script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&components=buttons`;
+                    script.async = true;
+                    script.onload = function() {
+                        paypalSDKLoaded = true;
+                        console.log('PayPal SDK加载成功');
+                    };
+                    script.onerror = function() {
+                        console.error('PayPal SDK加载失败');
+                        paypalSDKLoaded = false;
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    console.warn('PayPal服务未配置，PayPal支付功能将不可用');
+                    paypalSDKLoaded = false;
+                }
+            } catch (error) {
+                console.error('加载PayPal配置失败:', error);
+                if (error.message && error.message.includes('404')) {
+                    console.error('PayPal配置接口返回404，请检查：1. 服务器是否重启 2. 路由是否正确注册');
+                }
+                paypalSDKLoaded = false;
+            }
+        }
         
         // 显示消息
         function showMessage(message, type = 'success') {
@@ -826,6 +879,9 @@
             // 检查用户是否已登录
             if (!checkAuth()) return;
             
+            // 加载PayPal SDK
+            loadPayPalSDK();
+            
             // 初始化语言切换功能
             initLanguageSupport();
             
@@ -1133,7 +1189,122 @@
                     submitBtn.disabled = true;
                     
                     try {
-                        // 创建支付订单
+                        // 如果是PayPal支付，使用PayPal SDK
+                        if (paymentMethod === 'paypal') {
+                            // 检查PayPal SDK是否已加载
+                            if (!paypalSDKLoaded || !window.paypal) {
+                                showMessage('PayPal SDK正在加载中，请稍候再试...', 'error');
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalBtnText;
+                                return;
+                            }
+                            
+                            // 创建PayPal订单
+                            const response = await fetch('/api/credits/paypal/create', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                },
+                                body: JSON.stringify({ 
+                                    amount: parseInt(amount)
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (response.ok && data.success && data.data.paypalOrderId) {
+                                // 保存订单信息
+                                localStorage.setItem('pendingPayPalOrderNumber', data.data.orderNumber);
+                                localStorage.setItem('pendingPayPalOrderId', data.data.paypalOrderId);
+                                localStorage.setItem('pendingOrderAmount', amount);
+                                
+                                // 隐藏提交按钮，显示PayPal按钮容器
+                                submitBtn.style.display = 'none';
+                                
+                                // 创建PayPal按钮容器（如果不存在）
+                                let paypalButtonContainer = document.getElementById('paypal-button-container');
+                                if (!paypalButtonContainer) {
+                                    paypalButtonContainer = document.createElement('div');
+                                    paypalButtonContainer.id = 'paypal-button-container';
+                                    paypalButtonContainer.className = 'mt-4';
+                                    submitBtn.parentNode.insertBefore(paypalButtonContainer, submitBtn);
+                                } else {
+                                    paypalButtonContainer.innerHTML = '';
+                                }
+                                
+                                // 渲染PayPal按钮
+                                if (window.paypal) {
+                                    window.paypal.Buttons({
+                                        createOrder: function(data, actions) {
+                                            // 返回已创建的PayPal订单ID
+                                            return localStorage.getItem('pendingPayPalOrderId');
+                                        },
+                                        onApprove: async function(data, actions) {
+                                            try {
+                                                // 捕获支付
+                                                const captureResponse = await fetch('/api/credits/paypal/capture', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                                    },
+                                                    body: JSON.stringify({ 
+                                                        orderId: localStorage.getItem('pendingPayPalOrderNumber')
+                                                    })
+                                                });
+                                                
+                                                const captureData = await captureResponse.json();
+                                                
+                                                if (captureResponse.ok && captureData.success) {
+                                                    showMessage('支付成功！积分已到账', 'success');
+                                                    
+                                                    // 清理本地存储
+                                                    localStorage.removeItem('pendingPayPalOrderNumber');
+                                                    localStorage.removeItem('pendingPayPalOrderId');
+                                                    localStorage.removeItem('pendingOrderAmount');
+                                                    
+                                                    // 刷新页面数据
+                                                    setTimeout(() => {
+                                                        location.reload();
+                                                    }, 1500);
+                                                } else {
+                                                    showMessage(captureData.message || '支付处理失败，请稍后重试', 'error');
+                                                }
+                                            } catch (error) {
+                                                console.error('捕获PayPal支付出错:', error);
+                                                showMessage('支付处理出错，请稍后重试', 'error');
+                                            }
+                                        },
+                                        onCancel: function(data) {
+                                            showMessage('支付已取消', 'info');
+                                            // 恢复提交按钮
+                                            submitBtn.style.display = 'block';
+                                            paypalButtonContainer.innerHTML = '';
+                                        },
+                                        onError: function(err) {
+                                            console.error('PayPal错误:', err);
+                                            showMessage('PayPal支付出错，请稍后重试', 'error');
+                                            // 恢复提交按钮
+                                            submitBtn.style.display = 'block';
+                                            paypalButtonContainer.innerHTML = '';
+                                        }
+                                    }).render('#paypal-button-container');
+                                } else {
+                                    showMessage('PayPal SDK未加载，请刷新页面重试', 'error');
+                                    submitBtn.style.display = 'block';
+                                }
+                                
+                                // 恢复按钮文本（但保持隐藏）
+                                submitBtn.innerHTML = originalBtnText;
+                            } else {
+                                // 订单创建失败
+                                showMessage(data.message || '创建PayPal订单失败，请稍后重试', 'error');
+                                submitBtn.innerHTML = originalBtnText;
+                                submitBtn.disabled = false;
+                            }
+                        } else {
+                            // 支付宝支付流程
                         const response = await fetch('/api/credits/alipay/create', {
                         method: 'POST',
                         headers: {
@@ -1165,12 +1336,13 @@
                     } else {
                             // 订单创建失败
                             showMessage(data.message || '创建支付订单失败，请稍后重试', 'error');
+                                submitBtn.innerHTML = originalBtnText;
+                                submitBtn.disabled = false;
+                            }
                     }
                 } catch (error) {
                         console.error('创建支付订单出错:', error);
                         showMessage('创建支付订单出错，请稍后重试', 'error');
-                    } finally {
-                        // 恢复按钮状态
                         submitBtn.innerHTML = originalBtnText;
                         submitBtn.disabled = false;
                     }
