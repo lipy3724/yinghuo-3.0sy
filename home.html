@@ -1431,7 +1431,7 @@
                                     <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.diantu">垫图</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_resizer">图片改尺寸</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_crop">图像裁剪</a></li>
-                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/qwen-image-edit.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">图像编辑</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/qwen-image-edit.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-translate="QWEN_IMAGE_EDIT">图像编辑</a></li>
                                 </ul>
                             </div>
                             <!-- 模特/服饰类 -->
@@ -3623,6 +3623,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 "feature.video_style_transfer": "视频风格重绘",
                 "feature.amazon_search_terms": "后台搜索词",
                 
+                // 专用功能键
+                "QWEN_IMAGE_EDIT": "图像编辑",
+                
                 // 不带前缀的翻译键（用于功能选择区域）
                 "amazon_brand_naming": "品牌起名",
                 "amazon_post_creator": "创建Post",
@@ -3774,6 +3777,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 "feature.video_style_transfer": "Video Style Transfer",
                 "feature.amazon_search_terms": "Amazon Search Terms",
                 
+                // Dedicated feature keys
+                "QWEN_IMAGE_EDIT": "Image Editing",
+                
                 // 不带前缀的翻译键（用于功能选择区域）
                 "amazon_brand_naming": "Brand Naming",
                 "amazon_post_creator": "Post Creator",
@@ -3889,6 +3895,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             console.log('📄 页面标题和语言属性已更新');
+            
+            // 根据语言更新“使用教程”链接地址（桌面和移动端）
+            const tutorialUrlZh = 'https://ta5j81tu89k.feishu.cn/docx/VAQpdDFRgooS0rxcIEYcDKhGnYe?from=from_copylink';
+            const tutorialUrlEn = 'https://ta5j81tu89k.feishu.cn/docx/O9EGdZhq9o3Ev8xMLKfceBmPnZe';
+            const targetTutorialUrl = language === 'en' ? tutorialUrlEn : tutorialUrlZh;
+            
+            // 桌面端导航 - 通过教程图标定位，再找最近的链接
+            const tutorialIcon = document.querySelector('i.ri-book-open-line');
+            if (tutorialIcon) {
+                const tutorialAnchor = tutorialIcon.closest('a');
+                if (tutorialAnchor) {
+                    tutorialAnchor.setAttribute('href', targetTutorialUrl);
+                    tutorialAnchor.setAttribute('target', '_blank');
+                }
+            }
+            
+            // 移动端菜单 - 初始写死的链接，这里按链接特征进行同步更新
+            const mobileTutorialLinks = Array.from(document.querySelectorAll('a.mobile-feature-item, a'))
+                .filter(a => a.textContent && a.textContent.trim().includes('使用教程') || (a.querySelector('[data-translate="nav.tutorial"]')));
+            mobileTutorialLinks.forEach(a => {
+                if (a) {
+                    a.setAttribute('href', targetTutorialUrl);
+                    a.setAttribute('target', '_blank');
+                }
+            });
             
             // 重新渲染快速访问面板以应用新的语言
             if (typeof renderSidebarFeatures === 'function') {

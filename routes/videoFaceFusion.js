@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const videoenhan20200320 = require('@alicloud/videoenhan20200320');
 const OpenApi = require('@alicloud/openapi-client');
 const Util = require('@alicloud/tea-util');
-const { imageSize } = require('image-size');
+const sizeOf = require('image-size');
 
 // 配置multer用于内存存储
 const memoryUpload = multer({
@@ -60,7 +60,7 @@ const memoryUpload = multer({
  */
 function validateImageResolution(imageBuffer) {
     try {
-        const dimensions = imageSize(imageBuffer);
+        const dimensions = sizeOf(imageBuffer);
         const { width, height } = dimensions;
         
         // 阿里云限制：≥128x128 且 ≤4000x4000

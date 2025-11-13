@@ -4,6 +4,7 @@
 
 ## 🧠 今日任务反思（2025-11-10）
 
+- **视频换脸多语言对齐**：已为`public/video-face-fusion.html`接入全局翻译脚本，补充中英文词条并处理动态提示，确保与首页语言切换保持一致。后续可考虑抽离通用的错误提示样式，降低各视频功能页面的重复实现。
 - **多语言一致性**：今日针对`home.html`、`public/credits.html`、`public/download-center.html`与`public/translations.js`补充翻译键，确保亚马逊助手和下载中心区域在中英文间切换时表现一致。当前多语言文本更多依赖手动维护，后续可考虑抽离成集中式配置或CMS，以降低遗漏风险。
 - **组件脚本命名冲突**：积分使用页沿用了全局函数名`updatePageText`，与`components.js`重复导致导航栏语言切换无法更新页面文本。已改用专属函数`updateCreditsUsagePageText`并复用事件监听逻辑。后续在新增页面时应优先采用命名空间或模块化写法，避免类似冲突。
 - **翻译脚本命名冲突**：导航组件内置的`const translations`与公共`translations.js`重名，导致组件脚本语法报错从而失效。已将组件内翻译数据重命名为`navbarTranslations`并增加兼容逻辑，优先使用全局翻译数据。未来新增多语言脚本时应避免在全局作用域重复声明常量。

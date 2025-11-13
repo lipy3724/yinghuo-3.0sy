@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图像编辑 - 萤火AI</title>
+    <title data-translate="qwen_image_edit.page_title">图像编辑 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="/js/tailwind.min.js"></script>
     <link href="/components/styles.css" rel="stylesheet">
@@ -14,6 +14,8 @@
     <script src="/js/error-handler.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="/js/auth-helper.js"></script>
+    <!-- 多语言支持 -->
+    <script src="/translations.js"></script>
     <!-- 本地备份的remixicon -->
     <link href="/css/remixicon.css" rel="stylesheet">
     <style>
@@ -275,20 +277,20 @@
         <div class="px-4 py-6 sm:px-0">
             <!-- 页面标题 -->
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">图像编辑</h1>
-                <p class="text-lg text-gray-600">支持多图输入，精确修改图内文字、增删移动物体、改变主体动作、迁移图片风格</p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2" data-translate="qwen_image_edit.main_title">图像编辑</h1>
+                <p class="text-lg text-gray-600" data-translate="qwen_image_edit.description">支持多图输入，精确修改图内文字、增删移动物体、改变主体动作、迁移图片风格</p>
                 <div class="mt-4 flex justify-center items-center space-x-4 text-sm text-gray-500">
                     <span class="flex items-center">
                         <i class="ri-image-line mr-1"></i>
-                        支持1-3张图片
+                        <span data-translate="qwen_image_edit.support_images">支持1-3张图片</span>
                     </span>
                     <span class="flex items-center">
                         <i class="ri-file-line mr-1"></i>
-                        JPG、PNG、WEBP格式
+                        <span data-translate="qwen_image_edit.supported_formats">JPG、PNG、WEBP格式</span>
                     </span>
                     <span class="flex items-center">
                         <i class="ri-coin-line mr-1"></i>
-                        首次免费，后续7积分/张图片
+                        <span data-translate="qwen_image_edit.pricing_info">首次免费，后续7积分/张图片</span>
                     </span>
                 </div>
             </div>
@@ -297,51 +299,51 @@
                 <!-- 左侧功能菜单 -->
                 <div class="w-64 flex-shrink-0">
                     <div class="bg-white rounded-lg shadow p-4 sticky top-20">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">图像编辑</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4" data-translate="qwen_image_edit.sidebar_title">图像编辑</h3>
                         <div class="space-y-2">
                             <button class="function-btn active" data-function="multi-fusion">
                                 <i class="ri-collage-line"></i>
-                                <span>多图融合</span>
+                                <span data-translate="qwen_image_edit.function.multi_fusion">多图融合</span>
                             </button>
                             <button class="function-btn" data-function="consistency">
                                 <i class="ri-user-line"></i>
-                                <span>主体一致性保持</span>
+                                <span data-translate="qwen_image_edit.function.consistency">主体一致性保持</span>
                             </button>
                             <button class="function-btn" data-function="sketch-create">
                                 <i class="ri-pencil-line"></i>
-                                <span>草图创作</span>
+                                <span data-translate="qwen_image_edit.function.sketch_create">草图创作</span>
                             </button>
                             <button class="function-btn" data-function="creative-gen">
                                 <i class="ri-palette-line"></i>
-                                <span>文创生成</span>
+                                <span data-translate="qwen_image_edit.function.creative_gen">文创生成</span>
                             </button>
                             <button class="function-btn" data-function="depth-gen">
                                 <i class="ri-stack-line"></i>
-                                <span>根据深度图生成图像</span>
+                                <span data-translate="qwen_image_edit.function.depth_gen">根据深度图生成图像</span>
                             </button>
                             <button class="function-btn" data-function="keypoint-gen">
                                 <i class="ri-focus-3-line"></i>
-                                <span>根据关键点生成图像</span>
+                                <span data-translate="qwen_image_edit.function.keypoint_gen">根据关键点生成图像</span>
                             </button>
                             <button class="function-btn" data-function="text-edit">
                                 <i class="ri-font-size"></i>
-                                <span>文字编辑</span>
+                                <span data-translate="qwen_image_edit.function.text_edit">文字编辑</span>
                             </button>
                             <button class="function-btn" data-function="object-edit">
                                 <i class="ri-scissors-line"></i>
-                                <span>增删改及替换</span>
+                                <span data-translate="qwen_image_edit.function.object_edit">增删改及替换</span>
                             </button>
                             <button class="function-btn" data-function="perspective">
                                 <i class="ri-camera-3-line"></i>
-                                <span>视角转换</span>
+                                <span data-translate="qwen_image_edit.function.perspective">视角转换</span>
                             </button>
                             <button class="function-btn" data-function="bg-replace">
                                 <i class="ri-landscape-line"></i>
-                                <span>背景替换</span>
+                                <span data-translate="qwen_image_edit.function.bg_replace">背景替换</span>
                             </button>
                             <button class="function-btn" data-function="photo-restore">
                                 <i class="ri-image-2-line"></i>
-                                <span>老照片处理</span>
+                                <span data-translate="qwen_image_edit.function.photo_restore">老照片处理</span>
                             </button>
                         </div>
                     </div>
@@ -353,50 +355,52 @@
                     <div class="space-y-6">
                     <!-- 图片上传区域 -->
                     <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">上传图片（1-3张）</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4" data-translate="qwen_image_edit.upload_title">上传图片（1-3张）</h3>
                         
                         <div id="imageUploadArea" class="image-upload-area">
                             <div class="text-center">
                                 <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-4"></i>
-                                <p class="text-gray-600 mb-2">点击或拖拽上传图片</p>
-                                <p class="text-sm text-gray-500">支持 JPG、PNG、WEBP 格式，单张最大 10MB</p>
+                                <p class="text-gray-600 mb-2" data-translate="qwen_image_edit.upload_click_or_drag">点击或拖拽上传图片</p>
+                                <p class="text-sm text-gray-500" data-translate="qwen_image_edit.upload_formats">支持 JPG、PNG、WEBP 格式，单张最大 10MB</p>
                             </div>
                             <input type="file" id="imageInput" multiple accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none;">
                         </div>
                         
                         <!-- 图片预览区域 -->
                         <div id="imagePreviewArea" class="mt-4 text-center" style="display: none;">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">已上传的图片：</h4>
+                            <h4 class="text-sm font-medium text-gray-700 mb-2" data-translate="qwen_image_edit.uploaded_images">已上传的图片：</h4>
                             <div id="imagePreviewContainer"></div>
                         </div>
                     </div>
 
                     <!-- 编辑指令 -->
                     <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">编辑指令</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4" data-translate="qwen_image_edit.edit_instruction">编辑指令</h3>
                         
                         <div class="space-y-4">
                             <div>
                                 <label for="promptInput" class="block text-sm font-medium text-gray-700 mb-2">
-                                    编辑描述 <span class="text-red-500">*</span>
+                                    <span data-translate="qwen_image_edit.edit_description_required">编辑描述 *</span>
                                 </label>
                                 <textarea 
                                     id="promptInput" 
                                     rows="4" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    data-translate-placeholder="qwen_image_edit.edit_description_placeholder"
                                     placeholder="请详细描述您想要的编辑效果，例如：将图中的人物改为站立姿势，弯腰握住狗的前爪"
                                 ></textarea>
-                                <p class="mt-1 text-xs text-gray-500">提供清晰的指令，AI才能精准处理。支持中英文双语。</p>
+                                <p class="mt-1 text-xs text-gray-500" data-translate="qwen_image_edit.edit_description_tip">提供清晰的指令，AI才能精准处理。支持中英文双语。</p>
                             </div>
                             
                             <div>
                                 <label for="negativePromptInput" class="block text-sm font-medium text-gray-700 mb-2">
-                                    负面提示（可选）
+                                    <span data-translate="qwen_image_edit.negative_prompt">负面提示（可选）</span>
                                 </label>
                                 <textarea 
                                     id="negativePromptInput" 
                                     rows="2" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    data-translate-placeholder="qwen_image_edit.negative_prompt_placeholder"
                                     placeholder="描述您不希望出现的内容，例如：模糊、扭曲、变形、低质量"
                                 ></textarea>
                             </div>
@@ -404,24 +408,24 @@
                             <!-- 输出图片数量设置 -->
                             <div>
                                 <label for="outputCountInput" class="block text-sm font-medium text-gray-700 mb-2">
-                                    输出图片数量
+                                    <span data-translate="qwen_image_edit.output_count">输出图片数量</span>
                                 </label>
                                 <select 
                                     id="outputCountInput" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     onchange="updateCreditCost()"
                                 >
-                                    <option value="1" selected>1张图片</option>
-                                    <option value="2">2张图片</option>
-                                    <option value="3">3张图片</option>
-                                    <option value="4">4张图片</option>
-                                    <option value="5">5张图片</option>
-                                    <option value="6">6张图片</option>
+                                    <option value="1" selected data-translate="qwen_image_edit.output_count_1">1张图片</option>
+                                    <option value="2" data-translate="qwen_image_edit.output_count_2">2张图片</option>
+                                    <option value="3" data-translate="qwen_image_edit.output_count_3">3张图片</option>
+                                    <option value="4" data-translate="qwen_image_edit.output_count_4">4张图片</option>
+                                    <option value="5" data-translate="qwen_image_edit.output_count_5">5张图片</option>
+                                    <option value="6" data-translate="qwen_image_edit.output_count_6">6张图片</option>
                                 </select>
                                 <div class="mt-2 flex items-center justify-between">
-                                    <p class="text-xs text-gray-500">支持生成1-6张图片</p>
+                                    <p class="text-xs text-gray-500" data-translate="qwen_image_edit.output_count_support">支持生成1-6张图片</p>
                                     <div id="creditCostDisplay" class="text-sm font-medium text-indigo-600">
-                                        预计消耗：7积分
+                                        <span data-translate="qwen_image_edit.estimated_cost">预计消耗：7积分</span>
                                     </div>
                                 </div>
                             </div>
@@ -430,11 +434,11 @@
 
                     <!-- 随机数种子设置 -->
                     <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">随机数种子（高级选项）</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4" data-translate="qwen_image_edit.seed_title">随机数种子（高级选项）</h3>
                         
                         <div>
                             <label for="seedInput" class="block text-sm font-medium text-gray-700 mb-2">
-                                随机数种子
+                                <span data-translate="qwen_image_edit.seed_label">随机数种子</span>
                             </label>
                             <input 
                                 type="number" 
@@ -442,10 +446,11 @@
                                 name="seed" 
                                 min="0" 
                                 max="2147483647" 
+                                data-translate-placeholder="qwen_image_edit.seed_placeholder"
                                 placeholder="留空则自动生成随机种子"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             >
-                            <p class="mt-1 text-xs text-gray-500">
+                            <p class="mt-1 text-xs text-gray-500" data-translate="qwen_image_edit.seed_tip">
                                 输入0到2147483647之间的整数。使用相同的种子值可以生成相同的结果，实现可重复的图像编辑效果。
                             </p>
                         </div>
@@ -460,7 +465,7 @@
                             disabled
                         >
                             <i class="ri-magic-line mr-2"></i>
-                            开始编辑
+                            <span data-translate="qwen_image_edit.start_edit">开始编辑</span>
                         </button>
                     </div>
                 </div>
@@ -469,12 +474,12 @@
                 <div class="space-y-6">
                     <!-- 编辑结果 -->
                     <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">编辑结果</h3>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4" data-translate="qwen_image_edit.edit_result">编辑结果</h3>
                         
                         <div id="editResultArea">
                             <div class="text-center py-12 text-gray-500">
                                 <i class="ri-image-line text-4xl mb-4"></i>
-                                <p>上传图片并输入编辑指令后，编辑结果将在这里显示</p>
+                                <p data-translate="qwen_image_edit.result_placeholder">上传图片并输入编辑指令后，编辑结果将在这里显示</p>
                             </div>
                         </div>
                     </div>
@@ -482,22 +487,23 @@
                     <!-- 历史记录 -->
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-medium text-gray-900">编辑历史</h3>
+                            <h3 class="text-lg font-medium text-gray-900" data-translate="qwen_image_edit.edit_history">编辑历史</h3>
                             <div class="flex space-x-2">
                                 <button 
                                     id="clear-history-btn" 
                                     class="text-gray-500 hover:text-red-600 text-sm font-medium"
+                                    data-translate-title="qwen_image_edit.clear_history_title"
                                     title="清空历史记录"
                                 >
                                     <i class="ri-delete-bin-line mr-1"></i>
-                                    清空
+                                    <span data-translate="qwen_image_edit.clear_history">清空</span>
                                 </button>
                                 <button 
                                     id="refreshHistoryBtn" 
                                     class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                                 >
                                     <i class="ri-refresh-line mr-1"></i>
-                                    刷新
+                                    <span data-translate="qwen_image_edit.refresh">刷新</span>
                                 </button>
                             </div>
                         </div>
@@ -505,7 +511,7 @@
                         <div id="historyArea">
                             <div class="text-center py-8 text-gray-500">
                                 <i class="ri-history-line text-3xl mb-2"></i>
-                                <p>暂无编辑历史</p>
+                                <p data-translate="qwen_image_edit.no_history">暂无编辑历史</p>
                             </div>
                         </div>
                     </div>
@@ -520,10 +526,10 @@
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3 text-center">
                 <div class="loading-spinner mx-auto mb-4"></div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">正在处理图像编辑</h3>
-                <p class="text-sm text-gray-500 mb-4">AI正在分析您的图片和指令，请耐心等待...</p>
+                <h3 class="text-lg font-medium text-gray-900 mb-2" data-translate="qwen_image_edit.loading_title">正在处理图像编辑</h3>
+                <p class="text-sm text-gray-500 mb-4" data-translate="qwen_image_edit.loading_message">AI正在分析您的图片和指令，请耐心等待...</p>
                 <div class="text-xs text-gray-400">
-                    <p>预计处理时间：30-60秒</p>
+                    <p data-translate="qwen_image_edit.estimated_time">预计处理时间：30-60秒</p>
                 </div>
             </div>
         </div>
@@ -564,7 +570,10 @@
             const outputCount = parseInt(document.getElementById('outputCountInput').value) || 1;
             const creditCost = outputCount * 7; // 每张图片7积分
             const creditDisplay = document.getElementById('creditCostDisplay');
-            if (creditDisplay) {
+            if (creditDisplay && typeof translate === 'function') {
+                const costText = translate('qwen_image_edit.estimated_cost').replace('{cost}', creditCost);
+                creditDisplay.innerHTML = `<span data-translate="qwen_image_edit.estimated_cost">${costText}</span>`;
+            } else if (creditDisplay) {
                 creditDisplay.textContent = `预计消耗：${creditCost}积分`;
             }
         }
@@ -648,7 +657,7 @@
                 editResultArea.innerHTML = `
                     <div class="text-center py-12 text-gray-500">
                         <i class="ri-image-line text-4xl mb-4"></i>
-                        <p>上传图片并输入编辑指令后，编辑结果将在这里显示</p>
+                        <p>${typeof translate === 'function' ? translate('qwen_image_edit.result_placeholder') : '上传图片并输入编辑指令后，编辑结果将在这里显示'}</p>
                     </div>
                 `;
             }
@@ -760,14 +769,19 @@
 
             const info = functionInfo[functionType] || functionInfo['multi-fusion'];
             
-            // 更新页面标题和描述
-            document.querySelector('h1').textContent = info.title;
-            document.querySelector('h1').nextElementSibling.textContent = info.description;
+            // 更新页面标题和描述 - 使用翻译函数
+            const formattedFunctionType = functionType.replace(/-/g, '_');
+            const titleKey = `qwen_image_edit.function_info.${formattedFunctionType}.title`;
+            const descKey = `qwen_image_edit.function_info.${formattedFunctionType}.description`;
+            const placeholderKey = `qwen_image_edit.function_info.${formattedFunctionType}.placeholder`;
+            
+            document.querySelector('h1').textContent = typeof translate === 'function' ? translate(titleKey) || info.title : info.title;
+            document.querySelector('h1').nextElementSibling.textContent = typeof translate === 'function' ? translate(descKey) || info.description : info.description;
             
             // 更新编辑指令的占位符文本
             const textarea = document.getElementById('promptInput');
             if (textarea) {
-                textarea.placeholder = info.placeholder;
+                textarea.placeholder = typeof translate === 'function' ? translate(placeholderKey) || info.placeholder : info.placeholder;
                 textarea.value = ''; // 清空之前的内容
             }
 
@@ -823,20 +837,20 @@
             });
 
             if (imageFiles.length === 0) {
-                alert('请选择有效的图片文件（JPG、PNG、WEBP格式）');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.upload_first') : '请选择有效的图片文件（JPG、PNG、WEBP格式）');
                 return;
             }
 
             // 检查文件数量限制
             if (uploadedImages.length + imageFiles.length > 3) {
-                alert('最多只能上传3张图片');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.support_images') : '最多只能上传3张图片');
                 return;
             }
 
             // 检查文件大小
             const oversizedFiles = imageFiles.filter(file => file.size > 10 * 1024 * 1024);
             if (oversizedFiles.length > 0) {
-                alert('图片文件大小不能超过10MB');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.upload_formats') : '图片文件大小不能超过10MB');
                 return;
             }
 
@@ -914,12 +928,12 @@
             const negativePrompt = document.getElementById('negativePromptInput').value.trim();
 
             if (!prompt) {
-                alert('请输入编辑指令');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.enter_prompt') : '请输入编辑指令');
                 return;
             }
 
             if (uploadedImages.length === 0) {
-                alert('请至少上传一张图片');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.upload_first') : '请至少上传一张图片');
                 return;
             }
 
@@ -974,7 +988,7 @@
             } catch (error) {
                 console.error('创建图像编辑任务失败:', error);
                 document.getElementById('loadingModal').style.display = 'none';
-                alert('创建任务失败: ' + error.message);
+                alert((typeof translate === 'function' ? translate('qwen_image_edit.task_failed') : '创建任务失败') + ': ' + error.message);
             }
         }
 
@@ -1018,7 +1032,7 @@
                         // 任务失败
                         clearInterval(pollingInterval);
                         document.getElementById('loadingModal').style.display = 'none';
-                        alert('图像编辑失败: ' + (result.data?.error || '未知错误'));
+                        alert((typeof translate === 'function' ? translate('qwen_image_edit.task_failed_status') : '图像编辑失败') + ': ' + (result.data?.error || (typeof translate === 'function' ? translate('qwen_image_edit.task_failed_status') : '未知错误')));
                     }
                     // 任务进行中，继续轮询
 
@@ -1076,21 +1090,21 @@
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
                         <h4 class="font-medium text-gray-900">
-                            <i class="ri-image-edit-line mr-2"></i>图像编辑完成
+                            <i class="ri-image-edit-line mr-2"></i>${typeof translate === 'function' ? translate('qwen_image_edit.task_succeeded') : '图像编辑完成'}
                         </h4>
                         <div class="flex items-center space-x-2">
-                            <span class="task-status status-succeeded">已完成</span>
+                            <span class="task-status status-succeeded">${typeof translate === 'function' ? translate('qwen_image_edit.task_succeeded') : '已完成'}</span>
                             ${taskData.ossResultImages && taskData.ossResultImages.length > 0 ? 
-                                '<span class="text-xs text-green-600"><i class="ri-cloud-line"></i>已保存到云端</span>' : ''}
+                                `<span class="text-xs text-green-600"><i class="ri-cloud-line"></i>${typeof translate === 'function' ? translate('qwen_image_edit.save_to_download_center') : '已保存到云端'}</span>` : ''}
                         </div>
                     </div>
                     <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                        <strong>编辑指令：</strong>${getCleanPrompt(taskData.prompt)}
-                        ${taskData.negativePrompt ? `<br><strong>负面提示：</strong>${taskData.negativePrompt}` : ''}
+                        <strong>${typeof translate === 'function' ? translate('qwen_image_edit.edit_description') : '编辑指令'}：</strong>${getCleanPrompt(taskData.prompt)}
+                        ${taskData.negativePrompt ? `<br><strong>${typeof translate === 'function' ? translate('qwen_image_edit.negative_prompt') : '负面提示'}：</strong>${taskData.negativePrompt}` : ''}
                     </div>
                     <div class="text-center mb-4">
                         <span class="text-sm font-medium text-green-600">
-                            <i class="ri-check-line"></i> 成功生成 ${displayImages.length} 张编辑后的图片
+                            <i class="ri-check-line"></i> ${typeof translate === 'function' ? translate('qwen_image_edit.task_succeeded') : '成功生成'} ${displayImages.length} ${typeof translate === 'function' ? translate('qwen_image_edit.support_images') : '张编辑后的图片'}
                         </span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1118,17 +1132,17 @@
                                     <a href="${imageUrl}" download="qwen-edit-result-${index + 1}.jpg" 
                                        class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200 transition-colors">
                                         <i class="ri-download-line mr-1"></i>
-                                        下载
+                                        ${typeof translate === 'function' ? translate('qwen_image_edit.download_result') : '下载'}
                                     </a>
-                                    <button onclick="saveToDownloadCenter('${imageUrl}', 'QWEN_IMAGE_EDIT', '图像编辑结果 ${index + 1}', '${taskData.prompt}')" 
+                                    <button onclick="saveToDownloadCenter('${imageUrl}', 'QWEN_IMAGE_EDIT', '${typeof translate === 'function' ? translate('qwen_image_edit.edit_result') : '图像编辑结果'} ${index + 1}', '${taskData.prompt}')" 
                                             class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 transition-colors">
                                         <i class="ri-save-line mr-1"></i>
-                                        保存
+                                        ${typeof translate === 'function' ? translate('qwen_image_edit.save_to_downloads') : '保存'}
                                     </button>
                                     <button onclick="previewImage('${imageUrl}')" 
                                             class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-purple-600 bg-purple-100 hover:bg-purple-200 transition-colors">
                                         <i class="ri-eye-line mr-1"></i>
-                                        预览
+                                        ${typeof translate === 'function' ? translate('qwen_image_edit.edit_result') : '预览'}
                                     </button>
                                 </div>
                             </div>
@@ -1142,14 +1156,14 @@
                     ${taskData.editingInstructions ? `
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <h5 class="font-medium text-blue-900 mb-2">
-                                <i class="ri-lightbulb-line mr-1"></i>编辑说明
+                                <i class="ri-lightbulb-line mr-1"></i>${typeof translate === 'function' ? translate('qwen_image_edit.edit_instruction') : '编辑说明'}
                             </h5>
                             <div class="text-sm text-blue-800 whitespace-pre-wrap">${taskData.editingInstructions}</div>
                         </div>
                     ` : ''}
                     <div class="text-xs text-gray-500 text-center space-x-4">
-                        <span>消耗积分: ${taskData.isFree ? '0（免费）' : taskData.creditCost}${taskData.resultImages && taskData.resultImages.length > 1 ? ` (${taskData.resultImages.length}张×7积分)` : ''}</span>
-                        <span>完成时间: ${new Date(taskData.completedAt).toLocaleString()}</span>
+                        <span>${typeof translate === 'function' ? translate('qwen_image_edit.estimated_cost').replace('{cost}', taskData.isFree ? '0' : taskData.creditCost) : '消耗积分'}: ${taskData.isFree ? `0（${typeof translate === 'function' ? translate('qwen_image_edit.pricing_info') : '免费'}）` : taskData.creditCost}${taskData.resultImages && taskData.resultImages.length > 1 ? ` (${taskData.resultImages.length}张×7积分)` : ''}</span>
+                        <span>${typeof translate === 'function' ? translate('qwen_image_edit.estimated_time') : '完成时间'}: ${new Date(taskData.completedAt).toLocaleString()}</span>
                     </div>
                 </div>
             `;
@@ -1168,23 +1182,23 @@
                             <i class="ri-lightbulb-line mr-2"></i>图像编辑指导
                         </h4>
                         <div class="flex items-center space-x-2">
-                            <span class="task-status status-succeeded">已完成</span>
+                            <span class="task-status status-succeeded">${typeof translate === 'function' ? translate('qwen_image_edit.task_succeeded') : '已完成'}</span>
                         </div>
                     </div>
                     <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                        <strong>编辑指令：</strong>${getCleanPrompt(taskData.prompt)}
-                        ${taskData.negativePrompt ? `<br><strong>负面提示：</strong>${taskData.negativePrompt}` : ''}
+                        <strong>${typeof translate === 'function' ? translate('qwen_image_edit.edit_description') : '编辑指令'}：</strong>${getCleanPrompt(taskData.prompt)}
+                        ${taskData.negativePrompt ? `<br><strong>${typeof translate === 'function' ? translate('qwen_image_edit.negative_prompt') : '负面提示'}：</strong>${taskData.negativePrompt}` : ''}
                     </div>
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div class="text-center mb-3">
                             <i class="ri-robot-line text-2xl text-blue-600"></i>
-                            <p class="text-sm font-medium text-blue-900 mt-1">专业编辑指导</p>
+                            <p class="text-sm font-medium text-blue-900 mt-1">${typeof translate === 'function' ? translate('qwen_image_edit.edit_instruction') : '专业编辑指导'}</p>
                         </div>
                         <div class="text-sm text-blue-800 whitespace-pre-wrap leading-relaxed">${taskData.editingInstructions}</div>
                     </div>
                     <div class="text-xs text-gray-500 text-center space-x-4">
-                        <span>消耗积分: ${taskData.isFree ? '0（免费）' : taskData.creditCost}${taskData.resultImages && taskData.resultImages.length > 1 ? ` (${taskData.resultImages.length}张×7积分)` : ''}</span>
-                        <span>完成时间: ${new Date(taskData.completedAt).toLocaleString()}</span>
+                        <span>${typeof translate === 'function' ? translate('qwen_image_edit.estimated_cost').replace('{cost}', taskData.isFree ? '0' : taskData.creditCost) : '消耗积分'}: ${taskData.isFree ? `0（${typeof translate === 'function' ? translate('qwen_image_edit.pricing_info') : '免费'}）` : taskData.creditCost}${taskData.resultImages && taskData.resultImages.length > 1 ? ` (${taskData.resultImages.length}张×7积分)` : ''}</span>
+                        <span>${typeof translate === 'function' ? translate('qwen_image_edit.estimated_time') : '完成时间'}: ${new Date(taskData.completedAt).toLocaleString()}</span>
                     </div>
                     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                         <p class="text-sm text-yellow-800">
@@ -1275,7 +1289,7 @@
                 historyArea.innerHTML = `
                     <div class="text-center py-8 text-gray-500">
                         <i class="ri-history-line text-3xl mb-2"></i>
-                        <p>暂无编辑历史</p>
+                        <p>${typeof translate === 'function' ? translate('qwen_image_edit.no_history') : '暂无编辑历史'}</p>
                     </div>
                 `;
                 return;
@@ -1505,13 +1519,14 @@
                 console.log('历史图片下载成功:', fileName);
             } catch (error) {
                 console.error('历史图片下载失败:', error);
-                alert('图片下载失败，请重试');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.download_failed') : '图片下载失败，请重试');
             }
         }
 
         // 清空编辑历史记录
         async function clearEditHistory() {
-            if (!confirm('确定要清空所有图像编辑历史记录吗？此操作不可撤销。')) {
+            const confirmText = typeof translate === 'function' ? translate('qwen_image_edit.confirm_clear_history') : '确定要清空所有图像编辑历史记录吗？此操作不可撤销。';
+            if (!confirm(confirmText)) {
                 return;
             }
 
@@ -1520,7 +1535,8 @@
             
             try {
                 // 显示加载状态
-                clearBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-1"></i>清空中...';
+                const clearingText = typeof translate === 'function' ? translate('qwen_image_edit.processing') : '清空中...';
+                clearBtn.innerHTML = `<i class="ri-loader-4-line animate-spin mr-1"></i>${clearingText}`;
                 clearBtn.disabled = true;
 
                 // 调用后端API清空历史记录
@@ -1542,18 +1558,18 @@
                     historyArea.innerHTML = `
                         <div class="text-center py-8 text-gray-500">
                             <i class="ri-history-line text-3xl mb-2"></i>
-                            <p>暂无编辑历史</p>
+                            <p>${typeof translate === 'function' ? translate('qwen_image_edit.no_history') : '暂无编辑历史'}</p>
                         </div>
                     `;
                     
-                    alert('图像编辑历史记录已清空！');
+                    alert(typeof translate === 'function' ? translate('qwen_image_edit.history_cleared') : '图像编辑历史记录已清空！');
                 } else {
                     throw new Error(result.message || '清空历史记录失败');
                 }
 
             } catch (error) {
                 console.error('清空历史记录失败:', error);
-                alert('清空历史记录失败，请稍后重试。');
+                alert(typeof translate === 'function' ? translate('qwen_image_edit.clear_history_failed') : '清空历史记录失败，请稍后重试。');
             } finally {
                 // 恢复按钮状态
                 clearBtn.innerHTML = originalText;
@@ -1605,7 +1621,7 @@
                     // 显示成功提示
                     const toast = document.createElement('div');
                     toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
-                    toast.textContent = '图片已保存到下载中心';
+                    toast.textContent = typeof translate === 'function' ? translate('qwen_image_edit.save_to_download_center') : '图片已保存到下载中心';
                     document.body.appendChild(toast);
                     
                     setTimeout(() => {
@@ -1622,7 +1638,8 @@
                 // 显示错误提示
                 const toast = document.createElement('div');
                 toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
-                toast.textContent = '保存失败: ' + error.message;
+                const saveFailedText = typeof translate === 'function' ? translate('qwen_image_edit.save_failed').replace('{error}', error.message) : '保存失败: ' + error.message;
+                toast.textContent = saveFailedText;
                 document.body.appendChild(toast);
                 
                 setTimeout(() => {
@@ -1639,6 +1656,42 @@
                 clearInterval(pollingInterval);
             }
         });
+
+        // 监听语言切换事件（从home页面切换语言时触发）
+        document.addEventListener('languageChanged', function(event) {
+            console.log('图像编辑页面：语言已切换为', event.detail ? event.detail.language : localStorage.getItem('language'));
+            // translations.js 会自动更新所有带有 data-translate 属性的元素
+            if (typeof updatePageText === 'function') {
+                updatePageText();
+            }
+            // 更新select选项的文本
+            updateSelectOptions();
+            // 更新积分消耗显示
+            updateCreditCost();
+        });
+
+        // 更新select选项的文本
+        function updateSelectOptions() {
+            const select = document.getElementById('outputCountInput');
+            if (select && typeof translate === 'function') {
+                const options = select.querySelectorAll('option');
+                options.forEach((option, index) => {
+                    const value = option.value;
+                    const key = `qwen_image_edit.output_count_${value}`;
+                    option.textContent = translate(key);
+                });
+            }
+        }
+
+        // 页面加载时初始化翻译
+        if (typeof translate === 'function' && typeof updatePageText === 'function') {
+            // 等待translations.js加载完成
+            setTimeout(() => {
+                updatePageText();
+                updateSelectOptions();
+                updateCreditCost();
+            }, 100);
+        }
     </script>
 </body>
 </html>

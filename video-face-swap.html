@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com; media-src 'self' blob: data: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com https://yinghuo-ai.oss-cn-shanghai.aliyuncs.com; connect-src 'self' https://*.aliyuncs.com;">
-    <title>视频换人 - 萤火AI</title>
+    <title data-translate="video_face_swap.page_title">视频换人 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/images/favicon.png">
@@ -15,6 +15,8 @@
     <script src="/js/auth-check.js"></script>
     <!-- 导航栏样式 -->
     <link rel="stylesheet" href="/components/styles.css">
+    <!-- 翻译脚本 -->
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -193,7 +195,7 @@
 
     <!-- 主要内容 -->
     <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
-        <h1 class="text-3xl font-bold text-center mb-6">视频换人</h1>
+        <h1 class="text-3xl font-bold text-center mb-6" data-translate="video_face_swap.main_title">视频换人</h1>
         
         <!-- 功能说明 -->
         <div class="max-w-4xl mx-auto mb-8">
@@ -204,8 +206,8 @@
                             <i class="ri-magic-line text-blue-600 text-lg mt-0.5"></i>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-800 mb-1">核心功能</h3>
-                            <p class="text-gray-700 text-sm leading-relaxed">在不改变原始视频的动作、表情及环境的条件下，将视频中的角色替换为指定图片中的人物。</p>
+                            <h3 class="font-semibold text-gray-800 mb-1" data-translate="video_face_swap.core_function_title">核心功能</h3>
+                            <p class="text-gray-700 text-sm leading-relaxed" data-translate="video_face_swap.core_function_desc">在不改变原始视频的动作、表情及环境的条件下，将视频中的角色替换为指定图片中的人物。</p>
                         </div>
                     </div>
                     
@@ -214,8 +216,8 @@
                             <i class="ri-movie-2-line text-blue-600 text-lg mt-0.5"></i>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-800 mb-1">适用场景</h3>
-                            <p class="text-gray-700 text-sm leading-relaxed">适用于二次创作、影视后期制作等需要进行角色替换的场景。</p>
+                            <h3 class="font-semibold text-gray-800 mb-1" data-translate="video_face_swap.use_case_title">适用场景</h3>
+                            <p class="text-gray-700 text-sm leading-relaxed" data-translate="video_face_swap.use_case_desc">适用于二次创作、影视后期制作等需要进行角色替换的场景。</p>
                         </div>
                     </div>
                 </div>
@@ -229,14 +231,14 @@
                     <div class="space-y-6">
                         <!-- 上传原始视频 -->
                         <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <h2 class="text-xl font-semibold mb-4">上传原始视频</h2>
+                            <h2 class="text-xl font-semibold mb-4" data-translate="video_face_swap.upload_video_title">上传原始视频</h2>
                             <div class="preview-container flex items-center justify-center mb-4 relative">
                                 <div id="video-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
                                     <i class="ri-video-upload-line text-5xl text-gray-300 mb-2"></i>
-                                    <p class="text-gray-500 text-sm">点击或者拖拽视频文件到这里上传</p>
-                                    <p class="text-gray-400 text-xs mt-2">支持MP4、AVI、MOV格式，≤200MB，2秒＜时长＜30秒</p>
+                                    <p class="text-gray-500 text-sm" data-translate="video_face_swap.video_upload_hint">点击或者拖拽视频文件到这里上传</p>
+                                    <p class="text-gray-400 text-xs mt-2" data-translate="video_face_swap.video_format_requirements">支持MP4、AVI、MOV格式，≤200MB，2秒＜时长＜30秒</p>
                                     <input type="file" id="video-input" accept="video/*" class="hidden" />
-                                    <button class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
+                                    <button class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none" data-translate="video_face_swap.upload_video_btn">
                                         上传视频
                                     </button>
                                 </div>
@@ -245,19 +247,19 @@
                                 </div>
                                 <div class="upload-progress" id="video-progress"></div>
                             </div>
-                            <p class="text-xs text-gray-500">视频要求: 尺寸200x200-2048x2048像素，宽高比1:3-3:1，时长2-30秒。</p>
+                            <p class="text-xs text-gray-500" data-translate="video_face_swap.video_requirements">视频要求: 尺寸200x200-2048x2048像素，宽高比1:3-3:1，时长2-30秒。</p>
                         </div>
 
                         <!-- 上传人物图片 -->
                         <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <h2 class="text-xl font-semibold mb-4">上传人物图片</h2>
+                            <h2 class="text-xl font-semibold mb-4" data-translate="video_face_swap.upload_image_title">上传人物图片</h2>
                             <div class="preview-container flex items-center justify-center mb-4 relative">
                                 <div id="image-placeholder" class="flex flex-col items-center justify-center p-6 text-center">
                                     <i class="ri-user-line text-5xl text-gray-300 mb-2"></i>
-                                    <p class="text-gray-500 text-sm">点击或者拖拽人物图片到这里上传</p>
-                                    <p class="text-gray-400 text-xs mt-2">支持JPG、PNG、BMP、WEBP格式，≤5MB</p>
+                                    <p class="text-gray-500 text-sm" data-translate="video_face_swap.image_upload_hint">点击或者拖拽人物图片到这里上传</p>
+                                    <p class="text-gray-400 text-xs mt-2" data-translate="video_face_swap.image_format_requirements">支持JPG、PNG、BMP、WEBP格式，≤5MB</p>
                                     <input type="file" id="image-input" accept="image/*" class="hidden" />
-                                    <button class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none">
+                                    <button class="mt-4 px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-md hover:bg-indigo-100 focus:outline-none" data-translate="video_face_swap.upload_image_btn">
                                         上传图片
                                     </button>
                                 </div>
@@ -266,12 +268,12 @@
                                 </div>
                                 <div class="upload-progress" id="image-progress"></div>
                             </div>
-                            <p class="text-xs text-gray-500">图片要求: 尺寸200x200-4096x4096像素，宽高比1:3-3:1。</p>
+                            <p class="text-xs text-gray-500" data-translate="video_face_swap.image_requirements">图片要求: 尺寸200x200-4096x4096像素，宽高比1:3-3:1。</p>
                         </div>
 
                         <!-- 服务模式选择 -->
                         <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <h2 class="text-xl font-semibold mb-4">选择服务模式</h2>
+                            <h2 class="text-xl font-semibold mb-4" data-translate="video_face_swap.service_mode_title">选择服务模式</h2>
                             <div class="space-y-3">
                                 <!-- 标准模式 -->
                                 <div class="service-mode-option">
@@ -279,13 +281,13 @@
                                         <input type="radio" name="serviceMode" value="wan-std" class="mr-3" checked>
                                         <div class="flex-1">
                                             <div class="flex items-center mb-1">
-                                                <span class="font-medium text-gray-800">标准模式</span>
-                                                <span class="ml-2 px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">推荐</span>
+                                                <span class="font-medium text-gray-800" data-translate="video_face_swap.standard_mode">标准模式</span>
+                                                <span class="ml-2 px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full" data-translate="video_face_swap.standard_mode_recommended">推荐</span>
                                             </div>
-                                            <p class="text-sm text-gray-600 mb-1">生成速度快，满足基础需求，性价比高</p>
+                                            <p class="text-sm text-gray-600 mb-1" data-translate="video_face_swap.standard_mode_desc">生成速度快，满足基础需求，性价比高</p>
                                             <div class="flex items-center text-sm">
                                                 <i class="ri-coin-line text-yellow-500 mr-1"></i>
-                                                <span class="text-gray-700">消耗积分：8积分/次</span>
+                                                <span class="text-gray-700" data-translate="video_face_swap.standard_mode_credits">消耗积分：8积分/次</span>
                                             </div>
                                         </div>
                                     </label>
@@ -297,13 +299,13 @@
                                         <input type="radio" name="serviceMode" value="wan-pro" class="mr-3">
                                         <div class="flex-1">
                                             <div class="flex items-center mb-1">
-                                                <span class="font-medium text-gray-800">专业模式</span>
-                                                <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full">高质量</span>
+                                                <span class="font-medium text-gray-800" data-translate="video_face_swap.professional_mode">专业模式</span>
+                                                <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full" data-translate="video_face_swap.professional_mode_high_quality">高质量</span>
                                             </div>
-                                            <p class="text-sm text-gray-600 mb-1">动画流畅度高，效果更自然逼真</p>
+                                            <p class="text-sm text-gray-600 mb-1" data-translate="video_face_swap.professional_mode_desc">动画流畅度高，效果更自然逼真</p>
                                             <div class="flex items-center text-sm">
                                                 <i class="ri-coin-line text-yellow-500 mr-1"></i>
-                                                <span class="text-gray-700">消耗积分：10积分/次</span>
+                                                <span class="text-gray-700" data-translate="video_face_swap.professional_mode_credits">消耗积分：10积分/次</span>
                                             </div>
                                         </div>
                                     </label>
@@ -312,7 +314,7 @@
                         </div>
 
                         <button id="process-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                            <i class="ri-magic-line mr-2"></i>开始视频换人
+                            <i class="ri-magic-line mr-2"></i><span data-translate="video_face_swap.start_processing">开始视频换人</span>
                         </button>
                         
                         <!-- 法律合规提示 -->
@@ -320,7 +322,7 @@
                             <div class="flex items-start">
                                 <i class="ri-information-line text-indigo-600 text-xl mr-2 mt-0.5"></i>
                                 <div>
-                                    <p class="text-xs text-red-500 font-medium">
+                                    <p class="text-xs text-red-500 font-medium" data-translate="video_face_swap.warning_text">
                                         请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
                                     </p>
                                 </div>
@@ -333,14 +335,14 @@
                 <div class="md:col-span-2 border-l border-gray-200 pl-6">
                     <div class="space-y-6">
                         <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <h2 class="text-xl font-semibold mb-4">效果展示</h2>
+                            <h2 class="text-xl font-semibold mb-4" data-translate="video_face_swap.preview_title">效果展示</h2>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- 源视频 -->
                                 <div>
-                                    <h3 class="text-lg font-medium text-gray-800 mb-3">源视频:</h3>
+                                    <h3 class="text-lg font-medium text-gray-800 mb-3" data-translate="video_face_swap.source_video">源视频:</h3>
                                     <div class="preview-container flex items-center justify-center">
-                                        <div id="source-preview" class="text-center text-gray-500 w-full h-full flex items-center justify-center">
+                                        <div id="source-preview" class="text-center text-gray-500 w-full h-full flex items-center justify-center" data-translate="video_face_swap.source_video_placeholder">
                                             上传视频后将在这里显示
                                         </div>
                                     </div>
@@ -348,15 +350,15 @@
                                 
                                 <!-- 输出视频 -->
                                 <div>
-                                    <h3 class="text-lg font-medium text-gray-800 mb-3">输出视频:</h3>
+                                    <h3 class="text-lg font-medium text-gray-800 mb-3" data-translate="video_face_swap.output_video">输出视频:</h3>
                                     <div class="preview-container flex items-center justify-center">
                                         <div id="result-preview" class="hidden w-full h-full">
                                             <video id="result-video" class="w-full h-full object-cover" controls></video>
                                         </div>
                                         <div id="result-placeholder" class="flex flex-col items-center justify-center text-center text-gray-500">
                                             <i class="ri-video-line text-5xl text-gray-300 mb-2"></i>
-                                            <p>视频生成后将在这里显示</p>
-                                            <p class="text-xs mt-1">处理需要2-5分钟</p>
+                                            <p data-translate="video_face_swap.output_video_placeholder">视频生成后将在这里显示</p>
+                                            <p class="text-xs mt-1" data-translate="video_face_swap.processing_time_hint">处理需要2-5分钟</p>
                                         </div>
                                     </div>
                                 </div>
@@ -369,8 +371,8 @@
                                     
                                     <!-- 状态文本 -->
                                     <div class="text-center">
-                                        <h3 class="text-lg font-semibold text-gray-800 mb-2">正在生成视频</h3>
-                                        <p id="status-text" class="text-sm text-indigo-600 mb-3">正在处理中，请耐心等待...</p>
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-2" data-translate="video_face_swap.processing_title">正在生成视频</h3>
+                                        <p id="status-text" class="text-sm text-indigo-600 mb-3" data-translate="video_face_swap.processing_status">正在处理中，请耐心等待...</p>
                                         <div id="mode-specific-message" class="text-xs text-gray-500">
                                             <!-- 根据模式显示不同的等待时间 -->
                                         </div>
@@ -382,8 +384,8 @@
                                             <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                                         </div>
                                         <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                            <span>开始处理</span>
-                                            <span>完成</span>
+                                            <span data-translate="video_face_swap.progress_start">开始处理</span>
+                                            <span data-translate="video_face_swap.progress_complete">完成</span>
                                         </div>
                                     </div>
                                 </div>
@@ -392,7 +394,7 @@
                             <div id="result-actions" class="mt-4 hidden">
                                 <div class="flex space-x-4">
                                     <button id="download-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none">
-                                        <i class="ri-download-line mr-1"></i> 下载视频
+                                        <i class="ri-download-line mr-1"></i> <span data-translate="video_face_swap.download_video">下载视频</span>
                                     </button>
                                 </div>
                             </div>
@@ -402,12 +404,12 @@
                         <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
                             <div class="flex justify-between items-center mb-4">
                                 <div>
-                                    <h2 class="text-xl font-semibold">任务列表</h2>
-                                    <p class="text-sm text-gray-500 mt-1">仅显示24小时内的最新1条记录</p>
+                                    <h2 class="text-xl font-semibold" data-translate="video_face_swap.task_list_title">任务列表</h2>
+                                    <p class="text-sm text-gray-500 mt-1" data-translate="video_face_swap.task_list_note">仅显示24小时内的最新1条记录</p>
                                 </div>
                                 <div class="flex space-x-2">
                                     <button id="clear-all-tasks-btn" class="text-red-600 hover:text-red-800 text-sm px-3 py-1 border border-red-300 rounded-md">
-                                        <i class="ri-delete-bin-line mr-1"></i>清空所有
+                                        <i class="ri-delete-bin-line mr-1"></i><span data-translate="video_face_swap.clear_all">清空所有</span>
                                     </button>
                                     <button id="refresh-history" class="text-indigo-600 hover:text-indigo-800">
                                         <i class="ri-refresh-line text-lg"></i>
@@ -416,39 +418,39 @@
                             </div>
                             <div id="task-list" class="space-y-4">
                                 <div class="text-center py-8 text-gray-500">
-                                    <p>暂无视频换人记录</p>
-                                    <p class="text-sm mt-2 text-gray-400">仅显示24小时内的最新1条记录</p>
+                                    <p data-translate="video_face_swap.no_tasks">暂无视频换人记录</p>
+                                    <p class="text-sm mt-2 text-gray-400" data-translate="video_face_swap.task_list_note">仅显示24小时内的最新1条记录</p>
                                     <p class="text-xs mt-1 text-gray-300">请检查浏览器控制台获取更多调试信息</p>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="bg-white p-6 rounded-lg shadow-sm">
-                            <h2 class="text-xl font-semibold mb-4">注意事项</h2>
+                            <h2 class="text-xl font-semibold mb-4" data-translate="video_face_swap.notes_title">注意事项</h2>
                             <div class="space-y-4">
                                 <div>
-                                    <p class="font-medium text-indigo-700">视频要求：</p>
+                                    <p class="font-medium text-indigo-700" data-translate="video_face_swap.video_requirements_title">视频要求：</p>
                                     <ul class="space-y-1 mt-1">
-                                        <li>• 文件限制：支持MP4、AVI、MOV格式，文件≤200MB，2秒＜时长＜30秒。</li>
-                                        <li>• 尺寸限制：宽高各自在[200,2048]像素内，宽高比在1:3至3:1范围内。</li>
-                                        <li>• 视频内容：视频应包含清晰的人脸，避免大角度侧脸或人脸过小。</li>
+                                        <li data-translate="video_face_swap.video_requirements_1">• 文件限制：支持MP4、AVI、MOV格式，文件≤200MB，2秒＜时长＜30秒。</li>
+                                        <li data-translate="video_face_swap.video_requirements_2">• 尺寸限制：宽高各自在[200,2048]像素内，宽高比在1:3至3:1范围内。</li>
+                                        <li data-translate="video_face_swap.video_requirements_3">• 视频内容：视频应包含清晰的人脸，避免大角度侧脸或人脸过小。</li>
                                     </ul>
                                 </div>
                                 
                                 <div>
-                                    <p class="font-medium text-indigo-700">图片要求：</p>
+                                    <p class="font-medium text-indigo-700" data-translate="video_face_swap.image_requirements_title">图片要求：</p>
                                     <ul class="space-y-1 mt-1">
-                                        <li>• 文件限制：支持JPG、PNG、BMP、WEBP格式，文件≤5MB。</li>
-                                        <li>• 尺寸限制：宽高各自在[200,4096]像素内，宽高比在1:3至3:1范围内。</li>
-                                        <li>• 图片内容：需包含一张清晰的人物正脸，人脸占比适中。</li>
+                                        <li data-translate="video_face_swap.image_requirements_1">• 文件限制：支持JPG、PNG、BMP、WEBP格式，文件≤5MB。</li>
+                                        <li data-translate="video_face_swap.image_requirements_2">• 尺寸限制：宽高各自在[200,4096]像素内，宽高比在1:3至3:1范围内。</li>
+                                        <li data-translate="video_face_swap.image_requirements_3">• 图片内容：需包含一张清晰的人物正脸，人脸占比适中。</li>
                                     </ul>
                                 </div>
                                 
                                 <div>
-                                    <p class="font-medium text-indigo-700">服务模式：</p>
+                                    <p class="font-medium text-indigo-700" data-translate="video_face_swap.service_mode_requirements_title">服务模式：</p>
                                     <ul class="space-y-1 mt-1">
-                                        <li>• 标准模式：生成速度快，适合基础需求，消耗8积分/次。</li>
-                                        <li>• 专业模式：效果更自然逼真，动画流畅度更高，消耗10积分/次。</li>
+                                        <li data-translate="video_face_swap.service_mode_requirements_1">• 标准模式：生成速度快，适合基础需求，消耗8积分/次。</li>
+                                        <li data-translate="video_face_swap.service_mode_requirements_2">• 专业模式：效果更自然逼真，动画流畅度更高，消耗10积分/次。</li>
                                     </ul>
                                 </div>
                             </div>
@@ -465,7 +467,7 @@
             <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-gray-800">处理结果</h3>
+                        <h3 class="text-xl font-semibold text-gray-800" data-translate="video_face_swap.result_modal_title">处理结果</h3>
                         <button id="close-modal" class="text-gray-400 hover:text-gray-600">
                             <i class="fas fa-times text-xl"></i>
                         </button>
@@ -497,10 +499,48 @@
                 return; // 如果未认证，会自动跳转到登录页
             }
             
+            // 初始化翻译系统
+            if (typeof initializeTranslations === 'function') {
+                initializeTranslations();
+            } else if (typeof updatePageText === 'function') {
+                updatePageText();
+            }
+            
+            // 监听语言变化事件
+            document.addEventListener('languageChanged', function(event) {
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+                // 更新动态生成的文本（如状态文本、错误消息等）
+                updateDynamicTexts();
+            });
+            
             // 认证通过后初始化页面功能
             initializeUploadAreas();
             loadTaskHistory();
         });
+        
+        // 更新动态生成的文本
+        function updateDynamicTexts() {
+            // 更新状态文本
+            const statusText = document.getElementById('status-text');
+            if (statusText && typeof translate === 'function') {
+                statusText.textContent = translate('video_face_swap.processing_status');
+            }
+            
+            // 更新模式特定消息
+            const modeSpecificMessage = document.getElementById('mode-specific-message');
+            if (modeSpecificMessage) {
+                const serviceMode = document.querySelector('input[name="serviceMode"]:checked');
+                if (serviceMode && typeof translate === 'function') {
+                    if (serviceMode.value === 'wan-std') {
+                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>' + translate('video_face_swap.standard_mode_time');
+                    } else if (serviceMode.value === 'wan-pro') {
+                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>' + translate('video_face_swap.professional_mode_time');
+                    }
+                }
+            }
+        }
 
         // 检查用户认证 - 与其他页面保持一致
         async function checkUserAuth() {
@@ -636,13 +676,15 @@
                 'video/x-ms-wmv'       // WMV格式的正确MIME类型
             ];
             if (!allowedVideoTypes.includes(file.type)) {
-                showNotification('视频格式不支持，请使用MP4、AVI或MOV格式', 'error');
+                const formatErrorMsg = typeof translate === 'function' ? translate('video_face_swap.video_format_error') : '视频格式不支持，请使用MP4、AVI或MOV格式';
+                showNotification(formatErrorMsg, 'error');
                 return;
             }
             
             // 验证文件大小 - 阿里云标准：不超过200MB
             if (file.size > 200 * 1024 * 1024) {
-                showNotification('视频文件大小不能超过200MB', 'error');
+                const sizeErrorMsg = typeof translate === 'function' ? translate('video_face_swap.video_size_error') : '视频文件大小不能超过200MB';
+                showNotification(sizeErrorMsg, 'error');
                 return;
             }
             
@@ -685,13 +727,15 @@
             // 验证文件格式 - 支持JPG, JPEG, PNG, BMP, WEBP
             const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp', 'image/webp'];
             if (!allowedImageTypes.includes(file.type)) {
-                showNotification('图片格式不支持，请使用JPG、PNG、BMP或WEBP格式', 'error');
+                const imageFormatErrorMsg = typeof translate === 'function' ? translate('video_face_swap.image_format_error') : '图片格式不支持，请使用JPG、PNG、BMP或WEBP格式';
+                showNotification(imageFormatErrorMsg, 'error');
                 return;
             }
             
             // 验证文件大小 - 阿里云标准：不超过5MB
             if (file.size > 5 * 1024 * 1024) {
-                showNotification('图片文件大小不能超过5MB', 'error');
+                const imageSizeErrorMsg = typeof translate === 'function' ? translate('video_face_swap.image_size_error') : '图片文件大小不能超过5MB';
+                showNotification(imageSizeErrorMsg, 'error');
                 return;
             }
             
@@ -736,7 +780,8 @@
             // 清空右侧预览
             const sourcePreview = document.getElementById('source-preview');
             if (sourcePreview) {
-                sourcePreview.innerHTML = '<div class="text-center text-gray-500 w-full h-full flex items-center justify-center">上传视频后将在这里显示</div>';
+                const placeholderText = typeof translate === 'function' ? translate('video_face_swap.source_video_placeholder') : '上传视频后将在这里显示';
+                sourcePreview.innerHTML = `<div class="text-center text-gray-500 w-full h-full flex items-center justify-center">${placeholderText}</div>`;
             }
             
             checkProcessButton();
@@ -789,7 +834,8 @@
         // 开始处理
         async function startProcessing() {
             if (!uploadedVideo || !uploadedImage) {
-                showNotification('请先上传视频和图片', 'error');
+                const uploadFirstMsg = typeof translate === 'function' ? translate('video_face_swap.upload_video_first') : '请先上传视频和图片';
+                showNotification(uploadFirstMsg, 'error');
                 return;
             }
             
@@ -807,11 +853,11 @@
                 
                 // 根据模式显示不同的等待时间提示
                 const modeSpecificMessage = document.getElementById('mode-specific-message');
-                if (modeSpecificMessage) {
+                if (modeSpecificMessage && typeof translate === 'function') {
                     if (serviceMode === 'wan-std') {
-                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>标准模式：生成视频需要1-3分钟，请耐心等待';
+                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>' + translate('video_face_swap.standard_mode_time');
                     } else if (serviceMode === 'wan-pro') {
-                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>专业模式：生成视频需要3-5分钟，请耐心等待';
+                        modeSpecificMessage.innerHTML = '<i class="ri-time-line mr-1"></i>' + translate('video_face_swap.professional_mode_time');
                     }
                 }
                 
@@ -836,10 +882,11 @@
                 
                 const result = await response.json();
                 
-                // 处理后端响应格式
-                if (result.success && result.data && result.data.taskId) {
-                    processingTaskId = result.data.taskId;
-                    showNotification('任务创建成功，正在处理中...', 'success');
+                    // 处理后端响应格式
+                    if (result.success && result.data && result.data.taskId) {
+                        processingTaskId = result.data.taskId;
+                        const taskCreatedMsg = typeof translate === 'function' ? translate('video_face_swap.task_created') : '任务创建成功，正在处理中...';
+                        showNotification(taskCreatedMsg, 'success');
                     
                     // 初始化进度条
                     const progressBar = document.getElementById('progress-bar');
@@ -901,6 +948,12 @@
                         // 更新进度信息
                         updateProcessingProgress(task, pollAttempts);
                         
+                        // 更新状态文本
+                        const statusTextEl = document.getElementById('status-text');
+                        if (statusTextEl && typeof translate === 'function') {
+                            statusTextEl.textContent = translate('video_face_swap.processing_status');
+                        }
+                        
                         if (taskStatus === 'completed') {
                             clearInterval(statusCheckInterval);
                             statusCheckInterval = null;
@@ -916,7 +969,8 @@
                             console.log('任务完成，重新加载任务列表...');
                             await loadTaskHistory();
                             
-                            showNotification('视频换人完成！', 'success');
+                            const completeMsg = typeof translate === 'function' ? translate('video_face_swap.processing_complete') : '视频换人完成！';
+                            showNotification(completeMsg, 'success');
                             
                         } else if (taskStatus === 'failed') {
                             clearInterval(statusCheckInterval);
@@ -926,7 +980,8 @@
                             // 重置UI
                             resetProcessingUI();
                             
-                            showNotification('处理失败：' + (task.error || '未知错误'), 'error');
+                            const failedMsg = typeof translate === 'function' ? translate('video_face_swap.processing_failed') : '处理失败：';
+                            showNotification(failedMsg + (task.error || (typeof translate === 'function' ? translate('video_face_swap.status_unknown') : '未知错误')), 'error');
                             
                             // 刷新历史记录
                             await loadTaskHistory();
@@ -939,7 +994,8 @@
                             // 重置UI
                             resetProcessingUI();
                             
-                            showNotification('任务已过期（超过24小时），请重新创建任务', 'warning');
+                            const expiredMsg = typeof translate === 'function' ? translate('video_face_swap.task_expired') : '任务已过期（超过24小时），请重新创建任务';
+                            showNotification(expiredMsg, 'warning');
                             
                             // 刷新历史记录
                             await loadTaskHistory();
@@ -950,7 +1006,8 @@
                             clearInterval(statusCheckInterval);
                             statusCheckInterval = null;
                             
-                            showNotification('轮询超时，请手动刷新查看结果', 'warning');
+                            const timeoutMsg = typeof translate === 'function' ? translate('video_face_swap.poll_timeout') : '轮询超时，请手动刷新查看结果';
+                            showNotification(timeoutMsg, 'warning');
                             
                             // 不重置processingTaskId，允许用户手动查询
                         }
@@ -969,7 +1026,8 @@
                     if (pollAttempts >= 10) {
                         clearInterval(statusCheckInterval);
                         statusCheckInterval = null;
-                        showNotification('网络连接异常，请手动刷新查看结果', 'error');
+                        const networkErrorMsg = typeof translate === 'function' ? translate('video_face_swap.network_error') : '网络连接异常，请手动刷新查看结果';
+                        showNotification(networkErrorMsg, 'error');
                         
                         // 重置UI
                         resetProcessingUI();
@@ -984,8 +1042,7 @@
             const progressBar = document.getElementById('progress-bar');
             
             if (statusText) {
-                let text = '正在处理中，请耐心等待...';
-                
+                let text = typeof translate === 'function' ? translate('video_face_swap.processing_status') : '正在处理中，请耐心等待...';
                 statusText.textContent = text;
             }
             
@@ -1137,7 +1194,8 @@
                     renderTaskList([]);
                 }
                 
-                showNotification('加载历史记录失败', 'error');
+                const loadFailedMsg = typeof translate === 'function' ? translate('video_face_swap.load_history_failed') : '加载历史记录失败';
+                showNotification(loadFailedMsg, 'error');
             }
         }
 
@@ -1158,10 +1216,12 @@
             
             if (!tasks || tasks.length === 0) {
                 console.log('📝 显示空状态界面');
+                const noTasksText = typeof translate === 'function' ? translate('video_face_swap.no_tasks') : '暂无视频换人记录';
+                const taskListNote = typeof translate === 'function' ? translate('video_face_swap.task_list_note') : '仅显示24小时内的最新1条记录';
                 taskList.innerHTML = `
                     <div class="text-center py-8 text-gray-500">
-                        <p>暂无视频换人记录</p>
-                        <p class="text-sm mt-2 text-gray-400">仅显示24小时内的最新1条记录</p>
+                        <p>${noTasksText}</p>
+                        <p class="text-sm mt-2 text-gray-400">${taskListNote}</p>
                         <p class="text-xs mt-1 text-gray-300">请检查浏览器控制台获取更多调试信息</p>
                     </div>
                 `;
@@ -1192,10 +1252,12 @@
             
             if (displayTasks.length === 0) {
                 console.log('📝 显示24小时内无任务的空状态界面');
+                const noTasks24h = typeof translate === 'function' ? translate('video_face_swap.no_tasks_24h') : '暂无24小时内的视频换人任务';
+                const noTasks24hDesc = typeof translate === 'function' ? translate('video_face_swap.no_tasks_24h_desc') : '最近24小时内没有生成过视频任务';
                 taskList.innerHTML = `
                     <div class="text-center py-8 text-gray-500">
-                        <p>暂无24小时内的视频换人任务</p>
-                        <p class="text-sm mt-2 text-gray-400">最近24小时内没有生成过视频任务</p>
+                        <p>${noTasks24h}</p>
+                        <p class="text-sm mt-2 text-gray-400">${noTasks24hDesc}</p>
                     </div>
                 `;
                 return;
@@ -1225,26 +1287,50 @@
             // 任务状态标识
             let statusClass, statusText;
             
-            switch (task.status) {
-                case 'PENDING':
-                    statusClass = 'bg-yellow-100 text-yellow-800';
-                    statusText = '排队中';
-                    break;
-                case 'RUNNING':
-                    statusClass = 'bg-blue-100 text-blue-800';
-                    statusText = '生成中';
-                    break;
-                case 'SUCCEEDED':
-                    statusClass = 'bg-green-100 text-green-800';
-                    statusText = '已完成';
-                    break;
-                case 'FAILED':
-                    statusClass = 'bg-red-100 text-red-800';
-                    statusText = '失败';
-                    break;
-                default:
-                    statusClass = 'bg-gray-100 text-gray-800';
-                    statusText = '未知状态';
+            if (typeof translate === 'function') {
+                switch (task.status) {
+                    case 'PENDING':
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        statusText = translate('video_face_swap.status_pending');
+                        break;
+                    case 'RUNNING':
+                        statusClass = 'bg-blue-100 text-blue-800';
+                        statusText = translate('video_face_swap.status_running');
+                        break;
+                    case 'SUCCEEDED':
+                        statusClass = 'bg-green-100 text-green-800';
+                        statusText = translate('video_face_swap.status_succeeded');
+                        break;
+                    case 'FAILED':
+                        statusClass = 'bg-red-100 text-red-800';
+                        statusText = translate('video_face_swap.status_failed');
+                        break;
+                    default:
+                        statusClass = 'bg-gray-100 text-gray-800';
+                        statusText = translate('video_face_swap.status_unknown');
+                }
+            } else {
+                switch (task.status) {
+                    case 'PENDING':
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        statusText = '排队中';
+                        break;
+                    case 'RUNNING':
+                        statusClass = 'bg-blue-100 text-blue-800';
+                        statusText = '生成中';
+                        break;
+                    case 'SUCCEEDED':
+                        statusClass = 'bg-green-100 text-green-800';
+                        statusText = '已完成';
+                        break;
+                    case 'FAILED':
+                        statusClass = 'bg-red-100 text-red-800';
+                        statusText = '失败';
+                        break;
+                    default:
+                        statusClass = 'bg-gray-100 text-gray-800';
+                        statusText = '未知状态';
+                }
             }
             
             // 视频预览（仅当任务成功且有视频URL时）
@@ -1262,16 +1348,16 @@
                         <div class="flex justify-between items-center mt-2">
                             <div class="text-xs text-gray-500">
                                 ${isOSSVideo ? 
-                                    '<i class="ri-cloud-line mr-1"></i>已保存到云存储' : 
-                                    '<i class="ri-time-line mr-1"></i>临时链接(24小时有效)'
+                                    '<i class="ri-cloud-line mr-1"></i>' + (typeof translate === 'function' ? translate('video_face_swap.saved_to_cloud') : '已保存到云存储') : 
+                                    '<i class="ri-time-line mr-1"></i>' + (typeof translate === 'function' ? translate('video_face_swap.temp_link') : '临时链接(24小时有效)')
                                 }
                             </div>
                             <div class="flex space-x-2">
                                 <button class="text-indigo-600 hover:text-indigo-800 text-sm download-btn" data-url="${videoUrl}" data-task-id="${task.taskId}">
-                                    <i class="ri-download-2-line mr-1"></i>下载
+                                    <i class="ri-download-2-line mr-1"></i>${typeof translate === 'function' ? translate('video_face_swap.download') : '下载'}
                                 </button>
                                 <button class="text-indigo-600 hover:text-indigo-800 text-sm preview-btn" data-url="${videoUrl}">
-                                    <i class="ri-fullscreen-line mr-1"></i>预览
+                                    <i class="ri-fullscreen-line mr-1"></i>${typeof translate === 'function' ? translate('video_face_swap.preview') : '预览'}
                                 </button>
                             </div>
                         </div>
@@ -1285,20 +1371,30 @@
             
             // 获取服务模式显示名称
             const getServiceModeDisplayName = (serviceMode) => {
-                const modeNames = {
-                    'wan-std': '标准模式',
-                    'wan-pro': '专业模式'
-                };
-                return modeNames[serviceMode] || '标准模式';
+                if (typeof translate === 'function') {
+                    const modeNames = {
+                        'wan-std': translate('video_face_swap.standard_mode'),
+                        'wan-pro': translate('video_face_swap.professional_mode')
+                    };
+                    return modeNames[serviceMode] || translate('video_face_swap.standard_mode');
+                } else {
+                    const modeNames = {
+                        'wan-std': '标准模式',
+                        'wan-pro': '专业模式'
+                    };
+                    return modeNames[serviceMode] || '标准模式';
+                }
             };
             
+            const taskIdText = typeof translate === 'function' ? translate('video_face_swap.task_id') : '任务 #';
+            const creditsText = typeof translate === 'function' ? translate('video_face_swap.credits_consumed') : '消耗积分:';
             taskElement.innerHTML = `
                 <div class="flex justify-between">
                     <div class="flex-1 pr-4">
-                        <p class="font-medium">任务 #${task.taskId.substring(0, 8)}</p>
+                        <p class="font-medium">${taskIdText}${task.taskId.substring(0, 8)}</p>
                         <div class="flex mt-2 text-sm text-gray-500">
                             <span class="mr-4">${getServiceModeDisplayName(task.serviceMode)}</span>
-                            <span class="mr-4">消耗积分: ${task.creditCost || 8}</span>
+                            <span class="mr-4">${creditsText} ${task.creditCost || 8}</span>
                             <span>${formattedDate}</span>
                         </div>
                     </div>
@@ -1395,12 +1491,19 @@
             // 然后显示模态框
             const modalContent = document.getElementById('modal-content');
             
+            const completedTitle = typeof translate === 'function' ? translate('video_face_swap.completed_title') : '视频换人完成！';
+            const completedDesc = typeof translate === 'function' ? translate('video_face_swap.completed_desc') : '您的视频已成功处理完成';
+            const savedToCloudPermanent = typeof translate === 'function' ? translate('video_face_swap.saved_to_cloud_permanent') : '已保存到云存储，永久有效';
+            const tempLink24h = typeof translate === 'function' ? translate('video_face_swap.temp_link_24h') : '临时链接，24小时有效';
+            const downloadVideoText = typeof translate === 'function' ? translate('video_face_swap.download_video') : '下载视频';
+            const closeText = typeof translate === 'function' ? translate('video_face_swap.close') : '关闭';
+            
             modalContent.innerHTML = `
                 <div class="text-center">
                     <div class="mb-6">
                         <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
-                        <h4 class="text-xl font-semibold text-gray-800 mb-2">视频换人完成！</h4>
-                        <p class="text-gray-600">您的视频已成功处理完成</p>
+                        <h4 class="text-xl font-semibold text-gray-800 mb-2">${completedTitle}</h4>
+                        <p class="text-gray-600">${completedDesc}</p>
                     </div>
                     
                     ${(task.ossResultVideoUrl || task.resultVideoUrl) ? `
@@ -1412,8 +1515,8 @@
                             <div class="text-center mt-2">
                                 <span class="text-xs text-gray-500">
                                     ${task.ossResultVideoUrl ? 
-                                        '<i class="ri-cloud-line mr-1"></i>已保存到云存储，永久有效' : 
-                                        '<i class="ri-time-line mr-1"></i>临时链接，24小时有效'
+                                        '<i class="ri-cloud-line mr-1"></i>' + savedToCloudPermanent : 
+                                        '<i class="ri-time-line mr-1"></i>' + tempLink24h
                                     }
                                 </span>
                             </div>
@@ -1422,11 +1525,11 @@
                         <div class="flex justify-center space-x-4">
                             <button onclick="downloadResult('${task.ossResultVideoUrl || task.resultVideoUrl}')" 
                                     class="gradient-bg text-white px-6 py-2 rounded-lg hover:opacity-90">
-                                <i class="fas fa-download mr-2"></i>下载视频
+                                <i class="fas fa-download mr-2"></i>${downloadVideoText}
                             </button>
                             <button onclick="closeModal()" 
                                     class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
-                                关闭
+                                ${closeText}
                             </button>
                         </div>
                     ` : `
@@ -1434,7 +1537,7 @@
                             <p class="text-gray-600 mb-4">处理完成，但未获取到结果视频</p>
                             <button onclick="closeModal()" 
                                     class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">
-                                关闭
+                                ${closeText}
                             </button>
                         </div>
                     `}
@@ -1560,7 +1663,8 @@
         
         // 清空所有任务
         async function clearAllTasks() {
-            if (!confirm('确定要清空所有任务吗？此操作不可撤销。')) {
+            const confirmText = typeof translate === 'function' ? translate('video_face_swap.confirm_clear') : '确定要清空所有任务吗？此操作不可撤销。';
+            if (!confirm(confirmText)) {
                 return;
             }
             
@@ -1586,17 +1690,21 @@
                         // 重新加载任务列表
                         await loadTaskHistory();
                         
-                        showNotification('所有视频换人任务已清空', 'success');
+                        const clearedMsg = typeof translate === 'function' ? translate('video_face_swap.all_cleared') : '所有视频换人任务已清空';
+                        showNotification(clearedMsg, 'success');
                     } else {
-                        showNotification('清空任务失败: ' + (data.message || '未知错误'), 'error');
+                        const failedMsg = typeof translate === 'function' ? translate('video_face_swap.processing_failed') : '处理失败：';
+                        showNotification(failedMsg + (data.message || (typeof translate === 'function' ? translate('video_face_swap.status_unknown') : '未知错误')), 'error');
                     }
                 } else {
                     const errorData = await response.json();
-                    showNotification('清空任务失败: ' + (errorData.message || '服务器错误'), 'error');
+                    const failedMsg = typeof translate === 'function' ? translate('video_face_swap.processing_failed') : '处理失败：';
+                    showNotification(failedMsg + (errorData.message || (typeof translate === 'function' ? '服务器错误' : '服务器错误')), 'error');
                 }
             } catch (error) {
                 console.error('清空任务失败:', error);
-                showNotification('清空任务失败: ' + error.message, 'error');
+                const failedMsg = typeof translate === 'function' ? translate('video_face_swap.processing_failed') : '处理失败：';
+                showNotification(failedMsg + error.message, 'error');
             }
         }
 
@@ -1806,28 +1914,33 @@
                     
                     // 时长验证：不少于2s且不大于30s
                     if (duration < 2) {
-                        reject(new Error('视频时长不能少于2秒'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.video_duration_too_short') : '视频时长不能少于2秒';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     if (duration > 30) {
-                        reject(new Error('视频时长不能超过30秒'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.video_duration_too_long') : '视频时长不能超过30秒';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     
                     // 尺寸验证：宽高各自在[200,2048]像素内
                     if (videoWidth < 200 || videoWidth > 2048) {
-                        reject(new Error('视频宽度必须在200-2048像素之间'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.video_width_error') : '视频宽度必须在200-2048像素之间';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     if (videoHeight < 200 || videoHeight > 2048) {
-                        reject(new Error('视频高度必须在200-2048像素之间'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.video_height_error') : '视频高度必须在200-2048像素之间';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     
                     // 比例验证：宽高比在1:3至3:1范围内
                     const ratio = videoWidth / videoHeight;
                     if (ratio < 1/3 || ratio > 3/1) {
-                        reject(new Error('视频宽高比必须在1:3到3:1之间'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.video_ratio_error') : '视频宽高比必须在1:3到3:1之间';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     
@@ -1836,7 +1949,8 @@
                 };
                 
                 video.onerror = function() {
-                    reject(new Error('视频文件损坏或格式不正确'));
+                    const errorMsg = typeof translate === 'function' ? translate('video_face_swap.video_corrupted') : '视频文件损坏或格式不正确';
+                    reject(new Error(errorMsg));
                 };
                 
                 video.src = URL.createObjectURL(file);
@@ -1853,18 +1967,21 @@
                     
                     // 尺寸验证：宽高各自在[200,4096]像素内
                     if (width < 200 || width > 4096) {
-                        reject(new Error('图片宽度必须在200-4096像素之间'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.image_width_error') : '图片宽度必须在200-4096像素之间';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     if (height < 200 || height > 4096) {
-                        reject(new Error('图片高度必须在200-4096像素之间'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.image_height_error') : '图片高度必须在200-4096像素之间';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     
                     // 比例验证：宽高比在1:3至3:1范围内
                     const ratio = width / height;
                     if (ratio < 1/3 || ratio > 3/1) {
-                        reject(new Error('图片宽高比必须在1:3到3:1之间'));
+                        const errorMsg = typeof translate === 'function' ? translate('video_face_swap.image_ratio_error') : '图片宽高比必须在1:3到3:1之间';
+                        reject(new Error(errorMsg));
                         return;
                     }
                     
@@ -1873,7 +1990,8 @@
                 };
                 
                 img.onerror = function() {
-                    reject(new Error('图片文件损坏或格式不正确'));
+                    const errorMsg = typeof translate === 'function' ? translate('video_face_swap.image_corrupted') : '图片文件损坏或格式不正确';
+                    reject(new Error(errorMsg));
                 };
                 
                 img.src = URL.createObjectURL(file);
@@ -1881,6 +1999,10 @@
         }
 
         function showNotification(message, type = 'info') {
+            // 如果消息是翻译键，尝试翻译
+            if (typeof translate === 'function' && message.startsWith('video_face_swap.')) {
+                message = translate(message);
+            }
             // 创建通知元素
             const notification = document.createElement('div');
             notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
