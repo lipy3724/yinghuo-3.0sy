@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com; media-src 'self' blob: data: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com https://yinghuo-ai.oss-cn-shanghai.aliyuncs.com; connect-src 'self' https://*.aliyuncs.com;">
-    <title>视频去水印/Logo - 萤火AI</title>
+    <title data-translate="video_logo_removal.page_title">视频去水印/Logo - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/images/favicon.png">
@@ -15,6 +15,8 @@
     <script src="/js/auth-check.js"></script>
     <!-- 导航栏样式 -->
     <link rel="stylesheet" href="/components/styles.css">
+    <!-- 翻译系统 -->
+    <script src="/translations.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -139,60 +141,60 @@
 
     <!-- 主要内容 -->
     <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
-        <h1 class="text-3xl font-bold text-center mb-8">视频去水印/Logo</h1>
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="video_logo_removal.main_title">视频去水印/Logo</h1>
         
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <!-- 左侧面板: 上传视频和设置 -->
             <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold mb-4">视频去水印设置</h2>
+                <h2 class="text-xl font-bold mb-4" data-translate="video_logo_removal.settings_title">视频去水印设置</h2>
                 
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">视频上传</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="video_logo_removal.video_upload">视频上传</label>
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-700">上传需要去除水印的视频</span>
+                        <span class="text-sm font-medium text-gray-700" data-translate="video_logo_removal.upload_description">上传需要去除水印的视频</span>
                     </div>
                     <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
                         <input type="file" id="video-upload" class="hidden" accept="video/mp4">
                         <div id="upload-placeholder">
                             <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">拖放视频到此处或 <span class="text-indigo-600 font-medium">点击上传</span></p>
-                            <p class="text-sm text-gray-400 mt-1">支持 MP4 格式，最大1GB，分辨率不超过1080P</p>
+                            <p class="text-gray-500"><span data-translate="video_logo_removal.drag_drop_text">拖放视频到此处或</span> <span class="text-indigo-600 font-medium" data-translate="video_logo_removal.click_upload">点击上传</span></p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="video_logo_removal.supported_formats">支持 MP4 格式，最大1GB，分辨率不超过1080P</p>
                         </div>
                         <div id="preview-container" class="hidden">
                             <p id="video-info" class="text-sm text-gray-500"></p>
-                            <button type="button" id="remove-video" class="mt-2 text-sm text-red-500 hover:text-red-700">
+                            <button type="button" id="remove-video" class="mt-2 text-sm text-red-500 hover:text-red-700" data-translate="video_logo_removal.remove_video">
                                 移除视频
                             </button>
                         </div>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">支持MP4格式，最大1GB，分辨率不超过1080P</p>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="video_logo_removal.supported_formats">支持MP4格式，最大1GB，分辨率不超过1080P</p>
                 </div>
 
                 <!-- 添加视频时长和积分消耗信息 -->
                 <div id="video-duration-info" class="hidden mb-6 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
                     <i class="ri-time-line mr-1"></i>
-                    视频时长: 计算中...
+                    <span data-translate="video_logo_removal.video_duration">视频时长</span>: <span data-translate="video_logo_removal.calculating">计算中...</span>
                 </div>
 
                 <!-- 添加积分扣除说明 -->
                 <div class="mb-6 p-3 bg-green-50 text-green-700 rounded-md text-sm">
                     <i class="ri-information-line mr-1"></i>
-                    <strong>积分将在任务成功完成后才扣除</strong>，请耐心等待处理结果。任务失败不会扣除积分。
+                    <span data-translate="video_logo_removal.credits_info">积分将在任务成功完成后才扣除，请耐心等待处理结果。任务失败不会扣除积分。</span>
                 </div>
 
                 <!-- 水印区域设置（上传后显示） -->
                 <div id="logo-settings-section" class="mb-6" style="display: none;">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">水印区域设置 <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="video_logo_removal.logo_area_settings">水印区域设置 <span class="text-red-500">*</span></label>
                     <div class="text-gray-600 text-sm mb-2">
-                        <p class="mb-1"><strong class="text-red-600">重要：</strong>请务必在右侧视频预览区域点击并拖拽来选择要去除的水印区域，<strong>至少需要选择1个区域</strong>才能获得最佳去水印效果。最多可选择2个区域。</p>
-                        <p class="mt-1 text-orange-600"><i class="ri-alert-line mr-1"></i>如果不选择水印区域，系统可能无法准确识别和去除水印！</p>
+                        <p class="mb-1" data-translate="video_logo_removal.logo_area_required">重要：请务必在右侧视频预览区域点击并拖拽来选择要去除的水印区域，至少需要选择1个区域才能获得最佳去水印效果。最多可选择2个区域。</p>
+                        <p class="mt-1 text-orange-600"><i class="ri-alert-line mr-1"></i><span data-translate="video_logo_removal.logo_area_warning">如果不选择水印区域，系统可能无法准确识别和去除水印！</span></p>
                     </div>
                     <div class="flex flex-wrap gap-2 mb-2">
                         <button id="add-logo-box" class="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200">
-                            <i class="fas fa-plus mr-1"></i>添加区域
+                            <i class="fas fa-plus mr-1"></i><span data-translate="video_logo_removal.add_area">添加区域</span>
                         </button>
                         <button id="clear-logo-boxes" class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">
-                            <i class="fas fa-trash mr-1"></i>清除所有
+                            <i class="fas fa-trash mr-1"></i><span data-translate="video_logo_removal.clear_all">清除所有</span>
                         </button>
                     </div>
                     <div id="logo-boxes-list" class="space-y-2">
@@ -203,12 +205,12 @@
                 <div class="pt-4">
                     <button id="submit-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                         <i class="ri-magic-line mr-2"></i>
-                        开始处理
+                        <span data-translate="video_logo_removal.start_processing">开始处理</span>
                     </button>
-                    <p class="mt-2 text-center text-sm text-gray-500">
+                    <p class="mt-2 text-center text-sm text-gray-500" data-translate="video_logo_removal.processing_time_info">
                         处理时间与视频长度成正比，5 积分/30秒（不满30秒按30秒计算）
                     </p>
-                    <p class="mt-2 text-center text-sm text-red-500 font-medium">
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium" data-translate="video_logo_removal.warning_text">
                         请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
                     </p>
                 </div>
@@ -218,27 +220,27 @@
             <div class="lg:col-span-3">
                 <!-- 视频预览区域 -->
                 <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                    <h2 class="text-xl font-bold mb-4">视频预览</h2>
+                    <h2 class="text-xl font-bold mb-4" data-translate="video_logo_removal.video_preview">视频预览</h2>
                     <div id="original-video-container" class="video-preview-container flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative">
                         <div id="original-video-wrapper" class="hidden w-full h-full relative">
                             <video id="original-video" class="w-full h-full object-contain" controls></video>
                         </div>
                         <div id="original-video-placeholder" class="text-center p-6">
                             <i class="ri-video-line text-6xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">您上传的视频将在这里显示</p>
+                            <p class="text-gray-500" data-translate="video_logo_removal.video_placeholder">您上传的视频将在这里显示</p>
                         </div>
                     </div>
                     
                     <!-- 处理后视频区域 -->
                     <div id="resultContainer" class="hidden mt-6">
-                        <h3 class="text-lg font-medium text-gray-700 mb-2">处理后视频</h3>
+                        <h3 class="text-lg font-medium text-gray-700 mb-2" data-translate="video_logo_removal.processed_video">处理后视频</h3>
                         <div id="output-video-container" class="video-preview-container flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative">
                             <div id="output-video-wrapper" class="hidden w-full h-full relative">
                                 <video id="output-video" class="w-full h-full object-contain" controls></video>
                             </div>
                             <div id="output-video-placeholder" class="text-center p-6">
                                 <i class="ri-video-line text-4xl text-gray-300 mb-2"></i>
-                                <p class="text-gray-500 text-sm">处理结果将在这里显示</p>
+                                <p class="text-gray-500 text-sm" data-translate="video_logo_removal.result_placeholder">处理结果将在这里显示</p>
                             </div>
                         </div>
                     </div>
@@ -264,7 +266,7 @@
                 <!-- 生成历史部分 -->
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">生成历史</h2>
+                        <h2 class="text-xl font-bold" data-translate="video_logo_removal.generation_history">生成历史</h2>
                         <div class="flex space-x-2">
                             <button id="clear-all-tasks-global-btn" class="text-gray-500 hover:text-red-600" title="清空历史记录">
                                 <i class="ri-delete-bin-line text-xl"></i>
@@ -277,12 +279,12 @@
                     
                     <div id="history-container" class="space-y-4">
                         <div class="text-center py-8 text-gray-500">
-                            <p>暂无视频去水印记录</p>
+                            <p data-translate="video_logo_removal.no_history">暂无视频去水印记录</p>
                         </div>
                     </div>
                     
                     <!-- 保存时间提示 -->
-                    <p class="text-xs text-gray-400 mt-3 text-center">仅显示24小时内的历史记录</p>
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="video_logo_removal.history_note">仅显示24小时内的历史记录</p>
                 </div>
             </div>
         </div>
@@ -1434,7 +1436,7 @@
         // 渲染历史记录
         function renderHistory(history) {
             if (history.length === 0) {
-                historyContainer.innerHTML = '<div class="text-center py-8 text-gray-500"><p>暂无视频去水印记录</p></div>';
+                historyContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p data-translate="video_logo_removal.no_history">${typeof translate === 'function' ? translate('video_logo_removal.no_history') : '暂无视频去水印记录'}</p></div>`;
                 return;
             }
                             
@@ -1790,6 +1792,12 @@
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', () => {
             loadTaskHistory();
+        });
+
+        // 监听语言切换事件
+        document.addEventListener('languageChanged', function(event) {
+            console.log('视频去水印/Logo页面：语言已切换为', event.detail ? event.detail.language : localStorage.getItem('language'));
+            // translations.js 会自动更新所有带有 data-translate 属性的元素
         });
     </script>
 </body>

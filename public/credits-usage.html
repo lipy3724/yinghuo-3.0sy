@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>积分使用情况 - 萤火AI</title>
+    <title data-translate="page.credits_usage_title">积分使用情况 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/auth-check.js"></script>
+    <script src="/translations.js"></script>
     <link rel="icon" href="/images/favicon.png" type="image/png">
 </head>
 <body class="bg-gray-50">
@@ -16,24 +17,24 @@
     <div id="navbar-full"></div>
 
     <div class="container mx-auto px-4 py-8" style="margin-top: 60px;">
-        <h1 class="text-2xl font-bold mb-6">积分使用情况</h1>
+        <h1 class="text-2xl font-bold mb-6" data-translate="credits_usage.title">积分使用情况</h1>
         
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-medium text-lg">积分概览</h3>
+                <h3 class="font-medium text-lg" data-translate="credits_usage.overview">积分概览</h3>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-indigo-50 rounded-lg p-4">
-                    <p class="text-sm text-gray-600">时段消费积分</p>
+                    <p class="text-sm text-gray-600" data-translate="credits_usage.period_credits">时段消费积分</p>
                     <p class="text-2xl font-bold text-indigo-600" id="total-credits-used">0</p>
                 </div>
                 <div class="bg-green-50 rounded-lg p-4">
-                    <p class="text-sm text-gray-600">使用次数</p>
+                    <p class="text-sm text-gray-600" data-translate="credits_usage.usage_count">使用次数</p>
                     <p class="text-2xl font-bold text-green-600" id="total-usage-count">0</p>
                 </div>
                 <div class="bg-blue-50 rounded-lg p-4">
-                    <p class="text-sm text-gray-600">使用功能数量</p>
+                    <p class="text-sm text-gray-600" data-translate="credits_usage.feature_count">使用功能数量</p>
                     <p class="text-2xl font-bold text-blue-600" id="feature-count">0</p>
                 </div>
             </div>
@@ -44,7 +45,7 @@
         </div>
         
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 class="font-medium text-lg mb-4">功能使用次数占比</h3>
+            <h3 class="font-medium text-lg mb-4" data-translate="credits_usage.feature_usage_proportion">功能使用次数占比</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-1">
                     <canvas id="feature-pie-chart" height="220"></canvas>
@@ -59,15 +60,15 @@
         
         <!-- 使用记录组件 -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 class="font-medium text-lg mb-4">使用记录</h3>
+            <h3 class="font-medium text-lg mb-4" data-translate="credits_usage.usage_records">使用记录</h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full border-collapse">
                     <thead>
                         <tr class="bg-gray-50">
-                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b">时间</th>
-                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b">功能名称</th>
-                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b">操作</th>
-                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b">积分消费</th>
+                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b" data-translate="credits_usage.time">时间</th>
+                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b" data-translate="credits_usage.feature_name">功能名称</th>
+                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b" data-translate="credits_usage.operation">操作</th>
+                            <th class="py-2 px-4 text-left text-sm font-medium text-gray-500 border-b" data-translate="credits_usage.credit_consumption">积分消费</th>
                         </tr>
                     </thead>
                     <tbody id="usage-records-list">
@@ -75,7 +76,7 @@
                     </tbody>
                 </table>
             </div>
-            <div id="no-records" class="hidden text-center py-6 text-gray-500">
+            <div id="no-records" class="hidden text-center py-6 text-gray-500" data-translate="credits_usage.no_records">
                 暂无使用记录
             </div>
         </div>
@@ -92,12 +93,265 @@
                 // 加载组件JavaScript
                 const script = document.createElement('script');
                 script.src = '/components/components.js';
+                script.onload = function() {
+                    // 初始化语言系统（如果函数存在）
+                    if (typeof initializeLanguageSelector === 'function') {
+                        initializeLanguageSelector();
+                    }
+                    
+                    // 初始化页面语言（确保在导航栏加载后也应用语言设置）
+                    const currentLanguage = getCurrentLanguage();
+                    // 先使用translations.js中的统一函数更新所有data-translate元素
+                    if (typeof updatePageText === 'function') {
+                        updatePageText();
+                    }
+                    // 然后更新积分使用情况页面的特殊元素
+                    updateCreditsUsagePageText(currentLanguage);
+                    
+                    // 监听语言变化事件（确保不会重复绑定）
+                    // 注意：这个事件监听器已经在上面定义过了，这里不需要重复绑定
+                };
                 document.head.appendChild(script);
             })
             .catch(error => {
                 console.error('加载导航栏组件失败:', error);
             });
 
+        // 获取当前语言
+        function getCurrentLanguage() {
+            return localStorage.getItem('language') || 'zh';
+        }
+
+        // 获取翻译文本
+        function getTranslation(key, language) {
+            const lang = language || getCurrentLanguage();
+            if (typeof translations !== 'undefined' && translations[lang] && translations[lang][key]) {
+                return translations[lang][key];
+            }
+            return key;
+        }
+
+        // 更新积分使用情况页面的特殊元素（图表和列表）
+        function updateCreditsUsagePageText(language) {
+            console.log('更新积分使用情况页面特殊元素，语言:', language);
+            
+            // 确保 localStorage 已更新（双重保险）
+            localStorage.setItem('language', language);
+            
+            // 确保 translations.js 中的 currentLanguage 变量已更新
+            if (typeof currentLanguage !== 'undefined') {
+                currentLanguage = language;
+                console.log('updateCreditsUsagePageText: 已更新 currentLanguage 为', language);
+            }
+            
+            // 验证 translations 对象是否可用
+            const currentLang = localStorage.getItem('language') || 'zh';
+            if (typeof translations === 'undefined' || !translations[currentLang]) {
+                console.warn('updateCreditsUsagePageText: translations 对象尚未准备好，等待后重试');
+                setTimeout(() => updateCreditsUsagePageText(language), 200);
+                return;
+            }
+            
+            console.log('updateCreditsUsagePageText: translations 对象已准备好，开始重新渲染');
+            
+            // 重新渲染图表和列表以应用新语言
+            // 即使数据未完全加载，也尝试重新渲染（如果数据存在）
+            if (usageData) {
+                // 如果有图表数据，重新渲染图表
+                if (usageData.chartData) {
+                    console.log('重新渲染使用趋势图表，当前语言:', currentLang);
+                    renderUsageChart();
+                }
+                
+                // 如果有功能使用数据，重新渲染饼图和列表
+                if (usageData.featureUsage) {
+                    console.log('重新渲染功能使用占比饼图和列表，当前语言:', currentLang);
+                    renderFeaturePieChart();
+                    renderFeatureList();
+                }
+                
+                // 如果有使用记录，重新渲染记录列表
+                if (usageData.usageRecords) {
+                    console.log('重新渲染使用记录列表，当前语言:', currentLang);
+                    renderUsageRecords();
+                }
+                
+                console.log('updateCreditsUsagePageText: 所有图表和列表重新渲染完成');
+            } else {
+                console.log('数据尚未加载，跳过图表和列表的重新渲染');
+            }
+        }
+
+        // 当页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('积分使用页面：DOM加载完成，开始初始化');
+            
+            // 初始化语言 - 优先从localStorage读取，如果没有则使用默认值'zh'
+            const currentLanguage = getCurrentLanguage();
+            console.log('积分使用情况页面初始化，当前语言:', currentLanguage);
+            
+            // 等待translations.js加载完成后再更新
+            const checkTranslations = setInterval(() => {
+                if (typeof updatePageText === 'function' && typeof translations !== 'undefined') {
+                    clearInterval(checkTranslations);
+                    // 先使用translations.js中的统一函数更新所有data-translate元素
+                    updatePageText();
+                    // 然后更新积分使用情况页面的特殊元素
+                    updateCreditsUsagePageText(currentLanguage);
+                }
+            }, 100);
+            
+            // 如果5秒后仍未加载完成，直接使用自定义函数
+            setTimeout(() => {
+                clearInterval(checkTranslations);
+                if (typeof updatePageText !== 'function') {
+                    updateCreditsUsagePageText(currentLanguage);
+                }
+            }, 5000);
+            
+            // 等待认证检查完成后再初始化用户界面
+            const waitForAuth = () => {
+                // 检查是否正在进行认证检查
+                if (window.isAuthChecking) {
+                    console.log('积分使用页面：等待认证检查完成...');
+                    setTimeout(waitForAuth, 500);
+                    return;
+                }
+                
+                // 检查认证状态
+                const authToken = localStorage.getItem('authToken');
+                const userInfo = localStorage.getItem('user');
+                
+                if (authToken && userInfo) {
+                    console.log('积分使用页面：认证完成，开始初始化');
+                    initializeUserUI();
+                } else {
+                    console.log('积分使用页面：用户未登录，等待认证检查...');
+                    setTimeout(waitForAuth, 500);
+                }
+            };
+            
+            // 延迟启动，确保auth-check.js有时间完成认证
+            setTimeout(waitForAuth, 2000);
+        });
+
+        // 监听语言变化事件（来自主页面的语言选择器）
+        document.addEventListener('languageChanged', function(event) {
+            const newLanguage = event.detail.language;
+            console.log('积分使用情况页面：接收到语言切换事件', newLanguage);
+            
+            // 确保 localStorage 已更新
+            localStorage.setItem('language', newLanguage);
+            
+            // 更新 translations.js 中的 currentLanguage 变量（关键！）
+            if (typeof currentLanguage !== 'undefined') {
+                currentLanguage = newLanguage;
+                console.log('积分使用情况页面：已更新 currentLanguage 变量为', newLanguage);
+            }
+            
+            // 更新页面语言属性
+            document.documentElement.lang = newLanguage === 'en' ? 'en' : 'zh-CN';
+            
+            // 先使用translations.js中的统一函数更新所有data-translate元素
+            if (typeof updatePageText === 'function') {
+                console.log('积分使用情况页面：调用 updatePageText() 更新基础文本');
+                updatePageText();
+            }
+            
+            // 重新获取后端数据（按新语言返回名称与描述）
+            loadUsageData();
+            
+            // 等待一小段时间确保 translations 对象已更新，然后更新积分使用情况页面的特殊元素（图表和列表）
+            setTimeout(() => {
+                console.log('积分使用情况页面：开始更新图表和列表，当前语言:', localStorage.getItem('language'));
+                updateCreditsUsagePageText(newLanguage);
+            }, 100);
+        });
+        
+        // 兼容性：同时监听 window 上的语言变化事件
+        window.addEventListener('languageChanged', function(event) {
+            const newLanguage = event.detail.language;
+            console.log('积分使用情况页面（window）：接收到语言切换事件', newLanguage);
+            
+            // 确保 localStorage 已更新
+            localStorage.setItem('language', newLanguage);
+            
+            // 更新 translations.js 中的 currentLanguage 变量
+            if (typeof currentLanguage !== 'undefined') {
+                currentLanguage = newLanguage;
+                console.log('积分使用情况页面（window）：已更新 currentLanguage 变量为', newLanguage);
+            }
+            
+            // 更新页面语言属性
+            document.documentElement.lang = newLanguage === 'en' ? 'en' : 'zh-CN';
+            
+            // 更新基础文案
+            if (typeof updatePageText === 'function') {
+                console.log('积分使用情况页面（window）：调用 updatePageText() 更新基础文本');
+                updatePageText();
+            }
+            
+            // 重新获取后端数据并刷新图表/列表
+            loadUsageData();
+            setTimeout(() => {
+                console.log('积分使用情况页面（window）：开始更新图表和列表，当前语言:', localStorage.getItem('language'));
+                updateCreditsUsagePageText(newLanguage);
+            }, 100);
+        });
+
+        // 监听localStorage变化（跨标签页语言同步）
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'language' && event.newValue) {
+                console.log('积分使用情况页面：检测到跨标签页语言变化', event.newValue);
+                
+                // 更新 translations.js 中的 currentLanguage 变量（关键！）
+                if (typeof currentLanguage !== 'undefined') {
+                    currentLanguage = event.newValue;
+                    console.log('积分使用情况页面：已更新 currentLanguage 变量为', event.newValue);
+                }
+                
+                // 更新页面语言属性
+                document.documentElement.lang = event.newValue === 'en' ? 'en' : 'zh-CN';
+                
+                // 先使用translations.js中的统一函数更新所有data-translate元素
+                if (typeof updatePageText === 'function') {
+                    console.log('积分使用情况页面：调用 updatePageText() 更新基础文本');
+                    updatePageText();
+                }
+                
+                // 重新获取后端数据（按新语言返回名称与描述）
+                loadUsageData();
+                
+                // 等待一小段时间确保 translations 对象已更新，然后更新积分使用情况页面的特殊元素（图表和列表）
+                setTimeout(() => {
+                    console.log('积分使用情况页面：开始更新图表和列表，当前语言:', localStorage.getItem('language'));
+                    updateCreditsUsagePageText(event.newValue);
+                }, 100);
+            }
+        });
+        
+        // 获取翻译文本
+        function t(key, defaultValue = '') {
+            const currentLang = localStorage.getItem('language') || 'zh';
+            if (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][key]) {
+                return translations[currentLang][key];
+            }
+            // 语言感知的兜底文案，避免在英文环境下回退到中文默认值
+            const englishFallbacks = {
+                'credits_usage.times': 'times',
+                'credits_usage.free': 'Free',
+                'credits_usage.credits': 'Credits',
+                'credits_usage.loading': 'Loading...',
+                'credits_usage.load_failed': 'Load failed',
+                'credits_usage.no_feature_data': 'No feature usage records',
+                'credits_usage.no_chart_data': 'No credits usage yet'
+            };
+            if (currentLang === 'en') {
+                return englishFallbacks[key] || (defaultValue || key);
+            }
+            return defaultValue || key;
+        }
+        
         // 初始化用户界面（不进行认证检查，由auth-check.js统一处理）
         function initializeUserUI() {
             const authToken = localStorage.getItem('authToken');
@@ -134,10 +388,11 @@
                     throw new Error('用户未登录');
                 }
                 
-                console.log(`积分使用页面：开始请求API /api/credits/usage?days=${days}`);
+                const lang = localStorage.getItem('language') || 'zh';
+                console.log(`积分使用页面：开始请求API /api/credits/usage?days=${days}&lang=${lang}`);
                 
                 // 调用API获取积分使用数据
-                const response = await fetch(`/api/credits/usage?days=${days}`, {
+                const response = await fetch(`/api/credits/usage?days=${days}&lang=${lang}`, {
                     headers: {
                         'Authorization': `Bearer ${authToken}`
                     }
@@ -203,9 +458,9 @@
                 console.log('积分使用页面：开始加载积分使用数据');
                 
                 // 显示加载状态
-                document.getElementById('total-credits-used').textContent = '加载中...';
-                document.getElementById('total-usage-count').textContent = '加载中...';
-                document.getElementById('feature-count').textContent = '加载中...';
+                document.getElementById('total-credits-used').textContent = t('credits_usage.loading', '加载中...');
+                document.getElementById('total-usage-count').textContent = t('credits_usage.loading', '加载中...');
+                document.getElementById('feature-count').textContent = t('credits_usage.loading', '加载中...');
                 
                 // 从服务器获取数据 - 使用固定的30天时间范围
                 const data = await fetchUserCreditsUsage(30);
@@ -264,9 +519,9 @@
                 console.error('积分使用页面：加载数据失败', error);
                 
                 // 显示错误信息给用户
-                document.getElementById('total-credits-used').textContent = '加载失败';
-                document.getElementById('total-usage-count').textContent = '加载失败';
-                document.getElementById('feature-count').textContent = '加载失败';
+                document.getElementById('total-credits-used').textContent = t('credits_usage.load_failed', '加载失败');
+                document.getElementById('total-usage-count').textContent = t('credits_usage.load_failed', '加载失败');
+                document.getElementById('feature-count').textContent = t('credits_usage.load_failed', '加载失败');
                 
                 // 显示错误提示
                 const errorDiv = document.createElement('div');
@@ -288,7 +543,14 @@
         
         // 渲染使用趋势图表
         function renderUsageChart() {
-            const ctx = document.getElementById('usage-chart').getContext('2d');
+            const canvas = document.getElementById('usage-chart');
+            const ctx = canvas.getContext('2d');
+            
+            // 如果已存在 Chart 实例，先销毁它（用于语言切换时重新渲染）
+            if (canvas.chart && typeof canvas.chart.destroy === 'function') {
+                canvas.chart.destroy();
+                canvas.chart = null;
+            }
             
             // 检查是否有数据
             const hasData = usageData.chartData?.data?.some(value => value > 0);
@@ -301,17 +563,17 @@
                 ctx.textBaseline = 'middle';
                 ctx.font = '16px sans-serif';
                 ctx.fillStyle = '#6B7280';
-                ctx.fillText('暂无积分使用记录', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                ctx.fillText(t('credits_usage.no_chart_data', '暂无积分使用记录'), ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
             
             // 有数据时正常绘制图表
-            new Chart(ctx, {
+            canvas.chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: usageData.chartData.labels,
                     datasets: [{
-                        label: '积分使用量',
+                        label: t('credits_usage.chart_label', '积分使用量'),
                         data: usageData.chartData.data,
                         borderColor: 'rgb(99, 102, 241)',
                         backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -338,7 +600,14 @@
         
         // 渲染功能使用占比饼图
         function renderFeaturePieChart() {
-            const ctx = document.getElementById('feature-pie-chart').getContext('2d');
+            const canvas = document.getElementById('feature-pie-chart');
+            const ctx = canvas.getContext('2d');
+            
+            // 如果已存在 Chart 实例，先销毁它（用于语言切换时重新渲染）
+            if (canvas.chart && typeof canvas.chart.destroy === 'function') {
+                canvas.chart.destroy();
+                canvas.chart = null;
+            }
             
             // 检查是否有数据
             if (!usageData.featureUsage || usageData.featureUsage.length === 0) {
@@ -348,7 +617,7 @@
                 ctx.textBaseline = 'middle';
                 ctx.font = '16px sans-serif';
                 ctx.fillStyle = '#6B7280';
-                ctx.fillText('暂无功能使用记录', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                ctx.fillText(t('credits_usage.no_feature_data', '暂无功能使用记录'), ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
             
@@ -380,7 +649,7 @@
                 ctx.textBaseline = 'middle';
                 ctx.font = '16px sans-serif';
                 ctx.fillStyle = '#6B7280';
-                ctx.fillText('暂无功能使用记录', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                ctx.fillText(t('credits_usage.no_feature_data', '暂无功能使用记录'), ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
             
@@ -523,10 +792,10 @@
                 total: validData.reduce((sum, item) => sum + item.usageCount, 0)
             });
             
-            new Chart(ctx, {
+            canvas.chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: validData.map(item => getChineseFeatureName(item.name)),
+                    labels: validData.map(item => getFeatureName(item.name)),
                     datasets: [{
                         data: validData.map(item => item.usageCount),
                         backgroundColor: validData.map(item => item.color || getRandomColor(item.name)),
@@ -547,7 +816,8 @@
                                     const value = context.raw || 0;
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const percentage = Math.round((value / total) * 100);
-                                    return `${label}: ${value} 次 (${percentage}%)`;
+                                    const timesText = t('credits_usage.times', '次');
+                                    return `${label}: ${value} ${timesText} (${percentage}%)`;
                                 }
                             }
                         }
@@ -586,7 +856,7 @@
             if (!usageData.featureUsage || usageData.featureUsage.length === 0) {
                 const emptyItem = document.createElement('li');
                 emptyItem.className = 'text-center text-gray-500 py-4';
-                emptyItem.textContent = '暂无功能使用记录';
+                emptyItem.textContent = t('credits_usage.no_feature_data', '暂无功能使用记录');
                 featureListEl.appendChild(emptyItem);
                 return;
             }
@@ -598,7 +868,7 @@
             if (validData.length === 0) {
                 const emptyItem = document.createElement('li');
                 emptyItem.className = 'text-center text-gray-500 py-4';
-                emptyItem.textContent = '暂无功能使用记录';
+                emptyItem.textContent = t('credits_usage.no_feature_data', '暂无功能使用记录');
                 featureListEl.appendChild(emptyItem);
                 return;
             }
@@ -616,13 +886,14 @@
                     
                     const listItem = document.createElement('li');
                     listItem.className = 'flex items-center justify-between';
+                    const timesText = t('credits_usage.times', '次');
                     listItem.innerHTML = `
                         <div class="flex items-center">
                             <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${feature.color || getRandomColor(feature.name)}"></div>
-                            <span class="text-sm">${getChineseFeatureName(feature.name)}</span>
+                            <span class="text-sm">${getFeatureName(feature.name)}</span>
                         </div>
                         <div class="text-right">
-                            <div class="text-sm font-medium">${feature.usageCount} 次</div>
+                            <div class="text-sm font-medium">${feature.usageCount} ${timesText}</div>
                             <div class="text-xs text-gray-500">${usagePercentage}%</div>
                         </div>
                     `;
@@ -630,58 +901,229 @@
                 });
         }
         
-        // 功能名称中文映射
-        function getChineseFeatureName(featureName) {
-            const featureNameMap = {
-                'VIDEO_LOGO_REMOVAL': '视频去水印/logo',
-                'IMAGE_CROP': '图像裁剪',
-                'IMAGE_RESIZE': '图片改尺寸',
-                'image-upscaler': '图像高清放大',
-                'marketing-images': 'AI营销图生成',
-                'cutout': '商品换背景',
-                'translate': '图片翻译',
-                'scene-generator': '场景图生成',
-                'image-removal': '图像智能消除',
-                'model-skin-changer': '模特换肤',
-                'clothing-simulation': '模拟试衣',
-                'text-to-video': '文生视频',
-                'image-to-video': '图生视频',
-                'IMAGE_EDIT': '指令编辑',
-                'LOCAL_REDRAW': '局部重绘',
-                'IMAGE_COLORIZATION': '图像上色',
-                'image-expansion': '智能扩图',
-                'VIRTUAL_SHOE_MODEL': '鞋靴虚拟试穿',
-                'TEXT_TO_IMAGE': '文生图片',
-                'IMAGE_SHARPENING': '模糊图片变清晰',
-                'CLOTH_SEGMENTATION': '智能服饰分割',
-                'GLOBAL_STYLE': '全局风格化',
-                'VIRTUAL_MODEL_VTON': '智能虚拟模特试穿',
-                'VIDEO_SUBTITLE_REMOVER': '视频去除字幕',
-                'MULTI_IMAGE_TO_VIDEO': '多图转视频',
-                'DIGITAL_HUMAN_VIDEO': '视频数字人',
-                'VIDEO_STYLE_REPAINT': '视频风格重绘',
-                'QWEN_IMAGE_EDIT': '图像编辑',
-                'VIDEO_FACE_SWAP': '视频换人',
-                'VIDEO_FACE_FUSION': '视频换脸'
-            };
+        // 功能名称映射（支持多语言）
+        function getFeatureName(featureName) {
+            // 获取当前语言
+            const currentLang = localStorage.getItem('language') || 'zh';
             
-            return featureNameMap[featureName] || featureName;
-        }
-
-        // 操作描述中文映射
-        function getChineseDescription(description) {
-            // 如果描述包含功能名称，替换为中文
-            let chineseDescription = description;
-            
-            // 匹配"使用XXX功能"的模式
-            const match = description.match(/使用(.+?)功能/);
-            if (match) {
-                const featureName = match[1];
-                const chineseFeatureName = getChineseFeatureName(featureName);
-                chineseDescription = description.replace(featureName, chineseFeatureName);
+            // 尝试通过 translations 反向查找键（当传入的是“展示用名称”而不是代码键/中文名时）
+            function findKeyByDisplayName(name) {
+                if (typeof translations === 'undefined') return null;
+                
+                // 在中文表中找：值等于传入名称 → 拿到相同 key
+                if (translations.zh) {
+                    for (const [key, value] of Object.entries(translations.zh)) {
+                        if (value === name) return key;
+                    }
+                }
+                // 在英文表中找：值等于传入名称 → 拿到相同 key
+                if (translations.en) {
+                    for (const [key, value] of Object.entries(translations.en)) {
+                        if (value === name) return key;
+                    }
+                }
+                return null;
             }
             
-            return chineseDescription;
+            // 中文名称到翻译键的映射（后端返回的是中文名称）
+            const chineseNameToTranslationKey = {
+                // 图像处理
+                '图像裁剪': 'feature.image_crop',
+                '图片改尺寸': 'feature.image_resizer',
+                '图像高清放大': 'feature.image_upscaling',
+                'AI营销图生成': 'feature.marketing_image',
+                '商品换背景': 'feature.smart_cutout',
+                '智能抠图': 'feature.smart_cutout',
+                '图片翻译': 'feature.image_translation',
+                '场景图生成': 'feature.scene_generator',
+                '图像智能消除': 'feature.smart_removal',
+                '模特换肤': 'feature.model_skin_change',
+                '模拟试衣': 'feature.virtual_try_on',
+                '文生视频': 'feature.text_to_video',
+                '图生视频': 'feature.image_to_video',
+                '指令编辑': 'feature.instruction_editing',
+                '局部重绘': 'feature.local_redraw',
+                '图像上色': 'feature.image_colorization',
+                '智能扩图': 'feature.smart_expansion',
+                '鞋靴虚拟试穿': 'feature.virtual_shoes_try_on',
+                '文生图片': 'feature.text_to_image',
+                '模糊图片变清晰': 'feature.blur_to_clear',
+                '智能服饰分割': 'feature.smart_clothing_segmentation',
+                '全局风格化': 'feature.global_stylization',
+                '智能虚拟模特试穿': 'feature.virtual_model_try_on',
+                '视频去除字幕': 'feature.video_subtitle_remover',
+                '多图转视频': 'feature.multi_image_to_video',
+                '视频数字人': 'feature.digital_human_video',
+                '视频风格重绘': 'feature.video_style_repaint',
+                '图像编辑': 'QWEN_IMAGE_EDIT',
+                '视频换人': 'VIDEO_FACE_SWAP',
+                '视频去水印/logo': 'VIDEO_LOGO_REMOVAL',
+                // 亚马逊相关功能
+                '亚马逊广告视频脚本生成': 'amazon_video_script',
+                '选品的改款分析和建议': 'product_improvement_analysis',
+                '品牌信息收集和总结': 'amazon_brand_info',
+                '亚马逊品牌起名': 'amazon_brand_naming',
+                '亚马逊Listing写作与优化': 'amazon_listing',
+                '亚马逊后台搜索词': 'amazon_search_term',
+                '亚马逊客户评论分析': 'amazon_review_analysis',
+                '亚马逊消费者洞察专家': 'amazon_consumer_insights',
+                '亚马逊客户邮件回复': 'amazon_customer_email',
+                'FBA索赔邮件': 'fba_claim_email',
+                '亚马逊评论生成': 'amazon_review_generator',
+                '亚马逊评论回复': 'amazon_review_response',
+                '产品对比': 'product_comparison',
+                '创建亚马逊Post': 'amazon_post_creator',
+                '亚马逊关键词推荐': 'amazon_keyword_recommender',
+                '亚马逊客服case内容': 'amazon_case_creator',
+                // 其他可能的名称变体
+                '垫图': 'feature.padding_image',
+                '虚拟试衣': 'feature.virtual_try_on',
+                'AI换脸': 'feature.ai_face_swap',
+                'AI换模特': 'feature.ai_model_change'
+            };
+            
+            // 英文键名到翻译键的映射（兼容性）
+            const englishKeyToTranslationKey = {
+                'IMAGE_CROP': 'feature.image_crop',
+                'IMAGE_RESIZE': 'feature.image_resizer',
+                'image-upscaler': 'feature.image_upscaling',
+                'marketing-images': 'feature.marketing_image',
+                'cutout': 'feature.smart_cutout',
+                'translate': 'feature.image_translation',
+                'scene-generator': 'feature.scene_generator',
+                'image-removal': 'feature.smart_removal',
+                'model-skin-changer': 'feature.model_skin_change',
+                'clothing-simulation': 'feature.virtual_try_on',
+                'text-to-video': 'feature.text_to_video',
+                'image-to-video': 'feature.image_to_video',
+                'IMAGE_EDIT': 'feature.instruction_editing',
+                'LOCAL_REDRAW': 'feature.local_redraw',
+                'IMAGE_COLORIZATION': 'feature.image_colorization',
+                'image-expansion': 'feature.smart_expansion',
+                'VIRTUAL_SHOE_MODEL': 'feature.virtual_shoes_try_on',
+                'TEXT_TO_IMAGE': 'feature.text_to_image',
+                'IMAGE_SHARPENING': 'feature.blur_to_clear',
+                'CLOTH_SEGMENTATION': 'feature.smart_clothing_segmentation',
+                'GLOBAL_STYLE': 'feature.global_stylization',
+                'VIRTUAL_MODEL_VTON': 'feature.virtual_model_try_on',
+                'VIDEO_SUBTITLE_REMOVER': 'feature.video_subtitle_remover',
+                'MULTI_IMAGE_TO_VIDEO': 'feature.multi_image_to_video',
+                'DIGITAL_HUMAN_VIDEO': 'feature.digital_human_video',
+                'VIDEO_STYLE_REPAINT': 'feature.video_style_repaint',
+                'QWEN_IMAGE_EDIT': 'QWEN_IMAGE_EDIT',
+                'VIDEO_FACE_SWAP': 'VIDEO_FACE_SWAP',
+                'VIDEO_LOGO_REMOVAL': 'VIDEO_LOGO_REMOVAL',
+                // 亚马逊相关功能
+                'amazon_video_script': 'amazon_video_script',
+                'product_improvement_analysis': 'product_improvement_analysis',
+                'amazon_brand_info': 'amazon_brand_info',
+                'amazon_brand_naming': 'amazon_brand_naming',
+                'amazon_listing': 'amazon_listing',
+                'amazon_search_term': 'amazon_search_term',
+                'amazon_review_analysis': 'amazon_review_analysis',
+                'amazon_consumer_insights': 'amazon_consumer_insights',
+                'amazon_customer_email': 'amazon_customer_email',
+                'fba_claim_email': 'fba_claim_email',
+                'amazon_review_generator': 'amazon_review_generator',
+                'amazon_review_response': 'amazon_review_response',
+                'product_comparison': 'product_comparison',
+                'amazon_post_creator': 'amazon_post_creator',
+                'amazon_keyword_recommender': 'amazon_keyword_recommender',
+                'amazon_case_creator': 'amazon_case_creator'
+            };
+            
+            // 先尝试中文名称映射（后端通常返回中文）
+            let translationKey = chineseNameToTranslationKey[featureName];
+            
+            // 如果中文映射不存在，尝试英文键映射
+            if (!translationKey) {
+                translationKey = englishKeyToTranslationKey[featureName];
+            }
+            
+            // 如果仍找不到，尝试基于 translations 的“值反查键”
+            if (!translationKey) {
+                translationKey = findKeyByDisplayName(featureName);
+            }
+            
+            // 如果存在翻译键，尝试从翻译对象获取
+            if (translationKey && typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang][translationKey]) {
+                return translations[currentLang][translationKey];
+            }
+            
+            // 找不到映射时，回退为原名称（保持原有行为）
+            return featureName;
+        }
+        
+        // 保留旧函数名以兼容
+        function getChineseFeatureName(featureName) {
+            return getFeatureName(featureName);
+        }
+
+        // 操作描述映射（支持多语言）
+        function getDescription(description) {
+            if (!description) return description;
+            
+            const currentLang = localStorage.getItem('language') || 'zh';
+            
+            // 如果是中文语言，除中文描述外，也要把英文描述转成中文
+            if (currentLang === 'zh') {
+                // 匹配"使用XXX功能"的模式（中文）
+                const matchCN = description.match(/使用(.+?)功能/);
+                if (matchCN) {
+                    const featureName = matchCN[1];
+                    const translatedFeatureName = getFeatureName(featureName);
+                    return description.replace(featureName, translatedFeatureName);
+                }
+                
+                // 匹配英文 "Used XXX feature" → 转中文
+                const matchEN = description.match(/Used (.+?) feature/i);
+                if (matchEN) {
+                    const featureName = matchEN[1];
+                    const translatedFeatureName = getFeatureName(featureName);
+                    return `使用${translatedFeatureName}功能`;
+                }
+                
+                // 匹配英文 "Processed X-second video" → 转中文
+                const videoEN = description.match(/Processed\s+(\d+)-second\s+video/i);
+                if (videoEN) {
+                    const seconds = videoEN[1];
+                    return `处理${seconds}秒视频`;
+                }
+                return description;
+            }
+            
+            // 如果是英文语言，需要完整翻译
+            if (currentLang === 'en') {
+                // 匹配"使用XXX功能"的模式（中文）
+                const matchCN = description.match(/使用(.+?)功能/);
+                if (matchCN) {
+                    const featureName = matchCN[1];
+                    const translatedFeatureName = getFeatureName(featureName);
+                    return `Used ${translatedFeatureName} feature`;
+                }
+                
+                // 匹配"处理X秒视频"的模式
+                const videoMatch = description.match(/处理(\d+)秒视频/);
+                if (videoMatch) {
+                    const seconds = videoMatch[1];
+                    return `Processed ${seconds}-second video`;
+                }
+                
+                // 匹配"Used XXX feature"的模式（英文，可能已经是英文）
+                const matchEN = description.match(/Used (.+?) feature/i);
+                if (matchEN) {
+                    const featureName = matchEN[1];
+                    const translatedFeatureName = getFeatureName(featureName);
+                    return description.replace(featureName, translatedFeatureName);
+                }
+            }
+            
+            return description;
+        }
+        
+        // 保留旧函数名以兼容
+        function getChineseDescription(description) {
+            return getDescription(description);
         }
 
         // 渲染使用记录列表
@@ -710,76 +1152,50 @@
                 // 🔧 修复积分使用记录显示逻辑：区分真正的免费使用和防重复扣费
                 let creditDisplay;
                 
+                const freeText = t('credits_usage.free', '免费');
+                const creditsText = t('credits_usage.credits', '积分');
+                
                 // 特殊处理局部重绘功能
-                if (record.feature === '局部重绘') {
+                if (record.feature === '局部重绘' || record.feature === 'LOCAL_REDRAW') {
                     // 检查是否为免费使用
                     if (record.isFree === true) {
-                        creditDisplay = '<span class="text-green-500 font-medium">免费</span>';
+                        creditDisplay = `<span class="text-green-500 font-medium">${freeText}</span>`;
                     } else {
                         // 如果不是免费，显示正确的积分消费
                         const creditCost = typeof record.credits === 'number' ? record.credits : 7; // 局部重绘标准积分消费
-                        creditDisplay = `<span class="text-red-500 font-medium">-${creditCost} 积分</span>`;
+                        creditDisplay = `<span class="text-red-500 font-medium">-${creditCost} ${creditsText}</span>`;
                     }
                 } else if (record.feature === '图片改尺寸' || record.feature === 'IMAGE_RESIZE') {
                     // 图片改尺寸功能始终免费
-                    creditDisplay = '<span class="text-green-500 font-medium">免费</span>';
+                    creditDisplay = `<span class="text-green-500 font-medium">${freeText}</span>`;
                 } else if (record.isFree === true) {
                     // 真正的免费使用
-                    creditDisplay = '<span class="text-green-500 font-medium">免费</span>';
+                    creditDisplay = `<span class="text-green-500 font-medium">${freeText}</span>`;
                 } else if (record.credits === 0) {
                     // 防重复扣费的0积分（这种情况不应该出现，因为后端已修复）
-                    creditDisplay = '<span class="text-gray-500 font-medium">0 积分</span>';
-                } else if (record.credits === "免费") {
+                    creditDisplay = `<span class="text-gray-500 font-medium">0 ${creditsText}</span>`;
+                } else if (record.credits === "免费" || record.credits === "Free") {
                     // 后端返回的免费标记
-                    creditDisplay = '<span class="text-green-500 font-medium">免费</span>';
+                    creditDisplay = `<span class="text-green-500 font-medium">${freeText}</span>`;
                 } else {
                     // 正常的付费使用
-                    creditDisplay = `<span class="text-red-500 font-medium">-${record.credits} 积分</span>`;
+                    creditDisplay = `<span class="text-red-500 font-medium">-${record.credits} ${creditsText}</span>`;
                 }
                 
                 row.innerHTML = `
                     <td class="py-3 px-4 border-b text-sm">${record.date}</td>
                     <td class="py-3 px-4 border-b text-sm">
                         <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs">
-                            ${getChineseFeatureName(record.feature)}
+                            ${getFeatureName(record.feature)}
                         </span>
                     </td>
-                    <td class="py-3 px-4 border-b text-sm">${getChineseDescription(record.description)}</td>
+                    <td class="py-3 px-4 border-b text-sm">${getDescription(record.description)}</td>
                     <td class="py-3 px-4 border-b text-sm">${creditDisplay}</td>
                 `;
                 recordsListEl.appendChild(row);
             });
         }
         
-        // 页面加载时检查登录状态
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('积分使用页面：DOM加载完成，开始初始化');
-            
-            // 等待认证检查完成后再初始化
-            const waitForAuth = () => {
-                // 检查是否正在进行认证检查
-                if (window.isAuthChecking) {
-                    console.log('积分使用页面：等待认证检查完成...');
-                    setTimeout(waitForAuth, 500);
-                    return;
-                }
-                
-                // 检查认证状态
-                const authToken = localStorage.getItem('authToken');
-                const userInfo = localStorage.getItem('user');
-                
-                if (authToken && userInfo) {
-                    console.log('积分使用页面：认证完成，开始初始化');
-                    initializeUserUI();
-                } else {
-                    console.log('积分使用页面：用户未登录，等待认证检查...');
-                    setTimeout(waitForAuth, 500);
-                }
-            };
-            
-            // 延迟启动，确保auth-check.js有时间完成认证
-            setTimeout(waitForAuth, 2000);
-        });
     </script>
 </body>
 </html> 

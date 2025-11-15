@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
-    <script src="../translations.js"></script>
+    <script src="/translations.js"></script>
     <style>
         /* 自定义滚动条 */
         ::-webkit-scrollbar {
@@ -201,10 +201,10 @@
                 <!-- 视图切换 -->
                 <div class="flex items-center space-x-3 mt-2 sm:mt-0">
                     <span class="text-sm text-gray-500" data-translate="download_center.view">视图:</span>
-                    <button id="grid-view-btn" class="p-1.5 rounded bg-indigo-100 text-indigo-700">
+                    <button id="grid-view-btn-bottom" class="p-1.5 rounded bg-indigo-100 text-indigo-700">
                         <i class="ri-grid-fill text-lg"></i>
                     </button>
-                    <button id="list-view-btn" class="p-1.5 rounded hover:bg-gray-100 text-gray-500">
+                    <button id="list-view-btn-bottom" class="p-1.5 rounded hover:bg-gray-100 text-gray-500">
                         <i class="ri-list-check text-lg"></i>
                     </button>
                     <button id="select-all-btn" class="ml-2 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg">
@@ -268,21 +268,91 @@
         let itemsPerPage = 24;
         let selectedItems = new Set();
         
+        // 将processType代码映射为翻译键的函数
+        function getProcessTypeTranslationKey(processType) {
+            const typeMap = {
+                'image-expansion': 'download_center.smart_expansion',
+                'IMAGE_SHARPENING': 'feature.blur_to_clear',
+                'QWEN_IMAGE_EDIT': 'download_center.qwen_image_edit',
+                'IMAGE_COLORIZATION': 'download_center.image_colorization',
+                'GLOBAL_STYLE': 'download_center.global_stylization',
+                'global-style': 'download_center.global_stylization',
+                'DIANTU': 'download_center.background_removal',
+                'LOCAL_REDRAW': 'download_center.model_weight',
+                'CLOTH_SEGMENTATION': 'download_center.smart_segmentation',
+                'TEXT_TO_IMAGE': 'download_center.text_to_image',
+                'IMAGE_UPSCALER': 'download_center.image_upscaling',
+                'IMAGE_UPSCALING': 'download_center.image_upscaling',
+                'PROMPT_EDITOR': 'download_center.image_editing',
+                'PROMPT_EDITING': 'download_center.image_editing',
+                'IMAGE_EDIT': 'download_center.image_editing',
+                '图片翻译': 'download_center.image_translation',
+                '营销图生成': 'download_center.ai_marketing',
+                '智能抠图': 'download_center.smart_cutout',
+                '场景图生成': 'download_center.scene_generation',
+                '智能消除': 'download_center.smart_removal',
+                '模特换肤': 'download_center.model_replacement',
+                '虚拟试衣': 'download_center.virtual_try_on',
+                '智能扩图': 'download_center.smart_expansion',
+                '模糊图片变清晰': 'feature.blur_to_clear',
+                '图像上色': 'download_center.image_colorization',
+                '全局风格化': 'download_center.global_stylization',
+                '垫图': 'download_center.background_removal',
+                '局部重绘': 'download_center.model_weight',
+                '智能服饰分割': 'download_center.smart_segmentation',
+                '文生图片': 'download_center.text_to_image',
+                '图像高清放大': 'download_center.image_upscaling',
+                '指令编辑': 'download_center.image_editing',
+                '图像编辑': 'download_center.qwen_image_edit',
+                '图像指令编辑': 'download_center.image_editing'
+            };
+            return typeMap[processType] || null;
+        }
+        
+        // 获取processType的显示名称（支持多语言）
+        function getProcessTypeDisplayName(processType, language) {
+            const lang = language || getCurrentLanguage();
+            const translationKey = getProcessTypeTranslationKey(processType);
+            if (translationKey) {
+                return getTranslation(translationKey, lang);
+            }
+            // 如果没有找到映射，尝试直接翻译
+            if (translations[lang] && translations[lang][`download_center.${processType}`]) {
+                return getTranslation(`download_center.${processType}`, lang);
+            }
+            // 如果都没有，返回原值
+            return processType || (lang === 'en' ? 'Image Processing' : '图片处理');
+        }
+        
         // 当页面加载完成后执行
         // 监听语言变化事件（来自主页面的语言选择器）
         document.addEventListener('languageChanged', function(event) {
             const newLanguage = event.detail.language;
             console.log('下载中心页面：接收到语言切换事件', newLanguage);
-            updatePageText(newLanguage);
+            // 先使用translations.js中的统一函数更新所有data-translate元素
+            if (typeof updatePageText === 'function') {
+                updatePageText();
+            }
+            // 然后更新下载中心页面的特殊元素
+            updateDownloadCenterText(newLanguage);
             updatePlaceholders(newLanguage);
+            // 重新渲染所有图片内容以更新语言
+            renderImages();
         });
 
         // 监听localStorage变化（跨标签页语言同步）
         window.addEventListener('storage', function(event) {
             if (event.key === 'language' && event.newValue) {
                 console.log('下载中心页面：检测到跨标签页语言变化', event.newValue);
-                updatePageText(event.newValue);
+                // 先使用translations.js中的统一函数更新所有data-translate元素
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+                // 然后更新下载中心页面的特殊元素
+                updateDownloadCenterText(event.newValue);
                 updatePlaceholders(event.newValue);
+                // 重新渲染所有图片内容以更新语言
+                renderImages();
             }
         });
 
@@ -291,9 +361,26 @@
             const currentLanguage = getCurrentLanguage();
             console.log('下载中心页面初始化，当前语言:', currentLanguage);
             
-            // 立即更新页面文本
-            updatePageText(currentLanguage);
-            updatePlaceholders(currentLanguage);
+            // 等待translations.js加载完成后再更新
+            const checkTranslations = setInterval(() => {
+                if (typeof updatePageText === 'function' && typeof translations !== 'undefined') {
+                    clearInterval(checkTranslations);
+                    // 先使用translations.js中的统一函数更新所有data-translate元素
+                    updatePageText();
+                    // 然后更新下载中心页面的特殊元素
+                    updateDownloadCenterText(currentLanguage);
+                    updatePlaceholders(currentLanguage);
+                }
+            }, 100);
+            
+            // 如果5秒后仍未加载完成，直接使用自定义函数
+            setTimeout(() => {
+                clearInterval(checkTranslations);
+                if (typeof updatePageText !== 'function') {
+                    updateDownloadCenterText(currentLanguage);
+                    updatePlaceholders(currentLanguage);
+                }
+            }, 5000);
             
             // 加载历史记录
             await loadImageHistory();
@@ -330,7 +417,15 @@
                     this.classList.add('bg-indigo-600', 'text-white');
                     
                     // 根据标签类型过滤图片
-                    filterImages(this.dataset.tab);
+                    // data-tab可能是中文名称，需要转换为当前语言的显示名称
+                    const tabType = this.dataset.tab;
+                    if (tabType === 'all') {
+                        filterImages('all');
+                    } else {
+                        // 获取当前语言的显示名称用于过滤
+                        const currentLangDisplayName = getProcessTypeDisplayName(tabType, getCurrentLanguage());
+                        filterImages(currentLangDisplayName);
+                    }
                 });
             });
         }
@@ -472,7 +567,8 @@
             deleteBtn.addEventListener('click', async function() {
                 if (selectedItems.size === 0) return;
                 
-                if (confirm(`确定要删除选中的 ${selectedItems.size} 张图片吗？`)) {
+                const confirmText = getTranslation('download_center.delete_selected_confirm', getCurrentLanguage()).replace('{count}', selectedItems.size);
+                if (confirm(confirmText)) {
                     try {
                         // 调用后端API删除图片
                         const token = localStorage.getItem('authToken') || '';
@@ -500,10 +596,10 @@
                         selectedItems.clear();
                         document.getElementById('delete-selected-btn').classList.add('hidden');
                         
-                        alert('删除成功');
+                        alert(getTranslation('download_center.delete_success', getCurrentLanguage()));
                     } catch (error) {
                         console.error('删除失败:', error);
-                        alert('删除失败: ' + error.message);
+                        alert(getTranslation('download_center.delete_failed', getCurrentLanguage()) + ': ' + error.message);
                     }
                 }
             });
@@ -542,8 +638,13 @@
                 // 更新过期提示信息
                 if (data.expirationPeriod) {
                     const expirationHours = data.expirationPeriod;
-                    document.querySelector('.bg-yellow-50 .text-yellow-700').innerHTML = 
-                        `<strong>温馨提示：</strong> 下载中心的图片和视频仅保存${expirationHours}小时，请及时下载保存到本地。`;
+                    const currentLang = getCurrentLanguage();
+                    const warmTip = getTranslation('download_center.warm_tip', currentLang);
+                    const expirationNotice = getTranslation('download_center.expiration_notice', currentLang).replace('12', expirationHours);
+                    const noticeElement = document.querySelector('.bg-yellow-50 .text-yellow-700');
+                    if (noticeElement) {
+                        noticeElement.innerHTML = `<strong>${warmTip}</strong> ${expirationNotice}`;
+                    }
                 }
                 
                 // 隐藏加载中提示
@@ -585,9 +686,9 @@
                 container.innerHTML = `
                     <div class="col-span-full text-center py-10">
                         <i class="ri-error-warning-line text-red-500 text-5xl mb-2"></i>
-                        <p class="text-gray-700">加载失败: ${error.message}</p>
+                        <p class="text-gray-700">${getCurrentLanguage() === 'en' ? 'Load failed' : '加载失败'}: ${error.message}</p>
                         <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700" onclick="loadImageHistory()">
-                            重试
+                            ${getCurrentLanguage() === 'en' ? 'Retry' : '重试'}
                         </button>
                     </div>
                 `;
@@ -720,55 +821,10 @@
             card.dataset.id = item.id;
             
             const processedImageUrl = item.processedImageUrl || '';
-            const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : '未知时间';
+            const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : (getCurrentLanguage() === 'en' ? 'Unknown time' : '未知时间');
             
-            // 根据processType显示对应的功能名称
-            let processType = item.processType || '图片处理';
-            
-            // 将功能代码映射为可读的中文名称
-            switch (processType) {
-                case 'image-expansion':
-                    processType = '智能扩图';
-                    break;
-                case 'IMAGE_SHARPENING':
-                    processType = '模糊图片变清晰';
-                    break;
-                case 'QWEN_IMAGE_EDIT':
-                    displayType = '图像编辑';
-                    break;
-                case 'IMAGE_COLORIZATION':
-                    processType = '图像上色';
-                    break;
-                case 'GLOBAL_STYLE':
-                case 'global-style':
-                    processType = '全局风格化';
-                    break;
-                case 'DIANTU':
-                    processType = '垫图';
-                    break;
-                case 'LOCAL_REDRAW':
-                    processType = '局部重绘';
-                    break;
-                case 'CLOTH_SEGMENTATION':
-                    processType = '智能服饰分割';
-                    break;
-                case 'TEXT_TO_IMAGE':
-                    processType = '文生图片';
-                    break;
-                // 保留其他已有的功能名称
-                case '图片翻译':
-                case '营销图生成':
-                case '智能抠图':
-                case '场景图生成':
-                case '智能消除':
-                case '模特换肤':
-                case '虚拟试衣':
-                case '全局风格化':
-                    break;
-                default:
-                    // 如果是其他未知类型，保持原样
-                    break;
-            }
+            // 根据processType显示对应的功能名称（支持多语言）
+            const processType = getProcessTypeDisplayName(item.processType, getCurrentLanguage());
             
             // 检查图片是否被选中
             const isSelected = selectedItems.has(item.id.toString());
@@ -799,7 +855,7 @@
                         </button>
                     </div>
                     ${hoursLeft < 3 ? `<div class="absolute top-2 right-2 bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded-sm">
-                        <i class="ri-time-line mr-0.5"></i>${hoursLeft}小时${minutesLeft}分钟后过期
+                        <i class="ri-time-line mr-0.5"></i>${getTranslation('download_center.expires_in', getCurrentLanguage()).replace('{hours}', hoursLeft).replace('{minutes}', minutesLeft)}
                     </div>` : ''}
                 </div>
                 <div class="p-2">
@@ -860,55 +916,10 @@
             row.dataset.id = item.id;
             
             const processedImageUrl = item.processedImageUrl || '';
-            const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : '未知时间';
+            const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : (getCurrentLanguage() === 'en' ? 'Unknown time' : '未知时间');
             
-            // 根据processType显示对应的功能名称
-            let processType = item.processType || '图片处理';
-            
-            // 将功能代码映射为可读的中文名称
-            switch (processType) {
-                case 'image-expansion':
-                    processType = '智能扩图';
-                    break;
-                case 'IMAGE_SHARPENING':
-                    processType = '模糊图片变清晰';
-                    break;
-                case 'QWEN_IMAGE_EDIT':
-                    processType = '图像编辑';
-                    break;
-                case 'IMAGE_COLORIZATION':
-                    processType = '图像上色';
-                    break;
-                case 'GLOBAL_STYLE':
-                case 'global-style':
-                    processType = '全局风格化';
-                    break;
-                case 'DIANTU':
-                    processType = '垫图';
-                    break;
-                case 'LOCAL_REDRAW':
-                    processType = '局部重绘';
-                    break;
-                case 'CLOTH_SEGMENTATION':
-                    processType = '智能服饰分割';
-                    break;
-                case 'TEXT_TO_IMAGE':
-                    processType = '文生图片';
-                    break;
-                // 保留其他已有的功能名称
-                case '图片翻译':
-                case '营销图生成':
-                case '智能抠图':
-                case '场景图生成':
-                case '智能消除':
-                case '模特换肤':
-                case '虚拟试衣':
-                case '全局风格化':
-                    break;
-                default:
-                    // 如果是其他未知类型，保持原样
-                    break;
-            }
+            // 根据processType显示对应的功能名称（支持多语言）
+            const processType = getProcessTypeDisplayName(item.processType, getCurrentLanguage());
             
             // 检查图片是否被选中
             const isSelected = selectedItems.has(item.id.toString());
@@ -942,7 +953,7 @@
                 <td class="p-3 text-sm text-gray-600">
                     ${formatDate(processTime)}
                     ${hoursLeft < 3 ? `<div class="mt-1 bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded-sm inline-block">
-                        <i class="ri-time-line mr-0.5"></i>${hoursLeft}小时${minutesLeft}分钟后过期
+                        <i class="ri-time-line mr-0.5"></i>${getTranslation('download_center.expires_in', getCurrentLanguage()).replace('{hours}', hoursLeft).replace('{minutes}', minutesLeft)}
                     </div>` : ''}
                 </td>
                 <td class="p-3">
@@ -1003,54 +1014,14 @@
             if (type === 'all') {
                 renderImages();
             } else {
+                const currentLang = getCurrentLanguage();
                 const filtered = allImages.filter(item => {
-                    // 首先将内部处理类型代码转换为对应的显示名称
-                    let displayType = item.processType || '';
-                    
-                    // 如果已经是中文显示名称，直接使用
-                    if (displayType === '图像指令编辑') {
-                        displayType = '指令编辑';
-                    }
-                    
-                    switch (displayType) {
-                        case 'image-expansion':
-                            displayType = '智能扩图';
-                            break;
-                        case 'IMAGE_SHARPENING':
-                            displayType = '模糊图片变清晰';
-                            break;
-                        case 'IMAGE_COLORIZATION':
-                            displayType = '图像上色';
-                            break;
-                        case 'GLOBAL_STYLE':
-                        case 'global-style':
-                            displayType = '全局风格化';
-                            break;
-                        case 'DIANTU':
-                            displayType = '垫图';
-                            break;
-                        case 'LOCAL_REDRAW':
-                            displayType = '局部重绘';
-                            break;
-                        case 'CLOTH_SEGMENTATION':
-                            displayType = '智能服饰分割';
-                            break;
-                        case 'TEXT_TO_IMAGE':
-                            displayType = '文生图片';
-                            break;
-                        case 'IMAGE_UPSCALER':
-                        case 'IMAGE_UPSCALING':
-                            displayType = '图像高清放大';
-                            break;
-                        case 'PROMPT_EDITOR':
-                        case 'PROMPT_EDITING':
-                        case 'IMAGE_EDIT':
-                            displayType = '指令编辑';
-                            break;
-                    }
-                    
-                    // 直接匹配指定类型
-                        return displayType === type;
+                    // 获取当前语言的显示名称
+                    const displayType = getProcessTypeDisplayName(item.processType, currentLang);
+                    // 匹配指定类型（type可能是中文或英文，需要都匹配）
+                    return displayType === type || 
+                           getProcessTypeDisplayName(item.processType, 'zh') === type ||
+                           getProcessTypeDisplayName(item.processType, 'en') === type;
                 });
                 renderImages(filtered);
             }
@@ -1070,7 +1041,8 @@
         
         // 删除图片函数
         async function deleteImage(id) {
-            if (confirm('确定要删除这张图片吗？')) {
+            const confirmText = getTranslation('download_center.delete_confirm', getCurrentLanguage());
+            if (confirm(confirmText)) {
                 try {
                     // 调用后端API删除图片
                     const token = localStorage.getItem('authToken') || '';
@@ -1101,7 +1073,7 @@
                     }
                 } catch (error) {
                     console.error('删除失败:', error);
-                    alert('删除失败: ' + error.message);
+                    alert(getTranslation('download_center.delete_failed', getCurrentLanguage()) + ': ' + error.message);
                 }
             }
         }
@@ -1115,66 +1087,10 @@
             
             const processedImageUrl = item.processedImageUrl || '';
             const originalImageUrl = item.originalImageUrl || '';
-            const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : '未知时间';
+            const processTime = item.processTime ? new Date(item.processTime).toLocaleString() : (getCurrentLanguage() === 'en' ? 'Unknown time' : '未知时间');
             
-            // 根据processType显示对应的功能名称
-            let processType = item.processType || '图片处理';
-            
-            // 将功能代码映射为可读的中文名称
-            switch (processType) {
-                case 'image-expansion':
-                    processType = '智能扩图';
-                    break;
-                case 'IMAGE_SHARPENING':
-                    processType = '模糊图片变清晰';
-                    break;
-                case 'IMAGE_COLORIZATION':
-                    processType = '图像上色';
-                    break;
-                case 'GLOBAL_STYLE':
-                case 'global-style':
-                    processType = '全局风格化';
-                    break;
-                case 'DIANTU':
-                    processType = '垫图';
-                    break;
-                case 'LOCAL_REDRAW':
-                    processType = '局部重绘';
-                    break;
-                case 'CLOTH_SEGMENTATION':
-                    processType = '智能服饰分割';
-                    break;
-                case 'TEXT_TO_IMAGE':
-                    processType = '文生图片';
-                    break;
-                case 'IMAGE_UPSCALER':
-                case 'IMAGE_UPSCALING':
-                case '图像高清放大':
-                    processType = '图像高清放大';
-                    break;
-                case 'PROMPT_EDITOR':
-                case 'PROMPT_EDITING':
-                case 'IMAGE_EDIT':
-                    processType = '指令编辑';
-                    break;
-                // 保留其他已有的功能名称
-                case '图片翻译':
-                case '营销图生成':
-                case '智能抠图':
-                case '场景图生成':
-                case '智能消除':
-                case '模特换肤':
-                case '虚拟试衣':
-                case '全局风格化':
-                case '指令编辑':
-                case '图像指令编辑':
-                case '图像编辑':
-                    processType = processType;
-                    break;
-                default:
-                    // 如果是其他未知类型，保持原样
-                    break;
-            }
+            // 根据processType显示对应的功能名称（支持多语言）
+            const processType = getProcessTypeDisplayName(item.processType, getCurrentLanguage());
             
             // 计算剩余时间
             const createdAt = new Date(item.createdAt || Date.now());
@@ -1195,22 +1111,22 @@
                         <div class="flex flex-col md:flex-row gap-4">
                             <div class="flex-1">
                                 <div class="border rounded-lg overflow-hidden">
-                                    <img src="${processedImageUrl}" alt="处理后图片" class="w-full">
+                                    <img src="${processedImageUrl}" alt="${getTranslation('download_center.table_image', getCurrentLanguage())}" class="w-full">
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mt-4 flex justify-between items-center">
                             <div>
-                                <p class="text-sm text-gray-500">处理时间: ${formatDate(processTime)}</p>
-                                <p class="text-sm text-gray-500">类型: ${processType}</p>
+                                <p class="text-sm text-gray-500">${getTranslation('download_center.table_time', getCurrentLanguage())}: ${formatDate(processTime)}</p>
+                                <p class="text-sm text-gray-500">${getTranslation('download_center.table_processing_type', getCurrentLanguage())}: ${processType}</p>
                                 ${hoursLeft < 12 ? `<p class="text-sm mt-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
-                                    <i class="ri-time-line mr-1"></i>还有 ${hoursLeft}小时${minutesLeft}分钟 后过期
+                                    <i class="ri-time-line mr-1"></i>${getTranslation('download_center.expires_in', getCurrentLanguage()).replace('{hours}', hoursLeft).replace('{minutes}', minutesLeft)}
                                 </p>` : ''}
                             </div>
                             
                             <button class="download-preview-btn px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                                <i class="ri-download-2-line mr-1"></i> 下载
+                                <i class="ri-download-2-line mr-1"></i> ${getTranslation('common.download', getCurrentLanguage())}
                             </button>
                         </div>
                     </div>
@@ -1252,16 +1168,23 @@
             const date = new Date(dateString);
             const now = new Date();
             const diff = now - date;
+            const currentLang = getCurrentLanguage();
             
             // 小于24小时显示相对时间
             if (diff < 24 * 60 * 60 * 1000) {
-                if (diff < 60 * 1000) return '刚刚';
-                if (diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))}分钟前`;
-                return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
+                if (diff < 60 * 1000) {
+                    return currentLang === 'en' ? 'Just now' : '刚刚';
+                }
+                if (diff < 60 * 60 * 1000) {
+                    const minutes = Math.floor(diff / (60 * 1000));
+                    return currentLang === 'en' ? `${minutes} minutes ago` : `${minutes}分钟前`;
+                }
+                const hours = Math.floor(diff / (60 * 60 * 1000));
+                return currentLang === 'en' ? `${hours} hours ago` : `${hours}小时前`;
             }
             
             // 超过24小时显示日期
-            return date.toLocaleString().replace(/:\d{2}$/, '');
+            return date.toLocaleString(currentLang === 'en' ? 'en-US' : 'zh-CN').replace(/:\d{2}$/, '');
         }
         
         // 认证检查函数 - 在跳转前检查用户是否已登录
@@ -1292,80 +1215,33 @@
             return translations[lang][key] || key;
         }
 
-        function updatePageText(language) {
-            console.log('更新下载中心页面文本，语言:', language);
+        // 更新下载中心页面的特殊元素（标签按钮等）
+        function updateDownloadCenterText(language) {
+            console.log('更新下载中心页面特殊元素，语言:', language);
             
-            // 更新页面标题
-            const pageTitle = document.querySelector('h1');
-            if (pageTitle) {
-                pageTitle.textContent = getTranslation('download_center.title', language);
-            }
-            
-            // 更新视图切换按钮（工具栏中的按钮）
-            const gridViewBtnToolbar = document.getElementById('grid-view-btn');
-            if (gridViewBtnToolbar) {
-                const icon = gridViewBtnToolbar.querySelector('i');
-                const text = gridViewBtnToolbar.childNodes[gridViewBtnToolbar.childNodes.length - 1];
-                if (text && text.nodeType === Node.TEXT_NODE) {
-                    text.textContent = ' ' + getTranslation('download_center.grid_view', language);
-                } else {
-                    // 如果没有文本节点，创建一个
-                    const textNode = document.createTextNode(' ' + getTranslation('download_center.grid_view', language));
-                    gridViewBtnToolbar.appendChild(textNode);
-                }
-            }
-            
-            const listViewBtnToolbar = document.getElementById('list-view-btn');
-            if (listViewBtnToolbar) {
-                const icon = listViewBtnToolbar.querySelector('i');
-                const text = listViewBtnToolbar.childNodes[listViewBtnToolbar.childNodes.length - 1];
-                if (text && text.nodeType === Node.TEXT_NODE) {
-                    text.textContent = ' ' + getTranslation('download_center.list_view', language);
-                } else {
-                    // 如果没有文本节点，创建一个
-                    const textNode = document.createTextNode(' ' + getTranslation('download_center.list_view', language));
-                    listViewBtnToolbar.appendChild(textNode);
-                }
-            }
-            
-            // 更新温馨提示
-            const warmTip = document.querySelector('[data-translate="download_center.warm_tip"]');
-            if (warmTip) {
-                warmTip.textContent = getTranslation('download_center.warm_tip', language);
-            }
-            
-            const expirationNotice = document.querySelector('[data-translate="download_center.expiration_notice"]');
-            if (expirationNotice) {
-                expirationNotice.textContent = getTranslation('download_center.expiration_notice', language);
-            }
-            
-            // 更新"正在加载"文本
-            const loadingText = document.querySelector('.loading span');
-            if (loadingText) {
-                loadingText.textContent = getTranslation('download_center.loading', language);
-            }
-            
-            // 更新所有带有data-translate属性的元素
-            const translateElements = document.querySelectorAll('[data-translate]');
-            translateElements.forEach(element => {
-                const translateKey = element.getAttribute('data-translate');
-                if (translateKey && translations[language] && translations[language][translateKey]) {
-                    // 如果元素内部有span标签，更新span的文本
-                    const span = element.querySelector('span');
+            // 更新标签按钮的文本（这些按钮使用data-tab属性，不是data-translate）
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(btn => {
+                const tabType = btn.getAttribute('data-tab');
+                if (tabType) {
+                    const span = btn.querySelector('span');
                     if (span) {
-                        span.textContent = getTranslation(translateKey, language);
-                    } else {
-                        element.textContent = getTranslation(translateKey, language);
+                        // 根据tab类型获取翻译键
+                        let translationKey = null;
+                        if (tabType === 'all') {
+                            translationKey = 'download_center.all_images';
+                        } else {
+                            // 尝试将tab类型映射到翻译键
+                            translationKey = getProcessTypeTranslationKey(tabType);
+                            if (!translationKey) {
+                                // 如果找不到，尝试直接使用download_center前缀
+                                translationKey = `download_center.${tabType}`;
+                            }
+                        }
+                        if (translationKey && translations[language] && translations[language][translationKey]) {
+                            span.textContent = getTranslation(translationKey, language);
+                        }
                     }
-                }
-            });
-            
-            // 更新所有带有data-translate-placeholder属性的元素
-            const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
-            placeholderElements.forEach(element => {
-                const translateKey = element.getAttribute('data-translate-placeholder');
-                if (translateKey && translations[language] && translations[language][translateKey]) {
-                    element.placeholder = getTranslation(translateKey, language);
                 }
             });
             
@@ -1373,21 +1249,6 @@
             const noDataText = document.querySelector('#no-data p');
             if (noDataText) {
                 noDataText.textContent = getTranslation('download_center.no_images', language);
-            }
-
-            // 更新搜索框占位符
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.placeholder = getTranslation('download_center.search_placeholder', language);
-            }
-
-            // 更新页面标题和语言属性
-            if (language === 'en') {
-                document.title = 'Download Center - Firefly AI';
-                document.documentElement.lang = 'en';
-            } else {
-                document.title = '下载中心 - 萤火AI';
-                document.documentElement.lang = 'zh-CN';
             }
         }
 
@@ -1418,7 +1279,12 @@
                     
                     // 初始化页面语言（确保在导航栏加载后也应用语言设置）
                     const currentLanguage = getCurrentLanguage();
-                    updatePageText(currentLanguage);
+                    // 先使用translations.js中的统一函数更新所有data-translate元素
+                    if (typeof updatePageText === 'function') {
+                        updatePageText();
+                    }
+                    // 然后更新下载中心页面的特殊元素
+                    updateDownloadCenterText(currentLanguage);
                     updatePlaceholders(currentLanguage);
                     
                     // 监听语言变化事件（确保不会重复绑定）

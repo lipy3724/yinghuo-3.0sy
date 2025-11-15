@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com; media-src 'self' blob: data: https://*.aliyuncs.com https://*.oss-cn-shanghai.aliyuncs.com https://yinghuo-ai.oss-cn-shanghai.aliyuncs.com; connect-src 'self' https://*.aliyuncs.com;">
-    <title>视频换脸 - 萤火AI</title>
+    <title data-translate="video_face_fusion.page_title">视频换脸 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/images/favicon.png">
@@ -13,6 +13,8 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <!-- 统一认证检查 -->
     <script src="/js/auth-check.js"></script>
+    <!-- 多语言支持 -->
+    <script src="/translations.js"></script>
     <!-- 导航栏样式 -->
     <link rel="stylesheet" href="/components/styles.css">
     <style>
@@ -119,75 +121,86 @@
 
     <!-- 主要内容 -->
     <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
-        <h1 class="text-3xl font-bold text-center mb-8">视频换脸</h1>
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="video_face_fusion.main_title">视频换脸</h1>
         
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <!-- 左侧面板: 上传视频和设置 -->
             <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold mb-4">视频换脸设置</h2>
+                <h2 class="text-xl font-bold mb-4" data-translate="video_face_fusion.settings_title">视频换脸设置</h2>
                 
                 <!-- 上传视频 -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">视频上传</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="video_face_fusion.video_upload_label">视频上传</label>
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-700">上传需要换脸的视频</span>
+                        <span class="text-sm font-medium text-gray-700" data-translate="video_face_fusion.video_upload_description">上传需要换脸的视频</span>
                     </div>
                     <div id="video-upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
                         <input type="file" id="video-input" class="hidden" accept="video/*">
                         <div id="video-upload-placeholder">
                             <i class="ri-upload-cloud-2-line text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">拖放视频到此处或 <span class="text-indigo-600 font-medium">点击上传</span></p>
-                            <p class="text-sm text-gray-400 mt-1">支持 MP4/AVI/MKV/MOV/FLV/TS/MPG，最大120MB，时长≤300秒</p>
-                            <p class="text-sm text-gray-400">分辨率：360×360 ~ 1920×1920像素（仅支持恒定帧率）</p>
+                            <p class="text-gray-500">
+                                <span data-translate="video_face_fusion.drag_drop_text">拖放视频到此处或</span>
+                                <span class="text-indigo-600 font-medium" data-translate="video_face_fusion.click_upload">点击上传</span>
+                            </p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="video_face_fusion.video_upload_formats">支持 MP4/AVI/MKV/MOV/FLV/TS/MPG，最大120MB，时长≤300秒</p>
+                            <p class="text-sm text-gray-400" data-translate="video_face_fusion.video_upload_resolution">分辨率：360×360 ~ 1920×1920像素（仅支持恒定帧率）</p>
                         </div>
                         <div id="video-preview-container" class="hidden">
                             <p id="video-info" class="text-sm text-gray-500"></p>
                             <button type="button" id="remove-video" class="mt-2 text-sm text-red-500 hover:text-red-700">
-                                移除视频
+                                <span data-translate="video_face_fusion.remove_video">移除视频</span>
                             </button>
                         </div>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">支持MP4/AVI/MKV/MOV/FLV/TS/MPG，最大120MB，时长≤300秒</p>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="video_face_fusion.video_upload_formats">支持MP4/AVI/MKV/MOV/FLV/TS/MPG，最大120MB，时长≤300秒</p>
                 </div>
 
                 <!-- 视频时长和积分消耗信息 -->
                 <div id="video-duration-info" class="hidden mb-6 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
                     <i class="ri-time-line mr-1"></i>
-                    视频时长: <span id="video-duration">-</span> | 预计消耗: <span id="video-credits" class="text-orange-600 font-semibold">-</span> 积分
+                    <span data-translate="video_face_fusion.video_duration_label">视频时长:</span>
+                    <span id="video-duration">-</span>
+                    <span class="mx-1">|</span>
+                    <span data-translate="video_face_fusion.video_credits_label">预计消耗:</span>
+                    <span id="video-credits" class="text-orange-600 font-semibold">-</span>
+                    <span data-translate="video_face_fusion.credits_unit">积分</span>
                 </div>
 
                 <!-- 上传人脸图片 -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">人脸图片上传</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="video_face_fusion.image_upload_label">人脸图片上传</label>
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-700">上传用于换脸的人脸图片</span>
+                        <span class="text-sm font-medium text-gray-700" data-translate="video_face_fusion.image_upload_description">上传用于换脸的人脸图片</span>
                     </div>
                     <div id="image-upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
                         <input type="file" id="image-input" class="hidden" accept="image/jpeg,image/jpg,image/png,image/bmp,image/x-ms-bmp">
                         <div id="image-upload-placeholder">
                             <i class="ri-user-line text-4xl text-gray-400 mb-2"></i>
-                            <p class="text-gray-500">拖放图片到此处或 <span class="text-indigo-600 font-medium">点击上传</span></p>
-                            <p class="text-sm text-gray-400 mt-1">支持 JPG、JPEG、PNG、BMP，最大30MB</p>
-                            <p class="text-sm text-gray-400">分辨率：32×32 ~ 8192×8192像素，人脸区域需≥64×64像素</p>
+                            <p class="text-gray-500">
+                                <span data-translate="video_face_fusion.drag_drop_image_text">拖放图片到此处或</span>
+                                <span class="text-indigo-600 font-medium" data-translate="video_face_fusion.click_upload">点击上传</span>
+                            </p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="video_face_fusion.image_upload_formats">支持 JPG、JPEG、PNG、BMP，最大30MB</p>
+                            <p class="text-sm text-gray-400" data-translate="video_face_fusion.image_upload_resolution">分辨率：32×32 ~ 8192×8192像素，人脸区域需≥64×64像素</p>
                         </div>
                         <div id="image-preview-container" class="hidden">
                             <p id="image-info" class="text-sm text-gray-500"></p>
                             <button type="button" id="remove-image" class="mt-2 text-sm text-red-500 hover:text-red-700">
-                                移除图片
+                                <span data-translate="video_face_fusion.remove_image">移除图片</span>
                             </button>
                         </div>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500">支持JPG、JPEG、PNG、BMP，最大30MB，32×32 ~ 8192×8192像素，人脸区域需≥64×64像素</p>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="video_face_fusion.image_upload_requirements">支持JPG、JPEG、PNG、BMP，最大30MB，32×32 ~ 8192×8192像素，人脸区域需≥64×64像素</p>
                 </div>
 
                 <!-- 选项设置 -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">选项设置</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="video_face_fusion.options_title">选项设置</label>
                     <div class="space-y-3">
                         <div>
                             <label class="flex items-center">
                                 <input type="checkbox" id="enhance" class="mr-2">
-                                <span class="text-sm text-gray-700">是否开启人脸美颜增强</span>
+                                <span class="text-sm text-gray-700" data-translate="video_face_fusion.enhance_option_label">是否开启人脸美颜增强</span>
                             </label>
                         </div>
                     </div>
@@ -196,19 +209,19 @@
                 <!-- 积分扣除说明 -->
                 <div class="mb-6 p-3 bg-green-50 text-green-700 rounded-md text-sm">
                     <i class="ri-information-line mr-1"></i>
-                    <strong>积分将在任务成功完成后才扣除</strong>，请耐心等待处理结果。任务失败不会扣除积分。
+                    <span data-translate="video_face_fusion.credit_notice_html"><strong>积分将在任务成功完成后才扣除</strong>，请耐心等待处理结果。任务失败不会扣除积分。</span>
                 </div>
                 
                 <div class="pt-4">
                     <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                         <i class="ri-magic-line mr-2"></i>
-                        开始换脸
+                        <span data-translate="video_face_fusion.start_button">开始换脸</span>
                     </button>
                     <p class="mt-2 text-center text-sm text-gray-500">
-                        处理时间与视频长度成正比，1 积分/秒
+                        <span data-translate="video_face_fusion.processing_info">处理时间与视频长度成正比，1 积分/秒</span>
                     </p>
                     <p class="mt-2 text-center text-sm text-red-500 font-medium">
-                        请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
+                        <span data-translate="video_face_fusion.warning_text">请上传合法合规的图片视频，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</span>
                     </p>
                 </div>
             </div>
@@ -217,35 +230,35 @@
             <div class="lg:col-span-3">
                 <!-- 视频预览区域 -->
                 <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                    <h2 class="text-xl font-bold mb-4">视频预览</h2>
+                    <h2 class="text-xl font-bold mb-4" data-translate="video_face_fusion.preview_title">视频预览</h2>
                     <div id="original-video-container" class="video-preview-container flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative">
                         <div id="original-video-wrapper" class="hidden w-full h-full relative">
                             <video id="original-video" class="w-full h-full object-contain" controls></video>
                         </div>
                         <div id="original-video-placeholder" class="text-center p-6">
                             <i class="ri-video-line text-6xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">您上传的视频将在这里显示</p>
+                            <p class="text-gray-500" data-translate="video_face_fusion.original_video_placeholder">您上传的视频将在这里显示</p>
                         </div>
                     </div>
                     
                     <!-- 处理后视频区域 -->
                     <div id="resultContainer" class="hidden mt-6">
-                        <h3 class="text-lg font-medium text-gray-700 mb-2">处理后视频</h3>
+                        <h3 class="text-lg font-medium text-gray-700 mb-2" data-translate="video_face_fusion.processed_video_title">处理后视频</h3>
                         <div id="output-video-container" class="video-preview-container flex items-center justify-center border border-gray-200 rounded-md overflow-hidden relative">
                             <div id="output-video-wrapper" class="hidden w-full h-full relative">
                                 <video id="output-video" class="w-full h-full object-contain" controls></video>
                             </div>
                             <div id="output-video-placeholder" class="text-center p-6">
                                 <i class="ri-video-line text-4xl text-gray-300 mb-2"></i>
-                                <p class="text-gray-500 text-sm">处理结果将在这里显示</p>
+                                <p class="text-gray-500 text-sm" data-translate="video_face_fusion.processed_video_placeholder">处理结果将在这里显示</p>
                             </div>
                         </div>
                     </div>
                     
                     <div id="generation-status" class="mt-4 hidden">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-700">处理进度</span>
-                            <span id="status-text" class="text-sm text-indigo-600">正在处理...</span>
+                            <span class="text-sm font-medium text-gray-700" data-translate="video_face_fusion.processing_progress">处理进度</span>
+                            <span id="status-text" class="text-sm text-indigo-600" data-translate="video_face_fusion.processing_status">正在处理...</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
                             <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
@@ -255,7 +268,7 @@
                     <div class="flex justify-end gap-3 mt-4 hidden" id="video-actions">
                         <button id="download-btn" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 bg-white rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             <i class="ri-download-2-line mr-1"></i>
-                            下载视频
+                            <span data-translate="video_face_fusion.download_video">下载视频</span>
                         </button>
                     </div>
                 </div>
@@ -263,12 +276,12 @@
                 <!-- 生成历史部分 -->
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">生成历史</h2>
+                        <h2 class="text-xl font-bold" data-translate="video_face_fusion.history_title">生成历史</h2>
                         <div class="flex space-x-2">
-                            <button id="clear-all-tasks-global-btn" class="text-gray-500 hover:text-red-600" title="清空历史记录">
+                            <button id="clear-all-tasks-global-btn" class="text-gray-500 hover:text-red-600" data-translate-title="video_face_fusion.clear_history_tooltip" title="清空历史记录">
                                 <i class="ri-delete-bin-line text-xl"></i>
                             </button>
-                            <button id="refresh-btn" class="text-indigo-600 hover:text-indigo-800" title="刷新历史记录">
+                            <button id="refresh-btn" class="text-indigo-600 hover:text-indigo-800" data-translate-title="video_face_fusion.refresh_history_tooltip" title="刷新历史记录">
                                 <i class="ri-refresh-line text-xl"></i>
                             </button>
                         </div>
@@ -276,12 +289,12 @@
                     
                     <div id="tasks-container" class="space-y-4">
                         <div class="text-center py-8 text-gray-500">
-                            <p>暂无视频换脸记录</p>
+                            <p data-translate="video_face_fusion.no_history">暂无视频换脸记录</p>
                         </div>
                     </div>
                     
                     <!-- 保存时间提示 -->
-                    <p class="text-xs text-gray-400 mt-3 text-center">仅显示24小时内的最新一条记录</p>
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="video_face_fusion.history_note">仅显示24小时内的最新一条记录</p>
                 </div>
             </div>
         </div>
@@ -351,11 +364,47 @@
             const tasksContainer = document.getElementById('tasks-container');
             const refreshBtn = document.getElementById('refresh-btn');
 
+            const t = (key, params = {}) => typeof translate === 'function' ? translate(key, params) : key;
+
+            const formatDurationLabel = (totalSeconds) => {
+                const secondsRounded = Math.ceil(totalSeconds);
+                const minutes = Math.floor(secondsRounded / 60);
+                const seconds = secondsRounded % 60;
+                if (minutes > 0) {
+                    return t('video_face_fusion.duration_minutes_seconds', { minutes, seconds });
+                }
+                return t('video_face_fusion.duration_seconds', { seconds: secondsRounded });
+            };
+
+            const setGenerateBtnIdle = () => {
+                if (generateBtn) {
+                    generateBtn.innerHTML = `<i class="ri-magic-line mr-2"></i>${t('video_face_fusion.start_button')}`;
+                }
+            };
+
+            const setGenerateBtnSubmitting = () => {
+                if (generateBtn) {
+                    generateBtn.innerHTML = `<i class="ri-loader-4-line animate-spin mr-2"></i>${t('video_face_fusion.submitting')}`;
+                }
+            };
+
+            const updateGenerateBtnLabel = () => {
+                if (!generateBtn) return;
+                if (generateBtn.disabled && generationStatus && !generationStatus.classList.contains('hidden')) {
+                    setGenerateBtnSubmitting();
+                } else {
+                    setGenerateBtnIdle();
+                }
+            };
+
+            let cachedTasks = [];
             // 全局变量
             let currentVideoFile = null;
             let currentImageFile = null;
             let currentVideoDuration = 0;
             let pollingInterval = null;
+
+            updateGenerateBtnLabel();
 
             // 视频上传处理
             videoUploadArea.addEventListener('click', () => videoInput.click());
@@ -389,7 +438,7 @@
                 if (!file) return;
 
                 if (file.size > 120 * 1024 * 1024) {
-                    alert('视频文件大小不能超过120MB');
+                    alert(t('video_face_fusion.error_video_size'));
                     return;
                 }
 
@@ -408,7 +457,7 @@
                 originalVideo.onloadedmetadata = function() {
                     currentVideoDuration = originalVideo.duration;
                     if (currentVideoDuration > 300) {
-                        alert('视频时长不能超过300秒');
+                        alert(t('video_face_fusion.error_video_duration'));
                         resetVideo();
                         return;
                     }
@@ -418,13 +467,13 @@
                     const videoHeight = originalVideo.videoHeight;
                     
                     if (videoWidth <= 360 || videoHeight <= 360) {
-                        alert(`视频分辨率过小：${videoWidth}x${videoHeight}，必须大于360x360像素`);
+                        alert(t('video_face_fusion.error_video_resolution_small', { width: videoWidth, height: videoHeight }));
                         resetVideo();
                         return;
                     }
                     
                     if (videoWidth >= 1920 || videoHeight >= 1920) {
-                        alert(`视频分辨率过大：${videoWidth}x${videoHeight}，必须小于1920x1920像素`);
+                        alert(t('video_face_fusion.error_video_resolution_large', { width: videoWidth, height: videoHeight }));
                         resetVideo();
                         return;
                     }
@@ -450,13 +499,12 @@
             }
 
             function updateVideoInfo() {
+                if (!videoDuration || !videoCredits || !videoDurationInfo || !currentVideoDuration) {
+                    return;
+                }
                 const duration = Math.ceil(currentVideoDuration);
-                const credits = duration * 1; // 1积分/秒
-                const minutes = Math.floor(duration / 60);
-                const seconds = duration % 60;
-                const durationText = minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
-                
-                videoDuration.textContent = durationText;
+                const credits = duration; // 1积分/秒
+                videoDuration.textContent = formatDurationLabel(duration);
                 videoCredits.textContent = `${credits}`;
                 videoDurationInfo.classList.remove('hidden');
             }
@@ -518,7 +566,7 @@
                 if (!file) return;
 
                 if (file.size > 30 * 1024 * 1024) {
-                    alert('图片文件大小不能超过30MB');
+                    alert(t('video_face_fusion.error_image_size') || '图片文件大小不能超过30MB');
                     return;
                 }
 
@@ -532,13 +580,13 @@
                     const imageHeight = img.naturalHeight;
                     
                     if (imageWidth < 32 || imageHeight < 32) {
-                        alert(`图片分辨率过小：${imageWidth}x${imageHeight}，最小支持32x32像素`);
+                        alert(t('video_face_fusion.error_image_resolution_small', { width: imageWidth, height: imageHeight }) || `图片分辨率过小：${imageWidth}x${imageHeight}，最小支持32x32像素`);
                         resetImage();
                         return;
                     }
                     
                     if (imageWidth > 8192 || imageHeight > 8192) {
-                        alert(`图片分辨率过大：${imageWidth}x${imageHeight}，最大支持8192x8192像素`);
+                        alert(t('video_face_fusion.error_image_resolution_large', { width: imageWidth, height: imageHeight }) || `图片分辨率过大：${imageWidth}x${imageHeight}，最大支持8192x8192像素`);
                         resetImage();
                         return;
                     }
@@ -548,7 +596,7 @@
                     checkGenerateButton();
                 };
                 img.onerror = function() {
-                    alert('图片加载失败，请重新上传');
+                    alert(t('video_face_fusion.error_image_load_failed'));
                     resetImage();
                 };
                 img.src = imageUrl;
@@ -592,12 +640,12 @@
             // 生成按钮
             generateBtn.addEventListener('click', async function() {
                 if (!currentVideoFile || !currentImageFile) {
-                    alert('请先上传视频和人脸图片');
+                    alert(t('video_face_fusion.error_missing_uploads'));
                     return;
                 }
 
                 generateBtn.disabled = true;
-                generateBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>提交中...';
+                setGenerateBtnSubmitting();
 
                 try {
                     const formData = new FormData();
@@ -617,12 +665,12 @@
                     const result = await response.json();
 
                     if (!response.ok || !result.success) {
-                        throw new Error(result.message || '任务创建失败');
+                        throw new Error(result.message || t('video_face_fusion.error_create_task'));
                     }
 
                     // 显示处理状态
                     generationStatus.classList.remove('hidden');
-                    statusText.textContent = '正在处理视频...';
+                    statusText.textContent = t('video_face_fusion.processing_video');
                     progressBar.style.width = '20%';
                     
                     startPolling(result.taskId);
@@ -634,10 +682,11 @@
 
                 } catch (error) {
                     console.error('创建任务失败:', error);
-                    alert(error.message || '创建任务失败');
+                    alert(error.message || t('video_face_fusion.error_create_task'));
                     generateBtn.disabled = false;
-                    generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>开始换脸';
+                    setGenerateBtnIdle();
                 }
+            });
             });
 
             // 显示视频（与视频去logo一致：使用主预览区域显示结果）
@@ -646,6 +695,7 @@
                 // direct=true 参数表示这是预览而非下载
                 const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&direct=true`;
                 console.log('使用代理URL加载视频:', proxyUrl);
+                const encodedDownloadFilename = encodeURIComponent(t('video_face_fusion.download_filename'));
                 
                 // 添加错误处理
                 originalVideo.onerror = function() {
@@ -653,10 +703,11 @@
                     originalVideoWrapper.innerHTML = `
                         <div class="text-center py-8 text-gray-500">
                             <i class="ri-error-warning-line text-4xl mb-2"></i>
-                            <p class="text-sm">视频加载失败，请尝试下载</p>
-                            <a href="/api/download?url=${encodeURIComponent(videoUrl)}&filename=换脸视频.mp4" 
-                               class="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">
-                                <i class="ri-download-2-line mr-1"></i>下载视频
+                            <p class="text-sm">${t('video_face_fusion.fallback_video_load_failed')}</p>
+                            <a href="/api/download?url=${encodeURIComponent(videoUrl)}&filename=${encodedDownloadFilename}" 
+                               class="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm"
+                               download="${t('video_face_fusion.download_filename')}">
+                                <i class="ri-download-2-line mr-1"></i>${t('video_face_fusion.download_video')}
                             </a>
                         </div>
                     `;
@@ -679,23 +730,20 @@
                     
                     newDownloadBtn.addEventListener('click', async () => {
                         console.log('预览区域下载按钮被点击，视频URL:', videoUrl);
-                        console.log('当前任务ID:', taskId || currentTask?.taskId);
+                        console.log('当前任务ID:', taskId || 'N/A');
                         
                         if (!videoUrl || !videoUrl.trim()) {
                             console.error('视频URL为空，无法下载');
-                            alert('视频URL为空，请等待视频完全生成后再尝试下载');
+                            alert(t('video_face_fusion.error_video_url_empty'));
                             return;
                         }
                         
                         try {
-                            // 优先使用传入的taskId，其次使用currentTask.taskId
-                            const finalTaskId = taskId || currentTask?.taskId;
-                            
                             // 使用代理API下载视频
-                            const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=换脸视频.mp4`;
+                            const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=${encodedDownloadFilename}`;
                             const a = document.createElement('a');
                             a.href = proxyDownloadUrl;
-                            a.download = '换脸视频.mp4';
+                            a.download = t('video_face_fusion.download_filename');
                             document.body.appendChild(a);
                             a.click();
                             setTimeout(() => {
@@ -723,7 +771,7 @@
                     attempts++;
                     if (attempts > maxAttempts) {
                         clearInterval(pollingInterval);
-                        statusText.textContent = '处理超时，请手动刷新查看结果';
+                        statusText.textContent = t('video_face_fusion.timeout_message');
                         generationStatus.classList.add('hidden');
                         return;
                     }
@@ -747,18 +795,19 @@
                                 if (videoUrl) {
                                     displayVideo(videoUrl, taskId);
                                 } else {
-                                    alert('任务完成但未找到视频文件，请重试');
+                                alert(t('video_face_fusion.error_video_missing'));
                                 }
                                 
                                 generateBtn.disabled = false;
-                                generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>开始换脸';
+                            setGenerateBtnIdle();
                                 loadTasks();
                             } else if (result.status === 'failed') {
                                 clearInterval(pollingInterval);
                                 generationStatus.classList.add('hidden');
                                 generateBtn.disabled = false;
-                                generateBtn.innerHTML = '<i class="ri-magic-line mr-2"></i>开始换脸';
-                                alert('处理失败: ' + (result.message || '未知错误'));
+                            setGenerateBtnIdle();
+                            const message = result.message || t('video_face_fusion.error_unknown');
+                            alert(`${t('video_face_fusion.error_processing_failed')}: ${message}`);
                                 loadTasks();
                             } else {
                                 // 更新进度条
@@ -766,14 +815,14 @@
                                 progress = Math.max(currentProgress, progress) + 2;
                                 if (progress > 95) progress = 95;
                                 progressBar.style.width = `${progress}%`;
-                                statusText.textContent = `处理中... (${attempts * 5}秒)`;
+                            statusText.textContent = t('video_face_fusion.processing_with_time', { seconds: attempts * 5 });
                             }
                         }
                     } catch (error) {
                         console.error('查询状态失败:', error);
                         if (attempts >= 10) {
                             clearInterval(pollingInterval);
-                            statusText.textContent = '网络异常，请手动刷新查看结果';
+                        statusText.textContent = t('video_face_fusion.network_error');
                             generationStatus.classList.add('hidden');
                         }
                     }
@@ -794,7 +843,8 @@
                     if (result.success && result.tasks && result.tasks.length > 0) {
                         renderTasks(result.tasks);
                     } else {
-                        tasksContainer.innerHTML = '<div class="text-center py-8 text-gray-500"><p>暂无任务记录</p></div>';
+                        cachedTasks = [];
+                        tasksContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p>${t('video_face_fusion.no_history')}</p></div>`;
                     }
                 } catch (error) {
                     console.error('加载任务列表失败:', error);
@@ -802,17 +852,27 @@
             }
 
             function renderTasks(tasks) {
-                if (tasks.length === 0) {
-                    tasksContainer.innerHTML = '<div class="text-center py-8 text-gray-500"><p>暂无视频换脸记录</p></div>';
+                cachedTasks = Array.isArray(tasks) ? tasks : [];
+
+                if (cachedTasks.length === 0) {
+                    tasksContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p>${t('video_face_fusion.no_history')}</p></div>`;
                     return;
                 }
                 
-                tasksContainer.innerHTML = tasks.map(task => {
+                const statusKeyMap = {
+                    completed: 'video_face_fusion.status_completed',
+                    failed: 'video_face_fusion.status_failed',
+                    processing: 'video_face_fusion.status_processing',
+                    running: 'video_face_fusion.status_processing',
+                    pending: 'video_face_fusion.status_pending'
+                };
+                
+                tasksContainer.innerHTML = cachedTasks.map(task => {
                     const statusClass = task.status === 'completed' ? 'bg-green-100 text-green-800' : 
                                        task.status === 'failed' ? 'bg-red-100 text-red-800' : 
                                        'bg-blue-100 text-blue-800';
-                    const statusText = task.status === 'completed' ? '已完成' : 
-                                      task.status === 'failed' ? '失败' : '处理中';
+                    const statusKey = statusKeyMap[task.status] || 'video_face_fusion.status_unknown';
+                    const statusTextTranslated = t(statusKey);
                     
                     // 优先使用结果视频URL，如果没有则使用原始视频URL
                     const videoUrl = task.resultUrl || task.videoUrl;
@@ -826,11 +886,11 @@
                             <div class="mt-3">
                                 <video controls class="w-full rounded" style="max-height: 180px" preload="metadata">
                                     <source src="${proxyUrl}" type="video/mp4">
-                                    您的浏览器不支持视频标签
+                                    ${t('video_face_fusion.browser_not_support')}
                                 </video>
                                 <div class="flex justify-end mt-2">
                                     <button class="history-download-btn text-indigo-600 hover:text-indigo-800 text-sm" data-video-url="${videoUrl}">
-                                        <i class="ri-download-2-line mr-1"></i>下载
+                                        <i class="ri-download-2-line mr-1"></i>${t('video_face_fusion.download_video')}
                                     </button>
                                 </div>
                             </div>
@@ -838,7 +898,7 @@
                     } else if (task.status === 'processing' || task.status === 'running') {
                         videoPreview = `
                             <div class="mt-3 flex justify-end">
-                                <span class="text-sm text-gray-500">处理中，请稍候...</span>
+                                <span class="text-sm text-gray-500">${t('video_face_fusion.processing_placeholder')}</span>
                             </div>
                         `;
                     }
@@ -847,14 +907,14 @@
                         <div class="task-item ${task.status === 'completed' ? 'completed' : task.status === 'failed' ? 'failed' : 'processing'}">
                             <div class="flex justify-between">
                                 <div class="flex-1 pr-4">
-                                    <p class="font-medium">视频换脸</p>
+                                    <p class="font-medium">${t('video_face_fusion.history_item_title')}</p>
                                     <div class="flex mt-2 text-sm text-gray-500">
-                                        ${taskId ? `<span class="mr-4">任务ID: ${taskId.substring(0, 8)}...</span>` : ''}
+                                        ${taskId ? `<span class="mr-4">${t('video_face_fusion.task_id_label')} ${taskId.substring(0, 8)}...</span>` : ''}
                                         <span>${createdAt}</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <span class="px-2 py-1 text-xs rounded-full ${statusClass}">${statusText}</span>
+                                    <span class="px-2 py-1 text-xs rounded-full ${statusClass}">${statusTextTranslated}</span>
                                 </div>
                             </div>
                             ${videoPreview}
@@ -867,15 +927,15 @@
                     btn.addEventListener('click', async () => {
                         const videoUrl = btn.dataset.videoUrl;
                         if (!videoUrl) {
-                            alert('视频URL为空，无法下载');
+                            alert(t('video_face_fusion.error_video_url_empty'));
                             return;
                         }
                         
                         try {
-                            const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=换脸视频.mp4`;
+                            const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent(t('video_face_fusion.download_filename'))}`;
                             const a = document.createElement('a');
                             a.href = proxyDownloadUrl;
-                            a.download = '换脸视频.mp4';
+                            a.download = t('video_face_fusion.download_filename');
                             document.body.appendChild(a);
                             a.click();
                             setTimeout(() => {
@@ -883,7 +943,7 @@
                             }, 100);
                         } catch (error) {
                             console.error('下载失败:', error);
-                            alert(`下载失败: ${error.message || '未知错误'}`);
+                            alert(`${t('video_face_fusion.error_download_failed')}: ${error.message || t('video_face_fusion.error_unknown')}`);
                         }
                     });
                 });
@@ -895,7 +955,7 @@
             const clearAllTasksBtn = document.getElementById('clear-all-tasks-global-btn');
             if (clearAllTasksBtn) {
                 clearAllTasksBtn.addEventListener('click', async function() {
-                    if (!confirm('确定要清空所有视频换脸任务记录吗？此操作不可恢复。')) {
+                    if (!confirm(t('video_face_fusion.clear_confirm'))) {
                         return;
                     }
                     
@@ -918,14 +978,14 @@
                         if (response.ok && result.success) {
                             // 清空成功，刷新任务列表
                             await loadTasks();
-                            alert('所有任务记录已清空');
+                            alert(t('video_face_fusion.clear_success'));
                         } else {
-                            throw new Error(result.error || result.message || '清空失败');
+                            throw new Error(result.error || result.message || t('video_face_fusion.error_clear_failed'));
                         }
                         
                     } catch (error) {
                         console.error('清空任务失败:', error);
-                        alert('清空失败: ' + (error.message || '未知错误'));
+                        alert(`${t('video_face_fusion.error_clear_failed')}: ${error.message || t('video_face_fusion.error_unknown')}`);
                     } finally {
                         clearAllTasksBtn.disabled = false;
                         clearAllTasksBtn.innerHTML = '<i class="ri-delete-bin-line text-xl"></i>';
@@ -935,6 +995,17 @@
 
             // 初始化加载任务列表
             loadTasks();
+
+            document.addEventListener('languageChanged', () => {
+                updateGenerateBtnLabel();
+                if (currentVideoDuration > 0) {
+                    updateVideoInfo();
+                }
+                if (generationStatus && !generationStatus.classList.contains('hidden')) {
+                    statusText.textContent = t('video_face_fusion.processing_video');
+                }
+                renderTasks(cachedTasks);
+            });
         });
     </script>
 </body>

@@ -2,6 +2,151 @@
 
 这是一个使用Node.js开发的AI智能工具平台，集成了图片处理、视频编辑、亚马逊助手等多种AI功能。系统采用组件化架构，提供了完整的用户界面和功能管理系统。
 
+## 🎉 最新功能更新 - PayPal支付集成（2025-01-XX）
+
+### 新增功能：PayPal支付支持
+
+**功能描述**：已成功集成PayPal支付功能，支持用户使用PayPal账户进行积分充值。
+
+#### 功能特性
+
+1. **支付方式**：
+   - ✅ 支持支付宝支付（原有功能）
+   - ✅ 支持PayPal支付（新增功能）
+
+2. **PayPal支付流程**：
+   - 用户选择PayPal支付方式
+   - 前端调用后端API创建PayPal订单
+   - 渲染PayPal支付按钮
+   - 用户在PayPal页面完成支付
+   - 后端捕获支付并更新用户积分
+
+3. **环境配置**：
+   - 当前使用沙盒测试环境（`isPayPalSandbox = true`）
+   - 支持切换到正式环境（修改`isPayPalSandbox = false`）
+
+#### 技术实现
+
+**后端实现**：
+- 使用`@paypal/paypal-server-sdk` SDK
+- 创建PayPal订单接口：`POST /api/credits/paypal/create`
+- 捕获PayPal支付接口：`POST /api/credits/paypal/capture`
+- PayPal支付返回页面：`GET /api/credits/paypal/return`
+
+**前端实现**：
+- 集成PayPal JavaScript SDK
+- 动态渲染PayPal支付按钮
+- 处理支付成功/失败/取消回调
+
+**数据库更新**：
+- `payment_orders`表的`payment_method`字段支持`'paypal'`值
+
+#### 环境变量配置
+
+在`.env`文件中添加以下配置：
+
+```env
+# PayPal支付配置
+# 沙盒测试环境：设置为true或1
+# 正式生产环境：设置为false或0，或不设置（默认为false）
+PAYPAL_SANDBOX=true
+# PayPal Client ID（从PayPal开发者控制台获取）
+PAYPAL_CLIENT_ID=your_paypal_client_id
+# PayPal Client Secret（从PayPal开发者控制台获取）
+PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+```
+
+**配置说明**：
+1. **获取PayPal凭证**：
+   - 访问 [PayPal开发者控制台](https://developer.paypal.com/)
+   - 创建应用并获取Client ID和Secret
+   - 沙盒环境用于测试，正式环境用于生产
+
+2. **环境切换**：
+   - 测试环境：设置`PAYPAL_SANDBOX=true`
+   - 生产环境：设置`PAYPAL_SANDBOX=false`或删除该配置
+   - 使用对应环境的Client ID和Secret
+
+3. **安全提示**：
+   - 不要将`.env`文件提交到代码仓库
+   - 生产环境使用正式的PayPal凭证
+   - 定期更换Secret以提高安全性
+
+#### 修改文件
+
+- ✅ `routes/credits.js` - 添加PayPal支付后端API
+- ✅ `public/credits.html` - 集成PayPal JavaScript SDK和支付流程
+- ✅ `models/PaymentOrder.js` - 更新数据库模型支持PayPal
+- ✅ `package.json` - 添加`@paypal/paypal-server-sdk`依赖
+
+#### 使用方法
+
+1. 访问积分管理页面：`http://localhost:8080/credits.html`
+2. 选择充值金额
+3. 选择"PayPal"支付方式
+4. 点击"确认充值"按钮
+5. 等待PayPal按钮渲染完成
+6. 点击PayPal按钮完成支付
+
+#### 注意事项
+
+1. **汇率转换**：当前使用固定汇率（1美元=7人民币），实际应用中应使用实时汇率
+2. **环境变量配置**：所有PayPal配置都通过`.env`文件管理，无需修改代码
+3. **PayPal SDK加载**：前端会自动从后端获取PayPal Client ID并动态加载SDK
+4. **环境切换**：只需修改`.env`文件中的`PAYPAL_SANDBOX`和对应的凭证即可
+5. **配置验证**：如果未配置PayPal凭证，系统会记录警告日志，PayPal支付功能将不可用
+
+#### 问题修复记录（2025-11-13）
+
+**问题1**：PayPal订单创建接口返回500错误，错误信息："Required authentication credentials for this API call are not provided or all provided auth combinations are disabled"
+
+**原因分析**：
+1. PayPal Server SDK 2.0.0的客户端初始化方式不正确，应该使用`clientCredentialsAuthCredentials`而不是`clientId`和`clientSecret`
+2. 错误处理不够完善，无法捕获PayPal API返回的详细错误信息
+3. BASE_URL环境变量在本地开发时设置为生产环境URL（https://yinghuo.ai），导致回调URL不正确
+4. 环境变量中的凭据可能包含多余的空格，导致认证失败
+
+**修复内容**：
+1. ✅ 修复PayPal SDK客户端初始化方式，使用正确的`clientCredentialsAuthCredentials`配置
+2. ✅ 改进错误处理逻辑，能够捕获PayPal API返回的详细错误信息（包括`details`数组、`name`字段等）
+3. ✅ 改进响应处理，确保能正确处理PayPal API的响应格式
+4. ✅ 添加详细的日志记录，便于调试和问题排查
+5. ✅ **修复BASE_URL配置**：动态检测当前环境，如果是本地开发环境（localhost或127.0.0.1），自动使用请求的host作为baseUrl，而不是环境变量中的生产URL
+6. ✅ **改进PayPal凭据处理**：添加`trim()`方法确保环境变量中的凭据没有多余空格
+7. ✅ **添加超时配置**：设置PayPal API调用的超时时间为30秒
+8. ✅ **增强初始化检查**：添加PayPal客户端和控制器初始化状态的检查，确保在调用API前已正确初始化
+
+**问题2**：PayPal订单创建成功但报错"响应中缺少订单ID"，日志显示响应体包含订单ID但代码无法读取
+
+**原因分析**：
+- PayPal Server SDK 2.0.0在某些情况下返回的`response.body`是JSON字符串而不是对象
+- 代码直接访问`response.body.id`，如果`response.body`是字符串，则返回`undefined`
+- 从日志可以看到响应体是：`'{"id":"9NT06340D2705445D","status":"CREATED",...}'`，这是字符串格式
+
+**修复内容**：
+1. ✅ **修复响应体解析**：在创建订单和捕获支付时，检查`response.body`是否为字符串，如果是则先使用`JSON.parse()`解析为对象
+2. ✅ **增强错误日志**：当响应体解析失败时，记录详细的错误信息和响应体内容
+3. ✅ **统一处理逻辑**：在`createOrder`和`captureOrder`两个方法中都添加了相同的响应体解析逻辑
+
+**URL配置说明**：
+- 本地开发环境：自动检测请求的host（如`localhost:8080`），使用`http://localhost:8080`作为baseUrl
+- 生产环境：使用环境变量`BASE_URL`或默认值`https://yinghuo.ai`
+- 这样可以在本地开发时自动使用正确的URL，无需修改环境变量
+
+**参考文档**：
+- [PayPal Orders V2 API文档](https://developer.paypal.com/docs/api/orders/v2/#orders_create)
+- [PayPal Server SDK 2.0.0文档](https://www.npmjs.com/package/@paypal/paypal-server-sdk/v/2.0.0)
+
+---
+
+## 🧠 今日任务反思（2025-11-10）
+
+- **视频换脸多语言对齐**：已为`public/video-face-fusion.html`接入全局翻译脚本，补充中英文词条并处理动态提示，确保与首页语言切换保持一致。后续可考虑抽离通用的错误提示样式，降低各视频功能页面的重复实现。
+- **多语言一致性**：今日针对`home.html`、`public/credits.html`、`public/download-center.html`与`public/translations.js`补充翻译键，确保亚马逊助手和下载中心区域在中英文间切换时表现一致。当前多语言文本更多依赖手动维护，后续可考虑抽离成集中式配置或CMS，以降低遗漏风险。
+- **组件脚本命名冲突**：积分使用页沿用了全局函数名`updatePageText`，与`components.js`重复导致导航栏语言切换无法更新页面文本。已改用专属函数`updateCreditsUsagePageText`并复用事件监听逻辑。后续在新增页面时应优先采用命名空间或模块化写法，避免类似冲突。
+- **翻译脚本命名冲突**：导航组件内置的`const translations`与公共`translations.js`重名，导致组件脚本语法报错从而失效。已将组件内翻译数据重命名为`navbarTranslations`并增加兼容逻辑，优先使用全局翻译数据。未来新增多语言脚本时应避免在全局作用域重复声明常量。
+- **潜在改进**：下载中心页面的文本更新逻辑分散在多个监听器中，建议后续封装统一的语言刷新入口，便于复用与测试；同时可引入自动化检查，提醒缺失的`data-translate`或翻译键，防止未来新增功能出现未翻译内容。
+
 ## 💾 最新数据库备份记录
 
 ### 📦 数据库备份 - 2025-10-23 09:58:35

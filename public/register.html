@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户注册 - 萤火AI</title>
+	<title data-translate="page.register_title">用户注册 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<script src="/translations.js"></script>
     <style>
         :root {
             --primary-color: #6366f1;
@@ -218,64 +219,78 @@
         
         <form id="register-form" class="register-form">
             <div class="form-row">
-                <div class="form-label">用户名</div>
+				<div class="form-label" data-translate="register.username_label">用户名</div>
                 <div class="form-input-container">
-                    <input type="text" id="username" name="username" class="form-input" required minlength="3" maxlength="50" placeholder="请设置用户名">
+					<input type="text" id="username" name="username" class="form-input" required minlength="3" maxlength="50" data-translate-placeholder="register.username_placeholder" placeholder="请设置用户名">
                 </div>
             </div>
             
             <div class="form-row">
-                <div class="form-label">手机号</div>
+				<div class="form-label" data-translate="register.phone_label">手机号</div>
                 <div class="form-input-container">
-                    <input type="text" id="phone" name="phone" class="form-input" placeholder="请输入手机号" pattern="^1[3-9]\d{9}$" required>
+					<input type="text" id="phone" name="phone" class="form-input" data-translate-placeholder="register.phone_placeholder" placeholder="请输入手机号" pattern="^1[3-9]\d{9}$" required>
                 </div>
             </div>
             
             <div class="form-row">
-                <div class="form-label">密码</div>
+				<div class="form-label" data-translate="register.password_label">密码</div>
                 <div class="form-input-container">
-                    <input type="password" id="password" name="password" class="form-input" required minlength="6" placeholder="请设置密码">
+					<input type="password" id="password" name="password" class="form-input" required minlength="6" data-translate-placeholder="register.password_placeholder" placeholder="请设置密码">
                 </div>
             </div>
             
             <div class="form-row">
-                <div class="form-label">确认密码</div>
+				<div class="form-label" data-translate="register.confirm_password_label">确认密码</div>
                 <div class="form-input-container">
-                    <input type="password" id="confirm-password" name="confirm-password" class="form-input" required placeholder="请再次输入密码">
+					<input type="password" id="confirm-password" name="confirm-password" class="form-input" required data-translate-placeholder="register.confirm_password_placeholder" placeholder="请再次输入密码">
                 </div>
             </div>
             
             <div class="form-row">
-                <div class="form-label">验证码</div>
+				<div class="form-label" data-translate="register.code_label">验证码</div>
                 <div class="form-input-container">
                     <div class="code-container">
-                        <input type="text" id="code" name="code" class="code-input" placeholder="请输入验证码" required>
-                        <button type="button" id="send-code-btn" class="code-btn">获取验证码</button>
+						<input type="text" id="code" name="code" class="code-input" data-translate-placeholder="register.code_placeholder" placeholder="请输入验证码" required>
+						<button type="button" id="send-code-btn" class="code-btn" data-translate="register.send_code">获取验证码</button>
                     </div>
                 </div>
             </div>
             
             <button type="submit" class="register-btn">
-                <i class="fas fa-user-plus"></i> 注册
+				<i class="fas fa-user-plus"></i> <span data-translate="register.register_button">注册</span>
             </button>
             
-            <div class="agreement-container" style="margin-top: 15px; text-align: center;">
-                <label class="agreement-label" style="display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-light);">
-                    <input type="checkbox" id="agreement-checkbox" style="margin-right: 5px;" required>
-                    <span>注册即表示您同意</span>
-                    <a href="/service-agreement.html" target="_blank" style="color: var(--primary-color); margin: 0 3px;">《服务协议》</a>
-                    <span>和</span>
-                    <a href="/privacy-policy.html" target="_blank" style="color: var(--primary-color); margin-left: 3px;">《隐私政策》</a>
+			<div class="agreement-container" style="margin-top: 15px; text-align: left;">
+				<label for="agreement-checkbox" class="agreement-label" style="display: flex; align-items: flex-start; justify-content: flex-start; flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--text-light); white-space: normal;">
+					<input type="checkbox" id="agreement-checkbox" style="margin-right: 6px;" required>
+					<span data-translate="register.agree_prefix">注册即表示您同意</span>
+					<a href="/service-agreement.html" target="_blank" style="color: var(--primary-color);" data-translate="login.service_agreement">《服务协议》</a>
+					<span data-translate="login.and">和</span>
+					<a href="/privacy-policy.html" target="_blank" style="color: var(--primary-color);" data-translate="login.privacy_policy">《隐私政策》</a>
                 </label>
             </div>
         </form>
         
         <div class="auth-footer">
-            <p>已有账号？ <a href="/login.html">立即登录</a></p>
+			<p><span data-translate="register.have_account">已有账号？</span> <a href="/login.html" data-translate="register.login_now">立即登录</a></p>
         </div>
     </div>
 
     <script>
+		// 初始化语言文本
+		if (typeof updatePageText === 'function') {
+			updatePageText();
+		}
+
+		// 语言切换时，更新本页文本
+		if (typeof window !== 'undefined') {
+			window.addEventListener('languageChanged', function() {
+				if (typeof updatePageText === 'function') {
+					updatePageText();
+				}
+			});
+		}
+
         // 获取DOM元素
         const registerForm = document.getElementById('register-form');
         const usernameInput = document.getElementById('username');
@@ -337,7 +352,7 @@
             
             // 验证手机号
             if (!isValidPhone(phone)) {
-                showError('请输入有效的手机号');
+				showError(typeof translate === 'function' ? translate('register.error.invalid_phone') : '请输入有效的手机号');
                 return;
             }
             
@@ -360,24 +375,26 @@
                     
                     countdownTimer = setInterval(() => {
                         countdown--;
-                        sendCodeBtn.textContent = `${countdown}秒后重试`;
+						const suffix = (typeof translate === 'function' ? translate('register.retry_suffix') : '秒后重试');
+						sendCodeBtn.textContent = `${countdown}${suffix}`;
                         
                         if (countdown <= 0) {
                             clearInterval(countdownTimer);
                             sendCodeBtn.disabled = false;
-                            sendCodeBtn.textContent = '获取验证码';
+							sendCodeBtn.textContent = (typeof translate === 'function' ? translate('register.send_code') : '获取验证码');
                         }
                     }, 1000);
                     
                     // 显示成功消息（绿色）
-                    showMessage('验证码已发送到您的手机', false);
+					showMessage(typeof translate === 'function' ? translate('register.message.code_sent') : '验证码已发送到您的手机', false);
                 } else {
                     // 显示错误消息
-                    showError(data.message || '发送验证码失败，请重试');
+					const fallback = (typeof translate === 'function' ? translate('register.error.sending_code_failed') : '发送验证码失败，请重试');
+					showError(data.message || fallback);
                 }
             } catch (error) {
                 console.error('发送验证码出错:', error);
-                showError('发送验证码时发生错误，请稍后重试');
+				showError(typeof translate === 'function' ? translate('register.error.sending_code_error') : '发送验证码时发生错误，请稍后重试');
             }
         });
         
@@ -394,40 +411,40 @@
             
             // 验证表单
             if (username.length < 3) {
-                showError('用户名至少需要3个字符');
+				showError(typeof translate === 'function' ? translate('register.error.username_short') : '用户名至少需要3个字符');
                 return;
             }
             
             if (password.length < 6) {
-                showError('密码至少需要6个字符');
+				showError(typeof translate === 'function' ? translate('register.error.password_short') : '密码至少需要6个字符');
                 return;
             }
             
             if (password !== confirmPassword) {
-                showError('两次输入的密码不一致');
+				showError(typeof translate === 'function' ? translate('register.error.password_mismatch') : '两次输入的密码不一致');
                 return;
             }
             
             if (!isValidPhone(phone)) {
-                showError('请输入有效的手机号');
+				showError(typeof translate === 'function' ? translate('register.error.invalid_phone') : '请输入有效的手机号');
                 return;
             }
             
             if (!code) {
-                showError('请输入验证码');
+				showError(typeof translate === 'function' ? translate('register.error.missing_code') : '请输入验证码');
                 return;
             }
             
             // 检查用户是否同意协议
             const agreementCheckbox = document.getElementById('agreement-checkbox');
             if (!agreementCheckbox.checked) {
-                showError('请阅读并同意服务协议和隐私政策');
+				showError(typeof translate === 'function' ? translate('register.error.agreement_required') : '请阅读并同意服务协议和隐私政策');
                 return;
             }
             
             // 显示加载动画
             const button = document.querySelector('.register-btn');
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注册中...';
+			button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (typeof translate === 'function' ? translate('register.registering') : '注册中...');
             button.disabled = true;
             
             try {
@@ -465,17 +482,18 @@
                     }, 800);
                 } else {
                     // 显示错误消息
-                    showError(data.message || '注册失败，请重试');
+					const fallback = (typeof translate === 'function' ? translate('register.error.failed') : '注册失败，请重试');
+					showError(data.message || fallback);
                     // 恢复按钮状态
                     button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-user-plus"></i> 注册';
+					button.innerHTML = '<i class="fas fa-user-plus"></i> ' + (typeof translate === 'function' ? translate('register.register_button') : '注册');
                 }
             } catch (error) {
                 console.error('注册出错:', error);
-                showError('注册时发生错误，请稍后重试');
+				showError(typeof translate === 'function' ? translate('register.error.register_error') : '注册时发生错误，请稍后重试');
                 // 恢复按钮状态
                 button.disabled = false;
-                button.innerHTML = '<i class="fas fa-user-plus"></i> 注册';
+				button.innerHTML = '<i class="fas fa-user-plus"></i> ' + (typeof translate === 'function' ? translate('register.register_button') : '注册');
             }
         });
         
@@ -484,7 +502,7 @@
             clearInterval(countdownTimer);
             countdown = 0;
             sendCodeBtn.disabled = false;
-            sendCodeBtn.textContent = '获取验证码';
+			sendCodeBtn.textContent = (typeof translate === 'function' ? translate('register.send_code') : '获取验证码');
         });
     </script>
 </body>

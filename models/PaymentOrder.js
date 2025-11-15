@@ -39,7 +39,7 @@ const PaymentOrder = sequelize.define('payment_order', {
     defaultValue: 'pending'
   },
   payment_method: {
-    type: DataTypes.ENUM('alipay'),
+    type: DataTypes.ENUM('alipay', 'paypal'),
     allowNull: false
   },
   transaction_id: {

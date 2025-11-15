@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手机验证码登录 - 萤火AI</title>
+    <title data-translate="page.phone_login_title">手机验证码登录 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/translations.js"></script>
     <style>
         :root {
             --primary-color: #6366f1;
@@ -120,11 +121,13 @@
         }
         
         .input-label {
-            width: 60px;
+            width: 84px;
             font-size: 14px;
             font-weight: 600;
             color: var(--text-dark);
-            margin-right: 10px;
+            margin-right: 4px;
+            white-space: normal; /* 允许换行，显示成两行 */
+            line-height: 1.2;
         }
         
         .input-field-container {
@@ -275,6 +278,15 @@
         .error-message i {
             margin-right: 8px;
         }
+        
+        /* 小屏适配，避免挤压换行导致标签高度变大 */
+        @media (max-width: 420px) {
+            .input-label {
+                width: 72px;
+                font-size: 13px; /* 小屏更紧凑 */
+                margin-right: 2px;
+            }
+        }
     </style>
 
 </head>
@@ -287,8 +299,8 @@
         </div>
         
         <div class="tabs">
-            <div class="tab" onclick="window.location.href='/login.html'">密码登录</div>
-            <div class="tab active">验证码登录</div>
+            <div class="tab" onclick="window.location.href='/login.html'" data-translate="login.password_login_tab">密码登录</div>
+            <div class="tab active" data-translate="login.captcha_login_tab">验证码登录</div>
         </div>
         
         <div id="error-message" class="error-message" style="display: none;">
@@ -298,39 +310,39 @@
         
         <form id="phone-login-form">
             <div class="input-group">
-                <label class="input-label" for="phone">手机号</label>
+                <label class="input-label" for="phone" data-translate="register.phone_label">手机号</label>
                 <div class="input-field-container">
                     <input type="text" id="phone" name="phone" class="input-field" 
-                               placeholder="请输入手机号" required pattern="^1[3-9]\d{9}$">
+                               data-translate-placeholder="register.phone_placeholder" placeholder="请输入手机号" required pattern="^1[3-9]\d{9}$">
                 </div>
             </div>
             
             <div class="input-group">
-                <label class="input-label" for="code">验证码</label>
+                <label class="input-label" for="code" data-translate="register.code_label">验证码</label>
                 <div class="input-field-container">
                     <div class="code-group">
                         <input type="text" id="code" name="code" class="code-input" 
-                               placeholder="请输入验证码" required>
-                        <button type="button" id="send-code-btn" class="code-btn">获取验证码</button>
+                               data-translate-placeholder="register.code_placeholder" placeholder="请输入验证码" required>
+                        <button type="button" id="send-code-btn" class="code-btn" data-translate="register.send_code">获取验证码</button>
                     </div>
                 </div>
             </div>
             
             <button type="submit" class="login-btn">
-                <i class="fas fa-sign-in-alt"></i> 登录
+                <i class="fas fa-sign-in-alt"></i> <span data-translate="login.submit">登录</span>
             </button>
             
             <div class="policy-links" style="margin-top: 15px; text-align: center; font-size: 13px; color: var(--text-light);">
-                登录即表示您同意
-                <a href="/service-agreement.html" target="_blank" style="color: var(--primary-color);">《服务协议》</a>
-                和
-                <a href="/privacy-policy.html" target="_blank" style="color: var(--primary-color);">《隐私政策》</a>
+                <span data-translate="login.policy_prefix">登录即表示您同意</span>
+                <a href="/service-agreement.html" target="_blank" style="color: var(--primary-color);" data-translate="login.service_agreement">《服务协议》</a>
+                <span data-translate="login.and">和</span>
+                <a href="/privacy-policy.html" target="_blank" style="color: var(--primary-color);" data-translate="login.privacy_policy">《隐私政策》</a>
             </div>
         </form>
         
         <div class="auth-footer">
-            <p>没有账号？ <a href="/register.html">立即注册</a></p>
-            <p><a href="/forgot-password.html">忘记密码？</a></p>
+            <p><span data-translate="login.no_account">没有账号？</span> <a href="/register.html" data-translate="login.register_now">立即注册</a></p>
+            <p><a href="/forgot-password.html" data-translate="login.forgot_password">忘记密码？</a></p>
         </div>
     </div>
 
@@ -395,7 +407,7 @@
             
             // 验证手机号
             if (!isValidPhone(phone)) {
-                showError('请输入有效的手机号');
+                showError(typeof translate === 'function' ? translate('register.error.invalid_phone') : '请输入有效的手机号');
                 return;
             }
             
@@ -418,24 +430,26 @@
                     
                     countdownTimer = setInterval(() => {
                         countdown--;
-                        sendCodeBtn.textContent = `${countdown}秒后重试`;
+                        const suffix = (typeof translate === 'function' && currentLanguage === 'en') ? 's retry' : '秒后重试';
+                        sendCodeBtn.textContent = `${countdown}${suffix}`;
                         
                         if (countdown <= 0) {
                             clearInterval(countdownTimer);
                             sendCodeBtn.disabled = false;
-                            sendCodeBtn.textContent = '获取验证码';
+                            sendCodeBtn.textContent = (typeof translate === 'function' ? translate('register.send_code') : '获取验证码');
                         }
                     }, 1000);
                     
                     // 显示成功消息（绿色）
-                    showMessage('验证码已发送到您的手机', false);
+                    showMessage(typeof translate === 'function' ? translate('register.message.code_sent') : '验证码已发送到您的手机', false);
                 } else {
                     // 显示错误消息
-                    showError(data.message || '发送验证码失败，请重试');
+                    const fallback = (typeof translate === 'function' ? translate('register.error.sending_code_failed') : '发送验证码失败，请重试');
+                    showError(data.message || fallback);
                 }
             } catch (error) {
                 console.error('发送验证码出错:', error);
-                showError('发送验证码时发生错误，请稍后重试');
+                showError(typeof translate === 'function' ? translate('register.error.sending_code_error') : '发送验证码时发生错误，请稍后重试');
             }
         });
         
@@ -449,18 +463,18 @@
             
             // 验证表单
             if (!isValidPhone(phone)) {
-                showError('请输入有效的手机号');
+                showError(typeof translate === 'function' ? translate('register.error.invalid_phone') : '请输入有效的手机号');
                 return;
             }
             
             if (!code) {
-                showError('请输入验证码');
+                showError(typeof translate === 'function' ? translate('register.error.missing_code') : '请输入验证码');
                 return;
             }
             
             // 显示加载动画
             const button = document.querySelector('.login-btn');
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (typeof translate === 'function' ? translate('login.submitting') : '登录中...');
             button.disabled = true;
             
             try {
@@ -493,17 +507,19 @@
                     }, 800);
                 } else {
                     // 显示错误消息
-                    showError(data.message || '登录失败，请重试');
+                    const fallbackFailed = (typeof translate === 'function' ? translate('login.failed') : '登录失败，请重试');
+                    showError(data.message || fallbackFailed);
                     // 恢复按钮状态
                     button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+                    button.innerHTML = '<i class="fas fa-sign-in-alt"></i> ' + (typeof translate === 'function' ? translate('login.submit') : '登录');
                 }
             } catch (error) {
                 console.error('登录出错:', error);
-                showError('登录时发生错误，请稍后重试');
+                const errPrefix = (typeof translate === 'function' ? translate('login.error_prefix') : '登录时发生错误: ');
+                showError(errPrefix + (error && error.message ? error.message : ''));
                 // 恢复按钮状态
                 button.disabled = false;
-                button.innerHTML = '<i class="fas fa-sign-in-alt"></i> 登录';
+                button.innerHTML = '<i class="fas fa-sign-in-alt"></i> ' + (typeof translate === 'function' ? translate('login.submit') : '登录');
             }
         });
         
@@ -512,8 +528,20 @@
             clearInterval(countdownTimer);
             countdown = 0;
             sendCodeBtn.disabled = false;
-            sendCodeBtn.textContent = '获取验证码';
+            sendCodeBtn.textContent = (typeof translate === 'function' ? translate('register.send_code') : '获取验证码');
         });
+
+        // 初始化翻译并监听语言切换
+        if (typeof updatePageText === 'function') {
+            updatePageText();
+        }
+        if (typeof window !== 'undefined') {
+            window.addEventListener('languageChanged', function() {
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+            });
+        }
     </script>
 </body>
 </html> 

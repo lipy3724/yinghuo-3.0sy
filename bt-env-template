@@ -30,5 +30,14 @@ ALIPAY_APP_ID=your_alipay_app_id
 ALIPAY_PRIVATE_KEY=your_alipay_private_key
 ALIPAY_PUBLIC_KEY=your_alipay_public_key
 
+# PayPal支付配置
+# 沙盒测试环境：设置为true或1
+# 正式生产环境：设置为false或0，或不设置（默认为false）
+PAYPAL_SANDBOX=true
+# PayPal Client ID（从PayPal开发者控制台获取）
+PAYPAL_CLIENT_ID=your_paypal_client_id
+# PayPal Client Secret（从PayPal开发者控制台获取）
+PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+
 # 其他API密钥配置
 # 根据项目需要添加其他API密钥 

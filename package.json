@@ -18,6 +18,7 @@
     "@alicloud/tea-typescript": "^1.8.0",
     "@alicloud/tea-util": "^1.4.10",
     "@alicloud/videoenhan20200320": "^3.0.20",
+    "@paypal/paypal-server-sdk": "^2.0.0",
     "ali-oss": "^6.23.0",
     "alipay-api": "^1.0.1",
     "alipay-sdk": "^3.2.0",

@@ -90,7 +90,7 @@ const translations = {
         // 导航菜单
         'nav_ai_marketing': 'AI营销图',
         'nav_image_translate': '图片翻译',
-        'nav_product_background': '商品换背景',
+        'nav_product_background': '智能抠图',
         'nav_features_center': '功能中心',
         'nav_credits_center': '积分中心',
         'nav_recharge_center': '积分充值中心',
@@ -505,7 +505,7 @@ const translations = {
         // 导航菜单
         'nav_ai_marketing': 'AI Marketing',
         'nav_image_translate': 'Image Translation',
-        'nav_product_background': 'Product Background',
+        'nav_product_background': 'Smart Cutout',
         'nav_features_center': 'Features Center',
         'nav_credits_center': 'Credits Center',
         'nav_recharge_center': 'Recharge Center',

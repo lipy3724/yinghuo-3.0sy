@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户登录 - 萤火AI</title>
+    <title data-translate="page.login_title">用户登录 - 萤火AI</title>
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/translations.js"></script>
     <style>
         :root {
             --primary-color: #6366f1;
@@ -113,13 +114,17 @@
             margin-bottom: 20px;
             display: flex;
             align-items: center;
+            margin-left: -20px;
+            padding-left: 0;
         }
+        form { margin-left: 0; padding-left: 0; }
         
         .form-group label {
-            width: 45px;
+            width: 90px;
             font-weight: 600;
             color: var(--text-dark);
             font-size: 14px;
+            margin-left: -8px;
         }
         
         .form-control {
@@ -242,8 +247,8 @@
         </div>
         
         <div class="tabs">
-            <div class="tab active">密码登录</div>
-            <div class="tab" onclick="window.location.href='/phone-login.html'">验证码登录</div>
+            <div class="tab active" data-translate="login.password_login_tab">密码登录</div>
+            <div class="tab" onclick="window.location.href='/phone-login.html'" data-translate="login.captcha_login_tab">验证码登录</div>
         </div>
         
         <div id="error-message" class="error-message" style="display: none;">
@@ -253,30 +258,30 @@
         
         <form id="login-form">
             <div class="form-group">
-                <label for="account">账号</label>
-                <input type="text" id="account" name="account" class="form-control" placeholder="请输入用户名或手机号" required>
+                <label for="account" data-translate="login.account_label">账号</label>
+                <input type="text" id="account" name="account" class="form-control" data-translate-placeholder="login.account_placeholder" placeholder="请输入用户名或手机号" required>
             </div>
             
             <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="请输入密码" required>
+                <label for="password" data-translate="login.password_label">密码</label>
+                <input type="password" id="password" name="password" class="form-control" data-translate-placeholder="login.password_placeholder" placeholder="请输入密码" required>
             </div>
             
             <button type="submit" class="btn-primary">
-                <i class="fas fa-sign-in-alt"></i>&nbsp; 登录
+                <i class="fas fa-sign-in-alt"></i>&nbsp; <span data-translate="login.submit">登录</span>
             </button>
             
             <div class="policy-links" style="margin-top: 15px; text-align: center; font-size: 13px; color: var(--text-light);">
-                登录即表示您同意
-                <a href="/service-agreement.html" target="_blank" style="color: var(--primary-color);">《服务协议》</a>
-                和
-                <a href="/privacy-policy.html" target="_blank" style="color: var(--primary-color);">《隐私政策》</a>
+                <span data-translate="login.policy_prefix">登录即表示您同意</span>
+                <a href="/service-agreement.html" target="_blank" style="color: var(--primary-color);" data-translate="login.service_agreement">《服务协议》</a>
+                <span data-translate="login.and">和</span>
+                <a href="/privacy-policy.html" target="_blank" style="color: var(--primary-color);" data-translate="login.privacy_policy">《隐私政策》</a>
             </div>
         </form>
         
         <div class="auth-footer">
-            <p>没有账号？ <a href="/register.html">立即注册</a></p>
-            <p><a href="/forgot-password.html">忘记密码？</a></p>
+            <p><span data-translate="login.no_account">没有账号？</span> <a href="/register.html" data-translate="login.register_now">立即注册</a></p>
+            <p><a href="/forgot-password.html" data-translate="login.forgot_password">忘记密码？</a></p>
         </div>
     </div>
 
@@ -284,20 +289,25 @@
     <div id="ban-modal" class="ban-modal" style="display: none;">
         <div class="ban-modal-content">
             <div class="ban-modal-header">
-                <h3><i class="fas fa-ban"></i> 账号已被封禁</h3>
+                <h3><i class="fas fa-ban"></i> <span data-translate="login.ban.title">账号已被封禁</span></h3>
             </div>
             <div class="ban-modal-body">
-                <p><strong>封禁原因：</strong><span id="ban-reason">违反用户协议</span></p>
-                <p><strong>封禁状态：</strong><span id="ban-expire">永久封禁</span></p>
-                <p>如有疑问，请联系客服。</p>
+                <p><strong data-translate="login.ban.reason_label">封禁原因：</strong><span id="ban-reason" data-translate="login.ban.default_reason">违反用户协议</span></p>
+                <p><strong data-translate="login.ban.status_label">封禁状态：</strong><span id="ban-expire" data-translate="login.ban.default_status">永久封禁</span></p>
+                <p></p>
             </div>
             <div class="ban-modal-footer">
-                <button id="ban-modal-close">我知道了</button>
+                <button id="ban-modal-close" data-translate="login.ban.close">我知道了</button>
             </div>
         </div>
     </div>
 
     <script>
+        // 初始化语言文本
+        if (typeof updatePageText === 'function') {
+            updatePageText();
+        }
+
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -313,7 +323,7 @@
                 
                 // 显示加载动画
                 const button = document.querySelector('.btn-primary');
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; 登录中...';
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; ' + (typeof translate === 'function' ? translate('login.submitting') : '登录中...');
                 
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
@@ -341,12 +351,12 @@
                 // 检查是否被封禁
                 if (response.status === 403 && data.data && data.data.isBanned) {
                     // 恢复按钮状态
-                    button.innerHTML = '<i class="fas fa-sign-in-alt"></i>&nbsp; 登录';
+                    button.innerHTML = '<i class="fas fa-sign-in-alt"></i>&nbsp; ' + (typeof translate === 'function' ? translate('login.submit') : '登录');
                     button.disabled = false;
                     
                     // 显示封禁模态框
-                    document.getElementById('ban-reason').textContent = data.data.reason || '违反用户协议';
-                    document.getElementById('ban-expire').textContent = data.data.expireMessage || '永久封禁';
+                    document.getElementById('ban-reason').textContent = data.data.reason || (typeof translate === 'function' ? translate('login.ban.default_reason') : '违反用户协议');
+                    document.getElementById('ban-expire').textContent = data.data.expireMessage || (typeof translate === 'function' ? translate('login.ban.default_status') : '永久封禁');
                     document.getElementById('ban-modal').style.display = 'flex';
                     
                     // 添加关闭模态框的事件
@@ -367,7 +377,7 @@
                         phone: data.data.phone
                     }));
                     
-                    button.innerHTML = '<i class="fas fa-check"></i>&nbsp; 登录成功!';
+                    button.innerHTML = '<i class="fas fa-check"></i>&nbsp; ' + (typeof translate === 'function' ? translate('login.success') : '登录成功!');
                     
                     // 登录成功后跳转到home.html
                     setTimeout(() => {
@@ -378,14 +388,15 @@
                     }, 800); // 添加一点延迟，让用户看到加载动画
                 } else {
                     // 恢复按钮状态
-                    button.innerHTML = '<i class="fas fa-sign-in-alt"></i>&nbsp; 登录';
+                    button.innerHTML = '<i class="fas fa-sign-in-alt"></i>&nbsp; ' + (typeof translate === 'function' ? translate('login.submit') : '登录');
                     button.disabled = false;
                     
                     // 显示详细错误消息
                     console.error('登录失败:', data);
                     
                     const errorDetails = data.error ? ` (${data.error})` : '';
-                    errorText.textContent = `${data.message || '登录失败，请重试'}${errorDetails}`;
+                    const fallbackFailed = (typeof translate === 'function' ? translate('login.failed') : '登录失败，请重试');
+                    errorText.textContent = `${data.message || fallbackFailed}${errorDetails}`;
                     errorMessage.style.display = 'flex';
                     
                     // 添加抖动动画
@@ -397,11 +408,12 @@
             } catch (error) {
                 // 恢复按钮状态
                 const button = document.querySelector('.btn-primary');
-                button.innerHTML = '<i class="fas fa-sign-in-alt"></i>&nbsp; 登录';
+                button.innerHTML = '<i class="fas fa-sign-in-alt"></i>&nbsp; ' + (typeof translate === 'function' ? translate('login.submit') : '登录');
                 button.disabled = false;
                 
                 console.error('登录过程中发生错误:', error);
-                errorText.textContent = `登录时发生错误: ${error.message}`;
+                const errorPrefix = (typeof translate === 'function' ? translate('login.error_prefix') : '登录时发生错误: ');
+                errorText.textContent = errorPrefix + error.message;
                 errorMessage.style.display = 'flex';
             }
         });
@@ -415,6 +427,15 @@
                 }
             });
         });
+        
+        // 语言切换时，更新本页文本
+        if (typeof window !== 'undefined') {
+            window.addEventListener('languageChanged', function() {
+                if (typeof updatePageText === 'function') {
+                    updatePageText();
+                }
+            });
+        }
     </script>
 </body>
 </html> 

@@ -82,6 +82,9 @@ if (!global.textToVideoTasks) {
 const db = require('../config/db');
 const logger = require('../utils/logger');
 const axios = require('axios'); // 添加axios用于直接HTTP请求
+
+// PayPal SDK配置
+const paypal = require('@paypal/paypal-server-sdk');
 // 正确引入支付宝SDK v3.2.0版本
 const AlipaySdk = require('alipay-sdk').default;
 const AlipayFormData = require('alipay-sdk/lib/form').default;
@@ -2640,6 +2643,611 @@ router.post('/dev/reset-usage', protect, checkDeveloper, async (req, res) => {
     } catch (error) {
         logger.error('重置功能使用次数出错', { error: error.message, userId: req.user.id });
         res.status(500).json({ success: false, message: '重置功能使用次数失败', error: error.message });
+    }
+});
+
+// ==================== PayPal支付相关接口 ====================
+
+// PayPal环境配置（从环境变量读取）
+const isPayPalSandbox = process.env.PAYPAL_SANDBOX === 'true' || process.env.PAYPAL_SANDBOX === '1';
+const paypalClientId = process.env.PAYPAL_CLIENT_ID;
+const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+// 验证PayPal配置
+const isPayPalConfigured = paypalClientId && paypalClientSecret;
+if (!isPayPalConfigured) {
+    logger.warn('PayPal配置缺失：请在.env文件中配置PAYPAL_CLIENT_ID和PAYPAL_CLIENT_SECRET');
+}
+
+// 初始化PayPal环境（仅在配置存在时）
+let paypalEnvironment = null;
+let paypalConfig = null;
+let paypalClient = null;
+let ordersController = null;
+
+if (isPayPalConfigured) {
+    paypalEnvironment = isPayPalSandbox 
+        ? paypal.Environment.Sandbox
+        : paypal.Environment.Production;
+    
+    // 创建PayPal客户端配置
+    // 根据PayPal Server SDK 2.0.0文档，应该使用clientCredentialsAuthCredentials
+    // 参考：https://www.npmjs.com/package/@paypal/paypal-server-sdk/v/2.0.0
+    paypalConfig = {
+        environment: paypalEnvironment,
+        clientCredentialsAuthCredentials: {
+            oAuthClientId: paypalClientId.trim(), // 确保没有多余的空格
+            oAuthClientSecret: paypalClientSecret.trim() // 确保没有多余的空格
+        },
+        timeout: 30000 // 设置30秒超时
+    };
+    
+    // 记录配置信息（不记录完整的Secret，只记录前几位和后几位）
+    logger.info('初始化PayPal客户端', {
+        environment: paypalEnvironment,
+        isSandbox: isPayPalSandbox,
+        clientIdPrefix: paypalClientId ? paypalClientId.substring(0, 10) + '...' : '未设置',
+        clientSecretPrefix: paypalClientSecret ? paypalClientSecret.substring(0, 10) + '...' : '未设置',
+        hasClientId: !!paypalClientId,
+        hasClientSecret: !!paypalClientSecret
+    });
+    
+    try {
+        // 创建PayPal客户端
+        paypalClient = new paypal.Client(paypalConfig);
+        
+        // 创建Orders控制器（需要传入Client实例，而不是配置对象）
+        ordersController = new paypal.OrdersController(paypalClient);
+        
+        logger.info('PayPal客户端初始化成功');
+    } catch (initError) {
+        logger.error('PayPal客户端初始化失败', {
+            error: initError.message,
+            stack: initError.stack
+        });
+    }
+}
+
+/**
+ * @route   GET /api/credits/paypal/config
+ * @desc    获取PayPal配置（用于前端）
+ * @access  公开
+ */
+router.get('/paypal/config', (req, res) => {
+    try {
+        if (!isPayPalConfigured || !paypalClientId) {
+            return res.status(503).json({
+                success: false,
+                message: 'PayPal服务未配置，请在.env文件中配置PAYPAL_CLIENT_ID和PAYPAL_CLIENT_SECRET'
+            });
+        }
+        
+        res.json({
+            success: true,
+            data: {
+                clientId: paypalClientId,
+                isSandbox: isPayPalSandbox
+            }
+        });
+    } catch (error) {
+        logger.error('获取PayPal配置失败', { error: error.message });
+        res.status(500).json({
+            success: false,
+            message: '获取PayPal配置失败'
+        });
+    }
+});
+
+/**
+ * @route   POST /api/credits/paypal/create
+ * @desc    创建PayPal支付订单
+ * @access  私有
+ */
+router.post('/paypal/create', protect, async (req, res) => {
+    try {
+        // 检查PayPal是否已配置
+        if (!isPayPalConfigured || !ordersController) {
+            return res.status(503).json({
+                success: false,
+                message: 'PayPal服务未配置，请联系管理员'
+            });
+        }
+        
+        const { amount } = req.body;
+        
+        if (!amount || isNaN(amount) || amount < 10) {
+            return res.status(400).json({ success: false, message: '无效的充值金额' });
+        }
+        
+        // 计算对应的人民币金额（转换为美元，假设1美元=7人民币）
+        let price = 0;
+        if (parseInt(amount) === 800) price = 99;
+        else if (parseInt(amount) === 3980) price = 399;
+        else if (parseInt(amount) === 6730) price = 599;
+        else if (parseInt(amount) === 12500) price = 999;
+        else if (parseInt(amount) === 350) price = 59;
+        else price = Math.ceil(parseInt(amount) * 0.12); // 默认比例
+        
+        // 转换为美元（假设1美元=7人民币，实际应该使用实时汇率）
+        const priceInUSD = (price / 7).toFixed(2);
+        
+        // 创建订单号
+        const orderNumber = `PP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+        
+        logger.info('开始创建PayPal订单', { amount, price, priceInUSD, userId: req.user.id, orderNumber });
+        
+        // 使用Sequelize ORM创建订单记录
+        const order = await PaymentOrder.create({
+            user_id: req.user.id,
+            amount: parseInt(amount),
+            price: price,
+            status: 'pending',
+            payment_method: 'paypal',
+            order_number: orderNumber,
+            qrcode_expire_time: new Date(Date.now() + 15 * 60 * 1000) // 15分钟有效期
+        });
+        
+        logger.info('PayPal订单创建成功', { 
+            orderId: order.id, 
+            orderNumber: order.order_number 
+        });
+        
+        try {
+            // 创建PayPal订单（注意：PayPal SDK使用驼峰命名，不是下划线命名）
+            // 根据PayPal官方文档：https://developer.paypal.com/studio/checkout/standard/integrate
+            
+            // 动态检测当前环境，如果是本地开发环境，使用localhost
+            // 检查请求的host来判断是否是本地环境
+            const isLocal = req.get('host')?.includes('localhost') || 
+                          req.get('host')?.includes('127.0.0.1') ||
+                          process.env.NODE_ENV === 'development';
+            
+            // 根据环境设置baseUrl
+            let baseUrl;
+            if (isLocal) {
+                // 本地环境使用localhost
+                const protocol = req.protocol || 'http';
+                const host = req.get('host') || 'localhost:8080';
+                baseUrl = `${protocol}://${host}`;
+            } else {
+                // 生产环境使用环境变量或默认值
+                baseUrl = process.env.BASE_URL || 'https://yinghuo.ai';
+            }
+            
+            const returnUrl = `${baseUrl}/api/credits/paypal/return?orderNumber=${orderNumber}`;
+            const cancelUrl = `${baseUrl}/credits.html`;
+            
+            const orderRequest = {
+                intent: 'CAPTURE',
+                purchaseUnits: [{
+                    referenceId: orderNumber,
+                    description: `萤火AI积分充值-${amount}积分`,
+                    amount: {
+                        currencyCode: 'USD',
+                        value: priceInUSD.toString() // 确保是字符串类型
+                    }
+                }],
+                applicationContext: {
+                    brandName: '萤火AI',
+                    landingPage: 'BILLING',
+                    userAction: 'PAY_NOW',
+                    returnUrl: returnUrl,
+                    cancelUrl: cancelUrl
+                }
+            };
+            
+            logger.info('准备调用PayPal API创建订单', { 
+                orderRequest: JSON.stringify(orderRequest, null, 2),
+                orderNumber,
+                baseUrl,
+                returnUrl,
+                cancelUrl,
+                hasPaypalClient: !!paypalClient,
+                hasOrdersController: !!ordersController,
+                clientCredentialsAuthManager: paypalClient?.clientCredentialsAuthManager ? '已初始化' : '未初始化'
+            });
+            
+            // 检查PayPal客户端和控制器是否已正确初始化
+            if (!paypalClient || !ordersController) {
+                logger.error('PayPal客户端或控制器未初始化', {
+                    hasPaypalClient: !!paypalClient,
+                    hasOrdersController: !!ordersController
+                });
+                await order.update({ status: 'failed' });
+                return res.status(500).json({
+                    success: false,
+                    message: 'PayPal服务未正确初始化，请联系管理员'
+                });
+            }
+            
+            // 调用PayPal API创建订单
+            // 根据PayPal Orders V2 API文档：https://developer.paypal.com/docs/api/orders/v2/#orders_create
+            // PayPal Server SDK 2.0.0的createOrder方法接受一个包含body的对象
+            // body应该包含符合Orders V2 API规范的订单请求
+            logger.info('开始调用PayPal createOrder API');
+            const response = await ordersController.createOrder({ body: orderRequest });
+            
+            // 检查响应状态码和响应体
+            if (response && response.statusCode === 201 && response.body) {
+                // 处理响应体：如果它是字符串，先解析为JSON对象
+                let responseBody = response.body;
+                if (typeof responseBody === 'string') {
+                    try {
+                        responseBody = JSON.parse(responseBody);
+                        logger.info('PayPal响应体已从字符串解析为对象', { 
+                            orderNumber,
+                            hasId: !!responseBody.id
+                        });
+                    } catch (parseError) {
+                        logger.error('PayPal响应体JSON解析失败', { 
+                            orderNumber,
+                            responseBody: response.body,
+                            error: parseError.message
+                        });
+                        await order.update({ status: 'failed' });
+                        return res.status(500).json({
+                            success: false,
+                            message: 'PayPal订单创建失败：响应解析错误'
+                        });
+                    }
+                }
+                
+                // 从解析后的响应体中提取订单ID和批准URL
+                const paypalOrderId = responseBody.id;
+                const approvalUrl = responseBody.links?.find(link => link.rel === 'approve')?.href;
+                
+                if (!paypalOrderId) {
+                    logger.error('PayPal订单创建响应中缺少订单ID', { 
+                        orderNumber,
+                        responseBody: responseBody,
+                        responseBodyType: typeof responseBody,
+                        responseBodyKeys: responseBody ? Object.keys(responseBody) : []
+                    });
+                    await order.update({ status: 'failed' });
+                    return res.status(500).json({
+                        success: false,
+                        message: 'PayPal订单创建失败：响应格式错误'
+                    });
+                }
+                
+                // 更新订单，保存PayPal订单ID
+                await order.update({
+                    transaction_id: paypalOrderId
+                });
+                
+                logger.info('PayPal订单创建成功', { 
+                    orderNumber, 
+                    paypalOrderId,
+                    approvalUrl: approvalUrl ? approvalUrl.substring(0, 100) + '...' : '无'
+                });
+                
+                return res.json({
+                    success: true,
+                    data: {
+                        orderId: order.id,
+                        orderNumber: order.order_number,
+                        paypalOrderId: paypalOrderId,
+                        approvalUrl: approvalUrl,
+                        expireTime: order.qrcode_expire_time
+                    }
+                });
+            } else {
+                // 响应格式不正确或状态码不是201
+                logger.error('PayPal订单创建失败：响应格式错误', { 
+                    orderNumber,
+                    statusCode: response?.statusCode,
+                    responseBody: response?.body,
+                    fullResponse: response
+                });
+                await order.update({ status: 'failed' });
+                
+                return res.status(500).json({
+                    success: false,
+                    message: '创建PayPal订单失败，请稍后重试',
+                    error: response?.body?.message || 'PayPal API返回了意外的响应格式'
+                });
+            }
+        } catch (paypalError) {
+            // 记录详细的错误信息
+            // 根据PayPal Orders V2 API文档，错误可能来自多个地方
+            let errorDetails = {
+                message: paypalError.message,
+                stack: paypalError.stack,
+                userId: req.user.id,
+                orderNumber,
+                orderRequest: orderRequest // 记录请求内容以便调试
+            };
+            
+            // 尝试提取PayPal API返回的详细错误信息
+            // PayPal SDK可能返回的错误格式有多种
+            if (paypalError.response) {
+                errorDetails.response = {
+                    status: paypalError.response.status,
+                    statusText: paypalError.response.statusText,
+                    data: paypalError.response.data,
+                    headers: paypalError.response.headers
+                };
+            }
+            
+            // 如果错误有body属性（PayPal SDK可能返回的错误格式）
+            if (paypalError.body) {
+                errorDetails.paypalErrorBody = paypalError.body;
+                // PayPal API错误通常包含details数组，记录详细信息
+                if (paypalError.body.details) {
+                    errorDetails.paypalErrorDetails = paypalError.body.details;
+                }
+                if (paypalError.body.name) {
+                    errorDetails.paypalErrorName = paypalError.body.name;
+                }
+            }
+            
+            // 如果错误有result属性
+            if (paypalError.result) {
+                errorDetails.paypalResult = paypalError.result;
+            }
+            
+            // 如果错误有error属性（某些SDK版本可能使用此格式）
+            if (paypalError.error) {
+                errorDetails.paypalError = paypalError.error;
+            }
+            
+            // 记录完整的错误信息
+            logger.error('PayPal API调用失败', errorDetails);
+            
+            // 更新订单状态为失败
+            await order.update({ status: 'failed' });
+            
+            // 提取用户友好的错误消息
+            // 根据PayPal Orders V2 API文档，错误消息可能在多个位置
+            let errorMessage = '调用PayPal接口失败，请稍后重试';
+            
+            if (paypalError.body) {
+                // PayPal API错误通常有message字段
+                if (paypalError.body.message) {
+                    errorMessage = paypalError.body.message;
+                }
+                // 或者有details数组，取第一个detail的issue
+                else if (paypalError.body.details && paypalError.body.details.length > 0) {
+                    const firstDetail = paypalError.body.details[0];
+                    errorMessage = firstDetail.issue || firstDetail.description || errorMessage;
+                }
+            } else if (paypalError.response?.data?.message) {
+                errorMessage = paypalError.response.data.message;
+            } else if (paypalError.message) {
+                errorMessage = paypalError.message;
+            }
+            
+            return res.status(500).json({ 
+                success: false, 
+                message: '调用PayPal接口失败，请稍后重试', 
+                error: errorMessage,
+                // 开发环境返回详细错误，生产环境应该移除
+                ...(process.env.NODE_ENV !== 'production' && { 
+                    details: {
+                        errorName: errorDetails.paypalErrorName,
+                        errorDetails: errorDetails.paypalErrorDetails,
+                        fullError: errorDetails
+                    }
+                })
+            });
+        }
+    } catch (error) {
+        logger.error('创建PayPal订单出错', { 
+            error: error.message, 
+            stack: error.stack,
+            userId: req.user.id
+        });
+        res.status(500).json({ 
+            success: false, 
+            message: '创建支付订单失败，请稍后重试', 
+            error: error.message 
+        });
+    }
+});
+
+/**
+ * @route   POST /api/credits/paypal/capture
+ * @desc    捕获PayPal支付（确认支付）
+ * @access  私有
+ */
+router.post('/paypal/capture', protect, async (req, res) => {
+    try {
+        // 检查PayPal是否已配置
+        if (!isPayPalConfigured || !ordersController) {
+            return res.status(503).json({
+                success: false,
+                message: 'PayPal服务未配置，请联系管理员'
+            });
+        }
+        
+        const { orderId } = req.body;
+        
+        if (!orderId) {
+            return res.status(400).json({ success: false, message: '缺少订单ID' });
+        }
+        
+        // 查询订单
+        const order = await PaymentOrder.findOne({
+            where: { 
+                order_number: orderId,
+                user_id: req.user.id,
+                payment_method: 'paypal'
+            }
+        });
+        
+        if (!order) {
+            return res.status(404).json({ success: false, message: '订单不存在' });
+        }
+        
+        if (order.status === 'completed') {
+            return res.json({
+                success: true,
+                message: '订单已完成',
+                data: {
+                    orderId: order.id,
+                    orderNumber: order.order_number,
+                    amount: order.amount
+                }
+            });
+        }
+        
+        // 获取PayPal订单ID
+        const paypalOrderId = order.transaction_id;
+        if (!paypalOrderId) {
+            return res.status(400).json({ success: false, message: 'PayPal订单ID不存在' });
+        }
+        
+        logger.info('开始捕获PayPal支付', { 
+            orderNumber: order.order_number,
+            paypalOrderId 
+        });
+        
+        try {
+            // 调用PayPal API捕获支付（需要将订单ID包装在id参数中）
+            const response = await ordersController.captureOrder({ id: paypalOrderId });
+            
+            if (response.statusCode === 201 && response.body) {
+                // 处理响应体：如果它是字符串，先解析为JSON对象
+                let capture = response.body;
+                if (typeof capture === 'string') {
+                    try {
+                        capture = JSON.parse(capture);
+                        logger.info('PayPal捕获响应体已从字符串解析为对象', { 
+                            orderNumber: order.order_number,
+                            hasId: !!capture.id
+                        });
+                    } catch (parseError) {
+                        logger.error('PayPal捕获响应体JSON解析失败', { 
+                            orderNumber: order.order_number,
+                            responseBody: response.body,
+                            error: parseError.message
+                        });
+                        await order.update({ status: 'failed' });
+                        return res.status(500).json({
+                            success: false,
+                            message: 'PayPal支付捕获失败：响应解析错误'
+                        });
+                    }
+                }
+                
+                const captureId = capture.id;
+                const status = capture.status;
+                
+                logger.info('PayPal支付捕获成功', { 
+                    orderNumber: order.order_number,
+                    captureId,
+                    status
+                });
+                
+                // 如果支付成功
+                if (status === 'COMPLETED') {
+                    // 更新订单状态
+                    order.status = 'completed';
+                    order.transaction_id = captureId;
+                    order.payment_time = new Date();
+                    await order.save();
+                    
+                    // 更新用户积分
+                    const user = await User.findByPk(order.user_id);
+                    if (user) {
+                        user.credits = user.credits + order.amount;
+                        user.lastRechargeTime = new Date();
+                        await user.save();
+                        
+                        logger.info('PayPal支付: 用户积分已更新', { 
+                            userId: user.id, 
+                            credits: user.credits,
+                            amount: order.amount
+                        });
+                    }
+                    
+                    return res.json({
+                        success: true,
+                        message: '支付成功',
+                        data: {
+                            orderId: order.id,
+                            orderNumber: order.order_number,
+                            amount: order.amount,
+                            credits: user.credits
+                        }
+                    });
+                } else {
+                    logger.warn('PayPal支付状态未完成', { 
+                        orderNumber: order.order_number,
+                        status
+                    });
+                    
+                    return res.status(400).json({
+                        success: false,
+                        message: `支付状态: ${status}`
+                    });
+                }
+            } else {
+                logger.error('PayPal支付捕获失败', { 
+                    orderNumber: order.order_number,
+                    statusCode: response.statusCode,
+                    response: response.body
+                });
+                
+                return res.status(500).json({
+                    success: false,
+                    message: '支付捕获失败，请稍后重试'
+                });
+            }
+        } catch (paypalError) {
+            logger.error('PayPal API调用失败', { 
+                error: paypalError.message, 
+                stack: paypalError.stack,
+                orderNumber: order.order_number
+            });
+            
+            return res.status(500).json({ 
+                success: false, 
+                message: '调用PayPal接口失败，请稍后重试', 
+                error: paypalError.message 
+            });
+        }
+    } catch (error) {
+        logger.error('捕获PayPal支付出错', { 
+            error: error.message, 
+            stack: error.stack,
+            userId: req.user.id
+        });
+        res.status(500).json({ 
+            success: false, 
+            message: '处理支付失败，请稍后重试', 
+            error: error.message 
+        });
+    }
+});
+
+/**
+ * @route   GET /api/credits/paypal/return
+ * @desc    PayPal支付返回页面
+ * @access  公开
+ */
+router.get('/paypal/return', async (req, res) => {
+    try {
+        const { orderNumber, token, PayerID } = req.query;
+        
+        logger.info('收到PayPal支付返回', { 
+            orderNumber,
+            token,
+            PayerID
+        });
+        
+        // 如果有订单号，重定向到前端页面并传递订单号
+        if (orderNumber) {
+            return res.redirect(`/credits.html?paypalOrderNumber=${orderNumber}`);
+        }
+        
+        // 如果没有订单号，直接重定向到积分页面
+        res.redirect('/credits.html');
+    } catch (error) {
+        logger.error('处理PayPal返回页面出错', { 
+            error: error.message 
+        });
+        res.redirect('/credits.html');
     }
 });
 

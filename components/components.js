@@ -237,6 +237,9 @@ function initializeNavbar() {
     } else {
         console.log('用户菜单下拉元素未找到');
     }
+    
+    // 语言选择器使用 group-hover CSS 方式，无需 JavaScript 控制显示/隐藏
+    console.log('语言选择器使用 group-hover 方式，无需额外初始化');
 }
 
 // 初始化侧边栏功能
@@ -1392,8 +1395,8 @@ function updateCreditsDisplay(credits) {
 // 语言系统相关变量
 let currentLanguage = localStorage.getItem('language') || 'zh';
 
-// 翻译数据
-const translations = {
+// 导航栏内置翻译数据，避免与全局 translations 冲突
+const navbarTranslations = {
     zh: {
         "text.select_language": "选择语言",
         "nav.credits_center": "积分中心",
@@ -1528,35 +1531,63 @@ const translations = {
     }
 };
 
+// 语言选择器事件处理函数（避免重复绑定）
+let languageSelectorInitialized = false;
+
 // 初始化语言选择器
 function initializeLanguageSelector() {
-    console.log('初始化语言选择器...');
+    console.log('🔵 开始初始化语言选择器...');
     
+    // 查找所有语言选项（直接查找，不依赖容器）
     const languageOptions = document.querySelectorAll('.language-option');
     if (languageOptions.length === 0) {
-        console.log('语言选择器选项未找到');
+        console.log('⚠️ 语言选择器选项未找到，将在navbar加载后重试');
+        if (!languageSelectorInitialized) {
+            setTimeout(() => {
+                initializeLanguageSelector();
+            }, 500);
+        }
         return;
     }
 
-    console.log('语言选择器选项找到:', languageOptions.length, '个');
-    console.log('当前语言:', currentLanguage);
+    console.log('✅ 语言选择器选项找到:', languageOptions.length, '个');
+    console.log('💾 从localStorage读取的语言:', localStorage.getItem('language'));
+    console.log('🎯 当前语言变量值:', currentLanguage);
 
-    // 设置初始语言状态
+    // 设置初始语言状态 - 为当前语言选项添加active样式
     languageOptions.forEach(option => {
         const lang = option.getAttribute('data-lang');
         if (lang === currentLanguage) {
             option.classList.add('bg-purple-50', 'text-purple-600');
+            console.log('🔧 当前语言选项已标记:', lang);
         }
     });
     
     // 立即更新页面文本
-    updatePageText(currentLanguage);
+    console.log('📝 开始初始化页面翻译...');
+    if (typeof updatePageText === 'function') {
+        updatePageText(currentLanguage);
+    }
 
-    // 为每个语言选项添加点击事件
+    // 为每个语言选项添加点击事件（参考home.html的实现）
     languageOptions.forEach(option => {
-        option.addEventListener('click', function() {
+        // 确保选项可以接收点击事件
+        option.style.pointerEvents = 'auto';
+        option.style.cursor = 'pointer';
+        
+        // 绑定点击事件
+        option.addEventListener('click', function(e) {
+            // 阻止事件冒泡，确保点击能正确触发
+            e.preventDefault();
+            e.stopPropagation();
+            
             const selectedLanguage = this.getAttribute('data-lang');
-            console.log('用户选择了新语言:', selectedLanguage);
+            console.log('🔄 用户选择了新语言:', selectedLanguage);
+            
+            if (!selectedLanguage) {
+                console.error('❌ 语言选项没有data-lang属性');
+                return;
+            }
             
             // 移除所有选项的active样式
             languageOptions.forEach(opt => {
@@ -1570,25 +1601,49 @@ function initializeLanguageSelector() {
             
             // 保存到本地存储
             localStorage.setItem('language', selectedLanguage);
-            console.log('语言已保存到localStorage:', selectedLanguage);
+            console.log('💾 语言已保存到localStorage:', selectedLanguage);
             
             // 更新页面文本
-            updatePageText(selectedLanguage);
+            if (typeof updatePageText === 'function') {
+                updatePageText(selectedLanguage);
+            }
             
             // 触发语言变化事件，通知其他组件更新
             const languageChangeEvent = new CustomEvent('languageChanged', {
                 detail: { language: selectedLanguage }
             });
             document.dispatchEvent(languageChangeEvent);
+            // 同时向 window 派发，确保所有页面/组件都能收到
+            if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+                window.dispatchEvent(languageChangeEvent);
+            }
+            console.log('🔔 已触发语言变化事件:', selectedLanguage);
             
-            console.log('语言切换完成:', selectedLanguage === 'zh' ? '中文' : 'English');
-        });
+            console.log('✅ 语言切换完成:', selectedLanguage === 'zh' ? '中文' : 'English');
+        }, true); // 使用捕获阶段，确保事件能触发
+        
+        console.log('✅ 语言选项事件绑定完成:', option.getAttribute('data-lang'));
     });
     
-    console.log('语言选择器初始化完成');
+    languageSelectorInitialized = true;
+    console.log('🎉 语言选择器初始化完成');
 }
 
 // 更新页面文本
+function resolveTranslation(language, key) {
+    if (!key) return null;
+    
+    if (window.translations && window.translations[language] && window.translations[language][key]) {
+        return window.translations[language][key];
+    }
+    
+    if (navbarTranslations[language] && navbarTranslations[language][key]) {
+        return navbarTranslations[language][key];
+    }
+    
+    return null;
+}
+
 function updatePageText(language) {
     console.log('更新页面文本到:', language);
     
@@ -1598,8 +1653,9 @@ function updatePageText(language) {
         // 优先使用 data-translate，然后使用 data-i18n
         const key = element.getAttribute('data-translate') || element.getAttribute('data-i18n');
         
-        if (key && translations[language] && translations[language][key]) {
-            element.textContent = translations[language][key];
+        const value = resolveTranslation(language, key);
+        if (value !== null) {
+            element.textContent = value;
         }
     });
     
@@ -1614,12 +1670,10 @@ function getCurrentLanguage() {
 // 获取翻译文本
 function getTranslation(key, language) {
     language = language || getCurrentLanguage();
-    
-    // 直接查找翻译键
-    if (translations[language] && translations[language][key]) {
-        return translations[language][key];
-    } else {
-        console.warn('翻译键未找到:', key, 'language:', language);
-        return key; // 返回原键作为后备
+    const value = resolveTranslation(language, key);
+    if (value !== null) {
+        return value;
     }
+    console.warn('翻译键未找到:', key, 'language:', language);
+    return key; // 返回原键作为后备
 } 

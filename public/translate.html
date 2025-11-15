@@ -45,30 +45,22 @@
         // 添加全局变量保存当前任务ID
         let currentTaskId = null;
         
-        // 语言设置变量
+        // 全局变量保存当前语言
         let currentLanguage = 'zh-cn'; // 默认中文
         
-        // 从URL参数或localStorage获取语言设置
-        function getLanguageFromParams() {
+        // 获取语言设置：优先URL参数，否则读取localStorage，最后默认中文
+        function getLanguageFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
             const langParam = urlParams.get('lang');
-            
-            if (langParam) {
-                // 从URL参数获取语言
-                currentLanguage = langParam === 'en' ? 'en-us' : 'zh-cn';
-                console.log('从URL参数获取语言:', currentLanguage);
-            } else {
-                // 从localStorage获取语言
-                const storedLang = localStorage.getItem('language');
-                if (storedLang) {
-                    currentLanguage = storedLang === 'en' ? 'en-us' : 'zh-cn';
-                    console.log('从localStorage获取语言:', currentLanguage);
-                } else {
-                    console.log('使用默认语言:', currentLanguage);
-                }
+            if (langParam === 'en-us' || langParam === 'en') {
+                return 'en-us';
             }
-            
-            return currentLanguage;
+            // 读取站点语言设置
+            const siteLang = (localStorage.getItem('language') || 'zh').toLowerCase();
+            if (siteLang === 'en' || siteLang === 'en-us') {
+                return 'en-us';
+            }
+            return 'zh-cn';
         }
         
         // 从API获取配置信息
@@ -134,24 +126,25 @@
         
         // 构建编辑器URL并加载
         async function initializeEditor() {
-            // 首先获取语言设置
-            const language = getLanguageFromParams();
-            
             // 首先获取配置
             const configSuccess = await fetchConfig();
             if (!configSuccess) {
                 return; // 如果配置获取失败，不继续初始化
             }
             
+            // 获取初始语言设置（从URL参数或默认值）
+            currentLanguage = getLanguageFromUrl();
+            console.log('初始语言设置:', currentLanguage);
+            
             // 根据语言设置构建参数
             const params = {
                 apiHost: 'aibcn',
                 appKey: window.INTL_OP_FRAME_SDK_CONFIG.appKey,
                 trial: true,
-                lang: language, // 使用动态获取的语言
+                lang: currentLanguage, // 使用动态获取的语言
                 // 添加源语言和目标语言设置
-                sourceLanguage: language === 'en-us' ? 'en' : 'zh',
-                targetLanguage: language === 'en-us' ? 'zh' : 'en',
+                sourceLanguage: currentLanguage === 'en-us' ? 'en' : 'zh',
+                targetLanguage: currentLanguage === 'en-us' ? 'zh' : 'en',
                 charge: true // 开启生产拦截
             };
             
@@ -176,7 +169,7 @@
             
             // 更新iframe的src
             iframeEle.src = url;
-            console.log(`加载编辑器: 界面语言=${language}, 源语言=${params.sourceLanguage}, 目标语言=${params.targetLanguage}, 已开启生产拦截`);
+            console.log(`加载编辑器: 界面语言=${currentLanguage}, 源语言=${params.sourceLanguage}, 目标语言=${params.targetLanguage}, 已开启生产拦截`);
         }
         
         // 保存图片到服务器
@@ -318,12 +311,16 @@
             console.log("收到消息:", JSON.stringify(ev.data));
             
             // 处理来自父页面的语言切换消息
-            if (ev.data && ev.data.action === 'changeLanguage') {
-                const newLang = ev.data.lang;
-                console.log('收到语言切换消息:', newLang);
+            if (ev.data && ev.data.type === 'changeLanguage') {
+                const newLang = ev.data.language;
+                console.log('收到语言切换请求:', newLang);
                 
                 // 更新当前语言
-                currentLanguage = newLang === 'en' ? 'en-us' : 'zh-cn';
+                if (newLang === 'en' || newLang === 'en-us') {
+                    currentLanguage = 'en-us';
+                } else {
+                    currentLanguage = 'zh-cn';
+                }
                 
                 // 重新初始化编辑器
                 initializeEditor();
