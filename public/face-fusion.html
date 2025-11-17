@@ -419,16 +419,87 @@
             }
         }
 
-        // 加载可用模板
+        // 加载可用模板（从阿里云API获取）
         async function loadAvailableTemplates() {
             try {
-                // 这里应该调用API获取用户的模板列表
-                // 由于阿里云API限制，我们暂时使用本地存储模拟
-                const templates = JSON.parse(localStorage.getItem('faceTemplates') || '[]');
-                availableTemplates = templates;
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    console.warn('未找到认证令牌，无法加载模板列表');
+                    return;
+                }
+
+                // 调用后端API获取模板列表
+                const response = await fetch('/api/face-fusion/templates?pageNumber=1&pageSize=100', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || '获取模板列表失败');
+                }
+
+                // 先读取本地缓存的模板名称映射，保证「创建时的名字」能在下拉框里显示出来
+                let cachedTemplates = [];
+                const cachedMap = {};
+                try {
+                    cachedTemplates = JSON.parse(localStorage.getItem('faceTemplates') || '[]');
+                    if (Array.isArray(cachedTemplates)) {
+                        cachedTemplates.forEach(t => {
+                            if (t && t.templateId) {
+                                cachedMap[t.templateId] = t;
+                            }
+                        });
+                    }
+                } catch (cacheError) {
+                    console.warn('解析本地模板缓存失败:', cacheError);
+                }
+
+                // 转换模板数据格式，适配前端显示
+                availableTemplates = (data.templates || []).map(template => {
+                    const templateId = template.templateId;
+                    const cached = cachedMap[templateId] || {};
+                    
+                    return {
+                        templateId,
+                        // 优先使用用户自己填写的名称，其次使用服务端返回名称，最后才兜底为「模板_前8位ID」
+                        templateName: cached.templateName || cached.name || template.templateName || `模板_${templateId.substring(0, 8)}`,
+                        imageUrl: template.templateURL, // 模板图片URL
+                        createdAt: template.createTime || template.updateTime || cached.createdAt || new Date().toISOString()
+                    };
+                });
+
+                // 同步更新本地缓存，方便下次进入页面时还能看到自己的模板名称
+                localStorage.setItem('faceTemplates', JSON.stringify(availableTemplates));
+                
                 updateTemplateSelect();
+                
+                console.log(`成功加载 ${availableTemplates.length} 个模板`);
             } catch (error) {
                 console.error('加载模板列表失败:', error);
+                
+                // 如果API调用失败，尝试从localStorage读取缓存
+                try {
+                    const cachedTemplates = JSON.parse(localStorage.getItem('faceTemplates') || '[]');
+                    if (cachedTemplates.length > 0) {
+                        availableTemplates = cachedTemplates;
+                        updateTemplateSelect();
+                        console.warn('使用缓存的模板列表');
+                    } else {
+                        // 显示错误提示
+                        const select = document.getElementById('templateSelect');
+                        select.innerHTML = '<option value="">加载模板列表失败，请刷新页面重试</option>';
+                    }
+                } catch (cacheError) {
+                    console.error('读取缓存模板失败:', cacheError);
+                }
             }
         }
 
@@ -437,10 +508,20 @@
             const select = document.getElementById('templateSelect');
             select.innerHTML = '<option value="">请选择一个模板...</option>';
             
+            if (availableTemplates.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '暂无可用模板，请先创建模板';
+                option.disabled = true;
+                select.appendChild(option);
+                return;
+            }
+            
             availableTemplates.forEach(template => {
                 const option = document.createElement('option');
                 option.value = template.templateId;
-                option.textContent = template.templateName;
+                // 显示模板名称，如果没有名称则显示模板ID的前8位
+                option.textContent = template.templateName || `模板_${template.templateId.substring(0, 8)}`;
                 select.appendChild(option);
             });
         }
@@ -453,11 +534,20 @@
                 const preview = document.getElementById('selectedTemplatePreview');
                 const image = document.getElementById('selectedTemplateImage');
                 
-                if (template.imageUrl) {
-                    image.src = template.imageUrl;
+                if (template.imageUrl || template.templateURL) {
+                    // 优先使用templateURL（阿里云返回的URL），如果没有则使用imageUrl
+                    image.src = template.templateURL || template.imageUrl;
                     preview.classList.remove('hidden');
+                } else {
+                    // 如果没有图片URL，隐藏预览
+                    preview.classList.add('hidden');
                 }
                 
+                checkCanProcess();
+            } else {
+                console.warn('未找到模板:', templateId);
+                selectedTemplateId = null;
+                document.getElementById('selectedTemplatePreview').classList.add('hidden');
                 checkCanProcess();
             }
         }
@@ -515,11 +605,11 @@
                     throw new Error(result.error || result.message || '模板创建失败');
                 }
 
-                // 保存模板信息到本地存储
+                // 保存模板信息到本地存储（作为缓存）
                 const newTemplate = {
                     templateId: result.templateId,
                     templateName: result.templateName,
-                    imageUrl: URL.createObjectURL(templateFile),
+                    imageUrl: result.templateImageUrl || URL.createObjectURL(templateFile), // 优先使用服务器返回的URL
                     createdAt: new Date().toISOString()
                 };
 
@@ -536,6 +626,9 @@
 
                 // 切换到选择模板选项卡
                 switchTab('select');
+                
+                // 重新加载模板列表（从服务器获取最新数据）
+                await loadAvailableTemplates();
 
                 // 重置创建表单
                 document.getElementById('templateName').value = '';

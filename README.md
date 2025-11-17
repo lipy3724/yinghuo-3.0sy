@@ -139,6 +139,12 @@ PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 
 ---
 
+## 🧠 今日任务反思（2025-11-17）
+
+- **模板名称一致性**：前端换脸页新增从阿里云实时拉取模板列表，并将本地缓存的用户自定义名称与云端返回的模板ID进行映射，解决“创建模板时的名字与下拉列表显示不一致”的困扰，初学用户更容易定位自己的模板。
+- **缓存回退策略**：请求失败时自动退回到`localStorage`缓存，避免因偶发网络或凭证问题导致页面列表空白，后续可考虑为缓存增加版本号与过期机制。
+- **后续可优化**：当前模板名称仅保存在浏览器端，建议后续在后端存储名称字段或引入模板备注API，便于跨设备共享，减少依赖本地缓存导致的名称丢失风险。
+
 ## 🧠 今日任务反思（2025-11-10）
 
 - **视频换脸多语言对齐**：已为`public/video-face-fusion.html`接入全局翻译脚本，补充中英文词条并处理动态提示，确保与首页语言切换保持一致。后续可考虑抽离通用的错误提示样式，降低各视频功能页面的重复实现。
@@ -229,6 +235,87 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 
 ---
 
+### ✨ 功能更新: AI图片换脸功能完整对接阿里云模板管理API（2025-11-15）
+
+**更新类型**: 功能完善  
+**重要程度**: 🟢 重要  
+**更新状态**: ✅ 已完成
+
+#### 更新内容
+
+1. ✅ **创建模板功能**：已对接阿里云 `AddFaceImageTemplate` 接口
+   - 支持文件上传和Base64两种方式
+   - 自动验证图片格式、大小、分辨率
+   - 自动检测人脸数量（建议不超过5个）
+   - 验证人脸区域尺寸（≥64×64像素）
+   - 模板图片自动上传到OSS
+
+2. ✅ **查询模板列表功能**：新增对接阿里云 `QueryFaceImageTemplate` 接口
+   - 后端API：`GET /api/face-fusion/templates`
+   - 支持分页查询（pageNumber、pageSize参数）
+   - 返回模板ID、模板图片URL、创建时间等信息
+   - 前端自动从服务器获取模板列表，替换原有的localStorage方式
+
+#### 技术实现
+
+**后端实现**（`routes/faceFusion.js`）：
+- 创建模板接口：`POST /api/face-fusion/create-template`（已实现）
+- 查询模板列表接口：`GET /api/face-fusion/templates`（新增）
+- 使用阿里云官方SDK `@alicloud/facebody20191230`
+- 完整的错误处理和日志记录
+
+**前端实现**（`public/face-fusion.html`）：
+- 创建模板：上传图片 → 调用后端API → 显示创建结果
+- 选择已有模板：页面加载时自动从服务器获取模板列表
+- 模板列表缓存：API调用失败时使用localStorage缓存作为备用
+- 创建成功后自动刷新模板列表
+
+#### API接口说明
+
+**查询模板列表接口**：
+```
+GET /api/face-fusion/templates?pageNumber=1&pageSize=100
+Headers: Authorization: Bearer {token}
+
+响应格式：
+{
+  "success": true,
+  "templates": [
+    {
+      "templateId": "模板ID",
+      "templateURL": "模板图片URL",
+      "createTime": "创建时间",
+      "updateTime": "更新时间"
+    }
+  ],
+  "total": 模板总数,
+  "pageNumber": 1,
+  "pageSize": 100
+}
+```
+
+#### 使用流程
+
+1. **创建模板**：
+   - 点击"创建新模板"选项卡
+   - 输入模板名称
+   - 上传模板图片（人脸图片）
+   - 点击"创建模板"按钮
+   - 系统自动验证图片并调用阿里云API创建模板
+
+2. **选择已有模板**：
+   - 点击"选择已有模板"选项卡
+   - 从下拉列表中选择模板
+   - 系统自动显示模板预览图
+   - 选择模板后即可进行换脸操作
+
+#### 相关文档
+
+- 阿里云图像人脸融合模板增加：https://help.aliyun.com/zh/viapi/developer-reference/api-increase-of-image-and-face-fusion-templates
+- 阿里云图像人脸融合模板查询：https://help.aliyun.com/zh/viapi/developer-reference/api-image-and-face-fusion-template-query
+
+---
+
 ### 🔧 修复: 人脸融合模板创建改用阿里云AddFaceImageTemplate接口（2025-11-13）
 
 **修复类型**: 接口对接与稳定性  
@@ -237,7 +324,7 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 
 #### 问题现象
 
-- 创建模板时返回“模板创建失败”或“无法读取图片尺寸信息”
+- 创建模板时返回"模板创建失败"或"无法读取图片尺寸信息"
 - 服务器日志出现 `SignatureDoesNotMatch` 错误，说明请求未正确落到阿里云
 - 模板列表中始终没有新增记录，后续换脸流程无法继续
 
@@ -264,7 +351,8 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 
 #### 后续改进建议
 
-- 计划新增模板持久化：将模板信息写入数据库，并提供列表/删除接口  
+- ✅ **已完成**：新增模板查询功能，对接阿里云QueryFaceImageTemplate接口
+- 计划新增模板删除功能：对接阿里云删除模板接口
 - 引入内容安全检测：创建模板前调用阿里云内容审核，避免违规图片入库  
 - 补充自动化测试：为接口添加集成测试（需要准备可访问的 OSS 测试图片与凭证）
 
