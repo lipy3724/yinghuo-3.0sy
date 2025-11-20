@@ -13,7 +13,8 @@
   "dependencies": {
     "@alicloud/credentials": "^2.4.3",
     "@alicloud/dysmsapi20170525": "^4.1.0",
-    "@alicloud/openapi-client": "^0.4.14",
+    "@alicloud/facebody20191230": "^5.1.2",
+    "@alicloud/openapi-client": "^0.4.15",
     "@alicloud/pop-core": "^1.8.0",
     "@alicloud/tea-typescript": "^1.8.0",
     "@alicloud/tea-util": "^1.4.10",

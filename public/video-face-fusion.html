@@ -173,15 +173,15 @@
                         <span class="text-sm font-medium text-gray-700" data-translate="video_face_fusion.image_upload_description">上传用于换脸的人脸图片</span>
                     </div>
                     <div id="image-upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer bg-gray-50">
-                        <input type="file" id="image-input" class="hidden" accept="image/jpeg,image/jpg,image/png">
+                        <input type="file" id="image-input" class="hidden" accept="image/jpeg,image/jpg,image/png,image/bmp,image/x-ms-bmp">
                         <div id="image-upload-placeholder">
                             <i class="ri-user-line text-4xl text-gray-400 mb-2"></i>
                             <p class="text-gray-500">
                                 <span data-translate="video_face_fusion.drag_drop_image_text">拖放图片到此处或</span>
                                 <span class="text-indigo-600 font-medium" data-translate="video_face_fusion.click_upload">点击上传</span>
                             </p>
-                            <p class="text-sm text-gray-400 mt-1" data-translate="video_face_fusion.image_upload_formats">支持 JPG、JPEG、PNG，最大20MB</p>
-                            <p class="text-sm text-gray-400" data-translate="video_face_fusion.image_upload_resolution">分辨率：128×128 ~ 4000×4000像素</p>
+                            <p class="text-sm text-gray-400 mt-1" data-translate="video_face_fusion.image_upload_formats">支持 JPG、JPEG、PNG、BMP，最大30MB</p>
+                            <p class="text-sm text-gray-400" data-translate="video_face_fusion.image_upload_resolution">分辨率：32×32 ~ 8192×8192像素，人脸区域需≥64×64像素</p>
                         </div>
                         <div id="image-preview-container" class="hidden">
                             <p id="image-info" class="text-sm text-gray-500"></p>
@@ -190,7 +190,7 @@
                             </button>
                         </div>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500" data-translate="video_face_fusion.image_upload_requirements">支持JPG、JPEG、PNG，最大20MB，128×128 ~ 4000×4000像素</p>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="video_face_fusion.image_upload_requirements">支持JPG、JPEG、PNG、BMP，最大30MB，32×32 ~ 8192×8192像素，人脸区域需≥64×64像素</p>
                 </div>
 
                 <!-- 选项设置 -->
@@ -565,8 +565,8 @@
                 const file = e.target.files[0];
                 if (!file) return;
 
-                if (file.size > 20 * 1024 * 1024) {
-                    alert(t('video_face_fusion.error_image_size'));
+                if (file.size > 30 * 1024 * 1024) {
+                    alert(t('video_face_fusion.error_image_size') || '图片文件大小不能超过30MB');
                     return;
                 }
 
@@ -579,14 +579,14 @@
                     const imageWidth = img.naturalWidth;
                     const imageHeight = img.naturalHeight;
                     
-                    if (imageWidth < 128 || imageHeight < 128) {
-                        alert(t('video_face_fusion.error_image_resolution_small', { width: imageWidth, height: imageHeight }));
+                    if (imageWidth < 32 || imageHeight < 32) {
+                        alert(t('video_face_fusion.error_image_resolution_small', { width: imageWidth, height: imageHeight }) || `图片分辨率过小：${imageWidth}x${imageHeight}，最小支持32x32像素`);
                         resetImage();
                         return;
                     }
                     
-                    if (imageWidth > 4000 || imageHeight > 4000) {
-                        alert(t('video_face_fusion.error_image_resolution_large', { width: imageWidth, height: imageHeight }));
+                    if (imageWidth > 8192 || imageHeight > 8192) {
+                        alert(t('video_face_fusion.error_image_resolution_large', { width: imageWidth, height: imageHeight }) || `图片分辨率过大：${imageWidth}x${imageHeight}，最大支持8192x8192像素`);
                         resetImage();
                         return;
                     }
