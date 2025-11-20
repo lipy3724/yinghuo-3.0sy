@@ -11,7 +11,8 @@ const crypto = require('crypto');
 const videoenhan20200320 = require('@alicloud/videoenhan20200320');
 const OpenApi = require('@alicloud/openapi-client');
 const Util = require('@alicloud/tea-util');
-const sizeOf = require('image-size');
+// image-size v2.x 需要从对象中解构出 imageSize 函数
+const { imageSize: sizeOf } = require('image-size');
 
 // 配置multer用于内存存储
 const memoryUpload = multer({

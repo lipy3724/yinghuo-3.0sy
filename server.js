@@ -98,6 +98,8 @@ const fixDiantuResultRoutes = require('./routes/fix-diantu-result');
 const amazonListingRoutes = require('./routes/amazon-listing-api');
 // 导入客服路由（数据库版本）
 const kefuRoutes = require('./kefu/kefu-db');
+// 导入人脸融合路由
+const faceFusionRoutes = require('./routes/faceFusion');
 // 导入功能访问检查路由
 const featureAccessRoutes = require('./routes/featureAccess');
 // 导入认证中间件
@@ -473,6 +475,8 @@ app.use('/api/refund', require('./routes/refund'));
 app.use('/api/upscale', require('./routes/upscale'));
 // 添加阿里云API路由
 app.use('/api/aliyun', require('./routes/aliyun-api'));
+// 人脸融合API路由
+app.use('/api/face-fusion', faceFusionRoutes);
 // 添加视频换人路由
 app.use('/api/video-face-swap', require('./routes/videoFaceSwap'));
 // 添加视频换脸路由（通用视频人脸融合）
@@ -4609,6 +4613,11 @@ app.use('/api/image-expansion-history', imageExpansionHistoryRoutes);
 const imageSharpenHistoryRoutes = require('./routes/image-sharpen-history');
 // 注册模糊图片变清晰历史记录API路由
 app.use('/api/image-sharpen-history', imageSharpenHistoryRoutes);
+
+// 导入图片换脸历史记录路由
+const faceFusionHistoryRoutes = require('./routes/face-fusion-history');
+// 注册图片换脸历史记录API路由
+app.use('/api/face-fusion-history', faceFusionHistoryRoutes);
 
 
 // 导入图像上色功能路由
@@ -12474,6 +12483,10 @@ app.get('/api/direct-download', async (req, res) => {
 module.exports = {
   updateMultiImageToVideoTaskInOSS
 };
+
+// 设置为全局函数供中间件使用（避免循环依赖）
+global.updateMultiImageToVideoTaskInOSS = updateMultiImageToVideoTaskInOSS;
+
 
 // 设置为全局函数供中间件使用（避免循环依赖）
 global.updateMultiImageToVideoTaskInOSS = updateMultiImageToVideoTaskInOSS;

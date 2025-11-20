@@ -139,6 +139,13 @@ PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 
 ---
 
+## 🧠 今日任务反思（2025-11-19）
+
+- **模板生命周期闭环**：图片换脸功能新增删除模板能力，并与阿里云DeleteFaceImageTemplate接口打通，用户可以在一个页面完成创建、查询、删除的全流程操作，降低误删后台模板的风险。
+- **易用性提示**：前端在删除按钮旁添加高亮提示与二次确认弹窗，引导新手了解“删除后无法恢复、阿里云端也会同步删除”的影响，避免误操作。
+- **文案精简**：根据实际体验移除“删除模板会同步删除阿里云后台同名模板”字样，仅保留核心按钮与确认弹窗，避免重复提醒对初学者造成紧张情绪，同时不影响交互安全性。
+- **后续可优化**：建议增加“模板使用次数统计”和“模板快捷重命名”能力，为未来的模板分组或收藏功能打基础，同时在后台记录删除日志方便客服溯源。
+
 ## 🧠 今日任务反思（2025-11-17）
 
 - **模板名称一致性**：前端换脸页新增从阿里云实时拉取模板列表，并将本地缓存的用户自定义名称与云端返回的模板ID进行映射，解决“创建模板时的名字与下拉列表显示不一致”的困扰，初学用户更容易定位自己的模板。
@@ -255,12 +262,20 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
    - 支持分页查询（pageNumber、pageSize参数）
    - 返回模板ID、模板图片URL、创建时间等信息
    - 前端自动从服务器获取模板列表，替换原有的localStorage方式
+   - 创建成功后自动刷新模板列表
+
+3. ✅ **删除模板功能**：新增对接阿里云 `DeleteFaceImageTemplate` 接口
+   - 后端API：`DELETE /api/face-fusion/templates/:templateId`
+   - 删除前在前端进行高亮提示与二次确认，避免误删
+   - 删除成功后自动刷新下拉名单并同步清除本地缓存
+   - 返回阿里云 `RequestId`，便于排查问题
 
 #### 技术实现
 
 **后端实现**（`routes/faceFusion.js`）：
 - 创建模板接口：`POST /api/face-fusion/create-template`（已实现）
 - 查询模板列表接口：`GET /api/face-fusion/templates`（新增）
+- 删除模板接口：`DELETE /api/face-fusion/templates/:templateId`（新增）
 - 使用阿里云官方SDK `@alicloud/facebody20191230`
 - 完整的错误处理和日志记录
 
@@ -269,6 +284,7 @@ cd db_backups/mysql_backup_20251023_095835 && ./restore.sh
 - 选择已有模板：页面加载时自动从服务器获取模板列表
 - 模板列表缓存：API调用失败时使用localStorage缓存作为备用
 - 创建成功后自动刷新模板列表
+- 支持模板预览、删除确认、删除成功后自动刷新与同步清理缓存
 
 #### API接口说明
 
@@ -294,6 +310,25 @@ Headers: Authorization: Bearer {token}
 }
 ```
 
+**删除模板接口**：
+```
+DELETE /api/face-fusion/templates/{templateId}
+Headers: Authorization: Bearer {token}
+
+响应格式：
+{
+  "success": true,
+  "templateId": "模板ID",
+  "requestId": "阿里云RequestId",
+  "message": "模板已删除"
+}
+```
+
+**错误约定**：
+- 🔎 模板不存在：返回HTTP 404 + “模板不存在或已被删除”
+- 🔐 权限不足：返回HTTP 403 + “没有权限删除该模板，请联系管理员”
+- ⚠️ 其他异常：返回HTTP 500 + 阿里云错误信息
+
 #### 使用流程
 
 1. **创建模板**：
@@ -309,10 +344,423 @@ Headers: Authorization: Bearer {token}
    - 系统自动显示模板预览图
    - 选择模板后即可进行换脸操作
 
+3. **删除模板**：
+   - 在“选择已有模板”页签中选中目标模板
+   - 点击“删除模板”按钮并确认
+   - 等待接口返回成功提示，列表会自动刷新
+
 #### 相关文档
 
 - 阿里云图像人脸融合模板增加：https://help.aliyun.com/zh/viapi/developer-reference/api-increase-of-image-and-face-fusion-templates
 - 阿里云图像人脸融合模板查询：https://help.aliyun.com/zh/viapi/developer-reference/api-image-and-face-fusion-template-query
+- 阿里云图像人脸融合模板删除：https://help.aliyun.com/zh/viapi/developer-reference/api-image-and-face-fusion-template-delete
+
+---
+
+### 📦 图片换脸存储位置和加载机制详解
+
+**文档类型**: 技术文档  
+**重要程度**: 🟢 重要  
+**最后更新**: 2025-01-XX
+
+#### 一、存储位置概览
+
+图片换脸功能的所有数据均存储在**阿里云OSS**中，采用分层目录结构，按用户ID和功能类型组织。
+
+##### 1.1 模板图片存储
+
+- **存储位置**: 阿里云OSS
+- **路径格式**: `images/{timestamp}-{randomStr}.{ext}`
+- **代码位置**: 
+  - 文件上传：`routes/faceFusion.js` 第492-496行
+  - Base64上传：`routes/faceFusion.js` 第554-558行
+- **说明**: 
+  - 通过 `uploadImageToOSS` 函数上传（`utils/ossUtils.js`）
+  - 路径由OSS工具函数自动生成，包含时间戳和随机字符串
+  - 上传后返回公开可访问的URL
+
+##### 1.2 换脸结果图片存储
+
+- **存储位置**: 阿里云OSS
+- **路径格式**: `face-fusion/{userId}/{taskId}_{timestamp}.jpg`
+- **代码位置**: `routes/faceFusion.js` 第765-807行（`downloadAndSaveImageToOSS` 函数）
+- **说明**: 
+  - 从阿里云返回的临时URL（有效期30分钟）下载后保存到OSS
+  - 生成永久可访问的URL
+  - 按用户ID和任务ID组织，便于管理和查询
+
+##### 1.3 历史记录存储（OSS）
+
+历史记录通过 `services/faceFusionHistoryOSS.js` 统一管理：
+
+**结果图片**:
+- **路径格式**: `face-fusion/results/{userId}/{uuid}.jpg`
+- **代码位置**: `services/faceFusionHistoryOSS.js` 第137-143行
+- **说明**: 保存换脸处理后的结果图片
+
+**原始图片**（可选）:
+- **路径格式**: `face-fusion/originals/{userId}/{uuid}.jpg`
+- **代码位置**: `services/faceFusionHistoryOSS.js` 第155-161行
+- **说明**: 保存用户上传的原始图片（如果提供）
+
+**元数据文件**:
+- **路径格式**: `face-fusion/metadata/{userId}/{recordId}.json`
+- **代码位置**: `services/faceFusionHistoryOSS.js` 第193行
+- **说明**: 
+  - 存储历史记录的元数据（模板ID、创建时间、图片URL等）
+  - JSON格式，便于查询和过滤
+  - 包含完整的记录信息，支持时间范围查询
+
+#### 二、存储流程
+
+##### 2.1 创建模板流程
+
+```
+用户上传模板图片
+    ↓
+验证图片格式、大小、分辨率
+    ↓
+上传到OSS (images/目录)
+    ↓
+获取OSS URL
+    ↓
+调用阿里云AddFaceImageTemplate API
+    ↓
+返回模板ID和模板URL
+```
+
+##### 2.2 执行换脸流程
+
+```
+用户选择模板 + 上传图片
+    ↓
+上传用户图片到OSS (临时)
+    ↓
+调用阿里云MergeImageFace API
+    ↓
+阿里云返回临时URL (30分钟有效)
+    ↓
+下载临时图片并保存到OSS (face-fusion/{userId}/)
+    ↓
+生成永久URL
+    ↓
+异步保存历史记录到OSS
+```
+
+##### 2.3 保存历史记录流程
+
+```
+换脸完成，获得结果图片URL
+    ↓
+构建历史记录对象
+    ↓
+上传结果图片到OSS (face-fusion/results/{userId}/)
+    ↓
+上传原始图片到OSS (face-fusion/originals/{userId}/) [可选]
+    ↓
+保存元数据JSON到OSS (face-fusion/metadata/{userId}/)
+    ↓
+返回记录ID
+```
+
+#### 三、加载机制
+
+##### 3.1 历史记录加载流程
+
+**后端API**: `GET /api/face-fusion-history/list`
+
+**加载步骤**:
+
+1. **前端请求** (`public/face-fusion.html` 第1188行):
+```javascript
+const response = await fetch('/api/face-fusion-history/list?limit=3&hours=24', {
+    headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+    }
+});
+```
+
+2. **后端处理** (`routes/face-fusion-history.js` 第12-61行):
+   - 验证用户身份（`protect` 中间件）
+   - 调用 `getFaceFusionHistoryOSS` 函数
+   - 从OSS读取元数据文件列表
+   - 按时间排序并过滤（支持24小时过滤）
+   - 格式化时间显示
+   - 返回历史记录数组
+
+3. **OSS查询** (`services/faceFusionHistoryOSS.js` 第226-311行):
+   - 列出元数据文件：`face-fusion/metadata/{userId}/*.json`
+   - 按 `lastModified` 时间排序（最新的在前）
+   - 逐个读取JSON文件内容
+   - 根据时间过滤（如果启用 `last24Hours`）
+   - 返回历史记录数组
+
+4. **前端渲染** (`public/face-fusion.html` 第1098-1142行):
+   - 遍历历史记录数组
+   - 提取 `resultImage` 字段（图片URL）
+   - 使用 `<img>` 标签直接加载OSS URL
+   - 添加错误处理（`onerror` 事件）
+   - 显示时间、模板ID等信息
+   - 提供下载功能
+
+##### 3.2 图片URL访问方式
+
+**访问类型**: 公开访问（无需签名）
+
+- OSS上传后返回的URL是公开可访问的
+- 前端直接使用 `<img src="{ossUrl}">` 加载
+- 无需生成签名URL（`getSignedUrl` 函数未使用）
+
+**错误处理**:
+- 前端设置了 `onerror` 事件处理器
+- 图片加载失败时显示占位图（SVG格式）
+- 避免因URL失效导致的显示问题
+
+##### 3.3 图片加载优化
+
+1. **懒加载**: 使用 `loading="lazy"` 属性
+2. **错误处理**: 图片加载失败时显示占位图
+3. **缓存控制**: OSS上传时设置 `Cache-Control: max-age=31536000`（1年）
+
+#### 四、相关配置
+
+##### 4.1 OSS配置
+
+**配置来源**: `config/index.js` 或环境变量
+
+**必需配置项**:
+- `OSS_REGION`: OSS区域（如：`oss-cn-shanghai`）
+- `ALIYUN_ACCESS_KEY_ID`: 阿里云AccessKey ID
+- `ALIYUN_ACCESS_KEY_SECRET`: 阿里云AccessKey Secret
+- `OSS_BUCKET`: OSS存储桶名称
+
+**配置检查**: 
+- `utils/ossUtils.js` 第16-110行：初始化时检查配置完整性
+- 开发环境支持默认测试配置（仅用于开发）
+
+##### 4.2 存储路径总结
+
+| 类型 | 路径格式 | 说明 |
+|------|---------|------|
+| 模板图片 | `images/{timestamp}-{randomStr}.{ext}` | 通用图片存储 |
+| 换脸结果 | `face-fusion/{userId}/{taskId}_{timestamp}.jpg` | 临时结果存储 |
+| 历史结果 | `face-fusion/results/{userId}/{uuid}.jpg` | 历史记录结果 |
+| 历史原始 | `face-fusion/originals/{userId}/{uuid}.jpg` | 历史记录原始图 |
+| 历史元数据 | `face-fusion/metadata/{userId}/{recordId}.json` | 历史记录元数据 |
+
+#### 五、相关文件
+
+**核心文件**:
+- `routes/faceFusion.js`: 主要路由和存储逻辑
+- `routes/face-fusion-history.js`: 历史记录API路由
+- `services/faceFusionHistoryOSS.js`: 历史记录OSS存储服务
+- `utils/ossUtils.js`: OSS工具函数（上传、删除等）
+
+**前端文件**:
+- `public/face-fusion.html`: 图片换脸前端页面
+  - 第1063-1153行：历史记录加载函数
+  - 第1100-1142行：历史记录渲染逻辑
+
+#### 六、注意事项
+
+1. **URL有效期**: 
+   - 阿里云返回的临时URL有效期为30分钟
+   - 系统会自动下载并保存到OSS，生成永久URL
+
+2. **存储空间**: 
+   - 所有图片存储在OSS中，注意控制存储成本
+   - 历史记录按用户ID组织，便于清理
+
+3. **访问权限**: 
+   - 当前使用公开访问方式，无需签名
+   - 如需私有访问，需要修改为使用签名URL
+
+4. **错误处理**: 
+   - 历史记录加载失败时返回空数组，不影响主流程
+   - 图片加载失败时显示占位图
+
+5. **性能优化**: 
+   - 历史记录查询限制最多100条
+   - 支持按时间过滤（最近24小时）
+   - 前端使用懒加载优化图片显示
+
+---
+
+### 💰 图片换脸计费规则详解
+
+**文档类型**: 计费规则  
+**重要程度**: 🟢 重要  
+**最后更新**: 2025-01-XX
+
+#### 一、计费规则概览
+
+图片换脸（`FACE_FUSION`）功能采用**固定积分计费**模式，计费规则简单明了：
+
+| 使用次数 | 积分消耗 | 说明 |
+|---------|---------|------|
+| 第1次 | **0积分**（免费） | 首次使用免费体验 |
+| 第2次及以后 | **5积分/次** | 固定费用，每次使用扣除5积分 |
+
+#### 二、计费机制
+
+##### 2.1 扣费时机
+
+- **创建阶段**：不预扣积分（返回0）
+- **任务完成时**：根据使用次数判断是否扣费
+  - 首次使用（`usageCount < 1`）：不扣费
+  - 后续使用（`usageCount >= 1`）：扣除5积分
+
+##### 2.2 计费逻辑
+
+**代码位置**：
+- 功能配置：`middleware/featureAccess.js` 第155-161行
+- 扣费计算：`routes/credits.js` 第492-493行
+- 任务完成处理：`middleware/unifiedFeatureUsage.js` 第1079-1080行
+
+**配置代码**：
+```155:161:middleware/featureAccess.js
+'FACE_FUSION': {
+  creditCost: (payload) => {
+    // 图片换脸功能，创建阶段不预扣积分，任务完成后再扣费
+    return 0; // 创建阶段不扣费
+  },
+  freeUsage: 1  // 首次免费，后续每次5积分
+}, // 图片换脸功能 - 首次免费，后续5积分/次，任务完成时扣费
+```
+
+**扣费代码**：
+```492:493:routes/credits.js
+if (featureName === 'FACE_FUSION') {
+  creditCost = 5; // 图片换脸功能固定5积分
+}
+```
+
+#### 三、计费流程
+
+##### 3.1 用户使用流程
+
+```
+用户上传图片并选择模板
+    ↓
+调用 /api/face-fusion/face-swap API
+    ↓
+创建阶段：检查功能权限（不扣费）
+    ↓
+调用阿里云MergeImageFace API
+    ↓
+任务完成，返回结果图片
+    ↓
+调用 /api/credits/track-usage API
+    ↓
+判断使用次数：
+  - 首次使用（usageCount < 1）→ 不扣费
+  - 后续使用（usageCount >= 1）→ 扣除5积分
+    ↓
+更新用户积分和使用记录
+```
+
+##### 3.2 积分扣除逻辑
+
+1. **检查免费次数**：
+   - 读取用户的使用记录（`FeatureUsage`表）
+   - 获取当前使用次数（`usageCount`）
+   - 判断：`usageCount < freeUsage`（1次）→ 免费使用
+
+2. **计算积分消耗**：
+   - 免费使用：`creditCost = 0`
+   - 付费使用：`creditCost = 5`（固定值）
+
+3. **扣除积分**：
+   - 检查用户积分余额
+   - 如果余额不足，扣除全部余额（不扣负）
+   - 更新用户积分和使用记录
+
+#### 四、计费示例
+
+##### 示例1：首次使用（免费）
+
+- **用户积分**：100积分
+- **使用次数**：0次
+- **计费结果**：0积分（免费）
+- **扣除后积分**：100积分
+- **使用次数更新**：1次
+
+##### 示例2：第二次使用（付费）
+
+- **用户积分**：100积分
+- **使用次数**：1次
+- **计费结果**：5积分
+- **扣除后积分**：95积分
+- **使用次数更新**：2次
+
+##### 示例3：积分不足
+
+- **用户积分**：3积分
+- **使用次数**：5次
+- **计费结果**：5积分
+- **实际扣除**：3积分（全部余额）
+- **扣除后积分**：0积分
+- **使用次数更新**：6次
+
+#### 五、与其他功能对比
+
+| 功能 | 首次免费 | 后续费用 | 计费方式 |
+|------|---------|---------|---------|
+| **图片换脸** | ✅ 是 | 5积分/次 | 固定费用 |
+| 视频换脸 | ❌ 否 | 1积分/秒 | 按时长计费 |
+| 视频换人 | ❌ 否 | 8-10积分/秒 | 按时长+模式计费 |
+| 图像编辑 | ✅ 是 | 7积分/次 | 固定费用 |
+| 局部重绘 | ✅ 是 | 7积分/次 | 固定费用 |
+
+#### 六、注意事项
+
+1. **免费次数判断**：
+   - 基于用户的使用记录（`usageCount`）
+   - 只有成功完成的任务才计入使用次数
+   - 失败的任务不扣费，也不计入使用次数
+
+2. **积分不足处理**：
+   - 如果用户积分不足，会扣除全部余额
+   - 任务仍然会完成并返回结果
+   - 建议在使用前检查积分余额
+
+3. **任务失败退款**：
+   - 如果任务失败，不会扣除积分
+   - 如果已扣除积分，系统会自动退款
+
+4. **计费时机**：
+   - 任务完成时才扣费，不是创建时
+   - 确保用户只为成功的结果付费
+
+#### 七、相关文件
+
+**核心文件**：
+- `middleware/featureAccess.js`：功能配置和计费规则定义
+- `routes/credits.js`：积分扣除逻辑
+- `middleware/unifiedFeatureUsage.js`：任务完成时的扣费处理
+- `routes/faceFusion.js`：图片换脸API路由
+
+**数据库表**：
+- `users`：用户积分余额
+- `feature_usage`：功能使用记录（使用次数、积分消耗等）
+
+#### 八、计费规则修改
+
+如需修改计费规则，需要修改以下位置：
+
+1. **修改免费次数**：
+   - 文件：`middleware/featureAccess.js`
+   - 修改：`freeUsage` 字段的值
+
+2. **修改积分费用**：
+   - 文件：`routes/credits.js` 第493行
+   - 修改：`creditCost = 5;` 中的数值
+
+3. **修改后需要**：
+   - 重启服务器使配置生效
+   - 更新README文档说明
+   - 通知用户计费规则变更
 
 ---
 

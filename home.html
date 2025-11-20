@@ -1429,6 +1429,7 @@
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.local_redraw">局部重绘</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.global_style">全局风格化</a></li>
                                     <li><a onclick="checkAuthAndRedirect('/diantu.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.diantu">垫图</a></li>
+                                    <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/face-fusion.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.face_fusion">AI图片换脸</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_resizer">图片改尺寸</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-i18n="feature.image_crop">图像裁剪</a></li>
                                     <li><a href="javascript:void(0)" onclick="checkAuthAndRedirect('/qwen-image-edit.html')" class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded" data-translate="QWEN_IMAGE_EDIT">图像编辑</a></li>
@@ -1659,6 +1660,10 @@
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="垫图" data-icon="ri-collage-line" data-bg="bg-indigo-100" data-color="text-indigo-500" data-url="/diantu.html">
                             <span data-i18n="feature.diantu">垫图</span>
+                        </label>
+                        <label class="feature-checkbox-item">
+                            <input type="checkbox" data-feature="AI图片换脸" data-icon="ri-user-smile-line" data-bg="bg-cyan-100" data-color="text-cyan-500" data-url="/face-fusion.html">
+                            <span data-i18n="feature.face_fusion">AI图片换脸</span>
                         </label>
                         <label class="feature-checkbox-item">
                             <input type="checkbox" data-feature="图片改尺寸" data-icon="ri-aspect-ratio-line" data-bg="bg-purple-100" data-color="text-purple-500" data-url="/image-resizer.html">
@@ -2380,6 +2385,7 @@
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/local-redraw.html')" class="mobile-feature-item">局部重绘</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/global-style.html')" class="mobile-feature-item">全局风格化</a>
                         <a onclick="checkAuthAndRedirect('/diantu.html')" class="mobile-feature-item">垫图</a>
+                        <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/face-fusion.html')" class="mobile-feature-item">AI图片换脸</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-resizer.html')" class="mobile-feature-item">图片改尺寸</a>
                         <a href="javascript:void(0)" onclick="checkAuthAndRedirect('/image-crop.html')" class="mobile-feature-item">图像裁剪</a>
                     </div>
@@ -4080,6 +4086,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📄 页面已加载完成，立即加载客服组件');
             setTimeout(() => {
                 loadCustomerServiceForIndex();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
+
             }, 500);
         }
     </script>

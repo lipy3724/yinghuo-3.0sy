@@ -60,6 +60,63 @@
         .progress-bar {
             transition: width 0.3s ease;
         }
+        /* 处理中遮罩层 - 全屏样式（类似智能扩图） */
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .processing-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .processing-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1.5rem;
+            border: 4px solid #e5e7eb;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .processing-steps {
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        .processing-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .processing-step.active {
+            color: #6366f1;
+            font-weight: 500;
+        }
+        .processing-step.completed {
+            color: #10b981;
+        }
+        .processing-step-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         /* 图片拖动禁用 */
         img {
             -webkit-user-drag: none;
@@ -84,15 +141,35 @@
                 <h2 class="text-xl font-bold mb-3">图像换脸设置</h2>
                 
                 <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-2">使用提示:</p>
+                    <p class="text-base font-semibold text-gray-900 mb-3">使用说明</p>
                     <div class="instructions bg-gray-50 p-3 rounded-md">
-                        <p class="mb-2"><strong>第一步：</strong>创建或选择人脸模板（目标人脸图片）</p>
-                        <p class="mb-2"><strong>第二步：</strong>上传用户图片（包含您面部特征的图片）</p>
-                        <p class="mb-2"><strong>第三步：</strong>调整融合参数，点击开始处理</p>
-                        <p class="mb-2">支持JPG、JPEG、PNG、BMP格式，单张图片不超过30MB</p>
-                        <p class="mb-2">图片分辨率要求：32×32 至 8192×8192像素</p>
-                        <p class="mb-2 text-yellow-600">要求保证图像中的人脸清晰，人脸区域至少 64×64 像素，推荐更高分辨率</p>
-                        <p class="text-red-500 font-medium">请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        <p class="mb-4 text-gray-700">本功能可将您上传图片中的人脸，融合到目标图片的人脸位置，生成一张既保留目标图片场景、又具备您上传图片面部特征的新图像。</p>
+                        
+                        <p class="mb-2 font-semibold text-gray-900">操作步骤：</p>
+                        
+                        <div class="mb-3">
+                            <p class="mb-1"><strong>1️⃣ 选择目标图片（要替换人脸的图像）</strong></p>
+                            <p class="ml-6 text-sm text-gray-600">从已有模板中选择，或上传新图片作为目标人脸模板</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="mb-1"><strong>2️⃣ 上传您的图片（提供人脸的图像）</strong></p>
+                            <p class="ml-6 text-sm text-gray-600">上传包含您人脸的图片，该人脸将替换目标图片中的人脸</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="mb-1"><strong>3️⃣ 调整参数并生成</strong></p>
+                            <p class="ml-6 text-sm text-gray-600">根据需要调整参数设置，点击"开始处理"生成新图片</p>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-t border-gray-200">
+                            <p class="mb-2 text-sm">图像格式：JPG、JPEG、PNG</p>
+                            <p class="mb-2 text-sm">图像大小：不超过20 MB</p>
+                            <p class="mb-2 text-sm">图像分辨率：大于等于128×128像素，小于等于2000×2000像素，最长边小于等于2000像素</p>
+                            <p class="mb-2 text-sm">URL地址中不能包含中文字符</p>
+                            <p class="mb-2 text-sm text-yellow-600">要求保证图像中的人脸清晰，人脸区域至少 64×64 像素，推荐更高分辨率</p>
+                            <p class="text-sm text-red-500 font-medium">请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。</p>
+                        </div>
                     </div>
                 </div>
 
@@ -122,6 +199,13 @@
                             <img id="selectedTemplateImage" class="w-24 h-24 object-cover rounded-lg border">
                             <p class="text-xs text-gray-600 mt-1">已选择模板</p>
                         </div>
+                        <div id="templateActions" class="hidden mt-3">
+                            <button id="deleteTemplateBtn" disabled
+                                class="w-full bg-red-50 text-red-600 border border-red-200 rounded-md py-2 text-sm font-medium flex items-center justify-center gap-2 hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <i class="ri-delete-bin-line text-base"></i>
+                                <span>删除模板</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 创建新模板面板 -->
@@ -134,7 +218,7 @@
                         <div class="mb-3">
                             <label class="block text-sm font-medium text-gray-700 mb-2">上传模板图片</label>
                             <div id="templateUploadArea" class="upload-area h-28 flex flex-col items-center justify-center mb-2 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
-                                <input type="file" id="templateFileInput" class="hidden" accept="image/*">
+                                <input type="file" id="templateFileInput" class="hidden" accept="image/jpeg,image/jpg,image/png">
                                 <div id="templateUploadContent">
                                     <i class="ri-upload-cloud-line text-xl text-gray-400 mb-1"></i>
                                     <p class="text-gray-500 text-center text-xs px-2">点击上传模板图片</p>
@@ -154,7 +238,7 @@
                 <div class="mb-4">
                     <h3 class="text-base font-medium text-gray-900 mb-3">第二步：上传用户图片</h3>
                     <div id="userUploadArea" class="upload-area h-36 flex flex-col items-center justify-center mb-2 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-gray-100 transition-colors">
-                        <input type="file" id="userFileInput" class="hidden" accept="image/*">
+                        <input type="file" id="userFileInput" class="hidden" accept="image/jpeg,image/jpg,image/png">
                         <div id="userUploadContent">
                             <i class="ri-upload-cloud-line text-2xl text-gray-400 mb-1"></i>
                             <p class="text-gray-500 text-center text-xs px-2">点击或者拖动文件到这区域来上传</p>
@@ -183,19 +267,6 @@
                             <p class="text-xs text-gray-500 mt-1">v1版本会适配脸型，v2版本保持原脸型</p>
                         </div>
 
-                        <!-- 是否添加水印 -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">水印设置</label>
-                            <div class="flex items-center mb-2">
-                                <input type="checkbox" id="addWatermark" 
-                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                <label for="addWatermark" class="ml-2 text-sm text-gray-700">添加水印</label>
-                            </div>
-                            <select id="watermarkType" class="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="EN">英文水印</option>
-                                <option value="CN">中文水印</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
 
@@ -213,27 +284,14 @@
             </div>
             
             <!-- 右侧：效果展示 -->
-            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto">
+            <div class="w-full lg:w-2/3 p-6 flex flex-col h-full overflow-auto relative">
                 <h2 class="text-xl font-bold mb-4 text-center">效果展示</h2>
                 
-                <!-- 处理状态 -->
-                <div id="processStatus" class="hidden mb-6">
-                    <div class="text-center">
-                        <div class="loading-spinner mx-auto mb-4"></div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">正在处理中...</h3>
-                        <p class="text-gray-600 mb-4">请稍候，AI正在进行人脸融合处理</p>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div id="progressBar" class="progress-bar bg-indigo-600 h-2 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <p id="statusText" class="text-sm text-gray-500 mt-2">初始化处理...</p>
-                    </div>
-                </div>
-
                 <!-- 结果展示区域 -->
-                <div class="flex flex-col md:flex-row gap-6 flex-grow">
+                <div class="flex flex-col md:flex-row gap-6 flex-grow relative">
                     <div class="w-full md:w-1/2">
                         <h3 class="text-base font-medium mb-3 text-center">原始图像:</h3>
-                        <div id="original-image-container" class="preview-area">
+                        <div id="original-image-container" class="preview-area relative">
                             <div id="original-placeholder" class="text-gray-500 text-center px-4">
                                 <p>上传图片后将在这里显示</p>
                             </div>
@@ -243,11 +301,13 @@
                     
                     <div class="w-full md:w-1/2">
                         <h3 class="text-base font-medium mb-3 text-center">处理结果:</h3>
-                        <div id="result-image-container" class="preview-area">
+                        <div id="result-image-container" class="preview-area relative">
                             <div id="result-placeholder" class="text-gray-500 text-center px-4">
                                 <p>处理结果将在这里显示</p>
                             </div>
                             <img id="resultImage" class="hidden max-w-full max-h-full object-contain rounded-lg" alt="处理结果">
+                            
+                            <!-- 处理中遮罩层已移到body外部，使用全屏遮罩 -->
                         </div>
                     </div>
                 </div>
@@ -316,6 +376,50 @@
                             <span>含有多人脸的图像，建议图像中人脸个数不超过5个。</span>
                         </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 处理中全屏遮罩层（类似智能扩图） -->
+    <div id="processingOverlay" class="processing-overlay hidden">
+        <div class="processing-content">
+            <div class="processing-icon"></div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">正在处理中...</h3>
+            <p id="loading-message" class="text-lg font-medium text-gray-700 mb-2">AI正在进行人脸融合处理，请稍候</p>
+            <p class="text-sm text-gray-500 mb-4">处理时间约为10-20秒</p>
+            
+            <!-- 进度条 -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div id="progressBar" class="progress-bar bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="statusText" class="text-sm text-gray-500 mb-4">初始化处理...</p>
+            
+            <!-- 处理步骤 -->
+            <div class="processing-steps">
+                <div id="step1" class="processing-step">
+                    <div class="processing-step-icon">
+                        <i class="ri-loader-4-line animate-spin"></i>
+                    </div>
+                    <span>准备处理请求</span>
+                </div>
+                <div id="step2" class="processing-step">
+                    <div class="processing-step-icon">
+                        <i class="ri-time-line"></i>
+                    </div>
+                    <span>提交人脸融合请求</span>
+                </div>
+                <div id="step3" class="processing-step">
+                    <div class="processing-step-icon">
+                        <i class="ri-time-line"></i>
+                    </div>
+                    <span>AI处理中（10-20秒）</span>
+                </div>
+                <div id="step4" class="processing-step">
+                    <div class="processing-step-icon">
+                        <i class="ri-time-line"></i>
+                    </div>
+                    <span>生成结果图片</span>
                 </div>
             </div>
         </div>
@@ -391,12 +495,19 @@
                 } else {
                     selectedTemplateId = null;
                     document.getElementById('selectedTemplatePreview').classList.add('hidden');
+                    toggleTemplateActions(false);
                     checkCanProcess();
                 }
             });
 
             // 创建模板按钮
             document.getElementById('createTemplateBtn').addEventListener('click', createTemplate);
+
+            // 删除模板按钮
+            const deleteBtn = document.getElementById('deleteTemplateBtn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', deleteSelectedTemplate);
+            }
         }
 
         // 切换选项卡
@@ -480,6 +591,12 @@
                 localStorage.setItem('faceTemplates', JSON.stringify(availableTemplates));
                 
                 updateTemplateSelect();
+
+                if (selectedTemplateId && !availableTemplates.find(t => t.templateId === selectedTemplateId)) {
+                    selectedTemplateId = null;
+                    toggleTemplateActions(false);
+                    document.getElementById('selectedTemplatePreview').classList.add('hidden');
+                }
                 
                 console.log(`成功加载 ${availableTemplates.length} 个模板`);
             } catch (error) {
@@ -506,6 +623,7 @@
         // 更新模板选择下拉框
         function updateTemplateSelect() {
             const select = document.getElementById('templateSelect');
+            const previousValue = selectedTemplateId;
             select.innerHTML = '<option value="">请选择一个模板...</option>';
             
             if (availableTemplates.length === 0) {
@@ -524,6 +642,11 @@
                 option.textContent = template.templateName || `模板_${template.templateId.substring(0, 8)}`;
                 select.appendChild(option);
             });
+
+            if (previousValue && availableTemplates.some(t => t.templateId === previousValue)) {
+                select.value = previousValue;
+                selectTemplate(previousValue);
+            }
         }
 
         // 选择模板
@@ -542,13 +665,98 @@
                     // 如果没有图片URL，隐藏预览
                     preview.classList.add('hidden');
                 }
+
+                toggleTemplateActions(true);
                 
                 checkCanProcess();
             } else {
                 console.warn('未找到模板:', templateId);
                 selectedTemplateId = null;
                 document.getElementById('selectedTemplatePreview').classList.add('hidden');
+                toggleTemplateActions(false);
                 checkCanProcess();
+            }
+        }
+
+        function toggleTemplateActions(hasSelection) {
+            const actions = document.getElementById('templateActions');
+            const deleteBtn = document.getElementById('deleteTemplateBtn');
+            if (!actions || !deleteBtn) return;
+
+            if (hasSelection) {
+                actions.classList.remove('hidden');
+                deleteBtn.disabled = false;
+            } else {
+                actions.classList.add('hidden');
+                deleteBtn.disabled = true;
+            }
+        }
+
+        async function deleteSelectedTemplate() {
+            if (!selectedTemplateId) {
+                alert('请先选择要删除的模板');
+                return;
+            }
+
+            const targetTemplate = availableTemplates.find(t => t.templateId === selectedTemplateId);
+            const displayName = targetTemplate?.templateName || `模板_${selectedTemplateId.substring(0, 8)}`;
+
+            const confirmed = confirm(`确定要删除模板「${displayName}」吗？删除后将无法恢复。`);
+            if (!confirmed) {
+                return;
+            }
+
+            const deleteBtn = document.getElementById('deleteTemplateBtn');
+            const deleteBtnLabel = deleteBtn?.querySelector('span');
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+            }
+            if (deleteBtnLabel) {
+                deleteBtnLabel.textContent = '删除中...';
+            }
+
+            try {
+                const response = await fetch(`/api/face-fusion/templates/${encodeURIComponent(selectedTemplateId)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+                    }
+                });
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (parseError) {
+                    console.warn('解析删除模板响应失败:', parseError);
+                }
+
+                if (!response.ok || !result.success) {
+                    const errorMessage = result.error || result.message || `删除失败: ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+
+                alert('模板删除成功');
+
+                availableTemplates = availableTemplates.filter(t => t.templateId !== selectedTemplateId);
+                localStorage.setItem('faceTemplates', JSON.stringify(availableTemplates));
+
+                selectedTemplateId = null;
+                document.getElementById('templateSelect').value = '';
+                document.getElementById('selectedTemplatePreview').classList.add('hidden');
+                toggleTemplateActions(false);
+                checkCanProcess();
+
+                await loadAvailableTemplates();
+            } catch (error) {
+                console.error('删除模板失败:', error);
+                alert('删除模板失败: ' + error.message);
+            } finally {
+                if (deleteBtnLabel) {
+                    deleteBtnLabel.textContent = '删除模板';
+                }
+                if (deleteBtn) {
+                    deleteBtn.disabled = !selectedTemplateId;
+                }
             }
         }
 
@@ -706,15 +914,15 @@
         // 处理模板文件上传
         function handleTemplateFileUpload(file) {
             // 验证文件类型
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp', 'image/x-ms-bmp'];
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
             if (!allowedTypes.includes(file.type.toLowerCase())) {
-                alert('请选择JPG、JPEG、PNG或BMP格式的图片文件');
+                alert('请选择JPG、JPEG、PNG格式的图片文件');
                 return;
             }
 
             // 验证文件大小
-            if (file.size > 30 * 1024 * 1024) {
-                alert('图片文件不能超过30MB');
+            if (file.size > 20 * 1024 * 1024) {
+                alert('图片文件不能超过20MB');
                 return;
             }
 
@@ -729,19 +937,19 @@
                     // 验证图片分辨率
                     const { width, height } = img;
                     
-                    if (width < 32 || height < 32) {
-                        alert('图片分辨率过小，最小要求为32×32像素');
+                    if (width < 128 || height < 128) {
+                        alert('图片分辨率过小，最小要求为128×128像素');
                         return;
                     }
                     
-                    if (width > 8192 || height > 8192) {
-                        alert('图片分辨率过大，最大支持8192×8192像素');
+                    if (width > 2000 || height > 2000) {
+                        alert('图片分辨率过大，最大支持2000×2000像素');
                         return;
                     }
                     
                     const maxSide = Math.max(width, height);
-                    if (maxSide > 8192) {
-                        alert('图片最长边不能超过8192像素');
+                    if (maxSide > 2000) {
+                        alert('图片最长边不能超过2000像素');
                         return;
                     }
 
@@ -822,15 +1030,15 @@
         // 处理文件上传
         function handleFileUpload(file, type) {
             // 验证文件类型
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp', 'image/x-ms-bmp'];
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
             if (!allowedTypes.includes(file.type.toLowerCase())) {
-                alert('请选择JPG、JPEG、PNG或BMP格式的图片文件');
+                alert('请选择JPG、JPEG、PNG格式的图片文件');
                 return;
             }
 
             // 验证文件大小
-            if (file.size > 30 * 1024 * 1024) {
-                alert('图片文件不能超过30MB');
+            if (file.size > 20 * 1024 * 1024) {
+                alert('图片文件不能超过20MB');
                 return;
             }
 
@@ -849,19 +1057,19 @@
                     // 验证图片分辨率
                     const { width, height } = img;
                     
-                    if (width < 32 || height < 32) {
-                        alert('图片分辨率过小，最小要求为32×32像素');
+                    if (width < 128 || height < 128) {
+                        alert('图片分辨率过小，最小要求为128×128像素');
                         return;
                     }
                     
-                    if (width > 8192 || height > 8192) {
-                        alert('图片分辨率过大，最大支持8192×8192像素');
+                    if (width > 2000 || height > 2000) {
+                        alert('图片分辨率过大，最大支持2000×2000像素');
                         return;
                     }
                     
                     const maxSide = Math.max(width, height);
-                    if (maxSide > 8192) {
-                        alert('图片最长边不能超过8192像素');
+                    if (maxSide > 2000) {
+                        alert('图片最长边不能超过2000像素');
                         return;
                     }
 
@@ -906,7 +1114,7 @@
 
         // 初始化控件
         function initializeControls() {
-            // 模型版本和水印设置已经在HTML中定义，无需额外初始化
+            // 模型版本已经在HTML中定义，无需额外初始化
         }
 
         // 初始化事件监听器
@@ -961,7 +1169,7 @@
                 }
                 
                 // 从OSS加载历史记录
-                const response = await fetch('/api/face-fusion-history/list?limit=10&hours=24', {
+                const response = await fetch('/api/face-fusion-history/list?limit=3&hours=24', {
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
@@ -1011,13 +1219,10 @@
                     // 下载按钮事件
                     const downloadBtn = historyCard.querySelector('.download-history-btn');
                     if (downloadBtn) {
-                        downloadBtn.addEventListener('click', function() {
+                        downloadBtn.addEventListener('click', async function(e) {
                             const imageUrl = this.getAttribute('data-image-url');
                             if (imageUrl) {
-                                const link = document.createElement('a');
-                                link.href = imageUrl;
-                                link.download = `face_fusion_${Date.now()}.jpg`;
-                                link.click();
+                                await downloadImageFromUrl(imageUrl, `face_fusion_${Date.now()}.jpg`, this);
                             }
                         });
                     }
@@ -1071,6 +1276,14 @@
             }
         }
 
+        // 验证URL中是否包含中文字符
+        function containsChineseInUrl(url) {
+            if (!url) return false;
+            // 检查URL中是否包含中文字符
+            const chineseRegex = /[\u4e00-\u9fa5]/;
+            return chineseRegex.test(url);
+        }
+
         // 开始人脸融合处理
         async function startFaceFusion() {
             try {
@@ -1084,27 +1297,44 @@
                     return;
                 }
 
+                // 验证模板URL中是否包含中文字符
+                const selectedTemplate = availableTemplates.find(t => t.templateId === selectedTemplateId);
+                if (selectedTemplate) {
+                    const templateUrl = selectedTemplate.templateURL || selectedTemplate.imageUrl;
+                    if (templateUrl && containsChineseInUrl(templateUrl)) {
+                        alert('URL地址中不能包含中文字符，请重新选择模板或上传新模板');
+                        return;
+                    }
+                }
+
                 const processBtn = document.getElementById('processBtn');
-                const processStatus = document.getElementById('processStatus');
+                const processingOverlay = document.getElementById('processingOverlay');
                 const resultSection = document.getElementById('resultSection');
 
                 // 显示处理状态
                 processBtn.disabled = true;
-                processStatus.classList.remove('hidden');
+                processBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i><span>处理中...</span>';
+                processingOverlay.classList.remove('hidden');
                 resultSection.classList.add('hidden');
 
-                // 更新状态
-                updateProgress(10, '准备处理请求...');
+                // 重置所有步骤状态
+                resetProcessingSteps();
+
+                // 更新状态 - 步骤1：准备处理请求
+                updateProgress(5, '准备处理请求...');
+                updateProcessingStep(1, 'active');
 
                 // 准备表单数据
                 const formData = new FormData();
                 formData.append('templateId', selectedTemplateId);
                 formData.append('userImage', userFile);
                 formData.append('modelVersion', document.getElementById('modelVersion').value);
-                formData.append('addWatermark', document.getElementById('addWatermark').checked);
-                formData.append('watermarkType', document.getElementById('watermarkType').value);
 
-                updateProgress(30, '提交人脸融合请求...');
+                // 步骤1完成，进入步骤2
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateProgress(15, '准备完成，提交请求...');
+                updateProcessingStep(1, 'completed');
+                updateProcessingStep(2, 'active');
 
                 // 发送请求
                 const response = await fetch('/api/face-fusion/face-swap', {
@@ -1119,18 +1349,40 @@
                     throw new Error(`请求失败: ${response.status}`);
                 }
 
+                // 步骤2完成，进入步骤3
+                updateProgress(30, '请求已提交，AI处理中...');
+                updateProcessingStep(2, 'completed');
+                updateProcessingStep(3, 'active');
+
+                // 模拟处理进度（因为API是同步的，这里只是视觉反馈）
+                let progress = 30;
+                const progressInterval = setInterval(() => {
+                    progress = Math.min(progress + 5, 85);
+                    updateProgress(progress, 'AI正在进行人脸融合处理，请稍候...');
+                }, 500);
+
                 const result = await response.json();
+
+                clearInterval(progressInterval);
 
                 if (!result.success) {
                     throw new Error(result.error || '处理失败');
                 }
 
+                // 步骤3完成，进入步骤4
+                updateProgress(90, '处理完成，生成结果图片...');
+                updateProcessingStep(3, 'completed');
+                updateProcessingStep(4, 'active');
+
+                // 步骤4完成
+                await new Promise(resolve => setTimeout(resolve, 500));
                 updateProgress(100, '人脸融合处理完成！');
+                updateProcessingStep(4, 'completed');
 
                 // 显示结果
                 setTimeout(() => {
                     showResult(result.result);
-                }, 1000);
+                }, 800);
 
             } catch (error) {
                 console.error('人脸融合处理失败:', error);
@@ -1187,20 +1439,86 @@
         function updateProgress(percent, message) {
             const progressBar = document.getElementById('progressBar');
             const statusText = document.getElementById('statusText');
+            const loadingMessage = document.getElementById('loading-message');
             
-            progressBar.style.width = percent + '%';
-            statusText.textContent = message;
+            if (progressBar) {
+                progressBar.style.width = percent + '%';
+            }
+            if (statusText) {
+                statusText.textContent = message || '';
+            }
+            
+            // 根据进度更新加载消息（类似智能扩图）
+            if (loadingMessage) {
+                if (percent >= 90) {
+                    loadingMessage.textContent = '即将完成，请稍候...';
+                } else if (percent >= 75) {
+                    loadingMessage.textContent = '正在生成最终结果...';
+                } else if (percent >= 50) {
+                    loadingMessage.textContent = 'AI正在进行人脸融合处理...';
+                } else if (percent >= 25) {
+                    loadingMessage.textContent = '正在分析图片特征...';
+                } else {
+                    loadingMessage.textContent = 'AI正在进行人脸融合处理，请稍候';
+                }
+            }
+        }
+
+        // 重置处理步骤状态
+        function resetProcessingSteps() {
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step${i}`);
+                if (step) {
+                    step.classList.remove('active', 'completed');
+                    const icon = step.querySelector('.processing-step-icon');
+                    if (icon) {
+                        icon.innerHTML = '<i class="ri-time-line"></i>';
+                    }
+                }
+            }
+        }
+
+        // 更新处理步骤状态
+        function updateProcessingStep(stepNumber, status) {
+            const step = document.getElementById(`step${stepNumber}`);
+            if (!step) return;
+
+            step.classList.remove('active', 'completed');
+            const icon = step.querySelector('.processing-step-icon');
+            
+            if (status === 'active') {
+                step.classList.add('active');
+                if (icon) {
+                    icon.innerHTML = '<i class="ri-loader-4-line animate-spin"></i>';
+                }
+            } else if (status === 'completed') {
+                step.classList.add('completed');
+                if (icon) {
+                    icon.innerHTML = '<i class="ri-checkbox-circle-fill"></i>';
+                }
+            } else {
+                if (icon) {
+                    icon.innerHTML = '<i class="ri-time-line"></i>';
+                }
+            }
         }
 
         // 显示结果
         function showResult(result) {
-            const processStatus = document.getElementById('processStatus');
+            const processingOverlay = document.getElementById('processingOverlay');
             const resultSection = document.getElementById('resultSection');
             const resultImage = document.getElementById('resultImage');
             const resultPlaceholder = document.getElementById('result-placeholder');
 
-            processStatus.classList.add('hidden');
-            resultSection.classList.remove('hidden');
+            // 隐藏处理中界面
+            if (processingOverlay) {
+                processingOverlay.classList.add('hidden');
+            }
+            
+            // 显示结果区域
+            if (resultSection) {
+                resultSection.classList.remove('hidden');
+            }
 
             // 显示结果图片
             let imageUrl = null;
@@ -1213,6 +1531,11 @@
             }
             
             if (imageUrl && resultImage) {
+                // 检查URL中是否包含中文字符
+                if (containsChineseInUrl(imageUrl)) {
+                    console.warn('结果图片URL包含中文字符:', imageUrl);
+                    alert('警告：结果图片URL地址中包含中文字符，可能无法正常显示。请联系管理员处理。');
+                }
                 resultImage.src = imageUrl;
                 resultImage.classList.remove('hidden');
                 if (resultPlaceholder) {
@@ -1231,7 +1554,22 @@
         // 重置处理状态
         function resetProcessingState() {
             const processBtn = document.getElementById('processBtn');
-            processBtn.disabled = !(selectedTemplateId && userFile);
+            const processingOverlay = document.getElementById('processingOverlay');
+            
+            // 恢复按钮状态
+            if (processBtn) {
+                processBtn.disabled = !(selectedTemplateId && userFile);
+                processBtn.innerHTML = '<i class="ri-magic-line mr-2"></i><span>开始换脸处理</span>';
+            }
+            
+            // 隐藏处理中界面
+            if (processingOverlay) {
+                processingOverlay.classList.add('hidden');
+            }
+            
+            // 重置进度条
+            updateProgress(0, '');
+            resetProcessingSteps();
             
             if (pollInterval) {
                 clearInterval(pollInterval);
@@ -1240,14 +1578,183 @@
         }
 
         // 下载结果
-        function downloadResult() {
+        async function downloadResult() {
             const resultImage = document.getElementById('resultImage');
             if (resultImage.src) {
-                const link = document.createElement('a');
-                link.href = resultImage.src;
-                link.download = `face_fusion_result_${Date.now()}.jpg`;
-                link.click();
+                await downloadImageFromUrl(resultImage.src, `face_fusion_result_${Date.now()}.jpg`);
             }
+        }
+
+        // 从URL下载图片（优先使用代理API避免CORS问题）
+        async function downloadImageFromUrl(imageUrl, filename, buttonElement = null) {
+            try {
+                // 显示下载中提示
+                if (buttonElement) {
+                    const originalHTML = buttonElement.innerHTML;
+                    buttonElement.innerHTML = '<i class="ri-loader-4-line animate-spin"></i>';
+                    buttonElement.disabled = true;
+                    
+                    // 恢复按钮状态（延迟执行，确保下载完成）
+                    setTimeout(() => {
+                        buttonElement.innerHTML = originalHTML;
+                        buttonElement.disabled = false;
+                    }, 2000);
+                }
+
+                // 确保URL是HTTPS（如果是HTTP，转换为HTTPS）
+                let secureUrl = imageUrl;
+                if (imageUrl.startsWith('http://')) {
+                    secureUrl = imageUrl.replace('http://', 'https://');
+                }
+
+                // 检查是否是外部链接（如阿里云OSS），如果是则优先使用代理API
+                const isExternalUrl = secureUrl.includes('aliyuncs.com') || 
+                                     secureUrl.includes('dashscope') || 
+                                     secureUrl.includes('amazonaws.com') ||
+                                     (secureUrl.startsWith('http') && !secureUrl.includes(window.location.hostname));
+
+                // 如果是外部链接，使用代理API避免CORS问题
+                if (isExternalUrl) {
+                    // 直接使用代理API的URL作为下载链接（最简单高效的方式）
+                    const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(secureUrl)}&filename=${encodeURIComponent(filename)}`;
+                    const link = document.createElement('a');
+                    link.href = proxyDownloadUrl;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    return; // 使用代理下载，直接返回
+                }
+
+                // 对于本地或同源URL，使用fetch获取图片
+                let response;
+                try {
+                    response = await fetch(secureUrl, {
+                        method: 'GET',
+                        mode: 'cors', // 允许跨域
+                        credentials: 'omit' // 不发送凭证
+                    });
+                } catch (fetchError) {
+                    // 如果fetch失败，尝试直接下载
+                    console.warn('Fetch失败，尝试直接下载:', fetchError.message);
+                    const link = document.createElement('a');
+                    link.href = secureUrl;
+                    link.download = filename;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    return; // 直接下载成功，返回
+                }
+
+                if (!response.ok) {
+                    throw new Error(`下载失败: ${response.status} ${response.statusText}`);
+                }
+
+                // 获取图片blob
+                const blob = await response.blob();
+                
+                // 创建blob URL
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理
+                document.body.removeChild(link);
+                // 延迟释放blob URL，确保下载完成
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 100);
+                
+            } catch (error) {
+                // 静默处理错误，因为可能已经通过直接下载方式成功
+                // 只在确实失败时才显示错误
+                console.warn('下载过程中出现错误（可能已通过备用方案成功）:', error.message);
+                
+                // 最后尝试直接下载（作为备用方案）
+                try {
+                    const link = document.createElement('a');
+                    // 确保URL是HTTPS
+                    let secureUrl = imageUrl;
+                    if (imageUrl.startsWith('http://')) {
+                        secureUrl = imageUrl.replace('http://', 'https://');
+                    }
+                    link.href = secureUrl;
+                    link.download = filename;
+                    link.target = '_blank'; // 在新窗口打开，避免混合内容问题
+                    link.rel = 'noopener noreferrer'; // 安全设置
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (fallbackError) {
+                    console.error('所有下载方案都失败:', fallbackError);
+                    alert('下载失败: ' + error.message + '\n请检查网络连接或联系管理员。\n如果问题持续，请尝试右键图片选择"另存为"。');
+                }
+            }
+        }
+
+        // 使用img标签+canvas方式下载图片（避免CORS问题）
+        async function downloadImageViaCanvas(imageUrl, filename, buttonElement = null) {
+            return new Promise((resolve, reject) => {
+                // 确保URL是HTTPS
+                let secureUrl = imageUrl;
+                if (imageUrl.startsWith('http://')) {
+                    secureUrl = imageUrl.replace('http://', 'https://');
+                }
+
+                const img = new Image();
+                img.crossOrigin = 'anonymous'; // 尝试跨域加载
+                
+                img.onload = function() {
+                    try {
+                        // 创建canvas
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // 转换为blob
+                        canvas.toBlob(function(blob) {
+                            if (!blob) {
+                                reject(new Error('无法创建图片blob'));
+                                return;
+                            }
+                            
+                            // 创建下载链接
+                            const blobUrl = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.download = filename;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            // 清理
+                            setTimeout(() => {
+                                window.URL.revokeObjectURL(blobUrl);
+                            }, 100);
+                            
+                            resolve();
+                        }, 'image/jpeg', 0.95);
+                    } catch (canvasError) {
+                        reject(canvasError);
+                    }
+                };
+                
+                img.onerror = function() {
+                    reject(new Error('图片加载失败，可能是CORS限制'));
+                };
+                
+                // 开始加载图片
+                img.src = secureUrl;
+            });
         }
 
         // 保存到下载中心

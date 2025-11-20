@@ -152,6 +152,13 @@ const FEATURES = {
     }, 
     freeUsage: 0  // 🔧 视频去水印功能无免费次数，所有使用都收费
   }, // 视频去水印/logo功能，任务完成后根据实际时长扣费
+  'FACE_FUSION': {
+    creditCost: (payload) => {
+      // 图片换脸功能，创建阶段不预扣积分，任务完成后再扣费
+      return 0; // 创建阶段不扣费
+    },
+    freeUsage: 1  // 首次免费，后续每次5积分
+  }, // 图片换脸功能 - 首次免费，后续5积分/次，任务完成时扣费
   // 可以添加更多功能和对应的积分消耗
 };
 
@@ -190,14 +197,28 @@ const checkFeatureAccess = (featureName) => {
       });
       
       // 检查是否在免费使用次数内
+      // 对于任务完成后扣费的功能（如FACE_FUSION），不在这里增加usageCount，而是在任务完成时通过track-usage API增加
+      const isTaskCompletionCharge = featureName === 'FACE_FUSION' || 
+                                     featureName === 'text-to-video' || 
+                                     featureName === 'image-to-video' ||
+                                     featureName === 'DIGITAL_HUMAN_VIDEO' ||
+                                     featureName === 'MULTI_IMAGE_TO_VIDEO' ||
+                                     featureName === 'VIDEO_SUBTITLE_REMOVER' ||
+                                     featureName === 'VIDEO_STYLE_REPAINT' ||
+                                     featureName === 'VIDEO_LOGO_REMOVAL' ||
+                                     featureName === 'QWEN_IMAGE_EDIT';
+      
       if (usage.usageCount < featureConfig.freeUsage) {
         // 在免费使用次数内，允许使用
         console.log(`用户ID ${userId} 使用 ${featureName} 功能的免费次数 ${usage.usageCount + 1}/${featureConfig.freeUsage}`);
         
+        // 对于任务完成后扣费的功能，不在这里增加usageCount
+        if (!isTaskCompletionCharge) {
         // 更新使用次数
         usage.usageCount += 1;
         usage.lastUsedAt = new Date();
         await usage.save();
+        }
         
         // 获取用户信息，以便正确设置remainingCredits
         const user = await User.findByPk(userId);
@@ -252,10 +273,15 @@ const checkFeatureAccess = (featureName) => {
           // 多图转视频功能，在任务完成后根据实际时长扣除积分
           console.log(`多图转视频功能权限检查 - 跳过积分扣除`);
           creditCost = 30; // 仅检查用户是否有至少30积分，实际不会扣除
-        }else if (featureName === 'VIDEO_SUBTITLE_REMOVER') {
+        }        else if (featureName === 'VIDEO_SUBTITLE_REMOVER') {
           // 视频去除字幕功能，不预先扣除积分，而是在任务完成后扣除
           console.log(`视频去除字幕功能权限检查 - 跳过积分扣除`);
           creditCost = 30; // 仅检查用户是否有至少30积分，实际不会扣除
+        }
+        else if (featureName === 'FACE_FUSION') {
+          // 图片换脸功能，不预先扣除积分，而是在任务完成后扣除
+          console.log(`图片换脸功能权限检查 - 跳过积分扣除`);
+          creditCost = 5; // 仅检查用户是否有至少5积分，实际不会扣除
         }
         else {
           // 其他需要动态计算积分的功能
@@ -296,10 +322,15 @@ const checkFeatureAccess = (featureName) => {
       }
       
       // 积分足够，允许使用功能
-      // 更新使用次数
-      usage.usageCount += 1;
-      usage.lastUsedAt = new Date();
-      await usage.save();
+      // 对于任务完成后扣费的功能，不在这里增加usageCount和扣除积分
+      // 使用前面已经声明的 isTaskCompletionCharge 变量
+      
+      if (!isTaskCompletionCharge) {
+        // 更新使用次数
+        usage.usageCount += 1;
+        usage.lastUsedAt = new Date();
+        await usage.save();
+      }
       
       // 不在这里扣除积分，而是标记需要使用track-usage API
       req.featureUsage = {

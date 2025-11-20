@@ -51,21 +51,39 @@ const ALIYUN_FACE_FUSION_CONFIG = {
     region: process.env.ALIYUN_REGION || 'cn-shanghai'
 };
 
-const sizeOf = require('image-size');
+// image-size v2.x 使用 CommonJS 导入时需要解构出 imageSize 函数
+// 参考官方文档：https://www.npmjs.com/package/image-size
+const { imageSize: sizeOf } = require('image-size');
 
 /**
  * 初始化阿里云Facebody客户端
  */
 function getFacebodyClient() {
-    const config = new OpenapiClient.Config({
-        accessKeyId: process.env.ALIBABA_CLOUD_ACCESS_KEY_ID || process.env.ALIYUN_ACCESS_KEY_ID,
-        accessKeySecret: process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET || process.env.ALIYUN_ACCESS_KEY_SECRET
-    });
-    
-    // 访问的域名
-    config.endpoint = ALIYUN_FACE_FUSION_CONFIG.endpoint;
-    
-    return new FacebodyClient.default(config);
+    try {
+        const accessKeyId = process.env.ALIBABA_CLOUD_ACCESS_KEY_ID || process.env.ALIYUN_ACCESS_KEY_ID;
+        const accessKeySecret = process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET || process.env.ALIYUN_ACCESS_KEY_SECRET;
+        
+        if (!accessKeyId || !accessKeySecret) {
+            logger.error('阿里云AccessKey未配置，无法初始化Facebody客户端');
+            throw new Error('阿里云AccessKey未配置');
+        }
+        
+        const config = new OpenapiClient.Config({
+            accessKeyId: accessKeyId,
+            accessKeySecret: accessKeySecret
+        });
+        
+        // 访问的域名
+        config.endpoint = ALIYUN_FACE_FUSION_CONFIG.endpoint;
+        
+        return new FacebodyClient.default(config);
+    } catch (error) {
+        logger.error('初始化Facebody客户端失败', {
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
 }
 
 /**
@@ -73,18 +91,54 @@ function getFacebodyClient() {
  */
 function getResponseFromUrl(url) {
     return new Promise((resolve, reject) => {
-        const urlObj = new URL(url);
-        const httpClient = (urlObj.protocol === 'https:') ? https : http;
-        
-        httpClient.get(url, (response) => {
-            if (response.statusCode === 200) {
-                resolve(response);
-            } else {
-                reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+        try {
+            if (!url || typeof url !== 'string') {
+                reject(new Error('URL无效或未提供'));
+                return;
             }
-        }).on('error', (error) => {
-            reject(error);
-        });
+
+            let urlObj;
+            try {
+                urlObj = new URL(url);
+            } catch (urlError) {
+                reject(new Error(`URL格式无效: ${urlError.message}`));
+                return;
+            }
+
+            const httpClient = (urlObj.protocol === 'https:') ? https : http;
+            
+            const request = httpClient.get(url, {
+                timeout: 30000 // 30秒超时
+            }, (response) => {
+                if (response.statusCode === 200) {
+                    resolve(response);
+                } else {
+                    reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+                }
+            });
+
+            request.on('error', (error) => {
+                logger.error('从URL获取响应流时发生网络错误', {
+                    url: url,
+                    error: error.message,
+                    code: error.code
+                });
+                reject(new Error(`网络请求失败: ${error.message}`));
+            });
+
+            request.on('timeout', () => {
+                request.destroy();
+                reject(new Error('请求超时：30秒内未收到响应'));
+            });
+
+        } catch (error) {
+            logger.error('getResponseFromUrl函数内部错误', {
+                url: url,
+                error: error.message,
+                stack: error.stack
+            });
+            reject(new Error(`获取响应流失败: ${error.message}`));
+        }
     });
 }
 
@@ -97,9 +151,15 @@ function imageToBase64(buffer) {
 
 /**
  * 验证图片分辨率是否符合阿里云要求
- * 要求：大于等于32×32像素，小于等于8192×8192像素，最长边小于等于8192像素
+ * @param {Buffer} buffer - 图片buffer
+ * @param {Object} options - 验证选项
+ * @param {Boolean} options.isUserImage - 是否为用户图片（用户图片有特殊限制：长宽不能超过2000像素）
+ * @returns {Object} {valid: Boolean, error: String, dimensions: Object}
+ * 
+ * 通用要求：大于等于32×32像素，小于等于8192×8192像素，最长边小于等于8192像素
+ * 用户图片特殊要求：长或宽不能超过2000像素（阿里云API限制）
  */
-function validateImageDimensions(buffer) {
+function validateImageDimensions(buffer, options = {}) {
     try {
         // 验证 buffer 是否存在且有效
         if (!buffer || !Buffer.isBuffer(buffer)) {
@@ -186,6 +246,16 @@ function validateImageDimensions(buffer) {
                 valid: false,
                 error: `图片最长边不能超过8192像素，当前最长边为${maxSide}像素`
             };
+        }
+        
+        // 用户图片特殊检查：长或宽不能超过2000像素（阿里云API限制）
+        if (options.isUserImage) {
+            if (width > 2000 || height > 2000) {
+                return {
+                    valid: false,
+                    error: `用户图片分辨率超出限制，当前为${width}×${height}像素。阿里云要求用户图片的长或宽不能超过2000像素，请调整图片尺寸后重试`
+                };
+            }
         }
         
         return {
@@ -752,7 +822,12 @@ async function uploadBase64ImageToOSS(base64Data, filename = 'face-fusion.jpg') 
         const imageUrl = await uploadImageToOSS(tempFile);
         return imageUrl;
     } catch (error) {
-        console.error('上传图片到OSS失败:', error);
+        logger.error('上传图片到OSS失败', {
+            filename: filename,
+            error: error.message,
+            stack: error.stack,
+            code: error.code
+        });
         throw new Error('上传图片到OSS失败: ' + error.message);
     }
 }
@@ -764,11 +839,11 @@ async function downloadAndSaveImageToOSS(tempImageUrl, userId, taskId) {
     try {
         const client = getOSSClient();
         if (!client) {
-            console.error('保存图片到OSS失败: OSS客户端未初始化');
+            logger.error('保存图片到OSS失败: OSS客户端未初始化', { userId, taskId });
             throw new Error('OSS客户端未初始化，请检查OSS配置');
         }
 
-        console.log(`开始下载临时图片并保存到OSS: ${tempImageUrl}`);
+        logger.info('开始下载临时图片并保存到OSS', { userId, taskId, tempImageUrl });
         
         // 下载图片
         const response = await axios({
@@ -793,36 +868,90 @@ async function downloadAndSaveImageToOSS(tempImageUrl, userId, taskId) {
         };
         
         const result = await client.put(ossPath, imageBuffer, putOptions);
-        console.log(`图片已保存到OSS: ${result.url}`);
+        logger.info('图片已保存到OSS', { userId, taskId, url: result.url });
         
         return result.url; // 返回永久URL
     } catch (error) {
-        console.error('下载并保存图片到OSS失败:', error);
+        logger.error('下载并保存图片到OSS失败', {
+            userId,
+            taskId,
+            tempImageUrl,
+            error: error.message,
+            stack: error.stack
+        });
         // 如果保存失败，返回原始临时URL（至少30分钟内可用）
-        console.warn('使用原始临时URL:', tempImageUrl);
+        logger.warn('使用原始临时URL', { userId, taskId, tempImageUrl });
         return tempImageUrl;
     }
 }
 
 /**
  * 调用阿里云MergeImageFace接口进行人脸融合（使用官方SDK）
+ * 
+ * 参数说明：
+ * - templateId: 模板ID（目标人脸，要换成的脸）- 通过AddFaceImageTemplate接口创建
+ * - userImageBase64: 用户上传的图片Base64（源图片，要替换的图片）
+ * - 结果：将用户上传的图片中的人脸替换成模板中的人脸
+ * 
+ * 对应阿里云API参数：
+ * - templateId: 模板ID（目标人脸）
+ * - imageURL: 用户上传的图片URL（源图片）
  */
 async function performFaceFusion(templateId, userImageBase64, options = {}) {
     try {
         // 先将Base64图片上传到OSS获取URL
-        console.log('正在上传用户图片到OSS...');
-        const imageUrl = await uploadBase64ImageToOSS(userImageBase64, 'face-fusion-user.jpg');
-        console.log('图片上传成功，OSS URL:', imageUrl);
+        // 注意：userImageBase64是源图片（要替换的图片），templateId是目标人脸（要换成的脸）
+        logger.info('开始上传用户图片到OSS', { templateId });
+        let imageUrl;
+        try {
+            imageUrl = await uploadBase64ImageToOSS(userImageBase64, 'face-fusion-user.jpg');
+            logger.info('图片上传成功', { templateId, imageUrl });
+        } catch (uploadError) {
+            logger.error('上传用户图片到OSS失败', {
+                templateId,
+                error: uploadError.message,
+                stack: uploadError.stack
+            });
+            throw new Error(`上传用户图片失败: ${uploadError.message}`);
+        }
         
         // 初始化SDK客户端
-        const client = getFacebodyClient();
+        logger.info('初始化阿里云Facebody客户端', { templateId });
+        let client;
+        try {
+            client = getFacebodyClient();
+            if (!client) {
+                throw new Error('Facebody客户端初始化失败');
+            }
+        } catch (clientError) {
+            logger.error('初始化Facebody客户端失败', {
+                templateId,
+                error: clientError.message,
+                stack: clientError.stack
+            });
+            throw new Error(`初始化阿里云客户端失败: ${clientError.message}`);
+        }
         
         // 创建请求对象（使用Advance方法支持URL）
         const mergeImageFaceRequest = new FacebodyClient.MergeImageFaceAdvanceRequest();
+        // templateId: 模板ID（目标人脸，要换成的脸）
         mergeImageFaceRequest.templateId = templateId;
         
         // 从URL获取响应流
-        const imageUrlStream = await getResponseFromUrl(imageUrl);
+        // imageURLObject: 用户上传的图片（源图片，要替换的图片）
+        logger.info('从OSS URL获取响应流', { templateId, imageUrl });
+        let imageUrlStream;
+        try {
+            imageUrlStream = await getResponseFromUrl(imageUrl);
+        } catch (streamError) {
+            logger.error('从URL获取响应流失败', {
+                templateId,
+                imageUrl,
+                error: streamError.message,
+                stack: streamError.stack
+            });
+            throw new Error(`获取图片流失败: ${streamError.message}`);
+        }
         mergeImageFaceRequest.imageURLObject = imageUrlStream;
         
         // 设置可选参数（按照API文档设置默认值）
@@ -830,15 +959,30 @@ async function performFaceFusion(templateId, userImageBase64, options = {}) {
         mergeImageFaceRequest.addWatermark = options.addWatermark !== undefined ? options.addWatermark : false; // 默认false（不添加水印）
         mergeImageFaceRequest.watermarkType = options.watermarkType || 'EN'; // 默认EN（英文水印）
         
-        console.log('调用MergeImageFace接口进行人脸融合（使用官方SDK）...');
+        logger.info('调用MergeImageFace接口进行人脸融合', {
+            templateId,
+            modelVersion: options.modelVersion || 'v1',
+            addWatermark: options.addWatermark !== undefined ? options.addWatermark : false
+        });
         
         // 创建运行时选项
         const runtime = new TeaUtil.RuntimeOptions({});
         
         // 调用SDK方法
-        const mergeImageFaceResponse = await client.mergeImageFaceAdvance(mergeImageFaceRequest, runtime);
-        
-        console.log('MergeImageFace接口响应:', JSON.stringify(mergeImageFaceResponse, null, 2));
+        let mergeImageFaceResponse;
+        try {
+            mergeImageFaceResponse = await client.mergeImageFaceAdvance(mergeImageFaceRequest, runtime);
+            logger.info('MergeImageFace接口调用成功', { templateId });
+        } catch (apiError) {
+            logger.error('调用MergeImageFace接口失败', {
+                templateId,
+                error: apiError.message,
+                code: apiError.code,
+                data: apiError.data,
+                stack: apiError.stack
+            });
+            throw apiError;
+        }
         
         // 处理响应（SDK返回的数据结构）
         // 根据阿里云API文档，返回格式为：{"RequestId": "...", "Data": {"ImageURL": "..."}}
@@ -856,8 +1000,7 @@ async function performFaceFusion(templateId, userImageBase64, options = {}) {
                 // 需要下载并保存到自己的OSS，以便长期保存
                 const tempImageUrl = imageUrl;
                 
-                console.log('获取到临时图片URL:', tempImageUrl);
-                console.log('RequestId:', requestId);
+                logger.info('获取到临时图片URL', { tempImageUrl, requestId });
                 
                 // 返回包含RequestId和临时URL的数据
                 return {
@@ -866,20 +1009,38 @@ async function performFaceFusion(templateId, userImageBase64, options = {}) {
                     tempImageUrl: tempImageUrl // 用于后续保存
                 };
             } else {
-                console.error('响应数据中未找到ImageURL字段，完整响应:', JSON.stringify(mergeImageFaceResponse, null, 2));
+                logger.error('响应数据中未找到ImageURL字段', {
+                    templateId: templateId,
+                    response: JSON.stringify(mergeImageFaceResponse, null, 2)
+                });
                 throw new Error('人脸融合失败：未返回结果图片URL');
             }
         } else {
-            console.error('响应格式错误，完整响应:', JSON.stringify(mergeImageFaceResponse, null, 2));
+            logger.error('响应格式错误', {
+                templateId: templateId,
+                response: JSON.stringify(mergeImageFaceResponse, null, 2)
+            });
             throw new Error('人脸融合失败：响应数据格式错误');
         }
 
     } catch (error) {
-        console.error('执行人脸融合失败:', error);
+        logger.error('执行人脸融合失败', {
+            templateId: templateId,
+            error: error.message,
+            stack: error.stack,
+            code: error.code,
+            data: error.data,
+            response: error.response?.data
+        });
         
         // 处理SDK错误
         if (error.data && error.data.code) {
-            throw new Error(`人脸融合失败: ${error.data.code} - ${error.data.message || error.data.message}`);
+            throw new Error(`人脸融合失败: ${error.data.code} - ${error.data.message || error.data.Message || '未知错误'}`);
+        } else if (error.response && error.response.data) {
+            // 处理HTTP响应错误
+            const responseData = error.response.data;
+            const errorMsg = responseData.Message || responseData.message || error.message || '未知错误';
+            throw new Error(`人脸融合失败: ${errorMsg}`);
         } else if (error.message) {
             throw new Error(`人脸融合失败: ${error.message}`);
         } else {
@@ -890,11 +1051,21 @@ async function performFaceFusion(templateId, userImageBase64, options = {}) {
 
 router.post('/face-swap', protect, checkFeatureAccess('FACE_FUSION'), upload.single('userImage'), async (req, res) => {
     try {
+        // 防御性检查：确保用户已认证
+        if (!req.user || !req.user.id) {
+            logger.error('用户未认证', { hasUser: !!req.user });
+            return res.status(401).json({
+                success: false,
+                error: '用户未认证，请先登录'
+            });
+        }
+
         let userImageBase64;
-        const templateId = req.body.templateId;
+        const templateId = req.body?.templateId;
 
         // 检查必要参数
         if (!templateId) {
+            logger.warn('缺少TemplateId参数', { userId: req.user.id });
             return res.status(400).json({
                 success: false,
                 error: '请提供TemplateId，需要先创建模板'
@@ -903,21 +1074,113 @@ router.post('/face-swap', protect, checkFeatureAccess('FACE_FUSION'), upload.sin
 
         // 处理用户图片
         if (req.file) {
-            // 验证图片分辨率
-            const dimensionCheck = validateImageDimensions(req.file.buffer);
+            // 验证文件buffer是否存在
+            if (!req.file.buffer) {
+                logger.error('上传的文件buffer不存在', { userId: req.user.id });
+                return res.status(400).json({
+                    success: false,
+                    error: '上传的文件无效，请重新上传'
+                });
+            }
+
+            // 验证图片分辨率（用户图片需要特殊检查：长宽不能超过2000像素）
+            let dimensionCheck;
+            try {
+                dimensionCheck = validateImageDimensions(req.file.buffer, { isUserImage: true });
+            } catch (validateError) {
+                logger.error('验证图片尺寸失败', {
+                    userId: req.user.id,
+                    error: validateError.message,
+                    stack: validateError.stack
+                });
+                return res.status(400).json({
+                    success: false,
+                    error: `图片验证失败: ${validateError.message}`
+                });
+            }
+
             if (!dimensionCheck.valid) {
+                logger.warn('图片尺寸不符合要求', {
+                    userId: req.user.id,
+                    error: dimensionCheck.error
+                });
                 return res.status(400).json({
                     success: false,
                     error: dimensionCheck.error
                 });
             }
             
-            userImageBase64 = imageToBase64(req.file.buffer);
+            try {
+                userImageBase64 = imageToBase64(req.file.buffer);
+            } catch (base64Error) {
+                logger.error('转换图片为Base64失败', {
+                    userId: req.user.id,
+                    error: base64Error.message,
+                    stack: base64Error.stack
+                });
+                return res.status(400).json({
+                    success: false,
+                    error: '图片格式转换失败，请检查图片格式'
+                });
+            }
         } 
         else if (req.body.userImageBase64) {
             userImageBase64 = req.body.userImageBase64;
+            if (!userImageBase64 || typeof userImageBase64 !== 'string') {
+                logger.warn('Base64图片数据无效', { userId: req.user.id });
+                return res.status(400).json({
+                    success: false,
+                    error: 'Base64图片数据无效'
+                });
+            }
+            
+            // 验证Base64图片尺寸（用户图片需要特殊检查：长宽不能超过2000像素）
+            try {
+                // 将Base64字符串转换为Buffer进行验证
+                let imageBuffer;
+                try {
+                    // 处理可能包含data:image/...;base64,前缀的情况
+                    const base64Data = userImageBase64.includes(',') 
+                        ? userImageBase64.split(',')[1] 
+                        : userImageBase64;
+                    imageBuffer = Buffer.from(base64Data, 'base64');
+                } catch (bufferError) {
+                    logger.error('Base64图片数据转换失败', {
+                        userId: req.user.id,
+                        error: bufferError.message
+                    });
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Base64图片数据格式错误，无法解析'
+                    });
+                }
+                
+                // 验证图片尺寸
+                const dimensionCheck = validateImageDimensions(imageBuffer, { isUserImage: true });
+                if (!dimensionCheck.valid) {
+                    logger.warn('Base64图片尺寸不符合要求', {
+                        userId: req.user.id,
+                        error: dimensionCheck.error
+                    });
+                    return res.status(400).json({
+                        success: false,
+                        error: dimensionCheck.error
+                    });
+                }
+            } catch (validateError) {
+                logger.error('验证Base64图片尺寸失败', {
+                    userId: req.user.id,
+                    error: validateError.message,
+                    stack: validateError.stack
+                });
+                return res.status(400).json({
+                    success: false,
+                    error: `图片验证失败: ${validateError.message}`
+                });
+            }
         } 
         else {
+            logger.warn('未提供用户图片', { userId: req.user.id });
             return res.status(400).json({
                 success: false,
                 error: '请提供用户图片，支持文件上传或Base64格式'
@@ -938,13 +1201,19 @@ router.post('/face-swap', protect, checkFeatureAccess('FACE_FUSION'), upload.sin
         // 生成任务ID
         const taskId = `face-fusion-${Date.now()}-${uuidv4().substring(0, 8)}`;
         
-        console.log(`开始处理人脸融合请求，用户ID: ${req.user.id}, TemplateId: ${templateId}, TaskId: ${taskId}`);
+        logger.info('开始处理人脸融合请求', {
+            userId: req.user.id,
+            templateId: templateId,
+            taskId: taskId,
+            hasFile: !!req.file,
+            modelVersion: req.body.modelVersion || 'v1'
+        });
 
         // 准备选项参数
         const options = {
             modelVersion: req.body.modelVersion || 'v1',
-            addWatermark: req.body.addWatermark === 'true' || req.body.addWatermark === true,
-            watermarkType: req.body.watermarkType || 'EN'
+            addWatermark: false, // 默认不添加水印
+            watermarkType: 'EN' // 如果将来需要添加水印，默认使用英文水印
         };
 
         // 调用阿里云人脸融合API（使用TemplateId）
@@ -954,11 +1223,16 @@ router.post('/face-swap', protect, checkFeatureAccess('FACE_FUSION'), upload.sin
         let permanentImageUrl = result.ImageURL;
         if (result.tempImageUrl) {
             try {
-                console.log('开始下载临时图片并保存到OSS...');
+                logger.info('开始下载临时图片并保存到OSS', { userId: req.user.id, taskId });
                 permanentImageUrl = await downloadAndSaveImageToOSS(result.tempImageUrl, req.user.id, taskId);
-                console.log('图片已保存到OSS，永久URL:', permanentImageUrl);
+                logger.info('图片已保存到OSS', { userId: req.user.id, taskId, url: permanentImageUrl });
             } catch (saveError) {
-                console.error('保存图片到OSS失败，使用临时URL:', saveError);
+                logger.error('保存图片到OSS失败，使用临时URL', {
+                    userId: req.user.id,
+                    taskId,
+                    error: saveError.message,
+                    stack: saveError.stack
+                });
                 // 如果保存失败，使用临时URL（30分钟内有效）
                 permanentImageUrl = result.tempImageUrl;
             }
@@ -983,13 +1257,27 @@ router.post('/face-swap', protect, checkFeatureAccess('FACE_FUSION'), upload.sin
             const trackUsageResult = await trackUsageResponse.json();
             
             if (!trackUsageResult.success) {
-                console.error('扣费失败:', trackUsageResult);
+                logger.error('扣费失败', {
+                    userId: req.user.id,
+                    taskId,
+                    result: trackUsageResult
+                });
                 // 扣费失败不影响返回结果，但记录错误
             } else {
-                console.log(`任务完成，扣费成功: TaskId=${taskId}, 积分=${trackUsageResult.data?.creditCost || 0}, 是否免费=${trackUsageResult.data?.isFree || false}`);
+                logger.info('任务完成，扣费成功', {
+                    userId: req.user.id,
+                    taskId,
+                    creditCost: trackUsageResult.data?.creditCost || 0,
+                    isFree: trackUsageResult.data?.isFree || false
+                });
             }
         } catch (chargeError) {
-            console.error('调用track-usage API失败:', chargeError);
+            logger.error('调用track-usage API失败', {
+                userId: req.user.id,
+                taskId,
+                error: chargeError.message,
+                stack: chargeError.stack
+            });
             // 扣费失败不影响返回结果，但记录错误
         }
 
@@ -1049,10 +1337,24 @@ router.post('/face-swap', protect, checkFeatureAccess('FACE_FUSION'), upload.sin
         });
 
     } catch (error) {
-        console.error('人脸融合API错误:', error);
+        logger.error('人脸融合API错误', {
+            userId: req.user?.id,
+            templateId: req.body?.templateId,
+            hasFile: !!req.file,
+            error: error.message,
+            stack: error.stack,
+            code: error.code,
+            data: error.data
+        });
+        
+        // 返回更详细的错误信息（开发环境）
+        const errorMessage = process.env.NODE_ENV === 'development' 
+            ? error.message || '人脸融合处理失败'
+            : '人脸融合处理失败，请稍后重试';
+        
         res.status(500).json({
             success: false,
-            error: error.message || '人脸融合处理失败'
+            error: errorMessage
         });
     }
 });
@@ -1096,6 +1398,265 @@ router.get('/task/:taskId', protect, async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || '任务查询失败'
+        });
+    }
+});
+
+/**
+ * 查询人脸融合模板列表API（使用阿里云QueryFaceImageTemplate接口）
+ * 根据阿里云文档：https://help.aliyun.com/zh/viapi/developer-reference/api-image-and-face-fusion-template-query
+ */
+router.get('/templates', protect, async (req, res) => {
+    try {
+        const { pageNumber = 1, pageSize = 100 } = req.query;
+        
+        // 检查API密钥
+        const accessKeyId = process.env.ALIBABA_CLOUD_ACCESS_KEY_ID || process.env.ALIYUN_ACCESS_KEY_ID;
+        const accessKeySecret = process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET || process.env.ALIYUN_ACCESS_KEY_SECRET;
+        
+        if (!accessKeyId || !accessKeySecret) {
+            logger.error('阿里云AccessKey未配置', { userId: req.user.id });
+            return res.status(500).json({
+                success: false,
+                error: '服务器未配置阿里云AccessKey，请联系管理员'
+            });
+        }
+
+        const client = getFacebodyClient();
+        if (!client) {
+            logger.error('初始化阿里云Facebody客户端失败', { userId: req.user.id });
+            return res.status(500).json({
+                success: false,
+                error: '服务器未完成阿里云接口配置，请联系管理员'
+            });
+        }
+
+        // 创建查询请求
+        const request = new FacebodyClient.QueryFaceImageTemplateRequest({
+            pageNumber: parseInt(pageNumber),
+            pageSize: parseInt(pageSize)
+        });
+        const runtime = new TeaUtil.RuntimeOptions({});
+
+        logger.info('调用阿里云QueryFaceImageTemplate接口', {
+            userId: req.user.id,
+            pageNumber: parseInt(pageNumber),
+            pageSize: parseInt(pageSize)
+        });
+
+        const response = await client.queryFaceImageTemplateWithOptions(request, runtime);
+        const body = response?.body;
+
+        logger.info('QueryFaceImageTemplate接口返回', {
+            userId: req.user.id,
+            response: body
+        });
+
+        if (!body || !body.data) {
+            logger.warn('QueryFaceImageTemplate接口返回数据为空', {
+                userId: req.user.id,
+                body: body
+            });
+            return res.json({
+                success: true,
+                templates: [],
+                total: 0,
+                pageNumber: parseInt(pageNumber),
+                pageSize: parseInt(pageSize)
+            });
+        }
+
+        // 解析模板列表
+        const data = body.data;
+        const templates = [];
+        
+        // 处理模板数据（兼容不同的返回格式）
+        if (data.elements && Array.isArray(data.elements)) {
+            data.elements.forEach((element) => {
+                templates.push({
+                    templateId: element.templateId || element.TemplateId,
+                    templateURL: element.templateURL || element.TemplateURL,
+                    createTime: element.createTime || element.CreateTime,
+                    updateTime: element.updateTime || element.UpdateTime
+                });
+            });
+        } else if (data.templates && Array.isArray(data.templates)) {
+            data.templates.forEach((template) => {
+                templates.push({
+                    templateId: template.templateId || template.TemplateId,
+                    templateURL: template.templateURL || template.TemplateURL,
+                    createTime: template.createTime || template.CreateTime,
+                    updateTime: template.updateTime || template.UpdateTime
+                });
+            });
+        }
+
+        res.json({
+            success: true,
+            templates: templates,
+            total: data.total || templates.length,
+            pageNumber: parseInt(pageNumber),
+            pageSize: parseInt(pageSize),
+            requestId: body.requestId || body.RequestId
+        });
+
+    } catch (error) {
+        const aliErrorCode = error?.data?.Code || error?.data?.code;
+        const aliErrorMessage = error?.data?.Message || error?.message || '查询模板列表失败';
+
+        /**
+         * 特殊处理：当前用户还没有任何模板的情况
+         * 阿里云会返回 InvalidParameter + “用户id无效 / There are no records for this user” 之类的信息
+         * 业务上这是一个「正常场景」，前端期望拿到空列表而不是 500
+         */
+        const isNoRecordForUser =
+            aliErrorCode === 'InvalidParameter' &&
+            typeof aliErrorMessage === 'string' &&
+            (aliErrorMessage.includes('There are no records for this user') ||
+             aliErrorMessage.includes('用户id无效'));
+
+        if (isNoRecordForUser) {
+            logger.info('当前用户暂无人脸融合模板记录，返回空列表', {
+                userId: req.user?.id,
+                aliErrorCode,
+                aliErrorMessage
+            });
+
+            return res.json({
+                success: true,
+                templates: [],
+                total: 0,
+                pageNumber: parseInt(req.query.pageNumber || 1),
+                pageSize: parseInt(req.query.pageSize || 100)
+            });
+        }
+
+        // 其他错误才按真正错误处理
+        logger.error('查询人脸融合模板列表失败', {
+            userId: req.user?.id,
+            error: aliErrorMessage,
+            details: error?.data || error
+        });
+        
+        res.status(500).json({
+            success: false,
+            error: `查询模板列表失败：${aliErrorMessage}`
+        });
+    }
+});
+
+/**
+ * 删除人脸融合模板API（对接阿里云DeleteFaceImageTemplate接口）
+ * 文档：https://help.aliyun.com/zh/viapi/developer-reference/api-image-and-face-fusion-template-delete
+ */
+router.delete('/templates/:templateId', protect, async (req, res) => {
+    try {
+        const { templateId } = req.params;
+        const normalizedTemplateId = (templateId || '').trim();
+
+        if (!normalizedTemplateId) {
+            return res.status(400).json({
+                success: false,
+                error: '请提供有效的TemplateId'
+            });
+        }
+
+        const accessKeyId = process.env.ALIBABA_CLOUD_ACCESS_KEY_ID || process.env.ALIYUN_ACCESS_KEY_ID;
+        const accessKeySecret = process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET || process.env.ALIYUN_ACCESS_KEY_SECRET;
+
+        if (!accessKeyId || !accessKeySecret) {
+            logger.error('阿里云AccessKey未配置（删除模板）', { userId: req.user?.id });
+            return res.status(500).json({
+                success: false,
+                error: '服务器未配置阿里云AccessKey，请联系管理员'
+            });
+        }
+
+        const client = getFacebodyClient();
+        if (!client) {
+            logger.error('初始化阿里云Facebody客户端失败（删除模板）', { userId: req.user?.id });
+            return res.status(500).json({
+                success: false,
+                error: '服务器未完成阿里云接口配置，请联系管理员'
+            });
+        }
+
+        const request = new FacebodyClient.DeleteFaceImageTemplateRequest({
+            templateId: normalizedTemplateId
+        });
+        const runtime = new TeaUtil.RuntimeOptions({});
+
+        logger.info('调用阿里云DeleteFaceImageTemplate接口', {
+            userId: req.user?.id,
+            templateId: normalizedTemplateId
+        });
+
+        const response = await client.deleteFaceImageTemplateWithOptions(request, runtime);
+        const body = response?.body || {};
+
+        logger.info('DeleteFaceImageTemplate接口返回', {
+            userId: req.user?.id,
+            templateId: normalizedTemplateId,
+            response: body
+        });
+
+        return res.json({
+            success: true,
+            templateId: normalizedTemplateId,
+            requestId: body.requestId || body.RequestId,
+            message: '模板已删除'
+        });
+    } catch (error) {
+        const aliErrorCode = error?.data?.Code || error?.data?.code || error?.code;
+        const aliErrorMessage = error?.data?.Message || error?.message || '删除模板失败';
+
+        // 模板不存在或已删除：视作404
+        const isTemplateMissing =
+            aliErrorCode === 'InvalidParameter' ||
+            aliErrorCode === 'TemplateNotExist' ||
+            (typeof aliErrorMessage === 'string' && aliErrorMessage.toLowerCase().includes('not exist'));
+
+        if (isTemplateMissing) {
+            logger.warn('删除模板失败：模板不存在', {
+                userId: req.user?.id,
+                templateId: req.params?.templateId,
+                aliErrorCode,
+                aliErrorMessage
+            });
+            return res.status(404).json({
+                success: false,
+                error: '模板不存在或已被删除'
+            });
+        }
+
+        // 权限问题
+        const isPermissionError =
+            aliErrorCode === 'NoPermission' ||
+            aliErrorCode === 'Forbidden';
+
+        if (isPermissionError) {
+            logger.error('删除模板权限不足', {
+                userId: req.user?.id,
+                templateId: req.params?.templateId,
+                aliErrorCode,
+                aliErrorMessage
+            });
+            return res.status(403).json({
+                success: false,
+                error: '没有权限删除该模板，请联系管理员'
+            });
+        }
+
+        logger.error('删除人脸融合模板失败', {
+            userId: req.user?.id,
+            templateId: req.params?.templateId,
+            error: aliErrorMessage,
+            details: error?.data || error
+        });
+
+        res.status(500).json({
+            success: false,
+            error: `删除模板失败：${aliErrorMessage}`
         });
     }
 });

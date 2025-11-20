@@ -488,7 +488,12 @@ router.post('/track-usage', protect, async (req, res) => {
     // 计算积分消耗（使用与统一中间件相同的逻辑）
     let creditCost = 0;
     if (typeof featureConfig.creditCost === 'function') {
+      // 对于任务完成后扣费的功能，在track-usage时使用固定积分
+      if (featureName === 'FACE_FUSION') {
+        creditCost = 5; // 图片换脸功能固定5积分
+      } else {
       creditCost = featureConfig.creditCost(req.body);
+      }
     } else {
       creditCost = featureConfig.creditCost;
     }
@@ -2068,7 +2073,8 @@ function getLocalFeatureName(featureName) {
     'QWEN_IMAGE_EDIT': '图像编辑',
     'IMAGE_CROP': '图像裁剪',
     'IMAGE_RESIZE': '图片改尺寸',
-    'VIDEO_FACE_FUSION': '视频换脸'
+    'VIDEO_FACE_FUSION': '视频换脸',
+    'FACE_FUSION': '图片换脸'
   };
   
   return featureNames[featureName] || featureName;
