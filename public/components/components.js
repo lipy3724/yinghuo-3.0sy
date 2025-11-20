@@ -267,6 +267,15 @@ function initializeQuickAccess() {
     const closeDropdownBtn = document.getElementById('close-dropdown');
     const selectedCountSpan = document.getElementById('selected-count');
     const sidebarFeaturesContainer = document.getElementById('sidebar-features-container');
+
+    try {
+        if (typeof window !== 'undefined' && window.useQuickAccessV2) {
+            console.log('🆕 检测到新版快捷访问系统，跳过旧版初始化');
+            return;
+        }
+    } catch (flagError) {
+        console.warn('检查新版快捷访问标记失败:', flagError);
+    }
     
     if (quickAccessBtn && quickAccessDropdown) {
         // 打开快捷访问菜单

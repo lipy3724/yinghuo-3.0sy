@@ -1,15 +1,41 @@
 /* 组件JavaScript文件 - 导航栏和侧边栏交互功能 */
 
-// 检查用户权限并重定向 - 核心功能函数
-function checkAuthAndRedirect(url) {
-    const token = getAuthToken();
-    if (token) {
-        // 在新标签页中打开功能页面
-        window.open(url, '_blank');
-    } else {
-        // 登录页面在当前页面打开
-        window.location.href = '/login.html?redirect=' + encodeURIComponent(url);
+// 立即定义全局翻译函数，避免未定义错误
+window.getTranslation = function(key, language) {
+    try {
+        const currentLang = language || localStorage.getItem('language') || 'zh';
+        
+        // 尝试从全局translations获取
+        if (window.translations && window.translations[currentLang] && window.translations[currentLang][key]) {
+            return window.translations[currentLang][key];
+        }
+        
+        // 尝试从导航栏翻译获取
+        if (window.navbarTranslations && window.navbarTranslations[currentLang] && window.navbarTranslations[currentLang][key]) {
+            return window.navbarTranslations[currentLang][key];
+        }
+        
+        // 返回原键作为后备
+        return key;
+    } catch (error) {
+        console.warn('翻译获取失败:', error);
+        return key;
     }
+};
+
+// 获取当前语言
+function getCurrentLanguage() {
+    return localStorage.getItem('language') || 'zh';
+}
+
+// 解析翻译 - 使用全局函数
+function resolveTranslation(language, key) {
+    return window.getTranslation(key, language);
+}
+
+// 本地函数别名
+function getTranslation(key, language) {
+    return window.getTranslation(key, language);
 }
 
 // 等待DOM加载完成
@@ -32,11 +58,35 @@ if (document.readyState === 'loading') {
 
 // 初始化所有组件
 function initializeComponents() {
-    initializeNavbar();
-    initializeSidebar();
-    initializeQuickAccess();
-    initializeAuth();
-    initializeLanguageSelector();
+    try {
+        initializeNavbar();
+    } catch (error) {
+        console.error('初始化导航栏失败:', error);
+    }
+    
+    try {
+        initializeSidebar();
+    } catch (error) {
+        console.error('初始化侧边栏失败:', error);
+    }
+    
+    try {
+        initializeQuickAccess();
+    } catch (error) {
+        console.error('初始化快捷访问失败:', error);
+    }
+    
+    try {
+        initializeAuth();
+    } catch (error) {
+        console.error('初始化认证失败:', error);
+    }
+    
+    try {
+        initializeLanguageSelector();
+    } catch (error) {
+        console.error('初始化语言选择器失败:', error);
+    }
     
     // 监听积分更新事件
     document.addEventListener('creditsUpdated', function(event) {
@@ -266,11 +316,351 @@ function initializeSidebar() {
 
 // 初始化快捷访问功能
 function initializeQuickAccess() {
-    const quickAccessBtn = document.getElementById('quick-access-btn');
-    const quickAccessDropdown = document.getElementById('quick-access-dropdown');
+    console.log('🚀 开始初始化快捷访问功能...');
+
+    try {
+        if (typeof window !== 'undefined' && window.useQuickAccessV2) {
+            console.log('🆕 检测到新版快捷访问系统，跳过旧版初始化');
+            return;
+        }
+    } catch (flagError) {
+        console.warn('检查新版快捷访问标记失败:', flagError);
+    }
+    
+    // 多次尝试初始化，确保DOM元素可用
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    function tryInitialize() {
+        attempts++;
+        console.log(`🔄 尝试初始化快捷访问 (${attempts}/${maxAttempts})`);
+        
+        try {
+            const quickAccessBtn = document.getElementById('quick-access-btn');
+            const quickAccessDropdown = document.getElementById('quick-access-dropdown');
+            const sidebarFeaturesContainer = document.getElementById('sidebar-features-container');
+            
+            if (quickAccessBtn && quickAccessDropdown && sidebarFeaturesContainer) {
+                console.log('✅ 找到所有必要元素，开始设置快捷访问');
+                setupQuickAccessSimple(quickAccessBtn, quickAccessDropdown, sidebarFeaturesContainer);
+                return true;
+            } else {
+                console.log('⚠️ 元素未完全加载:', {
+                    quickAccessBtn: !!quickAccessBtn,
+                    quickAccessDropdown: !!quickAccessDropdown,
+                    sidebarFeaturesContainer: !!sidebarFeaturesContainer
+                });
+                
+                if (attempts < maxAttempts) {
+                    setTimeout(tryInitialize, 1000);
+                } else {
+                    console.error('❌ 达到最大尝试次数，快捷访问初始化失败');
+                }
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ 快捷访问初始化出错:', error);
+            if (attempts < maxAttempts) {
+                setTimeout(tryInitialize, 1000);
+            }
+            return false;
+        }
+    }
+    
+    // 立即尝试一次，然后延迟尝试
+    setTimeout(tryInitialize, 500);
+}
+
+// 简化的快捷访问设置
+function setupQuickAccessSimple(quickAccessBtn, quickAccessDropdown, sidebarFeaturesContainer) {
+    console.log('🔧 开始设置快捷访问事件...');
+    
+    // 强制清除旧数据并立即更新侧边栏
+    localStorage.removeItem('quick-access-features');
+    console.log('🗑️ 已清除旧的快捷访问数据');
+    
+    // 检查翻译系统状态
+    console.log('🌐 翻译系统检查:', {
+        language: localStorage.getItem('language'),
+        hasTranslations: !!window.translations,
+        hasGetTranslation: typeof window.getTranslation === 'function',
+        translationsKeys: window.translations ? Object.keys(window.translations) : 'none'
+    });
+    
+    // 立即清空侧边栏显示
+    const existingItems = sidebarFeaturesContainer.querySelectorAll('.sidebar-feature-item');
+    existingItems.forEach(item => item.remove());
+    const emptyState = sidebarFeaturesContainer.querySelector('.empty-state');
+    if (emptyState) {
+        emptyState.classList.remove('hidden');
+    }
+    console.log('🧹 已清空侧边栏显示');
+    
+    // 打开快捷访问菜单
+    quickAccessBtn.addEventListener('click', function() {
+        console.log('🖱️ 点击快捷访问按钮');
+        quickAccessDropdown.classList.remove('hidden');
+    });
+    
+    // 关闭快捷访问菜单
     const closeDropdownBtn = document.getElementById('close-dropdown');
-    const selectedCountSpan = document.getElementById('selected-count');
-    const sidebarFeaturesContainer = document.getElementById('sidebar-features-container');
+    if (closeDropdownBtn) {
+        closeDropdownBtn.addEventListener('click', function() {
+            console.log('🖱️ 点击关闭按钮');
+            quickAccessDropdown.classList.add('hidden');
+            saveAndUpdateQuickAccess(sidebarFeaturesContainer);
+        });
+    }
+    
+    // 点击背景关闭
+    quickAccessDropdown.addEventListener('click', function(e) {
+        if (e.target === quickAccessDropdown) {
+            console.log('🖱️ 点击背景关闭');
+            quickAccessDropdown.classList.add('hidden');
+            saveAndUpdateQuickAccess(sidebarFeaturesContainer);
+        }
+    });
+    
+    // 初始化时更新侧边栏
+    updateQuickAccessSidebar(sidebarFeaturesContainer);
+    
+    console.log('✅ 快捷访问设置完成');
+}
+
+// 功能URL到中文名称的映射 - 完整版本
+const urlToChineseName = {
+    '/scene-generator.html': '场景图生成',
+    '/image-removal.html': '图像智能消除',
+    '/image-expansion.html': '智能扩图',
+    '/image-sharpen.html': '模糊图片变清晰',
+    '/image-upscaler.html': '图像高清放大',
+    '/image-colorization.html': '图像上色',
+    '/local-redraw.html': '局部重绘',
+    '/global-style.html': '全局风格化',
+    '/face-swap.html': '人脸替换',
+    '/video-face-swap.html': '视频换脸',
+    '/product-photography.html': '商品摄影',
+    '/avatar-generator.html': '头像生成器',
+    '/image-to-video.html': '图生视频',
+    '/video-enhancement.html': '视频增强',
+    '/text-to-image.html': '文生图',
+    '/image-variation.html': '图像变体',
+    '/style-transfer.html': '风格迁移',
+    '/background-removal.html': '背景消除',
+    '/object-removal.html': '物体消除',
+    '/image-restoration.html': '图像修复',
+    '/credits.html': '积分管理',
+    '/credits-usage.html': '积分使用记录'
+};
+
+// 强制中文名称映射 - 防止翻译脚本干扰
+const forceChineseNames = {
+    'feature.scene_generator': '场景图生成',
+    'feature.image_removal': '图像智能消除',
+    'feature.image_expansion': '智能扩图',
+    'feature.image_sharpen': '模糊图片变清晰',
+    'feature.image_upscaler': '图像高清放大',
+    'feature.image_colorization': '图像上色',
+    'feature.local_redraw': '局部重绘',
+    'feature.global_style': '全局风格化',
+    'feature.face_swap': '人脸替换',
+    'feature.video_face_swap': '视频换脸',
+    'scene_generator': '场景图生成',
+    'image_removal': '图像智能消除',
+    'image_expansion': '智能扩图',
+    'image_sharpen': '模糊图片变清晰',
+    'image_upscaler': '图像高清放大',
+    'image_colorization': '图像上色',
+    'local_redraw': '局部重绘',
+    'global_style': '全局风格化',
+    'face_swap': '人脸替换',
+    'video_face_swap': '视频换脸'
+};
+
+// 保存并更新快捷访问
+function saveAndUpdateQuickAccess(sidebarFeaturesContainer) {
+    console.log('💾 保存并更新快捷访问...');
+    
+    try {
+        const quickAccessDropdown = document.getElementById('quick-access-dropdown');
+        if (!quickAccessDropdown) return;
+        
+        const checkedBoxes = quickAccessDropdown.querySelectorAll('input[type="checkbox"]:checked');
+        console.log('✅ 找到选中的复选框数量:', checkedBoxes.length);
+        
+        const features = Array.from(checkedBoxes).map(checkbox => {
+            const url = checkbox.dataset.url;
+            
+            // 直接硬编码中文名称映射，完全绕过翻译系统
+            const directChineseMapping = {
+                '/scene-generator.html': '场景图生成',
+                '/image-removal.html': '图像智能消除',
+                '/image-expansion.html': '智能扩图',
+                '/image-sharpen.html': '模糊图片变清晰',
+                '/image-upscaler.html': '图像高清放大',
+                '/image-colorization.html': '图像上色',
+                '/local-redraw.html': '局部重绘',
+                '/global-style.html': '全局风格化',
+                '/face-swap.html': '人脸替换',
+                '/video-face-swap.html': '视频换脸'
+            };
+            
+            const chineseName = directChineseMapping[url] || '功能项';
+            
+            console.log('💾 直接保存中文名称:', {
+                url: url,
+                chineseName: chineseName,
+                icon: checkbox.dataset.icon,
+                bg: checkbox.dataset.bg,
+                color: checkbox.dataset.color
+            });
+            
+            return {
+                feature: chineseName,  // 直接使用硬编码的中文名称
+                icon: checkbox.dataset.icon || 'ri-function-line',
+                bg: checkbox.dataset.bg || 'bg-blue-500',
+                color: checkbox.dataset.color || 'text-white',
+                url: url || '#'
+            };
+        });
+        
+        console.log('💾 保存功能列表:', features);
+        localStorage.setItem('quick-access-features', JSON.stringify(features));
+        
+        updateQuickAccessSidebar(sidebarFeaturesContainer);
+        
+    } catch (error) {
+        console.error('❌ 保存快捷访问失败:', error);
+    }
+}
+
+// 更新快捷访问侧边栏
+function updateQuickAccessSidebar(sidebarFeaturesContainer) {
+    console.log('🔄 更新快捷访问侧边栏...');
+    
+    try {
+        if (!sidebarFeaturesContainer) {
+            console.error('❌ 侧边栏容器未找到');
+            return;
+        }
+        
+        const saved = localStorage.getItem('quick-access-features');
+        const emptyState = sidebarFeaturesContainer.querySelector('.empty-state');
+        
+        // 清除现有功能项
+        const existingItems = sidebarFeaturesContainer.querySelectorAll('.sidebar-feature-item');
+        existingItems.forEach(item => item.remove());
+        
+        if (saved) {
+            const features = JSON.parse(saved);
+            console.log('📦 加载保存的功能:', features);
+            
+            if (features.length > 0) {
+                // 隐藏空状态
+                if (emptyState) {
+                    emptyState.classList.add('hidden');
+                }
+                
+                // 添加功能项
+                features.forEach((feature, index) => {
+                    console.log(`➕ 正在添加功能项 ${index + 1}:`, feature);
+                    const item = createSimpleFeatureItem(feature);
+                    sidebarFeaturesContainer.appendChild(item);
+                });
+                
+                console.log('✅ 侧边栏更新完成，共添加', features.length, '个功能');
+            } else {
+                // 显示空状态
+                if (emptyState) {
+                    emptyState.classList.remove('hidden');
+                }
+            }
+        } else {
+            // 显示空状态
+            if (emptyState) {
+                emptyState.classList.remove('hidden');
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ 更新侧边栏失败:', error);
+    }
+}
+
+// 获取正确的中文名称
+function getCorrectChineseName(feature) {
+    let chineseName = feature.feature;
+    
+    console.log('🔍 原始功能名称:', chineseName, '语言:', localStorage.getItem('language'));
+    
+    // 第一步：如果是翻译键，尝试使用翻译函数
+    if (chineseName && chineseName.startsWith('feature.')) {
+        // 尝试使用全局翻译函数
+        if (typeof window.getTranslation === 'function') {
+            const translated = window.getTranslation(chineseName);
+            console.log('🌐 翻译结果:', chineseName, '->', translated);
+            if (translated && translated !== chineseName) {
+                return translated;
+            }
+        }
+        
+        // 如果翻译失败，使用我们的映射
+        chineseName = forceChineseNames[chineseName] || urlToChineseName[feature.url] || '未知功能';
+    }
+    
+    // 第二步：根据URL映射
+    if (!chineseName || chineseName === '未知功能') {
+        chineseName = urlToChineseName[feature.url] || '未知功能';
+    }
+    
+    // 第三步：最后的安全检查
+    if (chineseName.includes('feature.') || chineseName.includes('_')) {
+        chineseName = urlToChineseName[feature.url] || '功能项';
+    }
+    
+    console.log('✅ 最终中文名称:', chineseName);
+    return chineseName;
+}
+
+// 创建简单的功能项 - 直接显示中文名称
+function createSimpleFeatureItem(feature) {
+    console.log('🏗️ 创建功能项:', feature);
+    
+    // 直接使用保存的中文名称
+    const chineseName = feature.feature || '功能项';
+    console.log('📝 直接显示名称:', chineseName);
+    
+    const item = document.createElement('li');
+    item.className = 'sidebar-feature-item';
+    
+    const link = document.createElement('a');
+    link.href = 'javascript:void(0)';
+    link.className = 'flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200';
+    
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('🖱️ 点击功能项:', chineseName);
+        if (feature.url && feature.url !== '#') {
+            window.location.href = feature.url;
+        }
+    });
+    
+    // 使用最简单的innerHTML方式，但强制设置中文
+    link.innerHTML = `
+        <div class="flex-shrink-0 w-8 h-8 ${feature.bg || 'bg-blue-500'} rounded-lg flex items-center justify-center mr-3">
+            <i class="${feature.icon || 'ri-function-line'} ${feature.color || 'text-white'} text-sm"></i>
+        </div>
+        <span class="text-sm font-medium" data-no-translate="true" translate="no">${chineseName}</span>
+    `;
+    
+    console.log('✅ 功能项创建完成，HTML:', link.innerHTML);
+    
+    item.appendChild(link);
+    return item;
+}
+
+// 旧的复杂函数保留但不使用
+function setupQuickAccess(quickAccessBtn, quickAccessDropdown, closeDropdownBtn, selectedCountSpan, sidebarFeaturesContainer) {
     
     if (quickAccessBtn && quickAccessDropdown) {
         // 打开快捷访问菜单
@@ -333,16 +723,25 @@ function initializeQuickAccess() {
     
     // 保存选中的功能
     function saveSelectedFeatures() {
+        console.log('💾 开始保存选中的功能...');
         const checkedBoxes = quickAccessDropdown.querySelectorAll('input[type="checkbox"]:checked');
-        const features = Array.from(checkedBoxes).map(checkbox => ({
-            feature: checkbox.dataset.feature,
-            icon: checkbox.dataset.icon,
-            bg: checkbox.dataset.bg,
-            color: checkbox.dataset.color,
-            url: checkbox.dataset.url
-        }));
+        console.log('✅ 找到选中的复选框数量:', checkedBoxes.length);
         
+        const features = Array.from(checkedBoxes).map(checkbox => {
+            const feature = {
+                feature: checkbox.dataset.feature,
+                icon: checkbox.dataset.icon,
+                bg: checkbox.dataset.bg,
+                color: checkbox.dataset.color,
+                url: checkbox.dataset.url
+            };
+            console.log('📝 保存功能:', feature);
+            return feature;
+        });
+        
+        console.log('💾 保存到localStorage的功能列表:', features);
         localStorage.setItem('quick-access-features', JSON.stringify(features));
+        console.log('✅ 功能保存完成');
     }
     
     // 加载保存的功能
@@ -369,38 +768,61 @@ function initializeQuickAccess() {
     
     // 更新侧边栏显示
     function updateSidebar() {
-        if (!sidebarFeaturesContainer) return;
+        console.log('🔄 开始更新侧边栏...');
+        
+        if (!sidebarFeaturesContainer) {
+            console.error('❌ 找不到 sidebarFeaturesContainer 元素');
+            return;
+        }
         
         const saved = localStorage.getItem('quick-access-features');
+        console.log('📦 从localStorage获取的数据:', saved);
+        
         const emptyState = sidebarFeaturesContainer.querySelector('.empty-state');
+        console.log('🔍 空状态元素:', emptyState);
         
         if (saved) {
             const features = JSON.parse(saved);
+            console.log('✅ 解析的功能列表:', features);
             
             if (features.length > 0) {
                 // 隐藏空状态
                 if (emptyState) {
                     emptyState.classList.add('hidden');
+                    console.log('🙈 隐藏空状态');
                 }
                 
                 // 清除现有内容（除了空状态）
                 const existingItems = sidebarFeaturesContainer.querySelectorAll('.sidebar-feature-item');
+                console.log('🗑️ 清除现有项目数量:', existingItems.length);
                 existingItems.forEach(item => item.remove());
                 
                 // 添加功能项
                 features.forEach(feature => {
+                    console.log('➕ 添加功能项:', feature.feature);
                     const item = createSidebarFeatureItem(feature);
                     sidebarFeaturesContainer.appendChild(item);
                 });
+                
+                console.log('✅ 侧边栏更新完成，共添加', features.length, '个功能');
             } else {
                 // 显示空状态
                 if (emptyState) {
                     emptyState.classList.remove('hidden');
+                    console.log('👁️ 显示空状态');
                 }
                 
                 // 清除所有功能项
                 const existingItems = sidebarFeaturesContainer.querySelectorAll('.sidebar-feature-item');
                 existingItems.forEach(item => item.remove());
+                console.log('🗑️ 清除所有功能项');
+            }
+        } else {
+            console.log('📭 没有保存的功能数据');
+            // 显示空状态
+            if (emptyState) {
+                emptyState.classList.remove('hidden');
+                console.log('👁️ 显示空状态（无数据）');
             }
         }
     }
@@ -410,16 +832,30 @@ function initializeQuickAccess() {
         const item = document.createElement('li');
         item.className = 'sidebar-feature-item';
         
-        item.innerHTML = `
-            <a href="javascript:void(0)" onclick="checkAuthAndRedirect('${feature.url}')" 
-               class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                <div class="flex-shrink-0 w-8 h-8 ${feature.bg} rounded-lg flex items-center justify-center mr-3">
-                    <i class="${feature.icon} ${feature.color} text-sm"></i>
-                </div>
-                <span class="text-sm font-medium">${feature.feature}</span>
-            </a>
+        const link = document.createElement('a');
+        link.href = 'javascript:void(0)';
+        link.className = 'flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200';
+        
+        // 添加点击事件处理
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            // 检查认证并重定向
+            if (typeof window.checkAuthAndRedirect === 'function') {
+                window.checkAuthAndRedirect(feature.url);
+            } else {
+                // 如果没有认证检查函数，直接跳转
+                window.location.href = feature.url;
+            }
+        });
+        
+        link.innerHTML = `
+            <div class="flex-shrink-0 w-8 h-8 ${feature.bg} rounded-lg flex items-center justify-center mr-3">
+                <i class="${feature.icon} ${feature.color} text-sm"></i>
+            </div>
+            <span class="text-sm font-medium">${feature.feature}</span>
         `;
         
+        item.appendChild(link);
         return item;
     }
     
@@ -1355,6 +1791,42 @@ function loadAuthCheckScript() {
     });
 }
 
+// 全局认证检查和重定向函数
+window.checkAuthAndRedirect = function(url) {
+    console.log('🔐 检查认证并重定向到:', url);
+    
+    // 检查是否有认证token
+    const token = getAuthToken();
+    const userInfo = localStorage.getItem('user');
+    
+    if (!token || !userInfo) {
+        console.log('❌ 用户未登录，重定向到登录页');
+        window.location.href = '/login.html';
+        return;
+    }
+    
+    // 如果有认证检查函数，先进行验证
+    if (typeof window.checkAuth === 'function') {
+        window.checkAuth(true).then(isAuthenticated => {
+            if (isAuthenticated) {
+                console.log('✅ 认证通过，跳转到:', url);
+                window.location.href = url;
+            } else {
+                console.log('❌ 认证失败，重定向到登录页');
+                window.location.href = '/login.html';
+            }
+        }).catch(error => {
+            console.error('认证检查出错:', error);
+            // 出错时直接跳转
+            window.location.href = url;
+        });
+    } else {
+        // 没有认证检查函数，直接跳转
+        console.log('⚠️ 没有认证检查函数，直接跳转到:', url);
+        window.location.href = url;
+    }
+};
+
 // 导出函数供外部使用
 window.ComponentsJS = {
     initializeComponents,
@@ -1363,7 +1835,8 @@ window.ComponentsJS = {
     initializeQuickAccess,
     initializeAuth,
     showToast,
-    loadAuthCheckScript
+    loadAuthCheckScript,
+    checkAuthAndRedirect: window.checkAuthAndRedirect
 };
 
 // 获取认证token
@@ -1378,6 +1851,8 @@ function getAuthToken() {
     
     return token;
 }
+
+// getTranslation函数在文件末尾定义
 
 // 更新积分显示
 function updateCreditsDisplay(credits) {
@@ -1624,56 +2099,4 @@ function initializeLanguageSelector() {
         
         console.log('✅ 语言选项事件绑定完成:', option.getAttribute('data-lang'));
     });
-    
-    languageSelectorInitialized = true;
-    console.log('🎉 语言选择器初始化完成');
 }
-
-// 更新页面文本
-function resolveTranslation(language, key) {
-    if (!key) return null;
-    
-    if (window.translations && window.translations[language] && window.translations[language][key]) {
-        return window.translations[language][key];
-    }
-    
-    if (navbarTranslations[language] && navbarTranslations[language][key]) {
-        return navbarTranslations[language][key];
-    }
-    
-    return null;
-}
-
-function updatePageText(language) {
-    console.log('更新页面文本到:', language);
-    
-    const elements = document.querySelectorAll('[data-translate], [data-i18n]');
-    
-    elements.forEach(element => {
-        // 优先使用 data-translate，然后使用 data-i18n
-        const key = element.getAttribute('data-translate') || element.getAttribute('data-i18n');
-        
-        const value = resolveTranslation(language, key);
-        if (value !== null) {
-            element.textContent = value;
-        }
-    });
-    
-    console.log('页面文本更新完成，共更新了', elements.length, '个元素');
-}
-
-// 获取当前语言
-function getCurrentLanguage() {
-    return localStorage.getItem('language') || 'zh';
-}
-
-// 获取翻译文本
-function getTranslation(key, language) {
-    language = language || getCurrentLanguage();
-    const value = resolveTranslation(language, key);
-    if (value !== null) {
-        return value;
-    }
-    console.warn('翻译键未找到:', key, 'language:', language);
-    return key; // 返回原键作为后备
-} 

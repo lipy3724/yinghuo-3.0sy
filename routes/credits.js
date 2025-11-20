@@ -2693,11 +2693,11 @@ if (isPayPalConfigured) {
     });
     
     try {
-        // 创建PayPal客户端
-        paypalClient = new paypal.Client(paypalConfig);
-        
-        // 创建Orders控制器（需要传入Client实例，而不是配置对象）
-        ordersController = new paypal.OrdersController(paypalClient);
+    // 创建PayPal客户端
+    paypalClient = new paypal.Client(paypalConfig);
+    
+    // 创建Orders控制器（需要传入Client实例，而不是配置对象）
+    ordersController = new paypal.OrdersController(paypalClient);
         
         logger.info('PayPal客户端初始化成功');
     } catch (initError) {

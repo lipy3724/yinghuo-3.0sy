@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>指令编辑 - 萤火AI</title>
+    <title data-translate="prompt_editor.page_title">指令编辑 - 萤火AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link rel="stylesheet" href="/components/styles.css">
@@ -78,6 +78,7 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="/js/auth-check.js"></script>
     <script src="/js/mobile-guard.js"></script>
+    <script src="/translations.js"></script>
     <script src="/js/wanxiang-api.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -86,45 +87,45 @@
     
     <!-- 主内容区域 -->
     <div class="container mx-auto py-8 px-4" style="margin-top: 60px;">
-        <h1 class="text-3xl font-bold text-center mb-8">AI 指令编辑</h1>
+        <h1 class="text-3xl font-bold text-center mb-8" data-translate="prompt_editor.main_title">AI 指令编辑</h1>
                 
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <!-- 左侧面板: 图片上传和指令输入 -->
             <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold mb-4">编辑设置</h2>
+                <h2 class="text-xl font-bold mb-4" data-translate="prompt_editor.edit_settings">编辑设置</h2>
                 
                 <!-- 图片上传区域 -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">图片上传</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-translate="prompt_editor.image_upload">图片上传</label>
                                 <div id="upload-area" class="upload-area flex flex-col items-center justify-center mb-2 bg-gray-50 border border-dashed border-gray-300 rounded-md hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
                                     <i class="ri-upload-cloud-line text-3xl text-gray-400 mb-2"></i>
-                                    <p class="text-gray-500 text-center text-sm px-2">点击或者拖动文件到这区域来上传</p>
-                                    <p class="text-xs text-gray-400 mt-1">支持jpg、png、webp格式，大小不超过10MB</p>
+                                    <p class="text-gray-500 text-center text-sm px-2" data-translate="prompt_editor.upload_placeholder">点击或者拖动文件到这区域来上传</p>
+                                    <p class="text-xs text-gray-400 mt-1" data-translate="prompt_editor.upload_format">支持jpg、png、webp格式，大小不超过10MB</p>
                                     <input type="file" id="image-upload" class="hidden" accept="image/*">
                                 </div>
-                    <p class="mt-1 text-xs text-gray-500">建议使用清晰的图片，尺寸最小为512×512px</p>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="prompt_editor.upload_recommendation">建议使用清晰的图片，尺寸最小为512×512px</p>
                             </div>
                             
                 <!-- 编辑指令输入 -->
                 <div class="mb-6">
-                    <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1">编辑指令</label>
+                    <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-1" data-translate="prompt_editor.edit_instruction">编辑指令</label>
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-gray-700">输入编辑描述</span>
+                        <span class="text-sm font-medium text-gray-700" data-translate="prompt_editor.input_description">输入编辑描述</span>
                                 </div>
-                    <textarea id="prompt-input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4" placeholder="例如：将图片中人物的头发颜色修改为红色，添加一副金色眼镜，背景改为海滩"></textarea>
-                    <p class="mt-1 text-xs text-gray-500">详细、具体的描述可以获得更好的效果</p>
+                    <textarea id="prompt-input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4" data-translate-placeholder="prompt_editor.prompt_placeholder" placeholder="例如：将图片中人物的头发颜色修改为红色，添加一副金色眼镜，背景改为海滩"></textarea>
+                    <p class="mt-1 text-xs text-gray-500" data-translate="prompt_editor.prompt_tip">详细、具体的描述可以获得更好的效果</p>
                                 </div>
                                 
                 <!-- 使用技巧 -->
                 <div class="mb-6">
                     <div class="tips-card p-4 rounded-md">
                                     <h3 class="font-medium text-blue-800 flex items-center mb-2">
-                                        <i class="ri-lightbulb-line mr-1"></i>使用技巧
+                                        <i class="ri-lightbulb-line mr-1"></i><span data-translate="prompt_editor.usage_tips">使用技巧</span>
                                     </h3>
                                     <ul class="text-sm text-blue-700 space-y-1 pl-5 list-disc">
-                                        <li>使用"添加"、"移除"、"修改"等明确的动作词</li>
-                                        <li>详细描述颜色、材质、位置等属性</li>
-                                        <li>一次修改一个或少数几个元素效果更佳</li>
+                                        <li data-translate="prompt_editor.tip_1">使用“添加”、“移除”、“修改”等明确的动作词</li>
+                                        <li data-translate="prompt_editor.tip_2">详细描述颜色、材质、位置等属性</li>
+                                        <li data-translate="prompt_editor.tip_3">一次修改一个或少数几个元素效果更佳</li>
                                     </ul>
                                 </div>
                             </div>
@@ -132,12 +133,12 @@
                 <div class="pt-4">
                     <button id="generate-btn" class="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 flex items-center justify-center">
                                     <i class="ri-magic-line mr-2"></i>
-                        生成图片
+                        <span data-translate="prompt_editor.generate_button">生成图片</span>
                                 </button>
-                    <p class="mt-2 text-center text-sm text-gray-500">
+                    <p class="mt-2 text-center text-sm text-gray-500" data-translate="prompt_editor.generation_info">
                         图片生成需要5-10秒，消耗7积分
                     </p>
-                    <p class="mt-2 text-center text-sm text-red-500 font-medium">
+                    <p class="mt-2 text-center text-sm text-red-500 font-medium" data-translate="prompt_editor.warning">
                         请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。
                     </p>
                         </div>
@@ -147,18 +148,18 @@
             <div class="lg:col-span-3">
                 <!-- 预览区域 -->
                 <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-                    <h2 class="text-xl font-bold mb-4">效果预览</h2>
+                    <h2 class="text-xl font-bold mb-4" data-translate="prompt_editor.preview_title">效果预览</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-white border border-gray-200 rounded-md overflow-hidden">
                             <h3 class="text-base font-medium p-3 border-b border-gray-100 flex items-center text-gray-700">
                                         <i class="ri-image-line mr-1 text-gray-500"></i>
-                                        原始图片
+                                        <span data-translate="prompt_editor.original_image">原始图片</span>
                                     </h3>
                             <div id="original-image-container" class="image-preview flex items-center justify-center overflow-hidden">
                                         <img id="original-image" class="hidden max-w-full max-h-full object-contain" alt="上传的图片">
                                         <div id="original-image-placeholder" class="text-center px-6">
                                     <i class="ri-image-add-line text-6xl text-gray-300 mb-4"></i>
-                                    <p class="text-gray-500">请上传图片</p>
+                                    <p class="text-gray-500" data-translate="prompt_editor.upload_image_prompt">请上传图片</p>
                                         </div>
                                     </div>
                                 </div>
@@ -167,14 +168,14 @@
                             <div class="flex justify-between items-center p-3 border-b border-gray-100">
                                         <h3 class="text-base font-medium flex items-center text-gray-700">
                                             <i class="ri-magic-line mr-1 text-indigo-500"></i>
-                                            生成结果
+                                            <span data-translate="prompt_editor.result_image">生成结果</span>
                                         </h3>
                                     </div>
                             <div id="result-image-container" class="image-preview flex items-center justify-center overflow-hidden">
                                         <img id="result-image" class="hidden max-w-full max-h-full object-contain" alt="生成的图片">
                                         <div id="result-image-placeholder" class="text-center px-6">
                                     <i class="ri-landscape-line text-6xl text-gray-300 mb-4"></i>
-                                    <p class="text-gray-500">生成结果将在这里显示</p>
+                                    <p class="text-gray-500" data-translate="prompt_editor.result_placeholder">生成结果将在这里显示</p>
                                         </div>
                                     </div>
                                 </div>
@@ -183,11 +184,11 @@
                     <div class="flex justify-center mt-4">
                         <button id="download-btn" class="hidden bg-indigo-600 text-white py-2.5 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center mr-4">
                                     <i class="ri-download-line mr-2"></i>
-                                    下载结果
+                                    <span data-translate="prompt_editor.download_result">下载结果</span>
                                 </button>
                         <button id="save-to-downloads-btn" class="hidden bg-white border border-indigo-500 text-indigo-600 py-2.5 px-6 rounded-md hover:bg-indigo-50 transition flex items-center justify-center">
                             <i class="ri-save-line mr-2"></i>
-                            保存到下载中心
+                            <span data-translate="prompt_editor.save_to_downloads">保存到下载中心</span>
                         </button>
                     </div>
                             </div>
@@ -195,7 +196,7 @@
                 <!-- 历史记录 -->
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold">生成历史</h2>
+                        <h2 class="text-xl font-bold" data-translate="prompt_editor.history_title">生成历史</h2>
                         <div class="flex space-x-2">
                             <button id="clear-history-btn" class="text-gray-500 hover:text-red-600" title="清空历史记录">
                                 <i class="ri-delete-bin-line text-xl"></i>
@@ -208,11 +209,11 @@
                     
                     <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         <!-- 历史记录将通过JavaScript动态添加到这里 -->
-                        <p class="text-gray-500 col-span-full text-center py-4">暂无历史记录</p>
+                        <p class="text-gray-500 col-span-full text-center py-4" data-translate="prompt_editor.no_history">暂无历史记录</p>
                     </div>
                     
                     <!-- 保存时间提示 -->
-                    <p class="text-xs text-gray-400 mt-3 text-center">历史记录仅显示最新3条，保存时间24小时</p>
+                    <p class="text-xs text-gray-400 mt-3 text-center" data-translate="prompt_editor.history_retention">历史记录仅显示最新3条，保存时间24小时</p>
                 </div>
             </div>
         </div>
@@ -222,12 +223,63 @@
     <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center">
             <div class="loading-spinner mb-4"></div>
-            <p id="loading-message" class="text-lg font-medium">图片生成中，请耐心等待...</p>
-            <p class="text-sm text-gray-500 mt-2">图片生成需要5-10秒</p>
+            <p id="loading-message" class="text-lg font-medium" data-translate="prompt_editor.generating">图片生成中，请耐心等待...</p>
+            <p class="text-sm text-gray-500 mt-2" data-translate="prompt_editor.generation_time">图片生成需要5-10秒</p>
         </div>
     </div>
 
     <script>
+        // 当前语言
+        let currentLanguage = localStorage.getItem('language') || 'zh';
+        
+        // 更新页面文本的函数
+        function updatePageText(language) {
+            currentLanguage = language || currentLanguage;
+            
+            // 更新所有带有data-translate属性的元素
+            const elements = document.querySelectorAll('[data-translate]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (window.translations && window.translations[currentLanguage] && window.translations[currentLanguage][key]) {
+                    element.textContent = window.translations[currentLanguage][key];
+                }
+            });
+            
+            // 更新placeholder属性
+            const placeholderElements = document.querySelectorAll('[data-translate-placeholder]');
+            placeholderElements.forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                if (window.translations && window.translations[currentLanguage] && window.translations[currentLanguage][key]) {
+                    element.placeholder = window.translations[currentLanguage][key];
+                }
+            });
+            
+            // 更新页面标题
+            const titleElement = document.querySelector('title[data-translate]');
+            if (titleElement) {
+                const key = titleElement.getAttribute('data-translate');
+                if (window.translations && window.translations[currentLanguage] && window.translations[currentLanguage][key]) {
+                    document.title = window.translations[currentLanguage][key];
+                }
+            }
+            
+            console.log('页面文本已更新为:', currentLanguage === 'zh' ? '中文' : 'English');
+        }
+        
+        // 监听语言变化事件
+        document.addEventListener('languageChanged', function(event) {
+            console.log('收到语言变化事件:', event.detail.language);
+            updatePageText(event.detail.language);
+        });
+        
+        // 页面加载时初始化语言
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟执行，确保translations.js已加载
+            setTimeout(() => {
+                updatePageText(currentLanguage);
+            }, 100);
+        });
+        
         document.addEventListener('DOMContentLoaded', async function() {
             // 首先检查用户认证状态
             console.log("页面加载：开始检查用户认证状态");

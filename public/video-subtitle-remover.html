@@ -198,6 +198,58 @@
     </div>
 
         <script>
+        // 当前语言
+        let currentLanguage = localStorage.getItem('language') || 'zh';
+        
+        // 翻译函数
+        function t(key) {
+            if (window.translations && window.translations[currentLanguage] && window.translations[currentLanguage][key]) {
+                return window.translations[currentLanguage][key];
+            }
+            return key;
+        }
+        
+        // 更新页面语言
+        function updatePageLanguage(language) {
+            currentLanguage = language || currentLanguage;
+            
+            // 更新所有带有data-translate属性的元素
+            const elements = document.querySelectorAll('[data-translate]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const translation = t(key);
+                if (translation !== key) {
+                    element.textContent = translation;
+                }
+            });
+            
+            // 更新页面标题
+            const titleElement = document.querySelector('title[data-translate]');
+            if (titleElement) {
+                const key = titleElement.getAttribute('data-translate');
+                const translation = t(key);
+                if (translation !== key) {
+                    document.title = translation;
+                }
+            }
+            
+            console.log('页面语言已更新为:', currentLanguage === 'zh' ? '中文' : 'English');
+        }
+        
+        // 监听语言变化事件
+        document.addEventListener('languageChanged', function(event) {
+            console.log('收到语言变化事件:', event.detail.language);
+            updatePageLanguage(event.detail.language);
+        });
+        
+        // 页面加载时初始化语言
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟执行，确保translations.js已加载
+            setTimeout(() => {
+                updatePageLanguage(currentLanguage);
+            }, 100);
+        });
+        
         document.addEventListener('DOMContentLoaded', async function() {
             // 加载导航栏组件
             try {
@@ -735,7 +787,7 @@
             // 渲染历史记录
             function renderHistory(history) {
                 if (history.length === 0) {
-                    historyContainer.innerHTML = '<div class="text-center py-8 text-gray-500"><p data-translate="common.no_tasks">暂无视频去字幕记录</p></div>';
+                    historyContainer.innerHTML = '<div class="text-center py-8 text-gray-500"><p data-translate="video_subtitle_remover.no_records">暂无视频去字幕记录</p></div>';
                     // 重新应用翻译
                     updatePageLanguage();
                     return;
@@ -933,11 +985,6 @@
             
             // 页面加载时获取历史记录
             loadHistory();
-            
-            // 初始化翻译系统
-            if (typeof initializeTranslations === 'function') {
-                initializeTranslations();
-            }
         });
     </script>
 </body>

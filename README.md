@@ -139,6 +139,15 @@ PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 
 ---
 
+## 🧠 今日任务反思（2025-11-13）
+
+- **快捷访问旧版脚本冲突**：定位到`components/components.js`的旧版快捷访问初始化会在页面加载后再次重绘侧栏，并强制写入中文文案，导致刷新后英文界面回退。已在首页声明`window.useQuickAccessV2`标记，并在旧组件脚本中识别后跳过初始化，消除双系统冲突。
+- **快捷访问多语言一致性**：排查首页快捷访问面板中文翻译失效问题，发现底部语言脚本仅在局部作用域内声明 `translations`，导致全局 `getTranslation()` 回退返回翻译键。已将翻译数据挂载到 `window.translations`，恢复中英文显示。后续可将语言包抽离为单独模块，通过构建流程校验必需键，避免类似疏漏。
+- **快捷访问即时刷新**：修复切换语言后快捷访问侧栏仍显示旧文案的问题，将渲染函数通过 `window.refreshQuickAccessPanel` 暴露给全局语言系统，并在重绘时传入当前语言，确保无需刷新即可实时更新文案。后续可考虑把语言切换事件广播给其他模块，形成统一的订阅机制。
+- **亚马逊助手翻译补全**：补充 `amazon_assistant_title`、`amazon_assistant_subtitle`、`amazon_brand_naming`、`post_creator_desc` 等翻译键的中英文文案，确保亚马逊助手卡片文本随语言切换即时更新。建议后续建立翻译键对齐清单，将 HTML 中的 `data-i18n` 属性与词条进行静态校验。
+- **卡片文本绑定修复**：定位到“评论回复”“Video Script”卡片缺失 `data-i18n` 属性且翻译键未注册，语言切换时依旧显示中文。已恢复 `feature.review_response`、`review_response_desc`、`amazon_video_script_desc` 绑定，并在语言包中同步补齐，保证双语同步。
+- **快捷访问多语言持久化**：修复刷新后快捷访问面板回退中文的问题。为每个快捷功能持久化 `translationKey` 与 `displayName`，并在渲染时优先使用翻译键获取目标语言文本，若缺失则回退到用户最近一次看到的名称，保证语言切换与刷新后的体验一致。后续可考虑为功能清单补充唯一ID，避免依赖中文名称进行索引。
+
 ## 🧠 今日任务反思（2025-11-10）
 
 - **视频换脸多语言对齐**：已为`public/video-face-fusion.html`接入全局翻译脚本，补充中英文词条并处理动态提示，确保与首页语言切换保持一致。后续可考虑抽离通用的错误提示样式，降低各视频功能页面的重复实现。

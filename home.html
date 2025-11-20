@@ -7,6 +7,39 @@
     <link rel="icon" href="/images/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- 全局翻译函数 - 必须在所有其他脚本之前定义 -->
+    <script>
+        // 立即定义全局翻译函数，避免未定义错误
+        window.getTranslation = function(key, language) {
+            try {
+                const currentLang = language || localStorage.getItem('language') || 'zh';
+                
+                // 尝试从全局translations获取
+                if (window.translations && window.translations[currentLang] && window.translations[currentLang][key]) {
+                    return window.translations[currentLang][key];
+                }
+                
+                // 尝试从导航栏翻译获取
+                if (window.navbarTranslations && window.navbarTranslations[currentLang] && window.navbarTranslations[currentLang][key]) {
+                    return window.navbarTranslations[currentLang][key];
+                }
+                
+                // 返回原键作为后备
+                return key;
+            } catch (error) {
+                console.warn('翻译获取失败:', error);
+                return key;
+            }
+        };
+        
+        // 确保函数立即可用
+        console.log('✅ 全局getTranslation函数已定义');
+    </script>
+    <script>
+        // 标记使用新版快捷访问系统，供全局组件脚本识别
+        window.useQuickAccessV2 = true;
+    </script>
+    
     <script src="/js/logout-handler.js"></script>
     <script src="/js/auth-check.js"></script>
     <script src="/components/components.js"></script>
@@ -2252,8 +2285,8 @@
                                 <i class="ri-reply-line text-2xl"></i>
                             </div>
                         </div>
-                        <h3 class="font-semibold text-center mb-3">评论回复</h3>
-                        <p class="text-sm text-gray-600 text-center">专业回复客户评论，处理负面反馈，增强品牌形象</p>
+                        <h3 class="font-semibold text-center mb-3" data-i18n="feature.review_response">评论回复</h3>
+                        <p class="text-sm text-gray-600 text-center" data-i18n="review_response_desc">专业回复客户评论，处理负面反馈，增强品牌形象</p>
                     </div>
                 </div>
                 
@@ -2292,7 +2325,7 @@
                             </div>
                         </div>
                         <h3 class="font-semibold text-center mb-3" data-i18n="amazon_video_script">广告视频脚本</h3>
-                        <p class="text-sm text-gray-600 text-center">生成专业产品广告视频脚本，提升转化率</p>
+                        <p class="text-sm text-gray-600 text-center" data-i18n="amazon_video_script_desc">生成专业产品广告视频脚本，提升转化率</p>
                     </div>
                 </div>
                 
@@ -3018,20 +3051,11 @@
                 if (saved) {
                     try {
                         selectedFeatures = JSON.parse(saved);
-                        // 同步最新的icon / bg / color（解决改图标后旧记录不更新的问题）
-                        selectedFeatures = selectedFeatures.map(sf => {
-                            const cb = document.querySelector(`.feature-checkbox-item input[data-feature="${sf.name}"]`);
-                            if (cb) {
-                                const { icon, bg, color } = cb.dataset;
-                                // 如果数据发生变化，则更新
-                                if (icon && sf.icon !== icon) sf.icon = icon;
-                                if (bg && sf.bg !== bg) sf.bg = bg;
-                                if (color && sf.color !== color) sf.color = color;
-                            }
-                            return sf;
-                        });
+                        // 同步最新的元数据（解决改图标后旧记录不更新的问题，并补充翻译信息）
+                        selectedFeatures = selectedFeatures.map(hydrateFeatureMetadata);
+                        saveSelectedFeatures();
                         updateSelectedCount();
-                        renderSidebarFeatures();
+                        renderSidebarFeatures(window.currentLanguage || localStorage.getItem('language') || 'zh');
                         updateCheckboxes();
                 } catch (e) {
                         console.error('加载快捷访问功能失败:', e);
@@ -3129,7 +3153,70 @@
                 '产品对比': 'feature.product_comparison'
             };
 
-            function renderSidebarFeatures() {
+            function deriveTranslationKey(featureName, checkboxEl) {
+                if (!featureName) return '';
+                if (checkboxEl) {
+                    if (checkboxEl.dataset.translationKey) {
+                        return checkboxEl.dataset.translationKey;
+                    }
+                    const labeledElement = checkboxEl.parentElement?.querySelector('[data-i18n]');
+                    if (labeledElement) {
+                        return labeledElement.getAttribute('data-i18n') || '';
+                    }
+                }
+                return featureTranslationMap[featureName] || featureName;
+            }
+
+            function deriveDisplayName(existingFeature, translationKey, checkboxEl) {
+                if (existingFeature.displayName) {
+                    return existingFeature.displayName;
+                }
+
+                if (checkboxEl) {
+                    const labelSpan = checkboxEl.parentElement?.querySelector('[data-i18n]') || checkboxEl.parentElement?.querySelector('span');
+                    if (labelSpan && labelSpan.textContent) {
+                        return labelSpan.textContent.trim();
+                    }
+                }
+
+                if (translationKey) {
+                    const fallbackLanguage = window.currentLanguage || localStorage.getItem('language') || 'zh';
+                    const translated = getTranslation(translationKey, fallbackLanguage);
+                    if (translated && translated !== translationKey) {
+                        return translated;
+                    }
+                }
+
+                if (existingFeature.name) {
+                    return existingFeature.name;
+                }
+
+                return translationKey;
+            }
+
+            function hydrateFeatureMetadata(rawFeature) {
+                const checkboxEl = document.querySelector(`.feature-checkbox-item input[data-feature="${rawFeature.name}"]`);
+                const hydrated = { ...rawFeature };
+
+                if (checkboxEl) {
+                    const { icon, bg, color, url } = checkboxEl.dataset;
+                    if (icon) hydrated.icon = icon;
+                    if (bg) hydrated.bg = bg;
+                    if (color) hydrated.color = color;
+                    if (url) hydrated.url = url;
+                }
+
+                const translationKey = rawFeature.translationKey ||
+                    deriveTranslationKey(rawFeature.name, checkboxEl);
+
+                hydrated.translationKey = translationKey;
+                hydrated.displayName = deriveDisplayName(hydrated, translationKey, checkboxEl);
+
+                return hydrated;
+            }
+
+            function renderSidebarFeatures(languageOverride) {
+                const activeLanguage = languageOverride || window.currentLanguage || localStorage.getItem('language') || 'zh';
                 // 清空容器，但保留空状态提示
                 const emptyState = document.querySelector('#sidebar-features-container .empty-state');
                 sidebarFeaturesContainer.innerHTML = '';
@@ -3142,8 +3229,11 @@
                     featureItem.setAttribute('data-index', index);
                     
                     // 获取翻译键
-                    const translationKey = featureTranslationMap[feature.name] || feature.name;
-                    const translatedName = getTranslation(translationKey);
+                    const translationKey = feature.translationKey || featureTranslationMap[feature.name] || feature.name;
+                    let translatedName = getTranslation(translationKey, activeLanguage);
+                    if (!translatedName || translatedName === translationKey) {
+                        translatedName = feature.displayName || feature.name || translationKey;
+                    }
                     
                     featureItem.innerHTML = `
                         <div class="feature-info">
@@ -3187,6 +3277,19 @@
             function addFeature(checkbox) {
                 const { feature, icon, bg, color, url } = checkbox.dataset;
                 const beta = checkbox.parentElement.querySelector('.beta-tag') !== null;
+                const translationKey = deriveTranslationKey(feature, checkbox);
+                const labelSpan = checkbox.parentElement.querySelector('[data-i18n]') || checkbox.parentElement.querySelector('span');
+                const currentLangForLabel = window.currentLanguage || localStorage.getItem('language') || 'zh';
+                let displayName = labelSpan && labelSpan.textContent ? labelSpan.textContent.trim() : '';
+                if (!displayName && translationKey) {
+                    const translated = getTranslation(translationKey, currentLangForLabel);
+                    if (translated && translated !== translationKey) {
+                        displayName = translated;
+                    }
+                }
+                if (!displayName) {
+                    displayName = feature;
+                }
                 
                 // 检查是否已经添加
                 const existingIndex = selectedFeatures.findIndex(item => item.name === feature);
@@ -3220,12 +3323,14 @@
                     bg,
                     color,
                     url,
-                    beta
+                    beta,
+                    translationKey,
+                    displayName
                 });
                 
                 // 更新UI
                 updateSelectedCount();
-                renderSidebarFeatures();
+                renderSidebarFeatures(window.currentLanguage || localStorage.getItem('language') || 'zh');
                 saveSelectedFeatures();
             }
             
@@ -3237,7 +3342,7 @@
                     
                     // 更新UI
                     updateSelectedCount();
-                    renderSidebarFeatures();
+                    renderSidebarFeatures(window.currentLanguage || localStorage.getItem('language') || 'zh');
                     updateCheckboxes();
                     saveSelectedFeatures();
                 }
@@ -3328,6 +3433,11 @@
             
             // 页面加载时初始化快捷访问功能
             loadSelectedFeatures();
+
+            // 暴露刷新快捷访问面板的方法，供语言切换等全局逻辑调用
+            window.refreshQuickAccessPanel = function(language) {
+                renderSidebarFeatures(language);
+            };
             
         });
         
@@ -3676,6 +3786,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 "keyword_recommendation": "关键词推荐",
                 "keyword_recommendation_desc": "推荐最佳搜索关键词",
                 
+                // 亚马逊助手区域通用键
+                "amazon_assistant_title": "亚马逊助手",
+                "amazon_assistant_subtitle": "横向滑动查看更多功能",
+                "amazon_brand_naming": "品牌起名",
+                "brand_naming_desc": "生成独特有吸引力的品牌名称，促进品牌识别",
+                "amazon_post_creator": "创建Post",
+                "post_creator_desc": "快速创建引人入胜的亚马逊品牌Post内容",
+                "amazon_video_script": "广告视频脚本",
+                "amazon_video_script_desc": "生成专业产品广告视频脚本，提升转化率",
+                "product_comparison": "产品对比",
+                "product_comparison_desc": "全面对比分析竞品优劣势，找出差异化竞争点",
+                "review_response_desc": "专业回复客户评论，处理负面反馈，增强品牌形象",
+                
                 // 语言选择器
                 "text.select_language": "选择语言"
             },
@@ -3830,10 +3953,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 "keyword_recommendation": "Keyword Recommendation",
                 "keyword_recommendation_desc": "Recommend optimal search keywords",
                 
+                // Amazon assistant shared keys
+                "amazon_assistant_title": "Amazon Assistant",
+                "amazon_assistant_subtitle": "Swipe horizontally to explore more features",
+                "amazon_brand_naming": "Brand Naming",
+                "brand_naming_desc": "Generate unique and attractive brand names to boost recognition",
+                "amazon_post_creator": "Post Creator",
+                "post_creator_desc": "Quickly craft engaging Amazon Brand Post content",
+                "amazon_video_script": "Video Script",
+                "amazon_video_script_desc": "Generate professional product ad video scripts to boost conversions",
+                "product_comparison": "Product Comparison",
+                "product_comparison_desc": "Analyze competitor pros and cons to find differentiation",
+                "review_response_desc": "Professionally respond to customer reviews, address negative feedback, and enhance brand reputation",
+                
                 // 语言选择器
                 "text.select_language": "Select Language"
             }
         };
+
+        // 将翻译数据暴露到全局，供 getTranslation 等函数使用
+        window.translations = translations;
 
         // 当前语言
         let currentLanguage = localStorage.getItem('language') || 'zh';
@@ -3922,8 +4061,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // 重新渲染快速访问面板以应用新的语言
-            if (typeof renderSidebarFeatures === 'function') {
-                renderSidebarFeatures();
+            if (typeof window.refreshQuickAccessPanel === 'function') {
+                window.refreshQuickAccessPanel(language);
+            } else if (typeof renderSidebarFeatures === 'function') {
+                renderSidebarFeatures(language);
                 console.log('🔄 快速访问面板已重新渲染');
             }
         }
@@ -3955,6 +4096,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // 立即更新页面文本
             console.log('📝 开始初始化页面翻译...');
             updatePageText(currentLanguage);
+            // 在初始化翻译后，立即刷新快捷访问面板，确保刷新后与当前语言一致
+            if (typeof window.refreshQuickAccessPanel === 'function') {
+                window.refreshQuickAccessPanel(currentLanguage);
+            }
 
             // 为每个语言选项添加点击事件
             languageOptions.forEach(option => {

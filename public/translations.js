@@ -268,6 +268,7 @@ const translations = {
         'credits.times': '次',
         'credits.unlimited': '无限制',
         'credits.resolution_pricing_note': '不同分辨率价格不同，按实际选择计费',
+        'credits.select_amount_error': '请选择充值金额',
         
         // 货币和支付
         'currency.yuan': '元',
@@ -2180,7 +2181,41 @@ const translations = {
         'text.chinese': '中文',
         'text.english': 'English',
         'button.try_now': '立即体验',
-        'button.learn_more': '了解更多'
+        'button.learn_more': '了解更多',
+        
+        // 指令编辑页面
+        'prompt_editor.page_title': '指令编辑 - 萤火AI',
+        'prompt_editor.main_title': 'AI 指令编辑',
+        'prompt_editor.edit_settings': '编辑设置',
+        'prompt_editor.image_upload': '图片上传',
+        'prompt_editor.upload_placeholder': '点击或者拖动文件到这区域来上传',
+        'prompt_editor.upload_format': '支持jpg、png、webp格式，大小不超过10MB',
+        'prompt_editor.upload_recommendation': '建议使用清晰的图片，尺寸最小为512×512px',
+        'prompt_editor.edit_instruction': '编辑指令',
+        'prompt_editor.input_description': '输入编辑描述',
+        'prompt_editor.prompt_placeholder': '例如：将图片中人物的头发颜色修改为红色，添加一副金色眼镜，背景改为海滩',
+        'prompt_editor.prompt_tip': '详细、具体的描述可以获得更好的效果',
+        'prompt_editor.usage_tips': '使用技巧',
+        'prompt_editor.tip_1': '使用"添加"、"移除"、"修改"等明确的动作词',
+        'prompt_editor.tip_2': '详细描述颜色、材质、位置等属性',
+        'prompt_editor.tip_3': '一次修改一个或少数几个元素效果更佳',
+        'prompt_editor.generate_button': '生成图片',
+        'prompt_editor.generation_info': '图片生成需要5-10秒，消耗7积分',
+        'prompt_editor.warning': '请上传合法合规的图片，如有违反会进行封号处理，任务一旦提交就会扣除积分不可中断，请勿重复刷新提交，否则会造成积分浪费。',
+        'prompt_editor.preview_title': '效果预览',
+        'prompt_editor.original_image': '原始图片',
+        'prompt_editor.upload_image_prompt': '请上传图片',
+        'prompt_editor.result_image': '生成结果',
+        'prompt_editor.result_placeholder': '生成结果将在这里显示',
+        'prompt_editor.download_result': '下载结果',
+        'prompt_editor.save_to_downloads': '保存到下载中心',
+        'prompt_editor.history_title': '生成历史',
+        'prompt_editor.clear_history': '清空历史记录',
+        'prompt_editor.refresh_history': '刷新历史记录',
+        'prompt_editor.no_history': '暂无历史记录',
+        'prompt_editor.history_retention': '历史记录仅显示最新3条，保存时间24小时',
+        'prompt_editor.generating': '图片生成中，请耐心等待...',
+        'prompt_editor.generation_time': '图片生成需要5-10秒'
     },
     en: {
         // 导航菜单
@@ -2450,6 +2485,7 @@ const translations = {
         'credits.times': 'times',
         'credits.unlimited': 'Unlimited',
         'credits.resolution_pricing_note': 'Different resolutions have different prices, charged according to actual selection',
+        'credits.select_amount_error': 'Please select a recharge amount',
         
         // 货币和支付
         'currency.yuan': 'Yuan',
@@ -4361,7 +4397,41 @@ const translations = {
         'text.chinese': '中文',
         'text.english': 'English',
         'button.try_now': 'Try Now',
-        'button.learn_more': 'Learn More'
+        'button.learn_more': 'Learn More',
+        
+        // 指令编辑页面
+        'prompt_editor.page_title': 'Prompt Editor - Yinghuo AI',
+        'prompt_editor.main_title': 'AI Prompt Editor',
+        'prompt_editor.edit_settings': 'Edit Settings',
+        'prompt_editor.image_upload': 'Image Upload',
+        'prompt_editor.upload_placeholder': 'Click or drag files to this area to upload',
+        'prompt_editor.upload_format': 'Supports jpg, png, webp formats, size not exceeding 10MB',
+        'prompt_editor.upload_recommendation': 'Recommend using clear images with minimum size of 512×512px',
+        'prompt_editor.edit_instruction': 'Edit Instruction',
+        'prompt_editor.input_description': 'Input Edit Description',
+        'prompt_editor.prompt_placeholder': 'For example: Change the hair color of the person in the image to red, add golden glasses, change background to beach',
+        'prompt_editor.prompt_tip': 'Detailed and specific descriptions can achieve better results',
+        'prompt_editor.usage_tips': 'Usage Tips',
+        'prompt_editor.tip_1': 'Use clear action words like "add", "remove", "modify"',
+        'prompt_editor.tip_2': 'Describe colors, materials, positions and other attributes in detail',
+        'prompt_editor.tip_3': 'Modifying one or a few elements at a time works better',
+        'prompt_editor.generate_button': 'Generate Image',
+        'prompt_editor.generation_info': 'Image generation takes 5-10 seconds, consumes 7 credits',
+        'prompt_editor.warning': 'Please upload legal and compliant images. Violations will result in account suspension. Credits will be deducted once the task is submitted and cannot be interrupted. Please do not refresh and resubmit repeatedly to avoid credit waste.',
+        'prompt_editor.preview_title': 'Effect Preview',
+        'prompt_editor.original_image': 'Original Image',
+        'prompt_editor.upload_image_prompt': 'Please upload image',
+        'prompt_editor.result_image': 'Generated Result',
+        'prompt_editor.result_placeholder': 'Generated result will be displayed here',
+        'prompt_editor.download_result': 'Download Result',
+        'prompt_editor.save_to_downloads': 'Save to Download Center',
+        'prompt_editor.history_title': 'Generation History',
+        'prompt_editor.clear_history': 'Clear History',
+        'prompt_editor.refresh_history': 'Refresh History',
+        'prompt_editor.no_history': 'No history records',
+        'prompt_editor.history_retention': 'History shows only the latest 3 records, saved for 24 hours',
+        'prompt_editor.generating': 'Generating image, please wait...',
+        'prompt_editor.generation_time': 'Image generation takes 5-10 seconds'
     }
 };
 
