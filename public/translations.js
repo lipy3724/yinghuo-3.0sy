@@ -19,6 +19,7 @@ const translations = {
         'page.image_expansion_title': '智能扩图 - 萤火AI',
         'page.text_to_video_title': '文生视频 - 萤火AI',
         'page.image_edit_title': '图像编辑 - 萤火AI',
+        'page.diantu_title': '垫图 - 萤火AI',
         
         // 主要标题
         'title.hot_features': '热门功能',
@@ -2068,6 +2069,7 @@ const translations = {
         'diantu.result_placeholder': '垫图结果将在这里显示',
         'diantu.history_records': '生成历史',
         'diantu.no_history': '暂无历史记录',
+        'diantu.history_retention': '历史记录仅保存24小时',
         'diantu.generating': '正在生成中...',
         'diantu.loading_result': '正在加载结果图像...',
         'diantu.generation_failed': '生成失败',
@@ -2236,6 +2238,7 @@ const translations = {
         'page.image_expansion_title': 'Smart Image Expansion - Yinghuo AI',
         'page.text_to_video_title': 'Text-to-Video - Yinghuo AI',
         'page.image_edit_title': 'Image Editing - Yinghuo AI',
+        'page.diantu_title': 'Mat Image - Yinghuo AI',
         
         // 主要标题
         'title.hot_features': 'Hot Features',
@@ -4307,6 +4310,7 @@ const translations = {
         'diantu.processing_time': 'Mat processing takes 5-10 seconds',
         'diantu.result_image_alt': 'Result Image',
         'diantu.download_filename': 'Mat Processing Result',
+        'diantu.history_retention': 'History records are only kept for 24 hours',
         
         // 服饰分割页面翻译
         'clothing_segmentation.page_title': 'Smart Clothing Segmentation - Yinghuo AI',
